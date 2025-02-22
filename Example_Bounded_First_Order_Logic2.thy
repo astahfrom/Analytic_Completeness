@@ -227,7 +227,14 @@ proof
     by (induct p x rule: delta_fun.induct) auto
 qed
 
-abbreviation \<open>Sorts \<equiv> [C.confl_sort, A.alpha_sort, B.beta_sort, G.gamma_sort, D.delta_sort]\<close>
+abbreviation Sorts :: \<open>('f, ('f, 'p) fm) sort list\<close> where
+  \<open>Sorts \<equiv> [C.confl_sort, A.alpha_sort, B.beta_sort, G.gamma_sort, D.delta_sort]\<close>
+
+lemma Sorts_cases:
+  assumes \<open>Q C.confl_sort\<close> \<open>Q A.alpha_sort\<close> \<open>Q B.beta_sort\<close> \<open>Q G.gamma_sort\<close> \<open>Q D.delta_sort\<close>
+    and \<open>P \<in> set Sorts\<close>
+  shows \<open>Q P\<close>
+  using assms by auto
 
 interpretation Consistency_Prop psub params_fm Sorts
   using C.Consistency_Sort_axioms A.Consistency_Sort_axioms B.Consistency_Sort_axioms G.Consistency_Sort_axioms D.Consistency_Sort_axioms
@@ -475,54 +482,39 @@ proof (induct p a rule: delta_fun.induct)
     using 1(1) UniI by blast
 qed auto
 
-theorem Consistency: \<open>CProp Sorts {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-  unfolding CProp_def
-proof
-  have inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- params (set qs \<union> S)|\<close>
-      if \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- params S|\<close> for S and qs :: \<open>('f, 'p) fm list\<close>
-    using that C.infinite_params_left Cinfinite_r card_of_UNIV card_of_ordLeq_finite cinfinite_def
-    by blast
+sublocale DC: Derivational_Confl psub params_fm confl_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+  using confl by unfold_locales blast
 
-  have \<open>CSort C.confl_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-    using confl by blast
-  moreover have \<open>CSort A.alpha_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-    using alpha inf by blast
-  moreover have \<open>CSort B.beta_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+sublocale DA: Derivational_Alpha psub params_fm alpha_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+  using alpha by unfold_locales blast
+
+sublocale DB: Derivational_Beta psub params_fm beta_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  show \<open>C.ACSort B.beta_sort {A. \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
   proof safe
     fix S ps and qs :: \<open>('f, 'p) fm list\<close>
-    show \<open>set ps \<subseteq> S \<Longrightarrow>
-       ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> |UNIV :: ('f, 'p) fm set| \<le>o |- params S| \<Longrightarrow> \<not> S \<tturnstile> \<^bold>\<bottom> \<Longrightarrow>
-      \<exists>q\<in>set qs. insert q S \<in> {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-      using beta[of ps qs S] inf[of S qs]
-      by (metis (no_types, lifting) List.set_insert empty_set inf insert_is_Un mem_Collect_eq)  
+    show \<open>set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<not> S \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> \<exists>q\<in>set qs. insert q S \<in> {A. \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+      using beta[of ps qs S] by auto
   qed
-  moreover have \<open>CSort G.gamma_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-    using gamma inf by blast
-  moreover have \<open>CSort D.delta_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-  proof safe
-    fix S :: \<open>('f, 'p) fm set\<close> and p :: \<open>('f, 'p) fm\<close>
-    assume p: \<open>p \<in> S\<close> and inf': \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- params S|\<close> and *: \<open>\<not> S \<tturnstile> \<^bold>\<bottom>\<close>
-    moreover have \<open>infinite (- (params ({p} \<union> S)))\<close>
-      using p inf' card_of_ordLeq_finite  inf_UNIV by auto
-    then obtain x where **: \<open>x \<notin> params ({p} \<union> S)\<close>
-      using infinite_imp_nonempty by blast
-    ultimately have \<open>set (delta_fun p x) \<union> S \<in> {A. \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-      using * p delta[of p S] by auto
-    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-      using inf inf' by blast
-  qed
-  (* TODO: this is frustrating to do *)
-  moreover have \<open>P \<in> set Sorts \<Longrightarrow> P = C.confl_sort \<or> P = A.alpha_sort \<or> P = B.beta_sort \<or> P = G.gamma_sort \<or> P = D.delta_sort\<close>
-    for P :: \<open>('f, ('f, 'p) fm) sort\<close>
-    by simp
-  ultimately show \<open>\<And>P. P \<in> set Sorts \<Longrightarrow> CSort P {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
-    by (metis (no_types, lifting))
 qed
 
-(* TODO: we want this back
-sublocale Derivational_Consistency params_fm psub map_tm classify \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-  using confl alpha beta delta gamma by unfold_locales
-*)
+sublocale DG: Derivational_Gamma map_tm psub params_fm gamma_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+  using gamma by unfold_locales blast
+
+sublocale DD: Derivational_Delta psub params_fm delta_fun \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  (* TODO: we should expose the nice assumption and let the framework convert to ACSort *)
+  show \<open>C.ACSort D.delta_sort {A. \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+  proof
+    fix S x and p :: \<open>('f, 'p) fm\<close>
+    show \<open>S \<in> {A. \<not> A \<tturnstile> \<^bold>\<bottom>} \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (delta_fun p x) \<union> S \<in> {A. \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+      using delta[of p S x] by blast
+  qed
+qed
+
+sublocale Derivational_Consistency psub params_fm Sorts \<open>|UNIV :: ('f, 'p) fm set|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+  using DC.strong_sort DA.strong_sort DB.strong_sort DG.strong_sort DD.strong_sort
+  by unfold_locales (rule Sorts_cases; assumption)
 
 subsection \<open>Strong Completeness\<close>
 
@@ -764,54 +756,31 @@ proof (induct p a rule: delta_fun.induct)
     by (simp add: sup.order_iff insert_absorb)
 qed simp_all
 
-theorem Consistency: \<open>CProp Sorts {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-  unfolding CProp_def
-proof
-  have inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- params (set qs \<union> S)|\<close>
-      if \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- params S|\<close> for S and qs :: \<open>('f, 'p) fm list\<close>
-    using that C.infinite_params_left Cinfinite_r card_of_UNIV card_of_ordLeq_finite cinfinite_def
-    by blast
+sublocale DC: Derivational_Confl psub params_fm confl_class TC
+  using confl by unfold_locales blast
 
-  have \<open>CSort C.confl_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-    using confl by blast
-  moreover have \<open>CSort A.alpha_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-    using alpha inf by blast
-  moreover have \<open>CSort B.beta_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+sublocale DA: Derivational_Alpha psub params_fm alpha_class TC
+  using alpha by unfold_locales blast
+
+sublocale DB: Derivational_Beta psub params_fm beta_class TC
+proof
+  show \<open>C.ACSort B.beta_sort {A. \<not> \<turnstile> A}\<close>
   proof safe
     fix S ps and qs :: \<open>('f, 'p) fm list\<close>
-    show \<open>set ps \<subseteq> S \<Longrightarrow>
-       ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> |UNIV :: ('f, 'p) fm set| \<le>o |- params S| \<Longrightarrow> \<not> \<turnstile> S \<Longrightarrow>
-      \<exists>q\<in>set qs. insert q S \<in> {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-      using beta[of ps qs S] inf[of S qs]
-      by (metis (no_types, lifting) List.set_insert empty_set inf insert_is_Un mem_Collect_eq)  
+    show \<open>set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<not> \<turnstile> S \<Longrightarrow> \<exists>q\<in>set qs. insert q S \<in> {A. \<not> \<turnstile> A}\<close>
+      using beta[of ps qs S] by auto
   qed
-  moreover have \<open>CSort G.gamma_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-    using gamma inf by blast
-  moreover have \<open>CSort D.delta_sort {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-  proof safe
-    fix S :: \<open>('f, 'p) fm set\<close> and p :: \<open>('f, 'p) fm\<close>
-    assume p: \<open>p \<in> S\<close> and inf': \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- params S|\<close> and *: \<open>\<not> \<turnstile> S\<close>
-    moreover have \<open>infinite (- (params ({p} \<union> S)))\<close>
-      using p inf' card_of_ordLeq_finite  inf_UNIV by auto
-    then obtain x where **: \<open>x \<notin> params ({p} \<union> S)\<close>
-      using infinite_imp_nonempty by blast
-    ultimately have \<open>set (delta_fun p x) \<union> S \<in> {A. \<not> \<turnstile> A}\<close>
-      using * p delta[of p S] by auto
-    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-      using inf inf' by blast
-  qed
-  (* TODO: this is frustrating to do *)
-  moreover have \<open>P \<in> set Sorts \<Longrightarrow> P = C.confl_sort \<or> P = A.alpha_sort \<or> P = B.beta_sort \<or> P = G.gamma_sort \<or> P = D.delta_sort\<close>
-    for P :: \<open>('f, ('f, 'p) fm) sort\<close>
-    by simp
-  ultimately show \<open>\<And>P. P \<in> set Sorts \<Longrightarrow> CSort P {A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-    by (metis (no_types, lifting))
 qed
 
-(* (* TODO: yikes *)
-sublocale Derivational_Consistency params_fm psub map_tm classify \<open>|UNIV|\<close> \<open>\<lambda>A. \<turnstile> A\<close>
-  using confl alpha beta delta gamma by unfold_locales
-*)
+sublocale DG: Derivational_Gamma map_tm psub params_fm gamma_class TC
+  using gamma by unfold_locales blast
+
+sublocale DD: Derivational_Delta psub params_fm delta_fun TC
+  using delta by unfold_locales fast
+
+sublocale Derivational_Consistency psub params_fm Sorts \<open>|UNIV :: ('f, 'p) fm set|\<close> TC
+  using DC.strong_sort DA.strong_sort DB.strong_sort DG.strong_sort DD.strong_sort
+  by unfold_locales (rule Sorts_cases; assumption)
 
 subsection \<open>Strong Completeness\<close>
 

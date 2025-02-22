@@ -334,7 +334,7 @@ locale Confl = Params_Fm map_fm params_fm
 begin
 
 inductive confl_pred where
-  confl_pred [intro]: \<open>ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> confl_pred ps (\<lambda>_ S. set qs \<inter> S = {})\<close>
+  confl_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> confl_pred ps (\<lambda>_ S. set qs \<inter> S = {})\<close>
 
 inductive_cases confl_predE[elim!]: \<open>confl_pred ps Q\<close>
 
@@ -447,14 +447,15 @@ locale Alpha = Params_Fm map_fm params_fm
 begin
 
 inductive alpha_pred where
-  alpha_pred [intro]: \<open>ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> alpha_pred ps (\<lambda>C S. set qs \<union> S \<in> C)\<close>
+  alpha_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> alpha_pred ps (\<lambda>C S. set qs \<union> S \<in> C)\<close>
 
 inductive_cases alpha_predE[elim!]: \<open>alpha_pred ps Q\<close>
 
 inductive alphaH where
   alphaH [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> H) \<Longrightarrow> alphaH H\<close>
 
-abbreviation \<open>alpha_sort \<equiv> Pred alpha_pred alphaH\<close>
+abbreviation alpha_sort :: \<open>('x, 'fm) sort\<close> where
+  \<open>alpha_sort \<equiv> Pred alpha_pred alphaH\<close>
 
 end
 
@@ -567,14 +568,15 @@ locale Beta = Params_Fm map_fm params_fm
 begin
 
 inductive beta_pred where
-  beta_pred [intro]: \<open>ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> beta_pred ps  (\<lambda>C S. \<exists>q \<in> set qs. {q} \<union> S \<in> C)\<close>
+  beta_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> beta_pred ps (\<lambda>C S. \<exists>q \<in> set qs. {q} \<union> S \<in> C)\<close>
 
 inductive_cases beta_predE[elim!]: \<open>beta_pred ps Q\<close>
 
 inductive betaH where
   betaH [intro!]: \<open>(\<And>ps qs. ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<exists>q \<in> set qs. q \<in> H) \<Longrightarrow> betaH H\<close>
 
-abbreviation \<open>beta_sort \<equiv> Pred beta_pred betaH\<close>
+abbreviation beta_sort :: \<open>('x, 'fm) sort\<close> where
+  \<open>beta_sort \<equiv> Pred beta_pred betaH\<close>
 
 end
 
@@ -697,14 +699,15 @@ locale Gamma = Map_Tm map_tm + Params_Fm map_fm params_fm
 begin
 
 inductive gamma_pred where
-  gamma_pred [intro]: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> gamma_pred ps (\<lambda>C S. \<forall>t \<in> F S. set (qs t) \<union> S \<in> C)\<close>
+  gamma_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> gamma_pred ps (\<lambda>C S. \<forall>t \<in> F S. set (qs t) \<union> S \<in> C)\<close>
 
 inductive_cases gamma_predE[elim!]: \<open>gamma_pred ps Q\<close>
 
 inductive gammaH where
   gammaH [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<forall>t \<in> F H. set (qs t) \<subseteq> H) \<Longrightarrow> gammaH H\<close>
 
-abbreviation \<open>gamma_sort \<equiv> Pred gamma_pred gammaH\<close>
+abbreviation gamma_sort :: \<open>('x, 'fm) sort\<close> where
+  \<open>gamma_sort \<equiv> Pred gamma_pred gammaH\<close>
 
 end
 
@@ -969,11 +972,10 @@ locale Modal = Params_Fm map_fm params_fm
 begin
 
 inductive modal_pred where
-  modal_pred [intro]: \<open>ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> modal_pred ps (\<lambda>C S. set qs \<union> F S \<in> C)\<close>
+  modal_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> modal_pred ps (\<lambda>C S. set qs \<union> F S \<in> C)\<close>
 
 inductive_cases modal_predE[elim!]: \<open>modal_pred ps Q\<close>
 
-(* TODO: put types on all the sorts *)
 abbreviation modal_sort :: \<open>('x, 'fm) sort\<close> where
   \<open>modal_sort \<equiv> Pred modal_pred modalH\<close>
 
@@ -983,8 +985,8 @@ locale ModalH = Modal map_fm params_fm modal_class modalH
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    modal_class :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50)
-    and modalH :: \<open>'fm set \<Rightarrow> bool\<close> +
+    modal_class :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) and
+    modalH :: \<open>'fm set \<Rightarrow> bool\<close> +
   assumes modal_hintikka: \<open>\<And>C S. CSort modal_sort C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort modal_sort S\<close>
 
 sublocale ModalH \<subseteq> Consistency_Sort map_fm params_fm modal_sort
@@ -1154,6 +1156,9 @@ locale Maximal_Consistency = Consistency_Prop map_fm params_fm Ps
   fixes r :: \<open>'fm rel\<close>
   assumes Cinfinite_r: \<open>Cinfinite r\<close>
 begin
+
+lemma inf_univ: \<open>infinite (UNIV :: 'fm set)\<close>
+  using Cinfinite_r card_of_UNIV card_of_ordLeq_infinite unfolding cinfinite_def by blast
 
 lemma wo_rel_r: \<open>wo_rel r\<close>
   by (simp add: Card_order_wo_rel Cinfinite_r)
@@ -1535,8 +1540,7 @@ locale Maximal_Consistency_UNIV = Consistency_Prop map_fm params_fm Ps
     Ps :: \<open>('x, 'fm) sort list\<close> +
   assumes inf_UNIV: \<open>infinite (UNIV :: 'fm set)\<close>
 
-sublocale Maximal_Consistency_UNIV \<subseteq>
-  Maximal_Consistency map_fm params_fm Ps \<open>|UNIV :: 'fm set|\<close>
+sublocale Maximal_Consistency_UNIV \<subseteq> Maximal_Consistency map_fm params_fm Ps \<open>|UNIV :: 'fm set|\<close>
 proof
   show \<open>Cinfinite |UNIV :: 'fm set|\<close>
     using inf_UNIV unfolding cinfinite_def by simp
@@ -1579,89 +1583,153 @@ qed
 
 end
 
-(*
-(* TODO: unclear if we can do this in a nice way *)
-locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ps
+locale Derivational_Sort = Consistency_Sort map_fm params_fm P
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    Ps :: \<open>('x, 'fm) sort list\<close> +
+    P :: \<open>('x, 'fm) sort\<close> + 
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_confl: \<open>\<And>ps qs A q. ps \<leadsto> Confl qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_alpha: \<open>\<And>ps qs A. ps \<leadsto> Alpha qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> \<turnstile> set qs \<union> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_beta: \<open>\<And>ps qs A. ps \<leadsto> Beta qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> \<forall>q \<in> set qs. \<turnstile> {q} \<union> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_gamma: \<open>\<And>ps P qs A t. ps \<leadsto> Gamma P qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> t \<in> P A \<Longrightarrow> \<turnstile> set (qs t) \<union> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_delta: \<open>\<And>ps qs A a. ps \<leadsto> Delta qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> a \<notin> params A \<Longrightarrow> \<turnstile> set (qs a) \<union> A \<Longrightarrow> \<turnstile> A\<close>
-begin
+  assumes refute_sort: \<open>ACSort P {A. \<not> \<turnstile> A}\<close>
 
-theorem Consistency: \<open>consistency {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-  unfolding consistency_def
-proof safe
-  fix S :: \<open>'fm set\<close> and ps qs
-  assume
-    *: \<open>\<not> \<turnstile> S\<close> and
-    inf': \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> and
-    ps: \<open>set ps \<subseteq> S\<close>
-  
-  have inf: \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> S)|\<close> for qs
-    using inf' infinite_params_left Cinfinite_r card_of_UNIV card_of_ordLeq_finite cinfinite_def
-    by blast
+(* TODO: what does it look like for Modal? *)
+locale Strong_Sort = Derivational_Sort map_fm params_fm P refute
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    P :: \<open>('x, 'fm) sort\<close> and
+    refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50) +
+  assumes strong_sort: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> CSort P {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
 
-  {
-    assume \<open>ps \<leadsto> Alpha qs\<close>
-    then show \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> S)|\<close>
-      using inf by blast
-  }
 
-  {
-    fix t and P :: \<open>'fm set \<Rightarrow> 'tm set\<close>
-    assume \<open>ps \<leadsto> Gamma P qs\<close>
-    then show \<open>|UNIV :: 'fm set| \<le>o |- params (set (qs t) \<union> S)|\<close>
-      using inf by blast
-  }
+locale Derivational_Confl = Confl map_fm params_fm confl_class
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    confl_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute_sort: \<open>ACSort confl_sort {A. \<not> \<turnstile> A}\<close>
 
-  {
-    fix q
-    assume \<open>ps \<leadsto> Confl qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
-    then show False
-      using * ps refute_confl by blast
-  }
+sublocale Derivational_Confl \<subseteq> Strong_Sort map_fm params_fm confl_sort refute
+  using infinite_params_left refute_sort by unfold_locales blast+
 
-  {
-    assume \<open>ps \<leadsto> Alpha qs\<close> \<open>\<turnstile> set qs \<union> S\<close>
-    then show False
-      using * ps refute_alpha by blast
-  }
+locale Derivational_Alpha = Alpha map_fm params_fm alpha_class
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    alpha_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute_sort: \<open>ACSort alpha_sort {A. \<not> \<turnstile> A}\<close>
 
-  {
-    assume \<open>ps \<leadsto> Beta qs\<close>
-    then show \<open>\<exists>q \<in> set qs. {q} \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-      using * ps inf refute_beta[of ps qs]
-      by (metis (no_types, lifting) finite.emptyI finite.insertI finite_list mem_Collect_eq)
-    }
+sublocale Derivational_Alpha \<subseteq> Strong_Sort map_fm params_fm alpha_sort refute
+  using infinite_params_left refute_sort by unfold_locales blast+
 
-  {
-    fix t P
-    assume \<open>ps \<leadsto> Gamma P qs\<close> \<open>t \<in> P S\<close> \<open>\<turnstile> set (qs t) \<union> S\<close>
-    then show False
-      using * ps refute_gamma by blast
-  }
+locale Derivational_Beta = Beta map_fm params_fm beta_class
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    beta_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute_sort: \<open>ACSort beta_sort {A. \<not> \<turnstile> A}\<close>
 
-  {
-    assume \<open>ps \<leadsto> Delta qs\<close>
-    moreover have \<open>infinite (- (params (set ps \<union> S)))\<close>
-      using ps inf' card_of_ordLeq_finite infinite_params
-      by (metis Cinfinite_r card_of_UNIV cinfinite_def)
-    then obtain x where **: \<open>x \<notin> params (set ps \<union> S)\<close>
-      using infinite_imp_nonempty by blast
-    ultimately have \<open>\<exists>x. set (qs x) \<union> S \<in> {A. \<not> \<turnstile> A}\<close>
-      using * ps refute_delta[of ps qs] by auto
-    then show \<open>\<exists>x. set (qs x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-      using ps inf by blast
-  }
+sublocale Derivational_Beta \<subseteq> Strong_Sort map_fm params_fm beta_sort refute
+proof
+  show \<open>ACSort beta_sort {A. \<not> \<turnstile> A}\<close>
+    using refute_sort .
+next
+  assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
+  then show \<open>CSort beta_sort {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix S ps qs
+    assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> \<turnstile> S\<close>
+    then have \<open>\<exists>q \<in> set qs. \<not> \<turnstile> ({q} \<union> S)\<close>
+      using refute_sort by blast
+    moreover assume \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> 
+    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> refute A}\<close>
+      using infinite_params_left[OF inf]
+      by (metis (no_types, lifting) empty_set insert_code(1) insert_is_Un mem_Collect_eq)
+  qed
 qed
 
+locale Derivational_Gamma = Gamma map_tm map_fm params_fm gamma_class
+  for
+    map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    gamma_class +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute_sort: \<open>ACSort gamma_sort {A. \<not> \<turnstile> A}\<close>
+
+sublocale Derivational_Gamma \<subseteq> Strong_Sort map_fm params_fm gamma_sort refute
+  using infinite_params_left refute_sort by unfold_locales blast+
+
+locale Derivational_Delta = Delta map_fm params_fm delta_fun
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute_sort: \<open>ACSort delta_sort {A. \<not> \<turnstile> A}\<close>
+
+sublocale Derivational_Delta \<subseteq> Strong_Sort map_fm params_fm delta_sort refute
+proof
+  show \<open>ACSort delta_sort {A. \<not> \<turnstile> A}\<close>
+    using infinite_params_left refute_sort by blast 
+next
+  assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
+  show \<open>CSort delta_sort {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix S p
+    assume *: \<open>p \<in> S\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>\<not> \<turnstile> S\<close>
+    then have \<open>infinite (- (params ({p} \<union> S)))\<close>
+      using card_of_ordLeq_finite inf by auto
+    then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
+      using infinite_imp_nonempty by blast
+    then have \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. \<not> \<turnstile> A}\<close>
+      using *(1,3) refute_sort \<open>\<not> \<turnstile> S\<close> by blast
+    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+      using * inf infinite_params_left by blast
+  qed
+qed
+
+locale Derivational_Modal = ModalH map_fm params_fm modal_class
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    modal_class :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute_sort: \<open>ACSort modal_sort {A. \<not> \<turnstile> A}\<close>
+    and params_subset: \<open>\<And>ps F qs S. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> params (F S) \<subseteq> params S\<close>
+
+sublocale Derivational_Modal \<subseteq> Strong_Sort map_fm params_fm modal_sort refute
+proof
+  show \<open>ACSort modal_sort {A. \<not> \<turnstile> A}\<close>
+    using refute_sort .
+next
+  assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
+  then show \<open>CSort modal_sort {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+   fix S ps F qs
+    assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+    then have \<open>|UNIV :: 'fm set| \<le>o |- params (F S)|\<close>
+      using * params_subset by (meson Compl_subset_Compl_iff card_of_mono1 ordLeq_transitive)
+    then show \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> F S)|\<close>
+      using infinite_params_left[OF inf] by blast
+  qed (use refute_sort in blast)
+qed
+
+locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ps r
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ps :: \<open>('x, 'fm) sort list\<close> and
+    r :: \<open>'fm rel\<close> +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes all_refute: \<open>\<And>P. P \<in> set Ps \<Longrightarrow> infinite (UNIV :: 'fm set) \<Longrightarrow> CSort P {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+begin
+
+theorem Consistency: \<open>CProp Ps {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  unfolding CProp_def using all_refute inf_univ by fast
+
 end
-*)
 
 end
