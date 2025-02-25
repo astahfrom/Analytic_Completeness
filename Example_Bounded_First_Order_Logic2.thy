@@ -207,17 +207,17 @@ fun delta_fun :: \<open>('f, 'p) fm \<Rightarrow> 'f \<Rightarrow> ('f, 'p) fm l
 | \<open>delta_fun _ _ = []\<close>
 
 interpretation C: Confl psub params_fm confl_class
-proof qed (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: confl_class.cases)
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: confl_class.cases)
 
 interpretation A: Alpha psub params_fm alpha_class
-proof qed (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases)
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases)
 
 interpretation B: Beta psub params_fm beta_class
-proof qed (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases)
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases)
 
 interpretation G: Gamma map_tm psub params_fm gamma_class
 proof
-  show \<open>\<And>ps F qs t A. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F A \<Longrightarrow> \<exists>B\<subseteq>A. finite B \<and> t \<in> F B\<close>
+  show \<open>\<And>ps F qs t A. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F A \<Longrightarrow> \<exists>B \<subseteq> A. finite B \<and> t \<in> F B\<close>
     by (elim gamma_class.cases) (auto simp: terms_source)  
 qed (fastforce simp: terms_def elim: gamma_class.cases)+
 
@@ -267,25 +267,17 @@ lemma canonical_tm_id_map [simp]:
   \<open>set ts \<subseteq> terms S \<Longrightarrow> map \<lblot>(\<lambda>n. \<^bold>#n \<in>? terms S, \<lambda>P ts. \<^bold>\<circle>P ts \<in>? terms S)\<rblot> ts = ts\<close>
   by (induct ts) simp_all
 
-locale Hintikka =
-  fixes S :: \<open>('f, 'p) fm set\<close>
+locale MyHintikka = Hintikka psub params_fm Kinds S
+  for S :: \<open>('f, 'p) fm set\<close> +
   assumes terms_ne: \<open>terms S \<noteq> {}\<close>
-    and Hin: \<open>\<And>P. P \<in> set Kinds \<Longrightarrow> HSort P S\<close>
 begin
 
-(* TODO: any way to do these lemmas and declares automatically? *)
 lemmas
-  confl = Hin[of C.kind, simplified] and
-  alpha = Hin[of A.kind, simplified] and
-  beta = Hin[of B.kind, simplified] and
-  gamma = Hin[of G.kind, simplified] and
-  delta = Hin[of D.kind, simplified]
-
-declare
-  C.conflH.simps[simp]
-  A.alphaH.simps[simp]
-  B.betaH.simps[simp]
-  G.gammaH.simps[simp]
+  confl = hkind[of C.kind] and
+  alpha = hkind[of A.kind] and
+  beta = hkind[of B.kind] and
+  gamma = hkind[of G.kind] and
+  delta = hkind[of D.kind]
 
 theorem model: \<open>(p \<in> S \<longrightarrow> canonical S \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> canonical S \<Turnstile> p)\<close>
 proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
@@ -371,18 +363,18 @@ theorem model_existence:
     and \<open>p \<in> S\<close>
   shows \<open>canonical (mk_mcs C S) \<Turnstile> p\<close>
 proof -
-  have *: \<open>Hintikka (mk_mcs C S)\<close>
+  have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
     show \<open>terms (mk_mcs C S) \<noteq> {}\<close>
       using assms(4) terms_mono Extend_subset by blast
   next
-    show \<open>\<And>K. K \<in> set Kinds \<Longrightarrow> HSort K (mk_mcs C S)\<close>
-      using mk_mcs_Hintikka[OF assms(1-3)] unfolding HProp_def by blast
+    show \<open>HProp Kinds (mk_mcs C S)\<close>
+      using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>p \<in> mk_mcs C S\<close>
     using assms(5) Extend_subset by blast
   ultimately show ?thesis
-    using Hintikka.model by blast
+    using MyHintikka.model by blast
 qed
 
 section \<open>Natural Deduction\<close>

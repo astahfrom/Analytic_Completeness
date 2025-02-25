@@ -7,7 +7,6 @@
 *)
 
 (* TODO: Might want to use a, b instead of n, m *)
-(* TODO: Gamma K should be probably be Gamma F *)
 (* TODO: In Isabelle2025 we can actually extend and instantiate wo_rel *)
 
 theory Analytic_Completeness2 imports
@@ -300,17 +299,17 @@ definition CProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightar
 definition (in Params_Fm) ACProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
   \<open>ACProp Ks C \<equiv> \<forall>K \<in> set Ks. ACKind K C\<close>
 
-inductive HSort :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
-  HSort_Cond [intro!]: \<open>H S \<Longrightarrow> HSort (Cond P H) S\<close>
-| HSort_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> S) \<Longrightarrow> HSort (Wits W) S\<close>
+inductive HKind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  HKind_Cond [intro!]: \<open>H S \<Longrightarrow> HKind (Cond P H) S\<close>
+| HKind_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> S) \<Longrightarrow> HKind (Wits W) S\<close>
 
-inductive_cases HSort_CondE[elim!]: \<open>HSort (Cond P H) C\<close>
-inductive_cases HSort_WitsE[elim!]: \<open>HSort (Wits W) C\<close>
+inductive_cases HKind_CondE[elim!]: \<open>HKind (Cond P H) C\<close>
+inductive_cases HKind_WitsE[elim!]: \<open>HKind (Wits W) C\<close>
 
 definition HProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
-  \<open>HProp Ks S \<equiv> \<forall>K \<in> set Ks. HSort K S\<close>
+  \<open>HProp Ks S \<equiv> \<forall>K \<in> set Ks. HKind K S\<close>
 
-theorem CKind_HSort_Wits: \<open>CKind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort (Wits W) S\<close>
+theorem hintSort_Wits: \<open>CKind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind (Wits W) S\<close>
   unfolding maximal_def by fast
 
 locale Consistency_Sort = Params_Fm map_fm params_fm
@@ -321,7 +320,7 @@ locale Consistency_Sort = Params_Fm map_fm params_fm
   assumes respects_close: \<open>\<And>C. CKind K C \<Longrightarrow> CKind K (close C)\<close>
     and respects_alt: \<open>\<And>C. CKind K C \<Longrightarrow> subset_closed C \<Longrightarrow> ACKind K (mk_alt_consistency C)\<close>
     and respects_fin: \<open>\<And>C. subset_closed C \<Longrightarrow> ACKind K C \<Longrightarrow> ACKind K (mk_finite_char C)\<close>
-    and hintikka: \<open>\<And>C S. CKind K C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort K S\<close>
+    and hintikka: \<open>\<And>C S. CKind K C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind K S\<close>
 
 subsection \<open>Conflicts\<close>
 
@@ -338,11 +337,13 @@ inductive pred where
 
 inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
-inductive conflH where
-  conflH [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<notin> H) \<Longrightarrow> conflH H\<close>
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<notin> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred conflH\<close>
+  \<open>kind \<equiv> Cond pred hint\<close>
 
 end
 
@@ -427,7 +428,7 @@ next
 next
   fix C S
   assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort kind S\<close>
+  show \<open>HKind kind S\<close>
   proof safe
     fix ps qs q
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
@@ -451,11 +452,13 @@ inductive pred where
 
 inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
-inductive alphaH where
-  alphaH [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> H) \<Longrightarrow> alphaH H\<close>
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred alphaH\<close>
+  \<open>kind \<equiv> Cond pred hint\<close>
 
 end
 
@@ -545,7 +548,7 @@ next
 next
   fix C S
   assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort kind S\<close>
+  show \<open>HKind kind S\<close>
   proof safe
     fix ps qs q
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
@@ -572,11 +575,13 @@ inductive pred where
 
 inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
-inductive betaH where
-  betaH [intro!]: \<open>(\<And>ps qs. ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<exists>q \<in> set qs. q \<in> H) \<Longrightarrow> betaH H\<close>
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps qs. ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<exists>q \<in> set qs. q \<in> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred betaH\<close>
+  \<open>kind \<equiv> Cond pred hint\<close>
 
 end
 
@@ -671,7 +676,7 @@ next
 next
   fix C S
   assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort kind S\<close>
+  show \<open>HKind kind S\<close>
   proof safe
     fix ps qs
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
@@ -703,11 +708,13 @@ inductive pred where
 
 inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
-inductive gammaH where
-  gammaH [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<forall>t \<in> F H. set (qs t) \<subseteq> H) \<Longrightarrow> gammaH H\<close>
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<forall>t \<in> F H. set (qs t) \<subseteq> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred gammaH\<close>
+  \<open>kind \<equiv> Cond pred hint\<close>
 
 end
 
@@ -821,7 +828,7 @@ next
 next
   fix C S
   assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort kind S\<close>
+  show \<open>HKind kind S\<close>
   proof safe
     fix ps F qs t
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close>
@@ -948,8 +955,8 @@ next
     qed
   qed
 next
-  show \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort kind S\<close>
-    using CKind_HSort_Wits .
+  show \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind kind S\<close>
+    using hintSort_Wits .
 qed
 
 subsection \<open>Modal\<close>
@@ -964,7 +971,7 @@ locale Modal = Params_Fm map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50)
-    and modalH :: \<open>'fm set \<Rightarrow> bool\<close>
+    and hint :: \<open>'fm set \<Rightarrow> bool\<close>
   assumes modal_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<exists>G. map (map_fm f) ps \<leadsto>\<^sub>\<box> (G, map (map_fm f) qs) \<and>
       (\<forall>S. map_fm f ` F S \<subseteq> G (map_fm f ` S))\<close>
     and modal_mono: \<open>\<And>ps F qs S S'. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> F S \<subseteq> F S'\<close>
@@ -977,17 +984,17 @@ inductive pred where
 inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred modalH\<close>
+  \<open>kind \<equiv> Cond pred hint\<close>
 
 end
 
-locale ModalH = Modal map_fm params_fm classify modalH
+locale ModalH = Modal map_fm params_fm classify hint
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) and
-    modalH :: \<open>'fm set \<Rightarrow> bool\<close> +
-  assumes modal_hintikka: \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort kind S\<close>
+    hint :: \<open>'fm set \<Rightarrow> bool\<close> +
+  assumes modal_hintikka: \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind kind S\<close>
 
 sublocale ModalH \<subseteq> Consistency_Sort map_fm params_fm kind
 proof
@@ -1090,7 +1097,7 @@ next
 next
   fix C S
   assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  then show \<open>HSort kind S\<close>
+  then show \<open>HKind kind S\<close>
     using modal_hintikka by simp
 qed
 
@@ -1560,14 +1567,14 @@ section \<open>Hintikka Sets\<close>
 context Maximal_Consistency_UNIV
 begin
 
-theorem mk_mcs_Hintikka:
+lemma mk_mcs_HProp:
   assumes \<open>CProp Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
   shows \<open>HProp Ks (mk_mcs C S)\<close>
   unfolding HProp_def
 proof
   fix K
   assume K: \<open>K \<in> set Ks\<close>
-  show \<open>HSort K (mk_mcs C S)\<close>
+  show \<open>HKind K (mk_mcs C S)\<close>
   proof (cases K)
     case (Cond P H)
     moreover have \<open>maximal (mk_cprop C) (mk_mcs C S)\<close>
@@ -1590,6 +1597,30 @@ proof
       using Wits by fast
   qed
 qed
+
+end
+
+locale Hintikka = Maximal_Consistency_UNIV map_fm params_fm Ks
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> +
+  fixes H :: \<open>'fm set\<close>
+  assumes hintikka: \<open>HProp Ks H\<close>
+begin
+
+lemma hkind: \<open>K \<in> set Ks \<Longrightarrow> HKind K H\<close>
+  using hintikka unfolding HProp_def by blast
+
+end
+
+context Maximal_Consistency_UNIV
+begin
+
+theorem mk_mcs_Hintikka:
+  assumes \<open>CProp Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  shows \<open>Hintikka map_fm params_fm Ks (mk_mcs C S)\<close>
+  using assms mk_mcs_HProp by unfold_locales
 
 end
 
