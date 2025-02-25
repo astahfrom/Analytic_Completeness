@@ -7,8 +7,7 @@
 *)
 
 (* TODO: Might want to use a, b instead of n, m *)
-(* TODO: Gamma P should be probably be Gamma F *)
-(* TODO: is there a nicer way to get the useful rel_sort? *)
+(* TODO: Gamma K should be probably be Gamma F *)
 (* TODO: In Isabelle2025 we can actually extend and instantiate wo_rel *)
 
 theory Analytic_Completeness2 imports
@@ -224,7 +223,7 @@ locale Map_Fm =
 begin
 
 abbreviation respects_map :: \<open>('fm list \<Rightarrow> 'fm list \<Rightarrow> bool) \<Rightarrow> bool\<close> where
-  \<open>respects_map P \<equiv> \<forall>ps qs f. P ps qs \<longrightarrow> P (map (map_fm f) ps) (map (map_fm f) qs)\<close>
+  \<open>respects_map K \<equiv> \<forall>ps qs f. K ps qs \<longrightarrow> K (map (map_fm f) ps) (map (map_fm f) qs)\<close>
 
 definition mk_alt_consistency :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
   \<open>mk_alt_consistency C = {S. \<exists>f. map_fm f ` S \<in> C}\<close>
@@ -277,51 +276,52 @@ lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |- pa
 
 end
 
-datatype ('x, 'fm) sort
-  = Pred \<open>'fm list \<Rightarrow> ('fm cprop \<Rightarrow> 'fm set \<Rightarrow> bool) \<Rightarrow> bool\<close> \<open>'fm set \<Rightarrow> bool\<close>
+datatype ('x, 'fm) kind
+  = Cond \<open>'fm list \<Rightarrow> ('fm cprop \<Rightarrow> 'fm set \<Rightarrow> bool) \<Rightarrow> bool\<close> \<open>'fm set \<Rightarrow> bool\<close>
   | Wits \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
 
-inductive CSort :: \<open>('x, 'fm) sort \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
-  CSort_Pred [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> CSort (Pred P H) C\<close>
-| CSort_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<union> S \<in> C) \<Longrightarrow> CSort (Wits W) C\<close>
+inductive CKind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  CKind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> CKind (Cond P H) C\<close>
+| CKind_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<union> S \<in> C) \<Longrightarrow> CKind (Wits W) C\<close>
 
-inductive_cases CSort_PredE[elim!]: \<open>CSort (Pred P H) C\<close>
-inductive_cases CSort_WitsE[elim!]: \<open>CSort (Wits W) C\<close>
+inductive_cases CKind_CondE[elim!]: \<open>CKind (Cond P H) C\<close>
+inductive_cases CKind_WitsE[elim!]: \<open>CKind (Wits W) C\<close>
 
-(* TODO: the Pred cases are the same. Extract them? *)
-inductive (in Params_Fm) ACSort :: \<open>('x, 'fm) sort \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
-  ACSort_Pred [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> ACSort (Pred P H) C\<close>
-| ACSort_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> ACSort (Wits W) C\<close>
+inductive (in Params_Fm) ACKind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  ACKind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> ACKind (Cond P H) C\<close>
+| ACKind_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> ACKind (Wits W) C\<close>
 
-inductive_cases (in Params_Fm) ACSort_PredE[elim!]: \<open>ACSort (Pred P H) C\<close>
-inductive_cases (in Params_Fm) ACSort_WitsE[elim!]: \<open>ACSort (Wits W) C\<close>
+inductive_cases (in Params_Fm) ACKind_CondE[elim!]: \<open>ACKind (Cond P H) C\<close>
+inductive_cases (in Params_Fm) ACKind_WitsE[elim!]: \<open>ACKind (Wits W) C\<close>
 
-(* TODO: make this inductive? *)
-definition CProp :: \<open>('x, 'fm) sort list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
-  \<open>CProp Ps C \<equiv> \<forall>P \<in> set Ps. CSort P C\<close>
+definition CProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  \<open>CProp Ks C \<equiv> \<forall>K \<in> set Ks. CKind K C\<close>
 
-definition (in Params_Fm) ACProp :: \<open>('x, 'fm) sort list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
-  \<open>ACProp Ps C \<equiv> \<forall>P \<in> set Ps. ACSort P C\<close>
+definition (in Params_Fm) ACProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  \<open>ACProp Ks C \<equiv> \<forall>K \<in> set Ks. ACKind K C\<close>
 
-inductive HSort :: \<open>('x, 'fm) sort \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
-  HSort_Pred [intro!]: \<open>H S \<Longrightarrow> HSort (Pred P H) S\<close>
+inductive HSort :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  HSort_Cond [intro!]: \<open>H S \<Longrightarrow> HSort (Cond P H) S\<close>
 | HSort_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> S) \<Longrightarrow> HSort (Wits W) S\<close>
 
-inductive_cases HSort_PredE[elim!]: \<open>HSort (Pred P H) C\<close>
+inductive_cases HSort_CondE[elim!]: \<open>HSort (Cond P H) C\<close>
 inductive_cases HSort_WitsE[elim!]: \<open>HSort (Wits W) C\<close>
 
-theorem CSort_HSort_Wits: \<open>CSort (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort (Wits W) S\<close>
+definition HProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  \<open>HProp Ks S \<equiv> \<forall>K \<in> set Ks. HSort K S\<close>
+
+theorem CKind_HSort_Wits: \<open>CKind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort (Wits W) S\<close>
   unfolding maximal_def by fast
 
 locale Consistency_Sort = Params_Fm map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
-  fixes P :: \<open>('x, 'fm) sort\<close>
-  assumes respects_close: \<open>\<And>C. CSort P C \<Longrightarrow> CSort P (close C)\<close>
-    and respects_alt: \<open>\<And>C. CSort P C \<Longrightarrow> subset_closed C \<Longrightarrow> ACSort P (mk_alt_consistency C)\<close>
-    and respects_fin: \<open>\<And>C. subset_closed C \<Longrightarrow> ACSort P C \<Longrightarrow> ACSort P (mk_finite_char C)\<close>
-    and hintikka: \<open>\<And>C S. CSort P C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort P S\<close>
+  fixes K :: \<open>('x, 'fm) kind\<close>
+  assumes respects_close: \<open>\<And>C. CKind K C \<Longrightarrow> CKind K (close C)\<close>
+    and respects_alt: \<open>\<And>C. CKind K C \<Longrightarrow> subset_closed C \<Longrightarrow> ACKind K (mk_alt_consistency C)\<close>
+    and respects_fin: \<open>\<And>C. subset_closed C \<Longrightarrow> ACKind K C \<Longrightarrow> ACKind K (mk_finite_char C)\<close>
+    and hintikka: \<open>\<And>C S. CKind K C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort K S\<close>
 
 subsection \<open>Conflicts\<close>
 
@@ -329,28 +329,28 @@ locale Confl = Params_Fm map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
-  fixes confl_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50)
+  fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50)
   assumes confl_map: \<open>respects_map (\<leadsto>\<^sub>\<crossmark>)\<close>
 begin
 
-inductive confl_pred where
-  confl_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> confl_pred ps (\<lambda>_ S. set qs \<inter> S = {})\<close>
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> pred ps (\<lambda>_ S. set qs \<inter> S = {})\<close>
 
-inductive_cases confl_predE[elim!]: \<open>confl_pred ps Q\<close>
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
 inductive conflH where
   conflH [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<notin> H) \<Longrightarrow> conflH H\<close>
 
-abbreviation confl_sort :: \<open>('x, 'fm) sort\<close> where
-  \<open>confl_sort \<equiv> Pred confl_pred conflH\<close>
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred conflH\<close>
 
 end
 
-sublocale Confl \<subseteq> Consistency_Sort map_fm params_fm confl_sort
+sublocale Confl \<subseteq> Consistency_Sort map_fm params_fm kind
 proof
   fix C
-  assume conflC: \<open>CSort confl_sort C\<close>
-  then show \<open>CSort confl_sort (close C)\<close>
+  assume conflC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> close C\<close>
@@ -372,8 +372,8 @@ proof
   qed
 next
   fix C
-  assume conflC: \<open>CSort confl_sort C\<close>
-  then show \<open>ACSort confl_sort (mk_alt_consistency C)\<close>
+  assume conflC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps qs q
 
@@ -403,8 +403,8 @@ next
   qed
 next
   fix C
-  assume conflAC: \<open>ACSort confl_sort C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>ACSort confl_sort (mk_finite_char C)\<close>
+  assume conflAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -426,8 +426,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>CSort confl_sort C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort confl_sort S\<close>
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HSort kind S\<close>
   proof safe
     fix ps qs q
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
@@ -442,28 +442,28 @@ locale Alpha = Params_Fm map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
-  fixes alpha_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50)
+  fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50)
   assumes alpha_map: \<open>respects_map (\<leadsto>\<^sub>\<alpha>)\<close>
 begin
 
-inductive alpha_pred where
-  alpha_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> alpha_pred ps (\<lambda>C S. set qs \<union> S \<in> C)\<close>
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> pred ps (\<lambda>C S. set qs \<union> S \<in> C)\<close>
 
-inductive_cases alpha_predE[elim!]: \<open>alpha_pred ps Q\<close>
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
 inductive alphaH where
   alphaH [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> H) \<Longrightarrow> alphaH H\<close>
 
-abbreviation alpha_sort :: \<open>('x, 'fm) sort\<close> where
-  \<open>alpha_sort \<equiv> Pred alpha_pred alphaH\<close>
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred alphaH\<close>
 
 end
 
-sublocale Alpha \<subseteq> Consistency_Sort map_fm params_fm alpha_sort
+sublocale Alpha \<subseteq> Consistency_Sort map_fm params_fm kind
 proof
   fix C
-  assume alphaC: \<open>CSort alpha_sort C\<close>
-  then show \<open>CSort alpha_sort (close C)\<close>
+  assume alphaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> close C\<close>
@@ -482,8 +482,8 @@ proof
   qed
 next
   fix C
-  assume alphaC: \<open>CSort alpha_sort C\<close>
-  then show \<open>ACSort alpha_sort (mk_alt_consistency C)\<close>
+  assume alphaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps qs
 
@@ -508,8 +508,8 @@ next
   qed
 next
   fix C
-  assume alphaAC: \<open>ACSort alpha_sort C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>ACSort alpha_sort (mk_finite_char C)\<close>
+  assume alphaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -544,8 +544,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>CSort alpha_sort C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort alpha_sort S\<close>
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HSort kind S\<close>
   proof safe
     fix ps qs q
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
@@ -563,28 +563,28 @@ locale Beta = Params_Fm map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
-  fixes beta_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50)
+  fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50)
   assumes beta_map: \<open>respects_map (\<leadsto>\<^sub>\<beta>)\<close>
 begin
 
-inductive beta_pred where
-  beta_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> beta_pred ps (\<lambda>C S. \<exists>q \<in> set qs. {q} \<union> S \<in> C)\<close>
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> pred ps (\<lambda>C S. \<exists>q \<in> set qs. {q} \<union> S \<in> C)\<close>
 
-inductive_cases beta_predE[elim!]: \<open>beta_pred ps Q\<close>
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
 inductive betaH where
   betaH [intro!]: \<open>(\<And>ps qs. ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<exists>q \<in> set qs. q \<in> H) \<Longrightarrow> betaH H\<close>
 
-abbreviation beta_sort :: \<open>('x, 'fm) sort\<close> where
-  \<open>beta_sort \<equiv> Pred beta_pred betaH\<close>
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred betaH\<close>
 
 end
 
-sublocale Beta \<subseteq> Consistency_Sort map_fm params_fm beta_sort
+sublocale Beta \<subseteq> Consistency_Sort map_fm params_fm kind
 proof
   fix C
-  assume betaC: \<open>CSort beta_sort C\<close>
-  then show \<open>CSort beta_sort (close C)\<close>
+  assume betaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> close C\<close>
@@ -603,8 +603,8 @@ proof
   qed
 next
   fix C
-  assume betaC: \<open>CSort beta_sort C\<close>
-  then show \<open>ACSort beta_sort (mk_alt_consistency C)\<close>
+  assume betaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps qs
 
@@ -629,8 +629,8 @@ next
   qed
 next
   fix C
-  assume betaAC: \<open>ACSort beta_sort C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>ACSort beta_sort (mk_finite_char C)\<close>
+  assume betaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -670,8 +670,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>CSort beta_sort C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort beta_sort S\<close>
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HSort kind S\<close>
   proof safe
     fix ps qs
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
@@ -690,7 +690,7 @@ locale Gamma = Map_Tm map_tm + Params_Fm map_fm params_fm
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
- fixes gamma_class :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50)
+  fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50)
   assumes gamma_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> \<exists>G rs. map (map_fm f) ps \<leadsto>\<^sub>\<gamma> (G, rs) \<and>
       (\<forall>S. map_tm f ` F S \<subseteq> G (map_fm f ` S)) \<and>
       (\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t))\<close>
@@ -698,24 +698,24 @@ locale Gamma = Map_Tm map_tm + Params_Fm map_fm params_fm
     and gamma_fin: \<open>\<And>ps F qs t A. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F A \<Longrightarrow> \<exists>B \<subseteq> A. finite B \<and> t \<in> F B\<close>
 begin
 
-inductive gamma_pred where
-  gamma_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> gamma_pred ps (\<lambda>C S. \<forall>t \<in> F S. set (qs t) \<union> S \<in> C)\<close>
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> pred ps (\<lambda>C S. \<forall>t \<in> F S. set (qs t) \<union> S \<in> C)\<close>
 
-inductive_cases gamma_predE[elim!]: \<open>gamma_pred ps Q\<close>
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
 inductive gammaH where
   gammaH [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<forall>t \<in> F H. set (qs t) \<subseteq> H) \<Longrightarrow> gammaH H\<close>
 
-abbreviation gamma_sort :: \<open>('x, 'fm) sort\<close> where
-  \<open>gamma_sort \<equiv> Pred gamma_pred gammaH\<close>
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred gammaH\<close>
 
 end
 
-sublocale Gamma \<subseteq> Consistency_Sort map_fm params_fm gamma_sort
+sublocale Gamma \<subseteq> Consistency_Sort map_fm params_fm kind
 proof
   fix C
-  assume gammaC: \<open>CSort gamma_sort C\<close>
-  then show \<open>CSort gamma_sort (close C)\<close>
+  assume gammaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
   proof safe
     fix S ps qs F t
     assume \<open>S \<in> close C\<close>
@@ -738,8 +738,8 @@ proof
   qed
 next
   fix C
-  assume gammaC: \<open>CSort gamma_sort C\<close>
-  then show \<open>ACSort gamma_sort (mk_alt_consistency C)\<close>
+  assume gammaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps F qs t
 
@@ -769,8 +769,8 @@ next
   qed
 next
   fix C
-  assume gammaAC: \<open>ACSort gamma_sort C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>ACSort gamma_sort (mk_finite_char C)\<close>
+  assume gammaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
   proof safe
     fix S ps F qs t
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -820,8 +820,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>CSort gamma_sort C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>HSort gamma_sort S\<close>
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HSort kind S\<close>
   proof safe
     fix ps F qs t
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close>
@@ -845,14 +845,14 @@ locale Delta = Params_Fm map_fm params_fm
   assumes delta_map: \<open>\<And>p f x. delta_fun (map_fm f p) (f x) = map (map_fm f) (delta_fun p x)\<close>
 begin
 
-abbreviation \<open>delta_sort \<equiv> Wits delta_fun\<close>
+abbreviation \<open>kind \<equiv> Wits delta_fun\<close>
 end
 
-sublocale Delta \<subseteq> Consistency_Sort map_fm params_fm delta_sort
+sublocale Delta \<subseteq> Consistency_Sort map_fm params_fm kind
 proof
   fix C
-  assume deltaC: \<open>CSort delta_sort C\<close>
-  then show \<open>CSort delta_sort (close C)\<close>
+  assume deltaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
   proof safe
     fix S p qs q
     assume \<open>S \<in> close C\<close>
@@ -871,8 +871,8 @@ proof
   qed
 next
   fix C
-  assume deltaC: \<open>CSort delta_sort C\<close>
-  then show \<open>ACSort delta_sort (mk_alt_consistency C)\<close>
+  assume deltaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
   proof safe
     fix S p qs x
 
@@ -912,8 +912,8 @@ next
   qed
 next
   fix C
-  assume deltaAC: \<open>ACSort delta_sort C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>ACSort delta_sort (mk_finite_char C)\<close>
+  assume deltaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
   proof safe
     fix S p qs x
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -948,8 +948,8 @@ next
     qed
   qed
 next
-  show \<open>\<And>C S. CSort delta_sort C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort delta_sort S\<close>
-    using CSort_HSort_Wits .
+  show \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort kind S\<close>
+    using CKind_HSort_Wits .
 qed
 
 subsection \<open>Modal\<close>
@@ -963,7 +963,7 @@ locale Modal = Params_Fm map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
-  fixes modal_class :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50)
+  fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50)
     and modalH :: \<open>'fm set \<Rightarrow> bool\<close>
   assumes modal_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<exists>G. map (map_fm f) ps \<leadsto>\<^sub>\<box> (G, map (map_fm f) qs) \<and>
       (\<forall>S. map_fm f ` F S \<subseteq> G (map_fm f ` S))\<close>
@@ -971,29 +971,29 @@ locale Modal = Params_Fm map_fm params_fm
     and modal_fin: \<open>\<And>ps F qs S A. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> finite A \<Longrightarrow> A \<subseteq> F S \<Longrightarrow> \<exists>S' \<subseteq> S. finite S' \<and> A \<subseteq> F S'\<close>
 begin
 
-inductive modal_pred where
-  modal_pred [intro!]: \<open>ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> modal_pred ps (\<lambda>C S. set qs \<union> F S \<in> C)\<close>
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> pred ps (\<lambda>C S. set qs \<union> F S \<in> C)\<close>
 
-inductive_cases modal_predE[elim!]: \<open>modal_pred ps Q\<close>
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
 
-abbreviation modal_sort :: \<open>('x, 'fm) sort\<close> where
-  \<open>modal_sort \<equiv> Pred modal_pred modalH\<close>
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred modalH\<close>
 
 end
 
-locale ModalH = Modal map_fm params_fm modal_class modalH
+locale ModalH = Modal map_fm params_fm classify modalH
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    modal_class :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) and
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) and
     modalH :: \<open>'fm set \<Rightarrow> bool\<close> +
-  assumes modal_hintikka: \<open>\<And>C S. CSort modal_sort C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort modal_sort S\<close>
+  assumes modal_hintikka: \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HSort kind S\<close>
 
-sublocale ModalH \<subseteq> Consistency_Sort map_fm params_fm modal_sort
+sublocale ModalH \<subseteq> Consistency_Sort map_fm params_fm kind
 proof
   fix C
-  assume modalC: \<open>CSort modal_sort C\<close>
-  then show \<open>CSort modal_sort (close C)\<close>
+  assume modalC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
   proof safe
     fix S ps F qs
     assume \<open>S \<in> close C\<close>
@@ -1012,8 +1012,8 @@ proof
   qed
 next
   fix C
-  assume modalC: \<open>CSort modal_sort C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>ACSort modal_sort (mk_alt_consistency C)\<close>
+  assume modalC: \<open>CKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps F qs
 
@@ -1043,8 +1043,8 @@ next
   qed
 next
   fix C
-  assume modalAC: \<open>ACSort modal_sort C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>ACSort modal_sort (mk_finite_char C)\<close>
+  assume modalAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
   proof safe
     fix S ps F qs t
     assume S: \<open>S \<in> mk_finite_char C\<close>
@@ -1089,8 +1089,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>CSort modal_sort C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  then show \<open>HSort modal_sort S\<close>
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  then show \<open>HSort kind S\<close>
     using modal_hintikka by simp
 qed
 
@@ -1100,18 +1100,18 @@ locale Consistency_Prop = Params_Fm map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
-  fixes Ps :: \<open>('x, 'fm) sort list\<close>
-  assumes all_sorts: \<open>\<And>P. P \<in> set Ps \<Longrightarrow> Consistency_Sort map_fm params_fm P\<close>
+  fixes Ks :: \<open>('x, 'fm) kind list\<close>
+  assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Sort map_fm params_fm K\<close>
 begin
 
-lemma CProp_close: \<open>CProp Ps C \<Longrightarrow> CProp Ps (close C)\<close>
-  unfolding CProp_def using all_sorts Consistency_Sort.respects_close by fast
+lemma CProp_close: \<open>CProp Ks C \<Longrightarrow> CProp Ks (close C)\<close>
+  unfolding CProp_def using all_kinds Consistency_Sort.respects_close by fast
 
-lemma CProp_alt: \<open>CProp Ps C \<Longrightarrow> subset_closed C \<Longrightarrow> ACProp Ps (mk_alt_consistency C)\<close>
-  unfolding CProp_def ACProp_def using all_sorts Consistency_Sort.respects_alt by fast
+lemma CProp_alt: \<open>CProp Ks C \<Longrightarrow> subset_closed C \<Longrightarrow> ACProp Ks (mk_alt_consistency C)\<close>
+  unfolding CProp_def ACProp_def using all_kinds Consistency_Sort.respects_alt by fast
 
-lemma CProp_fin: \<open>subset_closed C \<Longrightarrow> ACProp Ps C \<Longrightarrow> ACProp Ps (mk_finite_char C)\<close>
-  unfolding ACProp_def using all_sorts Consistency_Sort.respects_fin by fast
+lemma CProp_fin: \<open>subset_closed C \<Longrightarrow> ACProp Ks C \<Longrightarrow> ACProp Ks (mk_finite_char C)\<close>
+  unfolding ACProp_def using all_kinds Consistency_Sort.respects_fin by fast
 
 definition mk_cprop :: \<open>'fm cprop \<Rightarrow> 'fm cprop\<close> where
   \<open>mk_cprop C \<equiv> mk_finite_char (mk_alt_consistency (close C))\<close>
@@ -1126,33 +1126,32 @@ lemma mk_cprop_in: \<open>S \<in> C \<Longrightarrow> S \<in> mk_cprop C\<close>
   unfolding mk_cprop_def
   by (meson close_closed close_subset finite_char_subset in_mono mk_alt_consistency_closed mk_alt_consistency_subset)
 
-theorem CProp: \<open>CProp Ps C \<Longrightarrow> ACProp Ps (mk_cprop C)\<close>
+theorem CProp: \<open>CProp Ks C \<Longrightarrow> ACProp Ks (mk_cprop C)\<close>
   unfolding mk_cprop_def
   by (simp add: CProp_alt CProp_close CProp_fin close_closed mk_alt_consistency_closed)
 
 end
 
-(* TODO: should come up with a naming for sorts (should they be called sorts?) *)
-fun (in Params_Fm) witness_sorts :: \<open>('x, 'fm) sort list \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
-  \<open>witness_sorts [] p S = {}\<close>
-| \<open>witness_sorts (Pred _ _ # Qs) p S = witness_sorts Qs p S\<close>
-| \<open>witness_sorts (Wits W # Qs) p S =
+fun (in Params_Fm) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
+  \<open>witness_kinds [] p S = {}\<close>
+| \<open>witness_kinds (Cond _ _ # Qs) p S = witness_kinds Qs p S\<close>
+| \<open>witness_kinds (Wits W # Qs) p S =
   (let
-    rest = witness_sorts Qs p S;
+    rest = witness_kinds Qs p S;
     a = SOME x. x \<notin> params (rest \<union> {p} \<union> S)
    in set (W p a) \<union> rest)\<close>
 
-lemma (in Params_Fm) witness_sorts:
+lemma (in Params_Fm) witness_kinds:
   assumes \<open>Wits W \<in> set Qs\<close>
-  shows \<open>\<exists>x. set (W p x) \<subseteq> witness_sorts Qs p S\<close>
+  shows \<open>\<exists>x. set (W p x) \<subseteq> witness_kinds Qs p S\<close>
   using assms
-  by (induct Qs p S rule: witness_sorts.induct) (auto simp add: Let_def)
+  by (induct Qs p S rule: witness_kinds.induct) (auto simp add: Let_def)
 
-locale Maximal_Consistency = Consistency_Prop map_fm params_fm Ps
+locale Maximal_Consistency = Consistency_Prop map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    Ps :: \<open>('x, 'fm) sort list\<close> +
+    Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes r :: \<open>'fm rel\<close>
   assumes Cinfinite_r: \<open>Cinfinite r\<close>
 begin
@@ -1180,7 +1179,7 @@ lemma params_left: \<open>r \<le>o |- params S| \<Longrightarrow> r \<le>o |- pa
       Field_card_of card_of_Card_order cinfinite_def cinfinite_mono ordLeq_transitive)
 
 definition witness :: \<open>'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
-  \<open>witness \<equiv> witness_sorts Ps\<close>
+  \<open>witness \<equiv> witness_kinds Ks\<close>
 
 definition extendS :: \<open>'fm cprop \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>extendS C n prev \<equiv> if {n} \<union> prev \<in> C then witness n prev \<union> {n} \<union> prev else prev\<close>
@@ -1197,14 +1196,14 @@ lemma adm_woL_extendL: \<open>adm_woL r (extendL C)\<close>
 definition Extend :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>Extend C S \<equiv> \<Union>n \<in> Field r. extend C S n\<close>
 
-lemma finite_witness_sorts: \<open>finite (witness_sorts Qs p S)\<close>
-  unfolding witness_def by (induct Qs p S rule: witness_sorts.induct) (simp_all add: Let_def)
+lemma finite_witness_kinds: \<open>finite (witness_kinds Qs p S)\<close>
+  unfolding witness_def by (induct Qs p S rule: witness_kinds.induct) (simp_all add: Let_def)
 
 lemma finite_witness: \<open>finite (witness p S)\<close>
-  unfolding witness_def using finite_witness_sorts .
+  unfolding witness_def using finite_witness_kinds .
 
-lemma finite_witness_sorts_params: \<open>finite (params (witness_sorts Qs p S))\<close>
-  using finite_witness_sorts by simp
+lemma finite_witness_kinds_params: \<open>finite (params (witness_kinds Qs p S))\<close>
+  using finite_witness_kinds by simp
 
 lemma finite_witness_params: \<open>finite (params (witness p S))\<close>
   using finite_witness by simp
@@ -1308,11 +1307,11 @@ lemma is_chain_extend: \<open>wo_rel.is_chain r (extend C S)\<close>
   by (simp add: extend_under wo_rel.is_chain_def wo_rel_r)
 
 lemma extend_in_C_step:
-  assumes \<open>ACProp Ps C\<close> \<open>{n} \<union> extend C S n \<in> C\<close>
+  assumes \<open>ACProp Ks C\<close> \<open>{n} \<union> extend C S n \<in> C\<close>
     and inf: \<open>infinite (UNIV - params ({n} \<union> extend C S n))\<close> and n: \<open>n \<in> Field r\<close> 
   shows \<open>extend C S (succ r n) \<in> C\<close>
 proof -
-  have \<open>set Qs \<subseteq> set Ps \<Longrightarrow> witness_sorts Qs n (extend C S n) \<union> {n} \<union> extend C S n \<in> C\<close> for Qs
+  have \<open>set Qs \<subseteq> set Ks \<Longrightarrow> witness_kinds Qs n (extend C S n) \<union> {n} \<union> extend C S n \<in> C\<close> for Qs
   proof (induct Qs)
     case Nil
     then show ?case
@@ -1320,9 +1319,9 @@ proof -
   next
     case (Cons Q Qs)
     let ?S = \<open>extend C S n\<close>
-    let ?rest = \<open>witness_sorts Qs n ?S\<close>
+    let ?rest = \<open>witness_kinds Qs n ?S\<close>
 
-    have Q: \<open>Q \<in> set Ps\<close>
+    have Q: \<open>Q \<in> set Ks\<close>
       using Cons.prems by simp
 
     have *: \<open>?rest \<union> {n} \<union> ?S \<in> C\<close>
@@ -1333,7 +1332,7 @@ proof -
       case (Wits W)
 
       have \<open>infinite (UNIV - params (?rest \<union> {n} \<union> ?S))\<close>
-        using finite_witness_sorts_params inf by (metis UN_Un Un_assoc infinite_Diff_fin_Un)
+        using finite_witness_kinds_params inf by (metis UN_Un Un_assoc infinite_Diff_fin_Un)
       then have \<open>\<exists>x. x \<notin> params (?rest \<union> {n} \<union> ?S)\<close>
         by (metis diff_shunt finite.simps subset_eq)
       then obtain a where a:
@@ -1348,12 +1347,12 @@ proof -
       then have \<open>set (W n a) \<union> ?rest \<union>  {n} \<union> ?S \<in> C\<close>
         using a by fast
 
-      moreover have \<open>witness_sorts (Q # Qs) n ?S = set (W n a) \<union> ?rest\<close>
+      moreover have \<open>witness_kinds (Q # Qs) n ?S = set (W n a) \<union> ?rest\<close>
         using Cons Wits a by (simp add: Let_def)
       ultimately show ?thesis
         by simp
     next
-      case (Pred P)
+      case (Cond P)
       then show ?thesis
         using * by simp
     qed
@@ -1372,7 +1371,7 @@ lemma extend_in_C_stop:
   using assms extend_succ by auto
 
 lemma extend_in_C:
-  assumes \<open>ACProp Ps C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close> \<open>n \<in> Field r\<close>
+  assumes \<open>ACProp Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close> \<open>n \<in> Field r\<close>
   shows \<open>extend C S n \<in> C\<close>
   using assms
 proof (induct n rule: wo_rel.well_order_inductZSL[OF wo_rel_r])
@@ -1452,7 +1451,7 @@ next
 qed
 
 lemma Extend_in_C:
-  assumes \<open>ACProp Ps C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>ACProp Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>Extend C S \<in> C\<close>
   unfolding Extend_def
   using assms wo_rel.chain_union_closed[OF wo_rel_r] is_chain_extend extend_in_C nonempty_Field_r
@@ -1496,7 +1495,7 @@ definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
   \<open>witnessed S \<equiv> \<forall>p \<in> S. p \<in> Field r \<longrightarrow> (\<exists>S'. witness p S' \<subseteq> S)\<close>
 
 theorem Extend_witnessed:
-  assumes \<open>ACProp Ps C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>ACProp Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>witnessed (Extend C S)\<close>
   unfolding witnessed_def
 proof safe
@@ -1526,21 +1525,20 @@ theorem mk_mcs_rmaximal: \<open>rmaximal C (mk_mcs C S)\<close>
   using Extend_rmaximal rmaximal_def mk_cprop_finite_char mk_cprop_in by meson
 
 theorem mk_mcs_witnessed:
-  assumes \<open>CProp Ps C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>CProp Ks C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>witnessed (mk_mcs C S)\<close>
   using assms Extend_witnessed CProp mk_cprop_finite_char mk_cprop_in by blast
 
 end
 
-
-locale Maximal_Consistency_UNIV = Consistency_Prop map_fm params_fm Ps
+locale Maximal_Consistency_UNIV = Consistency_Prop map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    Ps :: \<open>('x, 'fm) sort list\<close> +
+    Ks :: \<open>('x, 'fm) kind list\<close> +
   assumes inf_UNIV: \<open>infinite (UNIV :: 'fm set)\<close>
 
-sublocale Maximal_Consistency_UNIV \<subseteq> Maximal_Consistency map_fm params_fm Ps \<open>|UNIV :: 'fm set|\<close>
+sublocale Maximal_Consistency_UNIV \<subseteq> Maximal_Consistency map_fm params_fm Ks \<open>|UNIV :: 'fm set|\<close>
 proof
   show \<open>Cinfinite |UNIV :: 'fm set|\<close>
     using inf_UNIV unfolding cinfinite_def by simp
@@ -1555,112 +1553,113 @@ lemma maximal: \<open>rmaximal C S \<longleftrightarrow> maximal C S\<close>
 lemma witnessed: \<open>witnessed S \<longleftrightarrow> (\<forall>p \<in> S. \<exists>S'. witness p S' \<subseteq> S)\<close>
   unfolding witnessed_def by simp
 
-(* TODO: do we want something like HProp? *)
+end
+
+section \<open>Hintikka Sets\<close>
+
+context Maximal_Consistency_UNIV
+begin
+
 theorem mk_mcs_Hintikka:
-  assumes \<open>CProp Ps C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>P \<in> set Ps\<close>
-  shows \<open>HSort P (mk_mcs C S)\<close>
-proof (cases P)
-  case (Pred P H)
-  moreover have \<open>maximal (mk_cprop C) (mk_mcs C S)\<close>
-    using Extend_rmaximal mk_cprop_finite_char unfolding maximal by blast
-  moreover have \<open>ACProp Ps (mk_cprop C)\<close>
-    using assms(1) CProp by blast
-  then have \<open>mk_mcs C S \<in> mk_cprop C\<close>
-    using assms(2-3) Extend_in_C mk_cprop_finite_char mk_cprop_in by blast
-  moreover have \<open>CSort (Pred P H) (mk_cprop C)\<close>
-    using \<open>ACProp Ps (mk_cprop C)\<close> Pred assms(4) unfolding ACProp_def by fast 
-  ultimately show ?thesis
-    using assms(4) all_sorts Consistency_Sort.hintikka by meson
-next
-  case (Wits W)
-  have \<open>witnessed (mk_mcs C S)\<close>
-    using mk_mcs_witnessed[OF assms(1-3)] .
-  then have \<open>\<forall>p \<in> mk_mcs C S. \<exists>x. set (W p x) \<subseteq> mk_mcs C S \<close>
-    unfolding witnessed witness_def using Wits witness_sorts assms(4) by fast 
-  then show ?thesis
-    using Wits by fast
+  assumes \<open>CProp Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  shows \<open>HProp Ks (mk_mcs C S)\<close>
+  unfolding HProp_def
+proof
+  fix K
+  assume K: \<open>K \<in> set Ks\<close>
+  show \<open>HSort K (mk_mcs C S)\<close>
+  proof (cases K)
+    case (Cond P H)
+    moreover have \<open>maximal (mk_cprop C) (mk_mcs C S)\<close>
+      using Extend_rmaximal mk_cprop_finite_char unfolding maximal by blast
+    moreover have \<open>ACProp Ks (mk_cprop C)\<close>
+      using assms(1) CProp by blast
+    then have \<open>mk_mcs C S \<in> mk_cprop C\<close>
+      using assms(2-3) Extend_in_C mk_cprop_finite_char mk_cprop_in by blast
+    moreover have \<open>CKind (Cond P H) (mk_cprop C)\<close>
+      using \<open>ACProp Ks (mk_cprop C)\<close> Cond K unfolding ACProp_def by fast 
+    ultimately show ?thesis
+      using K all_kinds Consistency_Sort.hintikka by meson
+  next
+    case (Wits W)
+    have \<open>witnessed (mk_mcs C S)\<close>
+      using mk_mcs_witnessed[OF assms(1-3)] .
+    then have \<open>\<forall>p \<in> mk_mcs C S. \<exists>x. set (W p x) \<subseteq> mk_mcs C S \<close>
+      unfolding witnessed witness_def using Wits witness_kinds K by fast 
+    then show ?thesis
+      using Wits by fast
+  qed
 qed
 
 end
 
-locale Derivational_Sort = Consistency_Sort map_fm params_fm P
+section \<open>Derivational Consistency\<close>
+
+locale Derivational_Kind = Consistency_Sort map_fm params_fm K
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    P :: \<open>('x, 'fm) sort\<close> + 
+    K :: \<open>('x, 'fm) kind\<close> +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_sort: \<open>ACSort P {A. \<not> \<turnstile> A}\<close>
+  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> CKind K {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
 
-(* TODO: what does it look like for Modal? *)
-locale Strong_Sort = Derivational_Sort map_fm params_fm P refute
+locale Derivational_Confl = Confl map_fm params_fm classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    P :: \<open>('x, 'fm) sort\<close> and
-    refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50) +
-  assumes strong_sort: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> CSort P {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-
-
-locale Derivational_Confl = Confl map_fm params_fm confl_class
-  for
-    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    confl_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> +
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_sort: \<open>ACSort confl_sort {A. \<not> \<turnstile> A}\<close>
+  assumes refute: \<open>\<And>S ps qs x. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> S \<Longrightarrow> \<turnstile> S\<close>
 
-sublocale Derivational_Confl \<subseteq> Strong_Sort map_fm params_fm confl_sort refute
-  using infinite_params_left refute_sort by unfold_locales blast+
+sublocale Derivational_Confl \<subseteq> Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
 
-locale Derivational_Alpha = Alpha map_fm params_fm alpha_class
+locale Derivational_Alpha = Alpha map_fm params_fm classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    alpha_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> +
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_sort: \<open>ACSort alpha_sort {A. \<not> \<turnstile> A}\<close>
+  assumes refute: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> set qs \<union> S \<Longrightarrow> \<turnstile> S\<close>
 
-sublocale Derivational_Alpha \<subseteq> Strong_Sort map_fm params_fm alpha_sort refute
-  using infinite_params_left refute_sort by unfold_locales blast+
+sublocale Derivational_Alpha \<subseteq> Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
 
-locale Derivational_Beta = Beta map_fm params_fm beta_class
+locale Derivational_Beta = Beta map_fm params_fm classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    beta_class :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_sort: \<open>ACSort beta_sort {A. \<not> \<turnstile> A}\<close>
+  assumes refute: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<forall>q \<in> set qs. \<turnstile> {q} \<union> S \<Longrightarrow> \<turnstile> S\<close>
 
-sublocale Derivational_Beta \<subseteq> Strong_Sort map_fm params_fm beta_sort refute
+sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm kind refute
 proof
-  show \<open>ACSort beta_sort {A. \<not> \<turnstile> A}\<close>
-    using refute_sort .
-next
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>CSort beta_sort {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  then show \<open>CKind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix S ps qs
     assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> \<turnstile> S\<close>
     then have \<open>\<exists>q \<in> set qs. \<not> \<turnstile> ({q} \<union> S)\<close>
-      using refute_sort by blast
+      using refute by blast
     moreover assume \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> 
-    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> refute A}\<close>
+    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
       using infinite_params_left[OF inf]
       by (metis (no_types, lifting) empty_set insert_code(1) insert_is_Un mem_Collect_eq)
   qed
 qed
 
-locale Derivational_Gamma = Gamma map_tm map_fm params_fm gamma_class
+locale Derivational_Gamma = Gamma map_tm map_fm params_fm classify
   for
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    gamma_class +
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_sort: \<open>ACSort gamma_sort {A. \<not> \<turnstile> A}\<close>
+  assumes refute: \<open>\<And>S ps F qs t. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F S \<Longrightarrow> \<turnstile> set (qs t) \<union> S \<Longrightarrow> \<turnstile> S \<close>
 
-sublocale Derivational_Gamma \<subseteq> Strong_Sort map_fm params_fm gamma_sort refute
-  using infinite_params_left refute_sort by unfold_locales blast+
+sublocale Derivational_Gamma \<subseteq> Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
 
 locale Derivational_Delta = Delta map_fm params_fm delta_fun
   for
@@ -1668,15 +1667,12 @@ locale Derivational_Delta = Delta map_fm params_fm delta_fun
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_sort: \<open>ACSort delta_sort {A. \<not> \<turnstile> A}\<close>
+  assumes refute: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> set (delta_fun p x) \<union> S \<Longrightarrow> \<turnstile> S\<close>
 
-sublocale Derivational_Delta \<subseteq> Strong_Sort map_fm params_fm delta_sort refute
+sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind refute
 proof
-  show \<open>ACSort delta_sort {A. \<not> \<turnstile> A}\<close>
-    using infinite_params_left refute_sort by blast 
-next
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  show \<open>CSort delta_sort {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  show \<open>CKind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix S p
     assume *: \<open>p \<in> S\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>\<not> \<turnstile> S\<close>
@@ -1684,29 +1680,26 @@ next
       using card_of_ordLeq_finite inf by auto
     then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
       using infinite_imp_nonempty by blast
-    then have \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. \<not> \<turnstile> A}\<close>
-      using *(1,3) refute_sort \<open>\<not> \<turnstile> S\<close> by blast
+    then have \<open>\<exists>x. \<not> \<turnstile> set (delta_fun p x) \<union> S\<close>
+      using *(1,3) refute \<open>\<not> \<turnstile> S\<close> by fast
     then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
       using * inf infinite_params_left by blast
   qed
 qed
 
-locale Derivational_Modal = ModalH map_fm params_fm modal_class
+locale Derivational_Modal = ModalH map_fm params_fm classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    modal_class :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) +
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_sort: \<open>ACSort modal_sort {A. \<not> \<turnstile> A}\<close>
+  assumes refute: \<open>\<And>S ps F qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<turnstile> set qs \<union> F S \<Longrightarrow> \<turnstile> S\<close>
     and params_subset: \<open>\<And>ps F qs S. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> params (F S) \<subseteq> params S\<close>
 
-sublocale Derivational_Modal \<subseteq> Strong_Sort map_fm params_fm modal_sort refute
+sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm kind refute
 proof
-  show \<open>ACSort modal_sort {A. \<not> \<turnstile> A}\<close>
-    using refute_sort .
-next
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>CSort modal_sort {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  then show \<open>CKind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
   proof safe
    fix S ps F qs
     assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
@@ -1714,21 +1707,21 @@ next
       using * params_subset by (meson Compl_subset_Compl_iff card_of_mono1 ordLeq_transitive)
     then show \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> F S)|\<close>
       using infinite_params_left[OF inf] by blast
-  qed (use refute_sort in blast)
+  qed (use refute in blast)
 qed
 
-locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ps r
+locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    Ps :: \<open>('x, 'fm) sort list\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> and
     r :: \<open>'fm rel\<close> +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes all_refute: \<open>\<And>P. P \<in> set Ps \<Longrightarrow> infinite (UNIV :: 'fm set) \<Longrightarrow> CSort P {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  assumes all_refute: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> CProp Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
 begin
 
-theorem Consistency: \<open>CProp Ps {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-  unfolding CProp_def using all_refute inf_univ by fast
+theorem Consistency: \<open>CProp Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  using all_refute inf_univ unfolding CProp_def by fast
 
 end
 
