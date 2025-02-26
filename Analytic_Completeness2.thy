@@ -312,7 +312,7 @@ definition HProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarro
 theorem hintSort_Wits: \<open>CKind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind (Wits W) S\<close>
   unfolding maximal_def by fast
 
-locale Consistency_Sort = Params_Fm map_fm params_fm
+locale Consistency_Kind = Params_Fm map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -347,7 +347,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Confl \<subseteq> Consistency_Sort map_fm params_fm kind
+sublocale Confl \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
   assume conflC: \<open>CKind kind C\<close>
@@ -462,7 +462,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Alpha \<subseteq> Consistency_Sort map_fm params_fm kind
+sublocale Alpha \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
   assume alphaC: \<open>CKind kind C\<close>
@@ -585,7 +585,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Beta \<subseteq> Consistency_Sort map_fm params_fm kind
+sublocale Beta \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
   assume betaC: \<open>CKind kind C\<close>
@@ -718,7 +718,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Gamma \<subseteq> Consistency_Sort map_fm params_fm kind
+sublocale Gamma \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
   assume gammaC: \<open>CKind kind C\<close>
@@ -855,7 +855,7 @@ begin
 abbreviation \<open>kind \<equiv> Wits delta_fun\<close>
 end
 
-sublocale Delta \<subseteq> Consistency_Sort map_fm params_fm kind
+sublocale Delta \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
   assume deltaC: \<open>CKind kind C\<close>
@@ -996,7 +996,7 @@ locale ModalH = Modal map_fm params_fm classify hint
     hint :: \<open>'fm set \<Rightarrow> bool\<close> +
   assumes modal_hintikka: \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind kind S\<close>
 
-sublocale ModalH \<subseteq> Consistency_Sort map_fm params_fm kind
+sublocale ModalH \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
   assume modalC: \<open>CKind kind C\<close>
@@ -1108,17 +1108,17 @@ locale Consistency_Prop = Params_Fm map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes Ks :: \<open>('x, 'fm) kind list\<close>
-  assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Sort map_fm params_fm K\<close>
+  assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Kind map_fm params_fm K\<close>
 begin
 
 lemma CProp_close: \<open>CProp Ks C \<Longrightarrow> CProp Ks (close C)\<close>
-  unfolding CProp_def using all_kinds Consistency_Sort.respects_close by fast
+  unfolding CProp_def using all_kinds Consistency_Kind.respects_close by fast
 
 lemma CProp_alt: \<open>CProp Ks C \<Longrightarrow> subset_closed C \<Longrightarrow> ACProp Ks (mk_alt_consistency C)\<close>
-  unfolding CProp_def ACProp_def using all_kinds Consistency_Sort.respects_alt by fast
+  unfolding CProp_def ACProp_def using all_kinds Consistency_Kind.respects_alt by fast
 
 lemma CProp_fin: \<open>subset_closed C \<Longrightarrow> ACProp Ks C \<Longrightarrow> ACProp Ks (mk_finite_char C)\<close>
-  unfolding ACProp_def using all_kinds Consistency_Sort.respects_fin by fast
+  unfolding ACProp_def using all_kinds Consistency_Kind.respects_fin by fast
 
 definition mk_cprop :: \<open>'fm cprop \<Rightarrow> 'fm cprop\<close> where
   \<open>mk_cprop C \<equiv> mk_finite_char (mk_alt_consistency (close C))\<close>
@@ -1586,7 +1586,7 @@ proof
     moreover have \<open>CKind (Cond P H) (mk_cprop C)\<close>
       using \<open>ACProp Ks (mk_cprop C)\<close> Cond K unfolding ACProp_def by fast 
     ultimately show ?thesis
-      using K all_kinds Consistency_Sort.hintikka by meson
+      using K all_kinds Consistency_Kind.hintikka by meson
   next
     case (Wits W)
     have \<open>witnessed (mk_mcs C S)\<close>
@@ -1626,7 +1626,7 @@ end
 
 section \<open>Derivational Consistency\<close>
 
-locale Derivational_Kind = Consistency_Sort map_fm params_fm K
+locale Derivational_Kind = Consistency_Kind map_fm params_fm K
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
