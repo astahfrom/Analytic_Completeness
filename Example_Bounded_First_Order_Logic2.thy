@@ -210,10 +210,10 @@ interpretation C: Confl psub params_fm confl_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: confl_class.cases)
 
 interpretation A: Alpha psub params_fm alpha_class
-  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases)
+  by unfold_locales (auto elim!: alpha_class.cases)
 
 interpretation B: Beta psub params_fm beta_class
-  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases)
+  by unfold_locales (auto elim!: beta_class.cases)
 
 interpretation G: Gamma map_tm psub params_fm gamma_class
 proof
@@ -224,7 +224,7 @@ qed (fastforce simp: terms_def elim: gamma_class.cases)+
 interpretation D: Delta psub params_fm delta_fun
 proof
   show \<open>\<And>f. delta_fun (psub f p) (f x) = map (psub f) (delta_fun p x)\<close> for p :: \<open>('f, 'p) fm\<close> and x
-    by (induct p x rule: delta_fun.induct) auto
+    by (induct p x rule: delta_fun.induct) simp_all
 qed
 
 abbreviation Kinds :: \<open>('f, ('f, 'p) fm) kind list\<close> where
@@ -481,7 +481,7 @@ proof
   qed simp_all
 qed
 
-sublocale Derivational_Consistency psub params_fm Kinds \<open>|UNIV :: ('f, 'p) fm set|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale Derivational_Consistency psub params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
   using CProp_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>

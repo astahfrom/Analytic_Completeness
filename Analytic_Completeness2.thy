@@ -309,7 +309,7 @@ inductive_cases HKind_WitsE[elim!]: \<open>HKind (Wits W) C\<close>
 definition HProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
   \<open>HProp Ks S \<equiv> \<forall>K \<in> set Ks. HKind K S\<close>
 
-theorem hintSort_Wits: \<open>CKind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind (Wits W) S\<close>
+theorem HKind_Wits: \<open>CKind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind (Wits W) S\<close>
   unfolding maximal_def by fast
 
 locale Consistency_Kind = Params_Fm map_fm params_fm
@@ -956,7 +956,7 @@ next
   qed
 next
   show \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind kind S\<close>
-    using hintSort_Wits .
+    using HKind_Wits .
 qed
 
 subsection \<open>Modal\<close>
@@ -1110,6 +1110,9 @@ locale Consistency_Prop = Params_Fm map_fm params_fm
   fixes Ks :: \<open>('x, 'fm) kind list\<close>
   assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Kind map_fm params_fm K\<close>
 begin
+
+lemma CProp_CKind: \<open>K \<in> set Ks \<Longrightarrow> CProp Ks C \<Longrightarrow> CKind K C\<close>
+  unfolding CProp_def by blast
 
 lemma CProp_close: \<open>CProp Ks C \<Longrightarrow> CProp Ks (close C)\<close>
   unfolding CProp_def using all_kinds Consistency_Kind.respects_close by fast
