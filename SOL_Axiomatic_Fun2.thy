@@ -515,9 +515,7 @@ inductive gamma_class_2F :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightar
 
 fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
   CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ]\<close> 
-  (* | CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>2P p) x = [ \<^bold>\<not> p ]\<close>  (* Really? *) *)
 | CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>2P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<dagger>2 x/0\<rangle>2Pp ]\<close>
-  (* | CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>2F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ]\<close> (* Really? *) *)
 | CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>2F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<dagger>2 x/0\<rangle>2Ffm  p ]\<close>
 | NOMATCH: \<open>delta_fun _ _ = []\<close>
 
@@ -620,6 +618,8 @@ interpretation G2F: Gamma map_sym map_fm params_fm gamma_class_2F
     done
   done
   
+
+
 
 (* OLD *)
 
