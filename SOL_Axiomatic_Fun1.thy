@@ -5,7 +5,7 @@
 
 *)
 
-theory SOL_Axiomatic_Fun2 imports Analytic_Completeness2 begin
+theory SOL_Axiomatic_Fun1 imports Analytic_Completeness begin
 
 section \<open>Syntax\<close>
 
@@ -493,135 +493,6 @@ lemma imply_weaken: \<open>ps \<turnstile> q \<Longrightarrow> set ps \<subseteq
 
 
 section \<open>Model Existence\<close>
-
-inductive confl_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
-  CFls: \<open>[ \<^bold>\<bottom> ] \<leadsto>\<^sub>\<crossmark> [ \<^bold>\<bottom> ]\<close>
-| CNeg: \<open>[ \<^bold>\<not> (\<^bold>\<ddagger>P ts) ] \<leadsto>\<^sub>\<crossmark> [ \<^bold>\<ddagger>P ts ]\<close>
-
-inductive alpha_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
-  CImpN: \<open>[ \<^bold>\<not> (p \<^bold>\<longrightarrow> q) ] \<leadsto>\<^sub>\<alpha> [ p, \<^bold>\<not> q ]\<close>
-
-inductive beta_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
-  CImpP: \<open>[ p \<^bold>\<longrightarrow> q ] \<leadsto>\<^sub>\<beta> [ \<^bold>\<not> p, q ]\<close>
-
-inductive gamma_class_FO :: \<open>'f fm list \<Rightarrow>  ('f fm set \<Rightarrow> 'f tm set) \<times> ('f tm \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>F\<^sub>O\<close> 50) where
-  CAllP: \<open>[ \<^bold>\<forall>p ] \<leadsto>\<^sub>\<gamma>\<^sub>F\<^sub>O (\<lambda>_. UNIV, \<lambda>t. [ \<langle>t/0\<rangle>p ])\<close>
-
-inductive gamma_class_2P :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>2\<^sub>P\<close> 50) where
-  CAllPP: \<open>[ \<^bold>\<forall>2P p ] \<leadsto>\<^sub>\<gamma>\<^sub>2\<^sub>P (\<lambda>_. UNIV, \<lambda>t. [ \<langle>t/0\<rangle>2P p ])\<close>
-
-inductive gamma_class_2F :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>2\<^sub>F\<close> 50) where
-  CAllFP: \<open>[ \<^bold>\<forall>2F p ] \<leadsto>\<^sub>\<gamma>\<^sub>2\<^sub>F (\<lambda>_. UNIV, \<lambda>t. [ \<langle>t/0\<rangle>2Ffm p ])\<close>
-
-fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
-  CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ]\<close> 
-  (* | CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>2P p) x = [ \<^bold>\<not> p ]\<close>  (* Really? *) *)
-| CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>2P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<dagger>2 x/0\<rangle>2Pp ]\<close>
-  (* | CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>2F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ]\<close> (* Really? *) *)
-| CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>2F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<dagger>2 x/0\<rangle>2Ffm  p ]\<close>
-| NOMATCH: \<open>delta_fun _ _ = []\<close>
-
-interpretation C: Confl map_fm params_fm confl_class
-  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0
-      elim!: confl_class.cases intro: confl_class.intros) (* From PIL2 *)
-
-interpretation A: Alpha map_fm params_fm alpha_class
-  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros) (* From PIL2 *)
-
-interpretation B: Beta map_fm params_fm beta_class
-  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros) (* From PIL2 *)
-
-lemma XXX[simp]:
-  "map_tm f (\<llangle>t/n\<rrangle> x) = \<llangle>map_tm f t/n\<rrangle> (map_tm f x)"
-  apply (induction x)
-    apply auto
-  done
-
-lemma YYY[simp]: "map_tm f (\<^bold>\<up> t) = \<^bold>\<up> (map_tm f t)"
-  apply (induction t)
-    apply auto
-  done
-
-lemma psub_inst_single [simp]: \<open>map_fm f (\<langle>t/0\<rangle>p) = \<langle>map_tm f t/0\<rangle>(map_fm f p)\<close>
-  sorry
-
-lemma psub_inst_single' [simp]: \<open>map_fm f (\<langle>t/0\<rangle>2P p) = \<langle>map_sym f t/0\<rangle>2P(map_fm f p)\<close>
-  sorry
-
-lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/0\<rangle>2Ffm p) = \<langle>map_sym f t/0\<rangle>2Ffm(map_fm f p)\<close>
-  sorry
-
-interpretation GFO: Gamma map_tm map_fm params_fm gamma_class_FO
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class_FO.cases)
-    apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle> (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllP[of "(map_fm f p)"]
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_FO.cases) (* From PIL2 *)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_FO.cases) (* From PIL2 *)
-    done
-  done
-
-interpretation G2P: Gamma map_sym map_fm params_fm gamma_class_2P 
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class_2P.cases)
-    apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>2P (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllPP
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_2P.cases) (* From PIL2 *)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_2P.cases) (* From PIL2 *)
-    done
-  done
-
-interpretation G2F: Gamma map_sym map_fm params_fm gamma_class_2F
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class_2F.cases)
-    apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>2Ffm (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllFP
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_2F.cases) (* From PIL2 *)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_2F.cases) (* From PIL2 *)
-    done
-  done
-  
-
-(* OLD *)
 
 inductive classify :: \<open>'f fm list \<Rightarrow> ('f fm list, 'f fm set \<Rightarrow> _, 'f tm \<Rightarrow> _, 'f \<Rightarrow> _) sort \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<close> 50) where
   CFls: \<open>[ \<^bold>\<bottom> ] \<leadsto> Confl [ \<^bold>\<bottom> ]\<close>
