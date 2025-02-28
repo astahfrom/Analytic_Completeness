@@ -529,25 +529,33 @@ interpretation A: Alpha map_fm params_fm alpha_class
 interpretation B: Beta map_fm params_fm beta_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros) (* From PIL2 *)
 
-lemma XXX[simp]:
+lemma map_tm_inst_tm [simp]:
   "map_tm f (\<llangle>t/n\<rrangle> x) = \<llangle>map_tm f t/n\<rrangle> (map_tm f x)"
-  apply (induction x)
-    apply auto
-  done
+  by (induct x) simp_all
 
-lemma YYY[simp]: "map_tm f (\<^bold>\<up> t) = \<^bold>\<up> (map_tm f t)"
-  apply (induction t)
-    apply auto
-  done
+lemma map_tm_lift_tm [simp]: "map_tm f (\<^bold>\<up> t) = \<^bold>\<up> (map_tm f t)"
+  by (induct t) simp_all
 
-lemma psub_inst_single [simp]: \<open>map_fm f (\<langle>t/0\<rangle>p) = \<langle>map_tm f t/0\<rangle>(map_fm f p)\<close>
-  sorry
+lemma map_sym_lift_tm2 [simp]: \<open>map_sym f (\<^bold>\<up>2sym t) = \<^bold>\<up>2sym (map_sym f t)\<close>
+  by (induct t) auto
 
-lemma psub_inst_single' [simp]: \<open>map_fm f (\<langle>t/0\<rangle>2P p) = \<langle>map_sym f t/0\<rangle>2P(map_fm f p)\<close>
-  sorry
+lemma map_tm_lift_tm2 [simp]: "map_tm f (\<^bold>\<up>2Ftm t) = \<^bold>\<up>2Ftm (map_tm f t)"
+  by (induct t) simp_all
 
-lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/0\<rangle>2Ffm p) = \<langle>map_sym f t/0\<rangle>2Ffm(map_fm f p)\<close>
-  sorry
+lemma map_fm_inst_single [simp]: \<open>map_fm f (\<langle>t/m\<rangle>p) = \<langle>map_tm f t/m\<rangle>(map_fm f p)\<close>
+  by (induct p arbitrary: t m) simp_all
+
+lemma map_sym_inst_sym [simp]: \<open>map_sym f (\<llangle>t/m\<rrangle>2 p) = \<llangle>map_sym f t/m\<rrangle>2 (map_sym f p)\<close>
+  by (induct p arbitrary: t m) simp_all
+
+lemma psub_inst_single' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>2P p) = \<langle>map_sym f t/m\<rangle>2P(map_fm f p)\<close>
+  by (induct p arbitrary: t m) simp_all
+
+lemma map_tm_inst_tm2Ftm [simp]: \<open>map_tm f (\<langle>t/m\<rangle>2Ftm s) = \<langle>map_sym f t/m\<rangle>2Ftm (map_tm f s)\<close>
+  by (induct s) auto
+
+lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>2Ffm p) = \<langle>map_sym f t/m\<rangle>2Ffm(map_fm f p)\<close>
+  by (induct p arbitrary: t m) simp_all
 
 interpretation GFO: Gamma map_tm map_fm params_fm gamma_class_FO
   apply (unfold_locales)
