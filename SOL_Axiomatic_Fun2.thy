@@ -607,7 +607,7 @@ interpretation G2F: Gamma map_sym map_fm params_fm gamma_class_2F
   apply (unfold_locales)
   subgoal for ps F qs f
     apply (cases rule: gamma_class_2F.cases)
-    apply auto
+     apply auto
     subgoal for p
       apply (rule_tac x="\<lambda>_. UNIV" in exI)
       apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>2Ffm (map_fm f p)]" in exI)
@@ -625,54 +625,517 @@ interpretation G2F: Gamma map_sym map_fm params_fm gamma_class_2F
     apply (fastforce elim: gamma_class_2F.cases) (* From PIL2 *)
     done
   done
-  
 
-
-
-(* OLD *)
-
-inductive classify :: \<open>'f fm list \<Rightarrow> ('f fm list, 'f fm set \<Rightarrow> _, 'f tm \<Rightarrow> _, 'f \<Rightarrow> _) sort \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<close> 50) where
-  CFls: \<open>[ \<^bold>\<bottom> ] \<leadsto> Confl [ \<^bold>\<bottom> ]\<close>
-| CNeg: \<open>[ \<^bold>\<not> (\<^bold>\<ddagger>P ts) ] \<leadsto> Confl [ \<^bold>\<ddagger>P ts ]\<close>
-| CImpP: \<open>[ p \<^bold>\<longrightarrow> q ] \<leadsto> Beta [ \<^bold>\<not> p, q ]\<close>
-| CImpN: \<open>[ \<^bold>\<not> (p \<^bold>\<longrightarrow> q) ] \<leadsto> Alpha [ p, \<^bold>\<not> q ]\<close>
-| CAllP: \<open>[ \<^bold>\<forall>p ] \<leadsto> Gamma (\<lambda>_. UNIV) (\<lambda>t. [ \<langle>t/0\<rangle>p ])\<close>
-| CAllN: \<open>[ \<^bold>\<not> \<^bold>\<forall>p ] \<leadsto> Delta (\<lambda>x. [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ])\<close>
-| CAll2PP: \<open>[ \<^bold>\<forall>2P p ] \<leadsto> Gamma (\<lambda>_. UNIV) (\<lambda>t. case t of \<^bold>\<dagger>s _ \<Rightarrow> [ \<langle>s/0\<rangle>2P p ] | _ \<Rightarrow> [])\<close>
-| CAll2PN: \<open>[ \<^bold>\<not> \<^bold>\<forall>2P p ] \<leadsto> Delta (\<lambda>x. [ \<^bold>\<not> p ])\<close>
-| CAll2FP: \<open>[ \<^bold>\<forall>2F p ] \<leadsto> Gamma (\<lambda>_. UNIV) (\<lambda>t. case t of \<^bold>\<dagger>s _ \<Rightarrow> [ \<langle>s/0\<rangle>2Ffm p ] | _ \<Rightarrow> [])\<close>
-| CAll2FN: \<open>[ \<^bold>\<not> \<^bold>\<forall>2F p ] \<leadsto> Delta (\<lambda>x. [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ])\<close>
-
-declare classify.intros[intro] classify.cases[elim]
-
-interpretation mcs: Maximal_Consistency_UNIV params_fm map_fm map_tm classify
+interpretation D: Delta map_fm params_fm delta_fun
 proof
-  show \<open>\<And>f ps qs.
-       ps \<leadsto> qs \<Longrightarrow>
-       \<exists>rs. map (map_fm f) ps \<leadsto> rs \<and>
-            rel_sort (\<lambda>qs. (=) (map (map_fm f) qs))
-             (\<lambda>P Q. \<forall>S. map_tm f ` P S
-                        \<subseteq> Q (map_fm f ` S))
-             (\<lambda>qs rs.
-                 \<forall>t. map (map_fm f) (qs t) =
-                     rs (map_tm f t))
-             (\<lambda>qs rs.
-                 \<forall>x. map (map_fm f) (qs x) = rs (f x))
-             qs rs\<close>
-    apply (elim classify.cases)
-             apply auto
-    sorry
-  show \<open>\<And>ps P qs S S'. ps \<leadsto> Gamma P qs \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> P S \<subseteq> P S'\<close>
-    by (fastforce)
-  show \<open>\<And>ps P qs t A. ps \<leadsto> Gamma P qs \<Longrightarrow> t \<in> P A \<Longrightarrow> \<exists>B\<subseteq>A. finite B \<and> t \<in> P B\<close>
-    by (elim classify.cases) (auto )  
-  show \<open>infinite (UNIV :: 'f fm set)\<close>
-    using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
-qed (auto simp: fm.map_id0 cong: fm.map_cong0)
+  show \<open>\<And>f. delta_fun (map_fm f p) (f x) = map (map_fm f) (delta_fun p x)\<close> for p :: \<open>'x fm\<close> and x
+    by (induct p x rule: delta_fun.induct) simp_all
+qed
 
+abbreviation Kinds :: \<open>('x, 'x fm) kind list\<close> where
+  \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, GFO.kind, G2P.kind, G2F.kind, D.kind]\<close>
+
+lemma CProp_Kinds:
+  assumes \<open>CKind C.kind C\<close> \<open>CKind A.kind C\<close> \<open>CKind B.kind C\<close> \<open>CKind GFO.kind C\<close> \<open>CKind G2P.kind C\<close> \<open>CKind G2F.kind C\<close> \<open>CKind D.kind C\<close>
+  shows \<open>CProp Kinds C\<close>
+  unfolding CProp_def using assms by simp
+
+interpretation Consistency_Prop map_fm params_fm Kinds
+  using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
+    GFO.Consistency_Kind_axioms G2P.Consistency_Kind_axioms G2F.Consistency_Kind_axioms
+    D.Consistency_Kind_axioms
+  by (auto intro!: Consistency_Prop.intro C.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+
+interpretation Maximal_Consistency_UNIV map_fm params_fm Kinds
+proof
+  show \<open>infinite (UNIV :: 'x fm set)\<close>
+    using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
+qed
+
+
+section \<open>Model Existence\<close>
+
+abbreviation henv2P where "henv2P H == \<lambda>n ts. \<^bold>\<ddagger>(\<^bold>#2 n) ts \<in> H"
+
+abbreviation hpred where "hpred H == \<lambda>P ts. \<^bold>\<ddagger>(\<^bold>\<dagger>2 P) ts \<in> H"
+
+abbreviation hdomP where "hdomP H == range (henv2P H) \<union> range (hpred H)"
+
+abbreviation henv2F where "henv2F == \<lambda>f. \<^bold>\<dagger> (\<^bold>#2 f)"
+
+abbreviation hfun where "hfun ==  \<lambda>f. \<^bold>\<dagger> (\<^bold>\<dagger>2 f)"
+
+definition hdomF where "hdomF == range henv2F \<union> range hfun"
+
+abbreviation (input) hmodel (\<open>\<lbrakk>_\<rbrakk>\<close>) where \<open>\<lbrakk>H\<rbrakk> \<equiv> \<lbrakk>\<^bold>#, henv2F, henv2P H, \<^bold>\<star>, hfun, hpred H, hdomP H, hdomF\<rbrakk>\<close>
+
+lemma semantics_tm_id [simp]: \<open>\<lparr>\<^bold>#, henv2F , \<^bold>\<star> , \<lambda>f. \<^bold>\<dagger> (\<^bold>\<dagger>2 f) \<rparr> t = t\<close>
+proof (induct t)
+  case (Var x)
+  then show ?case 
+    by (auto cong: map_cong)
+next
+  case (Fun x1a x2)
+  then show ?case
+    by (cases x1a) (auto cong: map_cong)
+next
+  case (Cst c)
+  then show ?case
+    by auto
+qed
+
+lemma semantics_tm_id_map [simp]: \<open>map \<lparr>\<^bold>#, \<lambda>f. \<^bold>\<dagger> (\<^bold>#2 f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<dagger> (\<^bold>\<dagger>2 f) \<rparr> ts = ts\<close>
+  by (auto cong: map_cong)
+
+lemma semantics_fn_h [simp]: \<open>\<lparr>henv2P S, hpred S\<rparr>2 P ts \<longleftrightarrow> \<^bold>\<ddagger>P ts \<in> S\<close>
+  by (cases P) simp_all
+
+lemma hdomP_range: \<open>hdomP S \<subseteq> range \<lparr>henv2P S, hpred S\<rparr>2\<close>
+  by fastforce
+
+locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\<close>
+begin
+
+lemmas
+  confl = hkind[of C.kind] and
+  alpha = hkind[of A.kind] and
+  beta = hkind[of B.kind] and
+  gammaFO = hkind[of GFO.kind] and
+  gamma2P = hkind[of G2P.kind] and
+  gamma2F = hkind[of G2F.kind] and
+  delta = hkind[of D.kind]
+
+
+theorem model: \<open>(p \<in> S \<longrightarrow> \<lbrakk>S\<rbrakk> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> \<lbrakk>S\<rbrakk> p)\<close>
+proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
+  case 1
+  then show ?case
+    by simp
+next
+  case (2 x)
+  then show ?case
+  proof (cases x)
+    case Falsity
+    then show ?thesis
+      using confl by (force intro: CFls)
+  next
+    case (Pre P ts)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<ddagger>P ts\<close> \<open>\<^bold>\<ddagger>P ts \<in> S\<close>
+      then show \<open>\<lbrakk>S\<rbrakk> (\<^bold>\<ddagger>P ts)\<close>
+        by simp
+    next
+      assume \<open>x = \<^bold>\<ddagger>P ts\<close> \<open>\<^bold>\<not> \<^bold>\<ddagger>P ts \<in> S\<close>
+      then have \<open>\<^bold>\<ddagger>P ts \<notin> S\<close>
+        using confl by (force intro: CNeg)
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> (\<^bold>\<ddagger>P ts)\<close>
+        by simp
+    qed
+  next
+    case (Imp p q)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>p \<^bold>\<longrightarrow> q \<in> S\<close>
+      then have \<open>\<^bold>\<not> p \<in> S \<or> q \<in> S\<close>
+        using beta by (force intro: CImpP)
+      then show \<open>\<lbrakk>S\<rbrakk> (p \<^bold>\<longrightarrow> q)\<close>
+        using 2 Imp by auto
+    next
+      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>\<^bold>\<not> (p \<^bold>\<longrightarrow> q) \<in> S\<close>
+      then have \<open>p \<in> S \<and> \<^bold>\<not> q \<in> S\<close>
+        using alpha by (force intro: CImpN)
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> (p \<^bold>\<longrightarrow> q)\<close>
+        using 2 Imp by auto
+    qed
+  next
+    case (Uni p)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<forall>p \<in> S\<close>
+      then have \<open>\<forall>t. \<langle>t/0\<rangle>p \<in> S\<close>
+        using gammaFO by (fastforce intro: CAllP)
+      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> (\<langle>t/0\<rangle>p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
+      then show \<open>\<lbrakk>S\<rbrakk> (\<^bold>\<forall>p)\<close>
+        by simp
+    next
+      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>p \<in> S\<close>
+      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<star>a/0\<rangle>p \<in> S\<close>
+        using delta by auto
+      moreover have \<open>(\<langle>\<^bold>\<star>a/0\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> (\<langle>\<^bold>\<star>a/0\<rangle>p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> (\<^bold>\<forall>p)\<close>
+        by auto
+    qed
+  next
+    case (Uni2P p)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<forall>2P p\<close> \<open>\<^bold>\<forall>2P p \<in> S\<close>
+      then have \<open>\<forall>t. \<langle>t/0\<rangle>2P p \<in> S\<close>
+        using gamma2P by (fastforce intro: CAllPP)
+      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>2P p, \<^bold>\<forall>2P p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> (\<langle>t/0\<rangle>2P p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>2P p\<close> by blast
+      then show \<open>\<lbrakk>S\<rbrakk> (\<^bold>\<forall>2P p)\<close>
+        (* TODO: I don't know what the required lemma is here *)
+        apply auto
+        subgoal for n
+          by (metis semantics_fn.simps(1))
+        subgoal for e
+          by (metis semantics_fn.simps(2))
+      done
+    next
+      assume \<open>x = \<^bold>\<forall>2P p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>2P p \<in> S\<close>
+      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<dagger>2 a/0\<rangle>2P p \<in> S\<close>
+        using delta by auto
+      moreover have \<open>(\<langle>\<^bold>\<dagger>2 a/0\<rangle>2P p, \<^bold>\<forall>2P p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> (\<langle>\<^bold>\<dagger>2a/0\<rangle>2P p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>2P p\<close> by blast
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> (\<^bold>\<forall>2P p)\<close>
+        by auto
+    qed
+  next
+    case (Uni2F p)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<forall>2F p\<close> \<open>\<^bold>\<forall>2F p \<in> S\<close>
+      then have \<open>\<forall>t. \<langle>t/0\<rangle>2Ffm p \<in> S\<close>
+        using gamma2F by (fastforce intro: CAllFP)
+      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>2Ffm p, \<^bold>\<forall>2F p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> (\<langle>t/0\<rangle>2Ffm p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>2F p\<close> by blast
+      then show \<open>\<lbrakk>S\<rbrakk> (\<^bold>\<forall>2F p)\<close>
+        unfolding hdomF_def
+          (* TODO: I don't know what the required lemma is here *)
+        apply auto
+        subgoal for f
+          by (metis semantics_fn.simps(1))
+        subgoal for e
+          by (metis semantics_fn.simps(2))
+        done
+    next
+      assume \<open>x = \<^bold>\<forall>2F p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>2F p \<in> S\<close>
+      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<dagger>2 a/0\<rangle>2Ffm p \<in> S\<close>
+        using delta by auto
+      moreover have \<open>(\<langle>\<^bold>\<dagger>2 a/0\<rangle>2Ffm p, \<^bold>\<forall>2F p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> (\<langle>\<^bold>\<dagger>2a/0\<rangle>2Ffm p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>2F p\<close> by blast
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> (\<^bold>\<forall>2F p)\<close>
+        by (auto simp: hdomF_def)
+    qed
+  qed
+qed
+
+end
+
+theorem model_existence:
+  fixes S :: \<open>'x fm set\<close>
+  assumes \<open>CProp Kinds C\<close>
+    and \<open>S \<in> C\<close>
+    and \<open>|UNIV :: 'x fm set| \<le>o |- C.params S|\<close>
+    and \<open>p \<in> S\<close>
+  shows \<open>\<lbrakk>mk_mcs C S\<rbrakk> p\<close>
+proof -
+  have *: \<open>MyHintikka (mk_mcs C S)\<close>
+  proof
+    show \<open>HProp Kinds (mk_mcs C S)\<close>
+      using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
+  qed
+  moreover have \<open>p \<in> mk_mcs C S\<close>
+    using assms(4) Extend_subset by blast
+  ultimately show ?thesis
+    using MyHintikka.model by blast
+qed
+
+section \<open>Derivational Consistency\<close>
+
+interpretation DC: Weak_Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A ps qs and q :: \<open>'x fm\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> set A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> set A\<close>
+  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+    apply cases
+     apply simp
+    by (metis MP' empty_set equals0D imply_head imply_mem imply_weaken set_ConsD)
+qed
+
+interpretation DA: Weak_Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A and ps qs :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CImpN p q)
+    then have \<open>A \<turnstile> \<^bold>\<not> (p \<^bold>\<longrightarrow> q)\<close>
+      using *(1) by simp
+    moreover have \<open>A \<turnstile> p \<^bold>\<longrightarrow> q\<close>
+      using CImpN(2) *(2) Boole[of q]
+      by (metis deduct2 imply.simps(1) imply.simps(2) imply_append)
+    ultimately show ?thesis
+      using MP' by blast
+  qed
+qed
+
+interpretation DB: Weak_Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A and ps qs :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<forall>q \<in> set qs. q # A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CImpP p q)
+    then show ?thesis
+      using * Boole[of p A]
+      by (metis MP' deduct2 imply_head imply_weaken insertI2 list.set_intros(1) list.simps(15))
+  qed
+qed
+
+interpretation DGFO: Weak_Derivational_Gamma map_tm map_fm params_fm gamma_class_FO \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A F qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F\<^sub>O (F, qs)\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CAllP p)
+    then show ?thesis
+      using * IA[of p t] MP'
+      by (metis (mono_tags, lifting) imply.simps(1-2) imply_append imply_swap_append imply_weaken)
+  qed
+qed
+
+interpretation DG2P: Weak_Derivational_Gamma map_sym map_fm params_fm gamma_class_2P \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A F qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>2\<^sub>P (F, qs)\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CAllPP p)
+    then show ?thesis
+      using * IA2P[of p t] MP'
+      by (metis (mono_tags, lifting) imply.simps(1-2) imply_append imply_swap_append imply_weaken)
+  qed
+qed
+
+interpretation DG2F: Weak_Derivational_Gamma map_sym map_fm params_fm gamma_class_2F \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A F qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>2\<^sub>F (F, qs)\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CAllFP p)
+    then show ?thesis
+      using * IA2F[of p t] MP'
+      by (metis (mono_tags, lifting) imply.simps(1-2) imply_append imply_swap_append imply_weaken)
+  qed
+qed
+
+lemma imply_params_fm: \<open>params_fm (ps \<^bold>\<leadsto> q) = params_fm q \<union> (\<Union>p \<in> set ps. params_fm p)\<close>
+  by (induct ps) auto
+
+interpretation DD: Weak_Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A a and p :: \<open>'x fm\<close>
+  assume \<open>p \<in> set A\<close> \<open>a \<notin> C.params (set A)\<close> \<open>delta_fun p a @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  proof (induct p a rule: delta_fun.induct)
+    case (1 p x)
+    have \<open>x \<notin> C.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
+      using 1(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
+    moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p # A \<turnstile> \<^bold>\<bottom>\<close>
+      using 1(3) by simp
+    ultimately have \<open>\<^bold>\<not> \<^bold>\<forall>p # A \<turnstile> \<^bold>\<bottom>\<close>
+      using GR'[of x p] by simp
+    then show ?thesis
+      using 1(1) by (meson Boole MP' imply_mem)
+  next
+    case (2 p x)
+    have \<open>x \<notin> C.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
+      using 2(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
+    moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<dagger>2 x/0\<rangle>2P p # A \<turnstile> \<^bold>\<bottom>\<close>
+      using 2(3) by simp
+    ultimately have \<open>\<^bold>\<not> \<^bold>\<forall>2P p # A \<turnstile> \<^bold>\<bottom>\<close>
+      using GR'2P[of x p] by simp
+    then show ?thesis
+      using 2(1) by (meson Boole MP' imply_mem)
+  next
+    case (3 p x)
+    have \<open>x \<notin> C.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
+      using 3(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
+    moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<dagger>2 x/0\<rangle>2Ffm p # A \<turnstile> \<^bold>\<bottom>\<close>
+      using 3(3) by simp
+    ultimately have \<open>\<^bold>\<not> \<^bold>\<forall>2F p # A \<turnstile> \<^bold>\<bottom>\<close>
+      using GR'2F[of x p] by simp
+    then show ?thesis
+      using 3(1) by (meson Boole MP' imply_mem)
+  qed simp_all
+qed
+
+interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof
+  assume inf: \<open>infinite (UNIV :: 'x set)\<close>
+  then
+  show \<open>CProp Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
+    using CProp_Kinds[OF DC.kind[OF inf] DA.kind DB.kind DGFO.kind DG2P.kind DG2F.kind DD.kind]
+    by blast
+qed
+
+theorem weak_completeness:
+  fixes p :: \<open>'x fm\<close>
+  assumes mod: \<open>\<forall>(E :: _ \<Rightarrow> 'x tm) E2F E2P C F G PS FS. range E2F \<subseteq> FS \<longrightarrow> range E2P \<subseteq> PS \<longrightarrow> range G \<subseteq> PS \<longrightarrow> range F \<subseteq> FS \<longrightarrow> (\<forall>q \<in> set ps. \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> q) \<longrightarrow> \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
+    and inf: \<open>|UNIV :: 'x fm set| \<le>o  |- C.params (set ps)|\<close>
+  shows \<open>ps \<turnstile> p\<close>
+proof (rule ccontr)
+  assume \<open>\<not> ps \<turnstile> p\<close>
+  then have *: \<open>\<not> (\<^bold>\<not> p) # ps \<turnstile> \<^bold>\<bottom>\<close>
+    using Boole by blast
+
+  let ?S = \<open>set (\<^bold>\<not> p # ps)\<close>
+  let ?C = \<open>{S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
+  let ?M = \<open>\<lbrakk>mk_mcs ?C ?S\<rbrakk>\<close>
+
+  have \<open>infinite (UNIV :: 'x set)\<close>
+    using inf card_of_ordLeq_infinite finite_subset inf_UNIV subset_UNIV by blast
+  then have \<open>CProp Kinds ?C\<close>
+    using Consistency by blast
+  moreover have \<open>?S \<in> ?C\<close>
+    using * by blast
+  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- C.params ?S|\<close>
+    using inf by (metis UN_insert finite_params_fm inf_univ infinite_left list.simps(15))
+  ultimately have *: \<open>\<forall>p \<in> ?S. ?M p\<close>
+    using model_existence by blast 
+  then have \<open>?M p\<close>
+    using mod unfolding hdomF_def by auto
+  then show False
+    using * by simp
+qed
+
+theorem completeness:
+  fixes p :: \<open>'x fm\<close>
+  assumes \<open>\<forall>(E :: nat \<Rightarrow> 'x tm) E2P E2F C F G PS FS. range E2F \<subseteq> FS \<longrightarrow> range E2P \<subseteq> PS \<longrightarrow> range G \<subseteq> PS \<longrightarrow> range F \<subseteq> FS \<longrightarrow> \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
+    and \<open>|UNIV :: 'x fm set| \<le>o  |UNIV :: 'x set|\<close>
+  shows \<open>\<turnstile> p\<close>
+  using assms weak_completeness[where ps=\<open>[]\<close>, of p] by simp
+
+section \<open>Hmm\<close>
+
+locale Strong
+begin
+
+abbreviation Axiomatic_set (infix \<open>\<tturnstile>\<close> 50) where
+  \<open>A \<tturnstile> q \<equiv> \<exists>ps. set ps \<subseteq> A \<and> ps \<turnstile> q\<close>
+
+lemma Clas:
+  assumes \<open>(p \<^bold>\<longrightarrow> q) # A \<turnstile> p\<close>
+  shows \<open>A \<turnstile> p\<close>
+proof -
+  have \<open>tautology ((((p \<^bold>\<longrightarrow> q) # A) \<^bold>\<leadsto> p) \<^bold>\<longrightarrow> (A \<^bold>\<leadsto> p))\<close>
+    by (induct A) auto
+  then have \<open>\<turnstile> ((p \<^bold>\<longrightarrow> q) # A) \<^bold>\<leadsto> p \<^bold>\<longrightarrow> (A \<^bold>\<leadsto> p)\<close>
+    using TA by blast
+  then show ?thesis
+    using MP assms by blast
+qed
+
+lemma FlsE: \<open>A \<turnstile> \<^bold>\<bottom> \<Longrightarrow> A \<turnstile> p\<close>
+  using Boole imply_Cons by blast
+
+lemma Boole_set:
+  assumes \<open>{\<^bold>\<not> p} \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  shows \<open>A \<tturnstile> p\<close>
+proof -
+  obtain ps where ps: \<open>ps \<turnstile> \<^bold>\<bottom>\<close> \<open>set ps \<subseteq> {\<^bold>\<not> p} \<union> A\<close>
+    using assms by blast
+  then have \<open>\<^bold>\<not> p # removeAll (\<^bold>\<not> p) ps \<turnstile> \<^bold>\<bottom>\<close>
+    by (metis imply_weaken insert_Diff insert_absorb2 list.simps(15) removeAll_id set_removeAll subset_insertI)
+  then have \<open>removeAll (\<^bold>\<not> p) ps \<turnstile> p\<close>
+    using Boole by blast
+  then show ?thesis
+    by (metis Diff_subset_conv ps(2) set_removeAll)
+qed
+
+lemma deduct_set: \<open>{p} \<union> A \<tturnstile> q \<Longrightarrow> A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
+proof -
+  assume \<open>{p} \<union> A \<tturnstile> q\<close>
+  then obtain ps where ps: \<open>ps \<turnstile> q\<close> \<open>set ps \<subseteq> {p} \<union> A\<close>
+    by blast
+  then have \<open>p # removeAll p ps \<turnstile> q\<close>
+    by (metis imply_weaken insert_Diff insert_absorb2 list.simps(15) removeAll_id set_removeAll subset_insertI)
+  then have \<open>removeAll p ps \<turnstile> p \<^bold>\<longrightarrow> q\<close>
+    by blast
+  then show ?thesis
+    by (metis Diff_subset_conv ps(2) set_removeAll)
+qed
+
+lemma FlsI_set: \<open>A \<tturnstile> p \<Longrightarrow> A \<tturnstile> \<^bold>\<not> p \<Longrightarrow> A \<tturnstile> \<^bold>\<bottom>\<close>
+proof -
+  assume \<open>A \<tturnstile> p\<close> \<open>A \<tturnstile> \<^bold>\<not> p\<close>
+  then obtain ps qs where
+    ps: \<open>ps \<turnstile> p\<close> \<open>set ps \<subseteq> A\<close> and
+    qs: \<open>qs \<turnstile> \<^bold>\<not> p\<close> \<open>set qs \<subseteq> A\<close>
+    by blast
+  then have \<open>ps @ qs \<turnstile> p\<close> \<open>ps @ qs \<turnstile> \<^bold>\<not> p\<close>
+    apply (metis imply_weaken set_append sup_ge1)
+    by (simp add: qs(1))
+  then have \<open>ps @ qs \<turnstile> \<^bold>\<bottom>\<close>
+    using MP' by blast
+  then show ?thesis
+    using ps qs by (metis set_append sup.boundedI)
+qed
+
+interpretation DC: Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A ps qs and q :: \<open>'x fm\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> A\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+    apply cases
+     apply blast
+    by (metis deduct1 empty_iff empty_set imply_head insert_subset list.simps(15) set_ConsD)
+qed
+
+interpretation DA: Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A and ps qs :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set qs \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CImpN p q)
+    then have \<open>A \<tturnstile> \<^bold>\<not> (p \<^bold>\<longrightarrow> q)\<close>
+      using *(1) by blast
+    moreover have \<open>{p} \<union> A \<tturnstile> q\<close>
+      using CImpN(2) *(2) Boole_set[of q \<open>{p} \<union> A\<close>] by simp
+    then have \<open>A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
+      using deduct_set[of p] by blast
+    ultimately show ?thesis
+      using FlsI_set by blast
+  qed
+qed
+
+interpretation DB: Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A and ps qs :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<forall>q \<in> set qs. {q} \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CImpP p q)
+    then show ?thesis
+      using * Boole_set[of p A] sorry
+  qed
+qed
+
+end
+
+(***** OLD ******)
 
 section \<open>Consistent\<close>
-
 
 definition \<open>consistent S \<equiv> \<nexists>S'. set S' \<subseteq> S \<and> S' \<turnstile> \<^bold>\<bottom>\<close>
 
@@ -849,112 +1312,7 @@ proof
 qed
 
 
-abbreviation henv2P where "henv2P H == \<lambda>n ts. \<^bold>\<ddagger>(\<^bold>#2 n) ts \<in> H"
 
-abbreviation hpred where "hpred H == \<lambda>P ts. \<^bold>\<ddagger>(\<^bold>\<dagger>2 P) ts \<in> H"
-
-abbreviation hdomP where "hdomP H == range (henv2P H) \<union> range (hpred H)"
-
-abbreviation henv2F where "henv2F == \<lambda>f. \<^bold>\<dagger> (\<^bold>#2 f)"
-
-abbreviation hfun where "hfun ==  \<lambda>f. \<^bold>\<dagger> (\<^bold>\<dagger>2 f)"
-
-definition hdomF where "hdomF == range henv2F \<union> range hfun"
-
-abbreviation (input) hmodel (\<open>\<lbrakk>_\<rbrakk>\<close>) where \<open>\<lbrakk>H\<rbrakk> \<equiv> \<lbrakk>\<^bold>#, henv2F, henv2P H, \<^bold>\<star>, hfun, hpred H, hdomP H, hdomF\<rbrakk>\<close>
-
-lemma semantics_tm_id [simp]: \<open>\<lparr>\<^bold>#, henv2F , \<^bold>\<star> , \<lambda>f. \<^bold>\<dagger> (\<^bold>\<dagger>2 f) \<rparr> t = t\<close>
-proof (induct t)
-  case (Var x)
-  then show ?case 
-    by (auto cong: map_cong)
-next
-  case (Fun x1a x2)
-  then show ?case
-    by (cases x1a) (auto cong: map_cong)
-next
-  case (Cst c)
-  then show ?case
-    by auto
-qed
-
-lemma semantics_tm_id_map [simp]: \<open>map \<lparr>\<^bold>#, \<lambda>f. \<^bold>\<dagger> (\<^bold>#2 f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<dagger> (\<^bold>\<dagger>2 f) \<rparr> ts = ts\<close>
-  by (auto cong: map_cong)
-
-locale MyHintikka = Hintikka params_fm map_fm map_tm classify S for S
-begin
-
-thm gamma[OF _ CAll2PP]
-
-theorem model: \<open>(p \<in> S \<longrightarrow> \<lbrakk>S\<rbrakk> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> \<lbrakk>S\<rbrakk> p)\<close>
-proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
-  case 1
-  then show ?case
-    by simp
-next
-  case (2 x)
-  then show ?case
-  proof (cases x)
-    case Falsity
-    then show ?thesis
-      using confl by force
-  next
-    case (Pre P ts)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = \<^bold>\<ddagger>P ts\<close> \<open>\<^bold>\<ddagger>P ts \<in> S\<close>
-      then show \<open>\<lbrakk>S\<rbrakk> (\<^bold>\<ddagger>P ts)\<close>
-        sorry
-    next
-      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> S\<close>
-      then have \<open>\<^bold>\<cdot>P ts \<notin> S\<close>
-        using confl by forces
-      moreover have \<open>set ts \<subseteq> terms S\<close>
-        using \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> S\<close> terms_def terms_tm_refl by fastforce
-      ultimately show \<open>\<not> canonical S \<Turnstile> \<^bold>\<cdot>P ts\<close>
-        by simp
-    qed
-  next
-    case (Imp p q)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>p \<^bold>\<longrightarrow> q \<in> S\<close>
-      then have \<open>\<^bold>\<not> p \<in> S \<or> q \<in> S\<close>
-        using beta by force
-      then show \<open>canonical S \<Turnstile> p \<^bold>\<longrightarrow> q\<close>
-        using 2 Imp by auto
-    next
-      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>\<^bold>\<not> (p \<^bold>\<longrightarrow> q) \<in> S\<close>
-      then have \<open>p \<in> S \<and> \<^bold>\<not> q \<in> S\<close>
-        using alpha by force
-      then show \<open>\<not> canonical S \<Turnstile> p \<^bold>\<longrightarrow> q\<close>
-        using 2 Imp by auto
-    qed
-  next
-    case (Uni p)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<forall>p \<in> S\<close>
-      then have \<open>\<forall>t \<in> terms S. \<langle>t\<rangle>p \<in> S\<close>
-        using gamma[of \<open>[\<^bold>\<forall> p]\<close>] by fastforce
-      moreover have \<open>\<forall>t. (\<langle>t\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<forall>t \<in> terms S. canonical S \<Turnstile> \<langle>t\<rangle>p\<close>
-        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
-      then show \<open>canonical S \<Turnstile> \<^bold>\<forall>p\<close>
-        by simp
-    next
-      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>p \<in> S\<close>
-      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<star>a\<rangle>p \<in> S\<close>
-        using delta[of \<open>[\<^bold>\<not> \<^bold>\<forall>p]\<close>] by fastforce
-      moreover have \<open>(\<langle>\<^bold>\<star>a\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<not> canonical S \<Turnstile> \<langle>\<^bold>\<star>a\<rangle>p\<close>
-        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
-      then show \<open>\<not> canonical S \<Turnstile> \<^bold>\<forall>p\<close>
-        using wf_canonical[OF terms_ne] by auto
-    qed
-  qed
 
 section \<open>Extension\<close>
 

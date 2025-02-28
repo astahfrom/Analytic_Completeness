@@ -1759,4 +1759,122 @@ theorem Consistency: \<open>CProp Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \
 
 end
 
+section \<open>Weak Derivational Consistency\<close>
+
+locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm K
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    K :: \<open>('x, 'fm) kind\<close> +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> CKind K {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+
+locale Weak_Derivational_Confl = Confl map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps qs x. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> set A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Confl \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
+
+locale Weak_Derivational_Alpha = Alpha map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> qs @ A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Alpha \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix ps qs A
+    assume \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> \<open>\<not> \<turnstile> A\<close>
+    then show \<open>\<exists>B. set B = set qs \<union> set A \<and> \<not> \<turnstile> B\<close>
+      using refute[of ps A qs] by (meson set_append)
+  qed
+qed
+
+locale Weak_Derivational_Beta = Beta map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<forall>q \<in> set qs. \<turnstile> q # A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Beta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix ps qs A
+    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> \<turnstile> A\<close>
+    then have \<open>\<exists>q \<in> set qs. \<not> \<turnstile> q # A\<close>
+      using refute by blast
+    then show \<open>\<exists>q\<in>set qs. insert q (set A) \<in> {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+      by (metis (mono_tags, lifting) CollectI list.simps(15))
+  qed
+qed
+
+locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm classify
+  for
+    map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps F qs t. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F (set A) \<Longrightarrow> \<turnstile> qs t @ A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Gamma \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix ps qs A F t
+    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>\<not> \<turnstile> A\<close> \<open>t \<in> F (set A)\<close>
+    then show \<open>\<exists>B. set B = set (qs t) \<union> set A \<and> \<not> \<turnstile> B\<close>
+      using refute[of ps A F qs t] by (meson set_append)
+  qed
+qed
+
+locale Weak_Derivational_Delta = Delta map_fm params_fm delta_fun
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> delta_fun p x @ A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  assume inf: \<open>infinite (UNIV :: 'x set)\<close>
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix p A
+    assume *: \<open>p \<in> set A\<close> \<open>\<not> \<turnstile> A\<close>
+    then have \<open>infinite (- (params (set (p # A))))\<close>
+      using inf finite_compl by fastforce
+    then obtain x where \<open>x \<notin> params (set (p # A))\<close>
+      using infinite_imp_nonempty by blast
+    then have \<open>\<exists>x. \<not> \<turnstile> delta_fun p x @ A\<close>
+      using * refute[of p A x] by auto
+    then show \<open>\<exists>x. set (delta_fun p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+      by (metis (mono_tags, lifting) CollectI set_append)
+  qed
+qed
+
+(* TODO: Weak for Modal requires that F works on lists rather than sets. *)
+
+locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> and
+    r :: \<open>'fm rel\<close> +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> CProp Ks {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+
 end

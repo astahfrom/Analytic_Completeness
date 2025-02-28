@@ -614,7 +614,7 @@ corollary strong_completeness_list:
 
 theorem main:
   fixes p :: \<open>('f, 'p) fm\<close>
-  assumes \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |UNIV :: 'f set|\<close>
+  assumes \<open>|UNIV :: ('f, 'p) fm set| \<le>o |UNIV :: 'f set|\<close>
   shows \<open>[] \<turnstile> p \<longleftrightarrow> (\<forall>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<longrightarrow> Model U E F G \<Turnstile> p)\<close>
   using assms strong_completeness_list[of \<open>{}\<close> p] soundness_nil[of p]
   by simp blast
