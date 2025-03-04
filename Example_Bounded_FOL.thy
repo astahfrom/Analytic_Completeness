@@ -473,7 +473,7 @@ proof
   proof (induct p a rule: delta_fun.induct)
     case (1 p x)
     then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
-      using 1 by auto
+      by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<star> x\<rangle> p\<close>
       using "1.prems"(3) Boole by auto
     ultimately show ?thesis

@@ -294,73 +294,13 @@ lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>F 
   by (induct p arbitrary: t m) simp_all
 
 interpretation G: Gamma map_tm map_fm params_fm gamma_class
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class.cases)
-    apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle> (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllP[of "(map_fm f p)"]
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class.cases)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class.cases)
-    done
-  done
+  by unfold_locales (fastforce elim: gamma_class.cases intro: gamma_class.intros)+
 
-interpretation G\<^sub>P: Gamma map_sym map_fm params_fm gamma_class_P 
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class_P.cases)
-    apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>\<^sub>P (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllPP
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_P.cases)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_P.cases)
-    done
-  done
+interpretation G\<^sub>P: Gamma map_sym map_fm params_fm gamma_class_P
+  by unfold_locales (fastforce elim: gamma_class_P.cases intro: gamma_class_P.intros)+
 
 interpretation G\<^sub>F: Gamma map_sym map_fm params_fm gamma_class_F
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class_F.cases)
-     apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>\<^sub>F (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllFP
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_F.cases)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_F.cases)
-    done
-  done
+  by unfold_locales (fastforce elim: gamma_class_F.cases intro: gamma_class_F.intros)+
 
 interpretation D: Delta map_fm params_fm delta_fun
 proof
@@ -387,7 +327,6 @@ proof
   show \<open>infinite (UNIV :: 'x fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
 qed
-
 
 
 abbreviation henv\<^sub>P where "henv\<^sub>P H == \<lambda>n ts. \<^bold>\<cdot>(\<^bold>#\<^sub>2 n) ts \<in> H"
@@ -431,8 +370,6 @@ lemma hdom\<^sub>P_range: \<open>hdom\<^sub>P S \<subseteq> range \<lblot>henv\<
 locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\<close>
 begin
 
-thm hkind
-
 lemmas
   confl = hkind[of C.kind] and
   alpha = hkind[of A.kind] and
@@ -441,7 +378,6 @@ lemmas
   gamma2P = hkind[of G\<^sub>P.kind] and
   gamma2F = hkind[of G\<^sub>F.kind] and
   delta = hkind[of D.kind]
-
 
 theorem model: \<open>(p \<in> S \<longrightarrow> \<lbrakk>S\<rbrakk> \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> \<lbrakk>S\<rbrakk> \<Turnstile> p)\<close>
 proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
@@ -520,7 +456,7 @@ next
         by simp
       ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>\<^sub>P p)\<close>
         using 2 \<open>x = \<^bold>\<forall>\<^sub>P p\<close> by blast
-      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>P p)\<close>
+      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> \<^bold>\<forall>\<^sub>P p\<close>
         (* TODO: I don't know what the required lemma is here *)
         apply auto
         subgoal for n
@@ -649,8 +585,11 @@ abbreviation Axiomatic_assms (\<open>_ \<turnstile> _\<close> [50, 50] 50) where
 
 section \<open>Soundness\<close>
 
+fun wf_model where
+  \<open>wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longleftrightarrow> range G \<subseteq> PS \<and> range E\<^sub>P \<subseteq> PS \<and> range F \<subseteq> FS \<and> range E\<^sub>F \<subseteq> FS\<close>
+
 theorem soundness:
-  shows \<open>\<turnstile> p \<Longrightarrow> range G \<subseteq> PS \<Longrightarrow> range E\<^sub>P \<subseteq> PS \<Longrightarrow> range F \<subseteq> FS \<Longrightarrow> range E\<^sub>F \<subseteq> FS \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
+  shows \<open>\<turnstile> p \<Longrightarrow> wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
 proof (induct p arbitrary: C F G PS FS rule: Axiomatic.induct)
   case (TA p)
   then show ?case
@@ -662,17 +601,11 @@ next
 next
   case (IA\<^sub>P p s)
   then show ?case
-    apply (cases s)
-    apply auto
-     apply (meson rangeI subsetD)
-    by (meson range_subsetD)
+    by (cases s) (fastforce intro!: rangeI)+
 next
   case (IA\<^sub>F p s)
   then show ?case
-    apply  (cases s)
-    apply auto
-     apply (simp add: subset_eq)
-    by (meson rangeI subsetD)
+    by (cases s) (fastforce intro!: rangeI)+
 next
   case (MP p q)
   then show ?case
@@ -680,25 +613,27 @@ next
 next
   case (GR q a p)
   moreover from this have \<open>(E, E\<^sub>F, E\<^sub>P, C(a := x), F, G, PS, FS) \<Turnstile> (q \<^bold>\<longrightarrow> \<langle>\<^bold>\<star>a/0\<rangle>p)\<close> for x
-    by blast
+    unfolding wf_model.simps by meson
   ultimately show ?case
     by fastforce
 next
   case (GR\<^sub>P q a p)
   moreover from this have \<open>\<forall>x. x \<in> PS \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G(a := x), PS,FS) \<Turnstile> (q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>Pp)\<close>
-    by (smt (verit, best) fun_upd_def imageE rev_image_eqI subset_eq)
+    unfolding wf_model.simps
+    by (metis (no_types, opaque_lifting) fun_upd_other fun_upd_same image_subset_iff)
   ultimately show ?case
     by fastforce
 next
   case (GR\<^sub>F q a p)
   moreover from this have \<open>\<forall>x. x \<in> FS \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F(a := x), G, PS,FS) \<Turnstile> (q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>Fp)\<close>
-    by (smt (verit, best) fun_upd_def imageE rev_image_eqI subset_eq)
+    unfolding wf_model.simps
+    by (metis (no_types, opaque_lifting) fun_upd_other fun_upd_same image_subset_iff)
   ultimately show ?case
     by fastforce
 qed
 
 corollary \<open>\<not> (\<turnstile> \<^bold>\<bottom>)\<close>
-  using soundness[of "\<^bold>\<bottom>" "\<lambda>p cs. True" "{\<lambda>cs. True}" "\<lambda>n cs. True" "\<lambda>p cs. ()"] by fastforce
+  using soundness[where p="\<^bold>\<bottom>" and G="\<lambda>p cs. True" and PS="{\<lambda>cs. True}" and E\<^sub>P="\<lambda>n cs. True" and F="\<lambda>p cs. ()"] by fastforce
 
 section \<open>Derived Rules\<close>
 
@@ -826,7 +761,6 @@ lemma imply_weaken: \<open>ps \<turnstile> q \<Longrightarrow> set ps \<subseteq
   by (induct ps arbitrary: q) (simp, metis MP' deduct(2) imply_mem insert_subset list.simps(15))
 
 
-
 section \<open>Derivational Consistency\<close>
 
 interpretation DC: Weak_Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
@@ -834,9 +768,7 @@ proof
   fix A ps qs and q :: \<open>'x fm\<close>
   assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> set A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> set A\<close>
   then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
-    apply cases
-     apply simp
-    by (metis MP' empty_set equals0D imply_head imply_mem imply_weaken set_ConsD)
+    by cases (simp, metis MP' empty_set equals0D imply_head imply_mem imply_weaken set_ConsD)
 qed
 
 interpretation DA: Weak_Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
@@ -994,5 +926,221 @@ theorem completeness:
     and \<open>|UNIV :: 'x fm set| \<le>o  |UNIV :: 'x set|\<close>
   shows \<open>\<turnstile> p\<close>
   using assms weak_completeness[where ps=\<open>[]\<close>, of p] by simp
+
+section \<open>Natural Deduction\<close>
+
+locale Natural_Deduction
+begin
+
+inductive ND_Set :: \<open>'x fm set \<Rightarrow> 'x fm \<Rightarrow> bool\<close> (infix \<open>\<tturnstile>\<close> 50) where
+  Assm [dest]: \<open>p \<in> A \<Longrightarrow> A \<tturnstile> p\<close>
+| FlsE [elim]: \<open>A \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> A \<tturnstile> p\<close>
+| ImpI [intro]: \<open>{p} \<union> A \<tturnstile> q \<Longrightarrow> A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
+| ImpE [dest]: \<open>A \<tturnstile> p \<^bold>\<longrightarrow> q \<Longrightarrow> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> q\<close>
+| UniI [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<star>a/0\<rangle>p \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>p\<close>
+| UniE [dest]: \<open>A \<tturnstile> \<^bold>\<forall>p \<Longrightarrow> A \<tturnstile> \<langle>t/0\<rangle>p\<close>
+| UniI\<^sub>P [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>\<^sub>P p\<close>
+| UniE\<^sub>P [dest]: \<open>A \<tturnstile> \<^bold>\<forall>\<^sub>P p \<Longrightarrow> A \<tturnstile> \<langle>s/0\<rangle>\<^sub>P p\<close>
+| UniI\<^sub>F [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>\<^sub>F p\<close>
+| UniE\<^sub>F [dest]: \<open>A \<tturnstile> \<^bold>\<forall>\<^sub>F p \<Longrightarrow> A \<tturnstile> \<langle>s/0\<rangle>\<^sub>F p\<close>
+| Clas: \<open>{p \<^bold>\<longrightarrow> q} \<union> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> p\<close>
+
+subsection \<open>Soundness\<close>
+
+theorem soundness_set:
+  assumes \<open>A \<tturnstile> p\<close> \<open>wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS)\<close>
+  shows \<open>\<forall>q \<in> A. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
+  using assms
+proof (induct A p arbitrary: C F G pred: ND_Set)
+  case (UniI A a p)
+  have \<open>\<forall>q \<in> A. (E, E\<^sub>F, E\<^sub>P, C(a := x), F, G, PS, FS) \<Turnstile> q\<close> for x
+    using UniI(3-) by simp
+  moreover have \<open>wf_model (E, E\<^sub>F, E\<^sub>P, C(a := x), F, G, PS, FS)\<close> for x
+    using UniI(5) by simp
+  ultimately have \<open>(E, E\<^sub>F, E\<^sub>P, C(a := x), F, G, PS, FS) \<Turnstile> \<langle>\<^bold>\<star>a/0\<rangle>p\<close> for x
+    using UniI by meson
+  then show ?case
+    using UniI by simp
+next
+  case (UniI\<^sub>P A a p)
+  have \<open>\<forall>x \<in> PS. \<forall>q \<in> A. (E, E\<^sub>F, E\<^sub>P, C, F, G(a := x), PS, FS) \<Turnstile> q\<close>
+    using UniI\<^sub>P(3-) by simp
+  moreover have \<open>\<forall>x \<in> PS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G(a := x), PS, FS)\<close>
+    using UniI\<^sub>P(5) by auto
+  ultimately have \<open>\<forall>x \<in> PS. (E, E\<^sub>F, E\<^sub>P, C, F, G(a := x), PS, FS) \<Turnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p\<close>
+    using UniI\<^sub>P by meson
+  then show ?case
+    using UniI\<^sub>P by simp
+next
+  case (UniE\<^sub>P A p s)
+  then show ?case
+    by (cases s) (fastforce intro!: rangeI)+
+next
+  case (UniI\<^sub>F A a p)
+  have \<open>\<forall>x \<in> FS. \<forall>q \<in> A. (E, E\<^sub>F, E\<^sub>P, C, F(a := x), G, PS, FS) \<Turnstile> q\<close>
+    using UniI\<^sub>F(3-) by simp
+  moreover have \<open>\<forall>x \<in> FS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F(a := x), G, PS, FS)\<close>
+    using UniI\<^sub>F(5) by auto
+  ultimately have \<open>\<forall>x \<in> FS. (E, E\<^sub>F, E\<^sub>P, C, F(a := x), G, PS, FS) \<Turnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p\<close>
+    using UniI\<^sub>F by meson
+  then show ?case
+    using UniI\<^sub>F by simp
+next
+  case (UniE\<^sub>F A p s)
+  then show ?case
+    by (cases s) (fastforce intro!: rangeI)+
+qed auto
+
+subsection \<open>Derivational Consistency\<close>
+
+lemma Boole: \<open>{\<^bold>\<not> p} \<union> A \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> A \<tturnstile> p\<close>
+  using Clas FlsE by blast
+
+sublocale DC: Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A ps qs and q :: \<open>'x fm\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> A\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+    by cases auto
+qed
+
+sublocale DA: Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A and ps qs :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set qs \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CImpN p q)
+    then have \<open>A \<tturnstile> \<^bold>\<not> (p \<^bold>\<longrightarrow> q)\<close>
+      using *(1) by auto
+    moreover have \<open>A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
+      using CImpN(2) *(2) Boole[of q \<open>{p} \<union> A\<close>] by auto
+    ultimately show ?thesis
+      by blast
+  qed
+qed
+
+sublocale DB: Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A and ps qs :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<forall>q \<in> set qs. {q} \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CImpP p q)
+    then show ?thesis
+      using * Boole[of p A]
+      by (metis Assm ImpE ImpI list.set_intros(1) set_subset_Cons subset_iff)
+  qed
+qed
+
+sublocale DG: Derivational_Gamma map_tm map_fm params_fm gamma_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A F qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>t \<in> F A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CAllP p)
+    then show ?thesis
+      using * UniE[of A p t] ImpI by auto
+  qed
+qed
+
+sublocale DGP: Derivational_Gamma map_sym map_fm params_fm gamma_class_P \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A F qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P (F, qs)\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>t \<in> F A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CAllPP p)
+    then show ?thesis
+      using * UniE\<^sub>P[of A p t] ImpI by auto
+  qed
+qed
+
+sublocale DGF: Derivational_Gamma map_sym map_fm params_fm gamma_class_F \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A F qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F (F, qs)\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>t \<in> F A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof cases
+    case (CAllFP p)
+    then show ?thesis
+      using * UniE\<^sub>F[of A p t] ImpI by auto
+  qed
+qed
+
+sublocale DD: Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof
+  fix A a and p :: \<open>'x fm\<close>
+  assume \<open>p \<in> A\<close> \<open>a \<notin> C.params A\<close> \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  proof (induct p a rule: delta_fun.induct)
+    case (1 p x)
+    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+      by auto
+    moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<star>x/0\<rangle> p\<close>
+      using "1.prems"(3) Boole by auto
+    ultimately show ?case
+      using 1(1) UniI by blast
+  next
+    case (2 p x)
+    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+      by auto
+    moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p\<close>
+      using "2.prems"(3) Boole by auto
+    ultimately show ?case
+      using 2(1) UniI\<^sub>P by blast
+  next
+    case (3 p x)
+    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+      by auto
+    moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p\<close>
+      using "3.prems"(3) Boole by auto
+    ultimately show ?case
+      using 3(1) UniI\<^sub>F by blast
+  qed simp_all
+qed
+
+sublocale Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+  using CProp_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
+
+subsection \<open>Strong Completeness\<close>
+
+theorem strong_completeness:
+  fixes p :: \<open>'x fm\<close>
+  assumes mod: \<open>\<And>(E :: nat \<Rightarrow> 'x tm) E\<^sub>F E\<^sub>P C F G PS FS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Longrightarrow>
+      (\<forall>q \<in> A. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q) \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
+    and inf: \<open>|UNIV :: 'x fm set| \<le>o |- C.params A|\<close>
+  shows \<open>A \<tturnstile> p\<close>
+proof (rule ccontr)
+  assume \<open>\<not> A \<tturnstile> p\<close>
+  then have *: \<open>\<not> {\<^bold>\<not> p} \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+    using Boole by (metis insert_is_Un)
+
+  let ?S = \<open>set [\<^bold>\<not> p] \<union> A\<close>
+  let ?C = \<open>{A :: 'x fm set. |UNIV :: 'x fm set| \<le>o |- C.params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+  let ?M = \<open>\<lbrakk>mk_mcs ?C ?S\<rbrakk>\<close>
+
+  have wf: \<open>wf_model ?M\<close>
+    unfolding hdom\<^sub>F_def by simp
+
+  have \<open>CProp Kinds ?C\<close>
+    using Consistency by blast
+  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- C.params ?S|\<close>
+    using inf params_left by blast
+  moreover from this have \<open>?S \<in> ?C\<close>
+    using * by simp
+  ultimately have *: \<open>\<forall>p \<in> ?S. ?M \<Turnstile> p\<close>
+    using model_existence by blast
+  then have \<open>?M \<Turnstile> p\<close>
+    using mod[OF wf] by fast 
+  then show False
+    using * by simp
+qed
+
+lemma \<open>\<exists>M. wf_model M\<close>
+  by (meson sup.cobounded2 sup_ge1 wf_model.simps)
+
+end
 
 end
