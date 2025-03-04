@@ -892,7 +892,7 @@ qed
 
 theorem weak_completeness:
   fixes p :: \<open>'x fm\<close>
-  assumes mod: \<open>\<forall>(E :: _ \<Rightarrow> 'x tm) E\<^sub>F E\<^sub>P C F G PS FS. range E\<^sub>F \<subseteq> FS \<longrightarrow> range E\<^sub>P \<subseteq> PS \<longrightarrow> range G \<subseteq> PS \<longrightarrow> range F \<subseteq> FS \<longrightarrow> (\<forall>q \<in> set ps. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q) \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
+  assumes mod: \<open>\<forall>(E :: _ \<Rightarrow> 'x tm) E\<^sub>F E\<^sub>P C F G PS FS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longrightarrow> (\<forall>q \<in> set ps. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q) \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
     and inf: \<open>|UNIV :: 'x fm set| \<le>o  |- C.params (set ps)|\<close>
   shows \<open>ps \<turnstile> p\<close>
 proof (rule ccontr)
@@ -922,7 +922,7 @@ qed
 
 theorem completeness:
   fixes p :: \<open>'x fm\<close>
-  assumes \<open>\<forall>(E :: nat \<Rightarrow> 'x tm) E\<^sub>P E\<^sub>F C F G PS FS. range E\<^sub>F \<subseteq> FS \<longrightarrow> range E\<^sub>P \<subseteq> PS \<longrightarrow> range G \<subseteq> PS \<longrightarrow> range F \<subseteq> FS \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
+  assumes \<open>\<forall>(E :: nat \<Rightarrow> 'x tm) E\<^sub>P E\<^sub>F C F G PS FS.  wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
     and \<open>|UNIV :: 'x fm set| \<le>o  |UNIV :: 'x set|\<close>
   shows \<open>\<turnstile> p\<close>
   using assms weak_completeness[where ps=\<open>[]\<close>, of p] by simp
@@ -1138,7 +1138,7 @@ proof (rule ccontr)
     using * by simp
 qed
 
-lemma \<open>\<exists>M. wf_model M\<close>
+proposition \<open>\<exists>M. wf_model M\<close>
   by (meson sup.cobounded2 sup_ge1 wf_model.simps)
 
 end
