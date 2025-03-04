@@ -18,8 +18,7 @@ datatype (params_sym:'f) sym
 datatype (params_tm: 'f) tm
   = Var nat (\<open>\<^bold>#\<close>)
   | Fun \<open>'f sym\<close> \<open>'f tm list\<close> (\<open>\<^bold>\<circle>\<close>)
-(* TODO: explicit domain in model so we don't need this guy? *)
-  | Cst 'f (\<open>\<^bold>\<star>\<close>) (* Måske burde konstanterne have deres egen typevariabel.*)
+  | Cst 'f (\<open>\<^bold>\<star>\<close>) 
 
 datatype (params_fm: 'f) fm
   = Falsity (\<open>\<^bold>\<bottom>\<close>)
