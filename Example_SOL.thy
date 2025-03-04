@@ -227,6 +227,374 @@ lemma size_inst_fm_P [simp]: \<open>size_fm (\<langle>t/m\<rangle>\<^sub>Pp) = s
 lemma size_inst_fm_F [simp]: \<open>size_fm (\<langle>t/m\<rangle>\<^sub>Fp) = size_fm p\<close>
   by (induct p arbitrary: m t) simp_all
 
+
+section \<open>Model Existence\<close>
+
+inductive confl_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
+  CFls: \<open>[ \<^bold>\<bottom> ] \<leadsto>\<^sub>\<crossmark> [ \<^bold>\<bottom> ]\<close>
+| CNeg: \<open>[ \<^bold>\<not> (\<^bold>\<cdot>P ts) ] \<leadsto>\<^sub>\<crossmark> [ \<^bold>\<cdot>P ts ]\<close>
+
+inductive alpha_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
+  CImpN: \<open>[ \<^bold>\<not> (p \<^bold>\<longrightarrow> q) ] \<leadsto>\<^sub>\<alpha> [ p, \<^bold>\<not> q ]\<close>
+
+inductive beta_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
+  CImpP: \<open>[ p \<^bold>\<longrightarrow> q ] \<leadsto>\<^sub>\<beta> [ \<^bold>\<not> p, q ]\<close>
+
+inductive gamma_class :: \<open>'f fm list \<Rightarrow>  ('f fm set \<Rightarrow> 'f tm set) \<times> ('f tm \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
+  CAllP: \<open>[ \<^bold>\<forall>p ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. UNIV, \<lambda>t. [ \<langle>t/0\<rangle>p ])\<close>
+
+inductive gamma_class_P :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>P\<close> 50) where
+  CAllPP: \<open>[ \<^bold>\<forall>\<^sub>P p ] \<leadsto>\<^sub>\<gamma>\<^sub>P (\<lambda>_. UNIV, \<lambda>s. [ \<langle>s/0\<rangle>\<^sub>P p ])\<close>
+
+inductive gamma_class_F :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>F\<close> 50) where
+  CAllFP: \<open>[ \<^bold>\<forall>\<^sub>F p ] \<leadsto>\<^sub>\<gamma>\<^sub>F (\<lambda>_. UNIV, \<lambda>s. [ \<langle>s/0\<rangle>\<^sub>F p ])\<close>
+
+fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
+  CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ]\<close> 
+| CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>\<^sub>P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>Pp ]\<close>
+| CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F  p ]\<close>
+| NOMATCH: \<open>delta_fun _ _ = []\<close>
+
+interpretation C: Confl map_fm params_fm confl_class
+  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0
+      elim!: confl_class.cases intro: confl_class.intros)
+
+interpretation A: Alpha map_fm params_fm alpha_class
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros)
+
+interpretation B: Beta map_fm params_fm beta_class
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros)
+
+lemma map_tm_inst_tm [simp]:
+  "map_tm f (\<llangle>t/n\<rrangle> x) = \<llangle>map_tm f t/n\<rrangle> (map_tm f x)"
+  by (induct x) simp_all
+
+lemma map_tm_lift_tm [simp]: "map_tm f (\<^bold>\<up> t) = \<^bold>\<up> (map_tm f t)"
+  by (induct t) simp_all
+
+lemma map_sym_lift_fn [simp]: \<open>map_sym f (\<^bold>\<up>\<^sub>2 t) = \<^bold>\<up>\<^sub>2 (map_sym f t)\<close>
+  by (induct t) auto
+
+lemma map_tm_lift_fn [simp]: "map_tm f (\<^bold>\<up>\<^sub>F t) = \<^bold>\<up>\<^sub>F (map_tm f t)"
+  by (induct t) simp_all
+
+lemma map_fm_inst_single [simp]: \<open>map_fm f (\<langle>t/m\<rangle>p) = \<langle>map_tm f t/m\<rangle>(map_fm f p)\<close>
+  by (induct p arbitrary: t m) simp_all
+
+lemma map_sym_inst_sym [simp]: \<open>map_sym f (\<llangle>t/m\<rrangle>\<^sub>2 p) = \<llangle>map_sym f t/m\<rrangle>\<^sub>2 (map_sym f p)\<close>
+  by (induct p arbitrary: t m) simp_all
+
+lemma psub_inst_single' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>P p) = \<langle>map_sym f t/m\<rangle>\<^sub>P(map_fm f p)\<close>
+  by (induct p arbitrary: t m) simp_all
+
+lemma map_tm_inst_fn [simp]: \<open>map_tm f (\<llangle>t/m\<rrangle>\<^sub>F s) = \<llangle>map_sym f t/m\<rrangle>\<^sub>F (map_tm f s)\<close>
+  by (induct s) auto
+
+lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>F p) = \<langle>map_sym f t/m\<rangle>\<^sub>F(map_fm f p)\<close>
+  by (induct p arbitrary: t m) simp_all
+
+interpretation G: Gamma map_tm map_fm params_fm gamma_class
+  apply (unfold_locales)
+  subgoal for ps F qs f
+    apply (cases rule: gamma_class.cases)
+    apply auto
+    subgoal for p
+      apply (rule_tac x="\<lambda>_. UNIV" in exI)
+      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle> (map_fm f p)]" in exI)
+      apply auto
+      subgoal
+        using CAllP[of "(map_fm f p)"]
+        apply auto
+        done
+      done
+    done
+  subgoal
+    apply (fastforce elim: gamma_class.cases)
+    done
+  subgoal
+    apply (fastforce elim: gamma_class.cases)
+    done
+  done
+
+interpretation G\<^sub>P: Gamma map_sym map_fm params_fm gamma_class_P 
+  apply (unfold_locales)
+  subgoal for ps F qs f
+    apply (cases rule: gamma_class_P.cases)
+    apply auto
+    subgoal for p
+      apply (rule_tac x="\<lambda>_. UNIV" in exI)
+      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>\<^sub>P (map_fm f p)]" in exI)
+      apply auto
+      subgoal
+        using CAllPP
+        apply auto
+        done
+      done
+    done
+  subgoal
+    apply (fastforce elim: gamma_class_P.cases)
+    done
+  subgoal
+    apply (fastforce elim: gamma_class_P.cases)
+    done
+  done
+
+interpretation G\<^sub>F: Gamma map_sym map_fm params_fm gamma_class_F
+  apply (unfold_locales)
+  subgoal for ps F qs f
+    apply (cases rule: gamma_class_F.cases)
+     apply auto
+    subgoal for p
+      apply (rule_tac x="\<lambda>_. UNIV" in exI)
+      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>\<^sub>F (map_fm f p)]" in exI)
+      apply auto
+      subgoal
+        using CAllFP
+        apply auto
+        done
+      done
+    done
+  subgoal
+    apply (fastforce elim: gamma_class_F.cases)
+    done
+  subgoal
+    apply (fastforce elim: gamma_class_F.cases)
+    done
+  done
+
+interpretation D: Delta map_fm params_fm delta_fun
+proof
+  show \<open>\<And>f. delta_fun (map_fm f p) (f x) = map (map_fm f) (delta_fun p x)\<close> for p :: \<open>'x fm\<close> and x
+    by (induct p x rule: delta_fun.induct) simp_all
+qed
+
+abbreviation Kinds :: \<open>('x, 'x fm) kind list\<close> where
+  \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, G\<^sub>P.kind, G\<^sub>F.kind, D.kind]\<close>
+
+lemma CProp_Kinds:
+  assumes \<open>CKind C.kind C\<close> \<open>CKind A.kind C\<close> \<open>CKind B.kind C\<close> \<open>CKind G.kind C\<close> \<open>CKind G\<^sub>P.kind C\<close> \<open>CKind G\<^sub>F.kind C\<close> \<open>CKind D.kind C\<close>
+  shows \<open>CProp Kinds C\<close>
+  unfolding CProp_def using assms by simp
+
+interpretation Consistency_Prop map_fm params_fm Kinds
+  using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
+    G.Consistency_Kind_axioms G\<^sub>P.Consistency_Kind_axioms G\<^sub>F.Consistency_Kind_axioms
+    D.Consistency_Kind_axioms
+  by (auto intro!: Consistency_Prop.intro C.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+
+interpretation Maximal_Consistency_UNIV map_fm params_fm Kinds
+proof
+  show \<open>infinite (UNIV :: 'x fm set)\<close>
+    using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
+qed
+
+
+
+abbreviation henv\<^sub>P where "henv\<^sub>P H == \<lambda>n ts. \<^bold>\<cdot>(\<^bold>#\<^sub>2 n) ts \<in> H"
+
+abbreviation hpred where "hpred H == \<lambda>P ts. \<^bold>\<cdot>(\<^bold>\<circle>\<^sub>2 P) ts \<in> H"
+
+abbreviation hdom\<^sub>P where "hdom\<^sub>P H == range (henv\<^sub>P H) \<union> range (hpred H)"
+
+abbreviation henv\<^sub>F where "henv\<^sub>F == \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2 f)"
+
+abbreviation hfun where "hfun ==  \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f)"
+
+definition hdom\<^sub>F where "hdom\<^sub>F == range henv\<^sub>F \<union> range hfun"
+
+abbreviation (input) hmodel (\<open>\<lbrakk>_\<rbrakk>\<close>) where \<open>\<lbrakk>H\<rbrakk> \<equiv> (\<^bold>#, henv\<^sub>F, henv\<^sub>P H, \<^bold>\<star>, hfun, hpred H, hdom\<^sub>P H, hdom\<^sub>F)\<close>
+
+lemma semantics_tm_id [simp]: \<open>\<lblot>\<^bold>#, henv\<^sub>F , \<^bold>\<star> , \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rblot> t = t\<close>
+proof (induct t)
+  case (Var x)
+  then show ?case 
+    by (auto cong: map_cong)
+next
+  case (Fun x1a x2)
+  then show ?case
+    by (cases x1a) (auto cong: map_cong)
+next
+  case (Cst c)
+  then show ?case
+    by auto
+qed
+
+lemma semantics_tm_id_map [simp]: \<open>map \<lblot>\<^bold>#, \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2 f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rblot> ts = ts\<close>
+  by (auto cong: map_cong)
+
+lemma semantics_fn_h [simp]: \<open>\<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2 P ts \<longleftrightarrow> \<^bold>\<cdot>P ts \<in> S\<close>
+  by (cases P) simp_all
+
+lemma hdom\<^sub>P_range: \<open>hdom\<^sub>P S \<subseteq> range \<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2\<close>
+  by fastforce
+
+locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\<close>
+begin
+
+thm hkind
+
+lemmas
+  confl = hkind[of C.kind] and
+  alpha = hkind[of A.kind] and
+  beta = hkind[of B.kind] and
+  gammaFO = hkind[of G.kind] and
+  gamma2P = hkind[of G\<^sub>P.kind] and
+  gamma2F = hkind[of G\<^sub>F.kind] and
+  delta = hkind[of D.kind]
+
+
+theorem model: \<open>(p \<in> S \<longrightarrow> \<lbrakk>S\<rbrakk> \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> \<lbrakk>S\<rbrakk> \<Turnstile> p)\<close>
+proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
+  case 1
+  then show ?case
+    by simp
+next
+  case (2 x)
+  then show ?case
+  proof (cases x)
+    case Falsity
+    then show ?thesis
+      using confl by (force intro: CFls)
+  next
+    case (Pre P ts)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<cdot>P ts \<in> S\<close>
+      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<cdot>P ts)\<close>
+        by simp
+    next
+      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> S\<close>
+      then have \<open>\<^bold>\<cdot>P ts \<notin> S\<close>
+        using confl by (force intro: CNeg)
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<cdot>P ts)\<close>
+        by simp
+    qed
+  next
+    case (Imp p q)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>p \<^bold>\<longrightarrow> q \<in> S\<close>
+      then have \<open>\<^bold>\<not> p \<in> S \<or> q \<in> S\<close>
+        using beta by (force intro: CImpP)
+      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (p \<^bold>\<longrightarrow> q)\<close>
+        using 2 Imp by auto
+    next
+      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>\<^bold>\<not> (p \<^bold>\<longrightarrow> q) \<in> S\<close>
+      then have \<open>p \<in> S \<and> \<^bold>\<not> q \<in> S\<close>
+        using alpha by (force intro: CImpN)
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (p \<^bold>\<longrightarrow> q)\<close>
+        using 2 Imp by auto
+    qed
+  next
+    case (Uni p)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<forall>p \<in> S\<close>
+      then have \<open>\<forall>t. \<langle>t/0\<rangle>p \<in> S\<close>
+        using gammaFO by (fastforce intro: CAllP)
+      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
+      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>p)\<close>
+        by simp
+    next
+      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>p \<in> S\<close>
+      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<star>a/0\<rangle>p \<in> S\<close>
+        using delta by auto
+      moreover have \<open>(\<langle>\<^bold>\<star>a/0\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>\<^bold>\<star>a/0\<rangle>p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>p)\<close>
+        by auto
+    qed
+  next
+    case (UniP p)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<forall>\<^sub>P p\<close> \<open>\<^bold>\<forall>\<^sub>P p \<in> S\<close>
+      then have \<open>\<forall>t. \<langle>t/0\<rangle>\<^sub>P p \<in> S\<close>
+        using gamma2P by (fastforce intro: CAllPP)
+      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>\<^sub>P p, \<^bold>\<forall>\<^sub>P p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>\<^sub>P p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>\<^sub>P p\<close> by blast
+      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>P p)\<close>
+        (* TODO: I don't know what the required lemma is here *)
+        apply auto
+        subgoal for n
+          by (metis semantics_fn.simps(1))
+        subgoal for e
+          by (metis semantics_fn.simps(2))
+      done
+    next
+      assume \<open>x = \<^bold>\<forall>\<^sub>P p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>P p \<in> S\<close>
+      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p \<in> S\<close>
+        using delta by auto
+      moreover have \<open>(\<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p, \<^bold>\<forall>\<^sub>P p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>P p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>\<^sub>P p\<close> by blast
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>P p)\<close>
+        by auto
+    qed
+  next
+    case (UniF p)
+    then show ?thesis
+    proof (safe del: notI)
+      assume \<open>x = \<^bold>\<forall>\<^sub>F p\<close> \<open>\<^bold>\<forall>\<^sub>F p \<in> S\<close>
+      then have \<open>\<forall>t. \<langle>t/0\<rangle>\<^sub>F p \<in> S\<close>
+        using gamma2F by (fastforce intro: CAllFP)
+      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>\<^sub>F p, \<^bold>\<forall>\<^sub>F p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>\<^sub>F p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>\<^sub>F p\<close> by blast
+      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>F p)\<close>
+        unfolding hdom\<^sub>F_def
+          (* TODO: I don't know what the required lemma is here *)
+        apply auto
+        subgoal for f
+          by (metis semantics_fn.simps(1))
+        subgoal for e
+          by (metis semantics_fn.simps(2))
+        done
+    next
+      assume \<open>x = \<^bold>\<forall>\<^sub>F p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>F p \<in> S\<close>
+      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p \<in> S\<close>
+        using delta by auto
+      moreover have \<open>(\<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p, \<^bold>\<forall>\<^sub>F p) \<in> measure size_fm\<close>
+        by simp
+      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>F p)\<close>
+        using 2 \<open>x = \<^bold>\<forall>\<^sub>F p\<close> by blast
+      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>F p)\<close>
+        by (auto simp: hdom\<^sub>F_def)
+    qed
+  qed
+qed
+
+end
+
+theorem model_existence:
+  fixes S :: \<open>'x fm set\<close>
+  assumes \<open>CProp Kinds C\<close>
+    and \<open>S \<in> C\<close>
+    and \<open>|UNIV :: 'x fm set| \<le>o |- C.params S|\<close>
+    and \<open>p \<in> S\<close>
+  shows \<open>\<lbrakk>mk_mcs C S\<rbrakk> \<Turnstile> p\<close>
+proof -
+  have *: \<open>MyHintikka (mk_mcs C S)\<close>
+  proof
+    show \<open>HProp Kinds (mk_mcs C S)\<close>
+      using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
+  qed
+  moreover have \<open>p \<in> mk_mcs C S\<close>
+    using assms(4) Extend_subset by blast
+  ultimately show ?thesis
+    using MyHintikka.model by blast
+qed
+
+
 section \<open>Propositional Semantics\<close>
 
 primrec boolean where
@@ -458,372 +826,6 @@ lemma imply_weaken: \<open>ps \<turnstile> q \<Longrightarrow> set ps \<subseteq
   by (induct ps arbitrary: q) (simp, metis MP' deduct(2) imply_mem insert_subset list.simps(15))
 
 
-section \<open>Model Existence\<close>
-
-inductive confl_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
-  CFls: \<open>[ \<^bold>\<bottom> ] \<leadsto>\<^sub>\<crossmark> [ \<^bold>\<bottom> ]\<close>
-| CNeg: \<open>[ \<^bold>\<not> (\<^bold>\<cdot>P ts) ] \<leadsto>\<^sub>\<crossmark> [ \<^bold>\<cdot>P ts ]\<close>
-
-inductive alpha_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
-  CImpN: \<open>[ \<^bold>\<not> (p \<^bold>\<longrightarrow> q) ] \<leadsto>\<^sub>\<alpha> [ p, \<^bold>\<not> q ]\<close>
-
-inductive beta_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
-  CImpP: \<open>[ p \<^bold>\<longrightarrow> q ] \<leadsto>\<^sub>\<beta> [ \<^bold>\<not> p, q ]\<close>
-
-inductive gamma_class :: \<open>'f fm list \<Rightarrow>  ('f fm set \<Rightarrow> 'f tm set) \<times> ('f tm \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
-  CAllP: \<open>[ \<^bold>\<forall>p ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. UNIV, \<lambda>t. [ \<langle>t/0\<rangle>p ])\<close>
-
-inductive gamma_class_P :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>P\<close> 50) where
-  CAllPP: \<open>[ \<^bold>\<forall>\<^sub>P p ] \<leadsto>\<^sub>\<gamma>\<^sub>P (\<lambda>_. UNIV, \<lambda>s. [ \<langle>s/0\<rangle>\<^sub>P p ])\<close>
-
-inductive gamma_class_F :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>F\<close> 50) where
-  CAllFP: \<open>[ \<^bold>\<forall>\<^sub>F p ] \<leadsto>\<^sub>\<gamma>\<^sub>F (\<lambda>_. UNIV, \<lambda>s. [ \<langle>s/0\<rangle>\<^sub>F p ])\<close>
-
-fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
-  CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ]\<close> 
-| CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>\<^sub>P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>Pp ]\<close>
-| CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F  p ]\<close>
-| NOMATCH: \<open>delta_fun _ _ = []\<close>
-
-interpretation C: Confl map_fm params_fm confl_class
-  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0
-      elim!: confl_class.cases intro: confl_class.intros)
-
-interpretation A: Alpha map_fm params_fm alpha_class
-  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros)
-
-interpretation B: Beta map_fm params_fm beta_class
-  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros)
-
-lemma map_tm_inst_tm [simp]:
-  "map_tm f (\<llangle>t/n\<rrangle> x) = \<llangle>map_tm f t/n\<rrangle> (map_tm f x)"
-  by (induct x) simp_all
-
-lemma map_tm_lift_tm [simp]: "map_tm f (\<^bold>\<up> t) = \<^bold>\<up> (map_tm f t)"
-  by (induct t) simp_all
-
-lemma map_sym_lift_fn [simp]: \<open>map_sym f (\<^bold>\<up>\<^sub>2 t) = \<^bold>\<up>\<^sub>2 (map_sym f t)\<close>
-  by (induct t) auto
-
-lemma map_tm_lift_fn [simp]: "map_tm f (\<^bold>\<up>\<^sub>F t) = \<^bold>\<up>\<^sub>F (map_tm f t)"
-  by (induct t) simp_all
-
-lemma map_fm_inst_single [simp]: \<open>map_fm f (\<langle>t/m\<rangle>p) = \<langle>map_tm f t/m\<rangle>(map_fm f p)\<close>
-  by (induct p arbitrary: t m) simp_all
-
-lemma map_sym_inst_sym [simp]: \<open>map_sym f (\<llangle>t/m\<rrangle>\<^sub>2 p) = \<llangle>map_sym f t/m\<rrangle>\<^sub>2 (map_sym f p)\<close>
-  by (induct p arbitrary: t m) simp_all
-
-lemma psub_inst_single' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>P p) = \<langle>map_sym f t/m\<rangle>\<^sub>P(map_fm f p)\<close>
-  by (induct p arbitrary: t m) simp_all
-
-lemma map_tm_inst_fn [simp]: \<open>map_tm f (\<llangle>t/m\<rrangle>\<^sub>F s) = \<llangle>map_sym f t/m\<rrangle>\<^sub>F (map_tm f s)\<close>
-  by (induct s) auto
-
-lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>F p) = \<langle>map_sym f t/m\<rangle>\<^sub>F(map_fm f p)\<close>
-  by (induct p arbitrary: t m) simp_all
-
-interpretation G: Gamma map_tm map_fm params_fm gamma_class
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class.cases)
-    apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle> (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllP[of "(map_fm f p)"]
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class.cases)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class.cases)
-    done
-  done
-
-interpretation G\<^sub>P: Gamma map_sym map_fm params_fm gamma_class_P 
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class_P.cases)
-    apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>\<^sub>P (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllPP
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_P.cases)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_P.cases)
-    done
-  done
-
-interpretation G\<^sub>F: Gamma map_sym map_fm params_fm gamma_class_F
-  apply (unfold_locales)
-  subgoal for ps F qs f
-    apply (cases rule: gamma_class_F.cases)
-     apply auto
-    subgoal for p
-      apply (rule_tac x="\<lambda>_. UNIV" in exI)
-      apply (rule_tac x="\<lambda>t. [\<langle>t/0\<rangle>\<^sub>F (map_fm f p)]" in exI)
-      apply auto
-      subgoal
-        using CAllFP
-        apply auto
-        done
-      done
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_F.cases) (* From PIL2 *)
-    done
-  subgoal
-    apply (fastforce elim: gamma_class_F.cases) (* From PIL2 *)
-    done
-  done
-
-interpretation D: Delta map_fm params_fm delta_fun
-proof
-  show \<open>\<And>f. delta_fun (map_fm f p) (f x) = map (map_fm f) (delta_fun p x)\<close> for p :: \<open>'x fm\<close> and x
-    by (induct p x rule: delta_fun.induct) simp_all
-qed
-
-abbreviation Kinds :: \<open>('x, 'x fm) kind list\<close> where
-  \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, G\<^sub>P.kind, G\<^sub>F.kind, D.kind]\<close>
-
-lemma CProp_Kinds:
-  assumes \<open>CKind C.kind C\<close> \<open>CKind A.kind C\<close> \<open>CKind B.kind C\<close> \<open>CKind G.kind C\<close> \<open>CKind G\<^sub>P.kind C\<close> \<open>CKind G\<^sub>F.kind C\<close> \<open>CKind D.kind C\<close>
-  shows \<open>CProp Kinds C\<close>
-  unfolding CProp_def using assms by simp
-
-interpretation Consistency_Prop map_fm params_fm Kinds
-  using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
-    G.Consistency_Kind_axioms G\<^sub>P.Consistency_Kind_axioms G\<^sub>F.Consistency_Kind_axioms
-    D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro C.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
-
-interpretation Maximal_Consistency_UNIV map_fm params_fm Kinds
-proof
-  show \<open>infinite (UNIV :: 'x fm set)\<close>
-    using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
-qed
-
-
-section \<open>Model Existence\<close>
-
-abbreviation henv\<^sub>P where "henv\<^sub>P H == \<lambda>n ts. \<^bold>\<cdot>(\<^bold>#\<^sub>2 n) ts \<in> H"
-
-abbreviation hpred where "hpred H == \<lambda>P ts. \<^bold>\<cdot>(\<^bold>\<circle>\<^sub>2 P) ts \<in> H"
-
-abbreviation hdom\<^sub>P where "hdom\<^sub>P H == range (henv\<^sub>P H) \<union> range (hpred H)"
-
-abbreviation henv\<^sub>F where "henv\<^sub>F == \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2 f)"
-
-abbreviation hfun where "hfun ==  \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f)"
-
-definition hdom\<^sub>F where "hdom\<^sub>F == range henv\<^sub>F \<union> range hfun"
-
-abbreviation (input) hmodel (\<open>\<lbrakk>_\<rbrakk>\<close>) where \<open>\<lbrakk>H\<rbrakk> \<equiv> (\<^bold>#, henv\<^sub>F, henv\<^sub>P H, \<^bold>\<star>, hfun, hpred H, hdom\<^sub>P H, hdom\<^sub>F)\<close>
-
-lemma semantics_tm_id [simp]: \<open>\<lblot>\<^bold>#, henv\<^sub>F , \<^bold>\<star> , \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rblot> t = t\<close>
-proof (induct t)
-  case (Var x)
-  then show ?case 
-    by (auto cong: map_cong)
-next
-  case (Fun x1a x2)
-  then show ?case
-    by (cases x1a) (auto cong: map_cong)
-next
-  case (Cst c)
-  then show ?case
-    by auto
-qed
-
-lemma semantics_tm_id_map [simp]: \<open>map \<lblot>\<^bold>#, \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2 f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rblot> ts = ts\<close>
-  by (auto cong: map_cong)
-
-lemma semantics_fn_h [simp]: \<open>\<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2 P ts \<longleftrightarrow> \<^bold>\<cdot>P ts \<in> S\<close>
-  by (cases P) simp_all
-
-lemma hdom\<^sub>P_range: \<open>hdom\<^sub>P S \<subseteq> range \<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2\<close>
-  by fastforce
-
-locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\<close>
-begin
-
-thm hkind
-
-lemmas
-  confl = hkind[of C.kind] and
-  alpha = hkind[of A.kind] and
-  beta = hkind[of B.kind] and
-  gammaFO = hkind[of G.kind] and
-  gamma2P = hkind[of G\<^sub>P.kind] and
-  gamma2F = hkind[of G\<^sub>F.kind] and
-  delta = hkind[of D.kind]
-
-
-theorem model: \<open>(p \<in> S \<longrightarrow> \<lbrakk>S\<rbrakk> \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> \<lbrakk>S\<rbrakk> \<Turnstile> p)\<close>
-proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
-  case 1
-  then show ?case
-    by simp
-next
-  case (2 x)
-  then show ?case
-  proof (cases x)
-    case Falsity
-    then show ?thesis
-      using confl by (force intro: CFls)
-  next
-    case (Pre P ts)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<cdot>P ts \<in> S\<close>
-      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<cdot>P ts)\<close>
-        by simp
-    next
-      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> S\<close>
-      then have \<open>\<^bold>\<cdot>P ts \<notin> S\<close>
-        using confl by (force intro: CNeg)
-      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<cdot>P ts)\<close>
-        by simp
-    qed
-  next
-    case (Imp p q)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>p \<^bold>\<longrightarrow> q \<in> S\<close>
-      then have \<open>\<^bold>\<not> p \<in> S \<or> q \<in> S\<close>
-        using beta by (force intro: CImpP)
-      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (p \<^bold>\<longrightarrow> q)\<close>
-        using 2 Imp by auto
-    next
-      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>\<^bold>\<not> (p \<^bold>\<longrightarrow> q) \<in> S\<close>
-      then have \<open>p \<in> S \<and> \<^bold>\<not> q \<in> S\<close>
-        using alpha by (force intro: CImpN)
-      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (p \<^bold>\<longrightarrow> q)\<close>
-        using 2 Imp by auto
-    qed
-  next
-    case (Uni p)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<forall>p \<in> S\<close>
-      then have \<open>\<forall>t. \<langle>t/0\<rangle>p \<in> S\<close>
-        using gammaFO by (fastforce intro: CAllP)
-      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>p)\<close>
-        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
-      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>p)\<close>
-        by simp
-    next
-      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>p \<in> S\<close>
-      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<star>a/0\<rangle>p \<in> S\<close>
-        using delta by auto
-      moreover have \<open>(\<langle>\<^bold>\<star>a/0\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>\<^bold>\<star>a/0\<rangle>p)\<close>
-        using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
-      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>p)\<close>
-        by auto
-    qed
-  next
-    case (UniP p)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = \<^bold>\<forall>\<^sub>P p\<close> \<open>\<^bold>\<forall>\<^sub>P p \<in> S\<close>
-      then have \<open>\<forall>t. \<langle>t/0\<rangle>\<^sub>P p \<in> S\<close>
-        using gamma2P by (fastforce intro: CAllPP)
-      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>\<^sub>P p, \<^bold>\<forall>\<^sub>P p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>\<^sub>P p)\<close>
-        using 2 \<open>x = \<^bold>\<forall>\<^sub>P p\<close> by blast
-      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>P p)\<close>
-        (* TODO: I don't know what the required lemma is here *)
-        apply auto
-        subgoal for n
-          by (metis semantics_fn.simps(1))
-        subgoal for e
-          by (metis semantics_fn.simps(2))
-      done
-    next
-      assume \<open>x = \<^bold>\<forall>\<^sub>P p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>P p \<in> S\<close>
-      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p \<in> S\<close>
-        using delta by auto
-      moreover have \<open>(\<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p, \<^bold>\<forall>\<^sub>P p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>P p)\<close>
-        using 2 \<open>x = \<^bold>\<forall>\<^sub>P p\<close> by blast
-      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>P p)\<close>
-        by auto
-    qed
-  next
-    case (UniF p)
-    then show ?thesis
-    proof (safe del: notI)
-      assume \<open>x = \<^bold>\<forall>\<^sub>F p\<close> \<open>\<^bold>\<forall>\<^sub>F p \<in> S\<close>
-      then have \<open>\<forall>t. \<langle>t/0\<rangle>\<^sub>F p \<in> S\<close>
-        using gamma2F by (fastforce intro: CAllFP)
-      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>\<^sub>F p, \<^bold>\<forall>\<^sub>F p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>\<^sub>F p)\<close>
-        using 2 \<open>x = \<^bold>\<forall>\<^sub>F p\<close> by blast
-      then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>F p)\<close>
-        unfolding hdom\<^sub>F_def
-          (* TODO: I don't know what the required lemma is here *)
-        apply auto
-        subgoal for f
-          by (metis semantics_fn.simps(1))
-        subgoal for e
-          by (metis semantics_fn.simps(2))
-        done
-    next
-      assume \<open>x = \<^bold>\<forall>\<^sub>F p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>F p \<in> S\<close>
-      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p \<in> S\<close>
-        using delta by auto
-      moreover have \<open>(\<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p, \<^bold>\<forall>\<^sub>F p) \<in> measure size_fm\<close>
-        by simp
-      ultimately have \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>F p)\<close>
-        using 2 \<open>x = \<^bold>\<forall>\<^sub>F p\<close> by blast
-      then show \<open>\<not> \<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>F p)\<close>
-        by (auto simp: hdom\<^sub>F_def)
-    qed
-  qed
-qed
-
-end
-
-theorem model_existence:
-  fixes S :: \<open>'x fm set\<close>
-  assumes \<open>CProp Kinds C\<close>
-    and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: 'x fm set| \<le>o |- C.params S|\<close>
-    and \<open>p \<in> S\<close>
-  shows \<open>\<lbrakk>mk_mcs C S\<rbrakk> \<Turnstile> p\<close>
-proof -
-  have *: \<open>MyHintikka (mk_mcs C S)\<close>
-  proof
-    show \<open>HProp Kinds (mk_mcs C S)\<close>
-      using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
-  qed
-  moreover have \<open>p \<in> mk_mcs C S\<close>
-    using assms(4) Extend_subset by blast
-  ultimately show ?thesis
-    using MyHintikka.model by blast
-qed
 
 section \<open>Derivational Consistency\<close>
 
