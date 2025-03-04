@@ -7,8 +7,6 @@
 *)
 
 (* TODO: Might want to use a, b instead of n, m *)
-(* TODO: Gamma P should be probably be Gamma F *)
-(* TODO: is there a nicer way to get the useful rel_sort? *)
 (* TODO: In Isabelle2025 we can actually extend and instantiate wo_rel *)
 
 theory Analytic_Completeness imports
@@ -208,74 +206,23 @@ lemma (in wo_rel) chain_union_closed:
   shows \<open>(\<Union>n \<in> Field r. f n) \<in> C\<close>
   using assms chain_index unfolding finite_char_def by metis
 
+definition maximal :: \<open>'a set set \<Rightarrow> 'a set \<Rightarrow> bool\<close> where
+  \<open>maximal C S \<longleftrightarrow> (\<forall>S' \<in> C. S \<subseteq> S' \<longrightarrow> S = S')\<close>
+
 section \<open>Locale\<close>
 
-type_synonym 'a cprop = \<open>'a set set\<close>
+type_synonym 'fm cprop = \<open>'fm set set\<close>
 
-datatype ('fms, 'fmtm, 'tfms, 'xfms) sort
-  = Confl \<open>'fms\<close>
-  | Alpha \<open>'fms\<close>
-  | Beta \<open>'fms\<close>
-  | Gamma \<open>'fmtm\<close> \<open>'tfms\<close>
-  | Delta \<open>'xfms\<close>
+locale Map_Tm =
+  fixes map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close>
 
-locale Consistency =
-  fixes
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
-    classify :: \<open>'fm list \<Rightarrow> ('fm list, 'fm set \<Rightarrow> 'tm set, 'tm \<Rightarrow> 'fm list, 'x \<Rightarrow> 'fm list) sort \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<close> 50)
-  assumes
-    finite_params_fm [simp]: \<open>\<And>p. finite (params_fm p)\<close> and
-    map_fm_id: \<open>map_fm id = id\<close> and
-    map_params_fm: \<open>\<And>f g p. \<forall>x \<in> params_fm p. f x = g x \<Longrightarrow> map_fm f p = map_fm g p\<close> and
-    map_fm_classify: \<open>\<And>f ps qs. ps \<leadsto> qs \<Longrightarrow> \<exists>rs. map (map_fm f) ps \<leadsto> rs \<and> rel_sort
-      (\<lambda>qs rs. map (map_fm f) qs = rs)
-      (\<lambda>P Q. \<forall>S. map_tm f ` P S \<subseteq> Q (map_fm f ` S))
-      (\<lambda>qs rs. \<forall>t. map (map_fm f) (qs t) = rs (map_tm f t))
-      (\<lambda>qs rs. \<forall>x. map (map_fm f) (qs x) = rs (f x))
-      qs rs\<close> and
-    mono_Gamma: \<open>\<And>ps P qs S S'. ps \<leadsto> Gamma P qs \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> P S \<subseteq> P S'\<close> and
-    fin_Gamma: \<open>\<And>ps P qs t A. ps \<leadsto> Gamma P qs \<Longrightarrow> t \<in> P A \<Longrightarrow>
-      \<exists>B \<subseteq> A. finite B \<and> t \<in> P B\<close> and
-    singleton_Delta: \<open>\<And>ps qs. ps \<leadsto> Delta qs \<Longrightarrow> \<exists>p. ps = [p]\<close> and
-    unique_Delta: \<open>\<And>ps qs rs. ps \<leadsto> Delta qs \<Longrightarrow> ps \<leadsto> Delta rs \<Longrightarrow> qs = rs\<close>
+locale Map_Fm =
+  fixes map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close>
+  assumes map_fm_id: \<open>map_fm id = id\<close>
 begin
 
-abbreviation params :: \<open>'fm set \<Rightarrow> 'x set\<close> where
-  \<open>params S \<equiv> \<Union>p \<in> S. params_fm p\<close>
-
-lemma infinite_params: \<open>infinite (- params B) \<Longrightarrow> infinite (- params (set ps \<union> B))\<close>
-  using infinite_diff_finite finite_params_fm by (metis List.finite_set UN_Un finite_UN_I)
-
-lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |- params S| \<Longrightarrow> |A| \<le>o |- params (set ps \<union> S)|\<close>
-  using infinite_left by (metis List.finite_set UN_Un finite_UN_I finite_params_fm)
-
-definition consistency :: \<open>'fm set set \<Rightarrow> bool\<close> where
-  \<open>consistency C \<equiv> \<forall>S. S \<in> C \<longrightarrow> (\<forall>ps. set ps \<subseteq> S \<longrightarrow>
-    (\<forall>qs. ps \<leadsto> Confl qs \<longrightarrow> (\<forall>q \<in> set qs. q \<notin> S)) \<and>
-    (\<forall>qs. ps \<leadsto> Alpha qs \<longrightarrow> set qs \<union> S \<in> C) \<and>
-    (\<forall>qs. ps \<leadsto> Beta qs \<longrightarrow> (\<exists>q \<in> set qs. {q} \<union> S \<in> C)) \<and>
-    (\<forall>P qs. ps \<leadsto> Gamma P qs \<longrightarrow> (\<forall>t \<in> P S. set (qs t) \<union> S \<in> C)) \<and>
-    (\<forall>qs. ps \<leadsto> Delta qs \<longrightarrow> (\<exists>x. set (qs x) \<union> S \<in> C)))\<close>
-
-lemma
-  assumes \<open>consistency C\<close> \<open>S \<in> C\<close> \<open>set ps \<subseteq> S\<close>
-  shows
-    confl [dest]: \<open>\<And>qs q. ps \<leadsto> Confl qs \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<notin> S\<close> and
-    alpha [dest]: \<open>\<And>qs. ps \<leadsto> Alpha qs \<Longrightarrow> set qs \<union> S \<in> C\<close> and
-    beta [dest]: \<open>\<And>qs. ps \<leadsto> Beta qs \<Longrightarrow> \<exists>q \<in> set qs. {q} \<union> S \<in> C\<close> and
-    gamma [dest]: \<open>\<And>P qs t. ps \<leadsto> Gamma P qs \<Longrightarrow> t \<in> P S \<Longrightarrow> set (qs t) \<union> S \<in> C\<close> and
-    delta [dest]: \<open>\<And>qs. ps \<leadsto> Delta qs \<Longrightarrow> \<exists>x. set (qs x) \<union> S \<in> C\<close>
-  using assms unfolding consistency_def by fast+
-
-definition alt_consistency :: \<open>'fm set set \<Rightarrow> bool\<close> where
-  \<open>alt_consistency C \<equiv> \<forall>S. S \<in> C \<longrightarrow> (\<forall>ps. set ps \<subseteq> S \<longrightarrow>
-    (\<forall>qs. ps \<leadsto> Confl qs \<longrightarrow> (\<forall>q \<in> set qs. q \<notin> S)) \<and>
-    (\<forall>qs. ps \<leadsto> Alpha qs \<longrightarrow> set qs \<union> S \<in> C) \<and>
-    (\<forall>qs. ps \<leadsto> Beta qs \<longrightarrow> (\<exists>q \<in> set qs. {q} \<union> S \<in> C)) \<and>
-    (\<forall>P qs. ps \<leadsto> Gamma P qs \<longrightarrow> (\<forall>t \<in> P S. set (qs t) \<union> S \<in> C)) \<and>
-    (\<forall>qs. ps \<leadsto> Delta qs \<longrightarrow> (\<forall>x. x \<notin> params S \<longrightarrow> set (qs x) \<union> S \<in> C)))\<close>
+abbreviation respects_map :: \<open>('fm list \<Rightarrow> 'fm list \<Rightarrow> bool) \<Rightarrow> bool\<close> where
+  \<open>respects_map K \<equiv> \<forall>ps qs f. K ps qs \<longrightarrow> K (map (map_fm f) ps) (map (map_fm f) qs)\<close>
 
 definition mk_alt_consistency :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
   \<open>mk_alt_consistency C = {S. \<exists>f. map_fm f ` S \<in> C}\<close>
@@ -293,172 +240,6 @@ proof
     by blast
 qed
 
-lemma alt_consistency:
-  assumes conc: \<open>consistency C\<close>
-  shows \<open>alt_consistency (mk_alt_consistency C)\<close>
-  unfolding alt_consistency_def
-proof safe
-  fix S :: \<open>'fm set\<close> and ps :: \<open>'fm list\<close> and qs
-
-  assume \<open>S \<in> mk_alt_consistency C\<close>
-  then obtain f :: \<open>'x \<Rightarrow> 'x\<close> where f: \<open>map_fm f ` S \<in> C\<close>
-    unfolding mk_alt_consistency_def by blast
-
-  let ?C' = \<open>mk_alt_consistency C\<close>
-  let ?S' = \<open>map_fm f ` S\<close>
-
-  assume \<open>set ps \<subseteq> S\<close>
-  then have *: \<open>set (map (map_fm f) ps) \<subseteq> ?S'\<close>
-    by auto
-
-  {
-    fix q
-    assume **: \<open>ps \<leadsto> Confl qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
-    then have \<open>map (map_fm f) ps \<leadsto> Confl (map (map_fm f) qs)\<close>
-      using map_fm_classify by (fastforce elim: sort.rel_cases)
-    then have \<open>\<forall>q \<in> set qs. map_fm f q \<notin> ?S'\<close>
-      using confl[OF conc f *] by simp
-    then have \<open>\<forall>q \<in> set qs. q \<notin> S\<close>
-      by blast
-    then show False
-      using **(2-) by blast
-  }
-
-  {
-    assume \<open>ps \<leadsto> Alpha qs\<close>
-    then have \<open>map (map_fm f) ps \<leadsto> Alpha (map (map_fm f) qs)\<close>
-      using map_fm_classify by (fastforce elim: sort.rel_cases)
-    then have \<open>set (map (map_fm f) qs) \<union> ?S' \<in> C\<close>
-      using conc f * by blast
-    then show \<open>set qs \<union> S \<in> ?C'\<close>
-      unfolding mk_alt_consistency_def by (auto simp: image_Un)
-  }
-
-  {
-    assume \<open>ps \<leadsto> Beta qs\<close>
-    then have \<open>map (map_fm f) ps \<leadsto> Beta (map (map_fm f) qs)\<close>
-      using map_fm_classify by (fastforce elim: sort.rel_cases)
-    then have \<open>\<exists>q \<in> set (map (map_fm f) qs). {q} \<union> ?S' \<in> C\<close>
-      using conc f * by blast
-    then show \<open>\<exists>q \<in> set qs. {q} \<union> S \<in> ?C'\<close>
-      unfolding mk_alt_consistency_def by (auto simp: image_Un)
-  }
-
-  {
-    fix P t
-    assume **: \<open>ps \<leadsto> Gamma P qs\<close> and t: \<open>t \<in> P S\<close>
-    obtain rs Q where rs:
-      \<open>map (map_fm f) ps \<leadsto> Gamma Q rs\<close>
-      \<open>\<forall>S. map_tm f ` P S \<subseteq> Q (map_fm f ` S)\<close>
-      \<open>\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t)\<close>
-      using map_fm_classify[OF **, of f] by (auto elim: sort.rel_cases)
-    then have \<open>set (rs (map_tm f t)) \<union> ?S' \<in> C\<close>
-      using conc f * t by blast
-    then have \<open>set (map (map_fm f) (qs t)) \<union> ?S' \<in> C\<close>
-      using rs by simp
-    then show \<open>set (qs t) \<union> S \<in> ?C'\<close>
-      unfolding mk_alt_consistency_def
-      by (auto split: option.splits simp: image_Un)
-  }
-
-  {
-    fix x
-    have map_fm_Delta: \<open>\<And>ps qs f. ps \<leadsto> Delta qs \<Longrightarrow>
-        \<exists>rs. map (map_fm f) ps \<leadsto> Delta rs \<and> (\<forall>x. map (map_fm f) (qs x) = rs (f x))\<close>
-      using map_fm_classify by (fastforce elim: sort.rel_cases)
-
-    assume **: \<open>ps \<leadsto> Delta qs\<close> and x: \<open>x \<notin> params S\<close>
-    then obtain rs where rs: \<open>map (map_fm f) ps \<leadsto> Delta rs\<close> \<open>\<forall>x. map (map_fm f) (qs x) = rs (f x)\<close>
-      using map_fm_Delta by meson
-    then obtain y where y: \<open>set (rs y) \<union> ?S' \<in> C\<close>
-      using conc f * by blast
-
-    let ?g = \<open>f(x := y)\<close>
-
-    have \<open>\<forall>x \<in> params S. f x = ?g x\<close>
-      using x by simp
-    then have S: \<open>\<forall>q \<in> S. map_fm ?g q = map_fm f q\<close>
-      using map_params_fm by simp
-    then have \<open>map (map_fm ?g) ps = map (map_fm f) ps\<close>
-      using \<open>set ps \<subseteq> S\<close> by auto
-    then have \<open>map (map_fm ?g) ps \<leadsto> Delta rs\<close> \<open>\<forall>x. map (map_fm ?g) (qs x) = rs (?g x)\<close>
-      using rs map_fm_Delta unique_Delta ** by metis+
-
-    moreover have \<open>set (rs (?g x)) \<union> ?S' \<in> C\<close>
-      using y by simp
-    ultimately have \<open>set (map (map_fm ?g) (qs x)) \<union> ?S' \<in> C\<close>
-      by simp
-    then have \<open>\<exists>f. set (map (map_fm f) (qs x)) \<union> map_fm f ` S \<in> C\<close>
-      using S by (metis image_cong)
-    then show \<open>set (qs x) \<union> S \<in> ?C'\<close>
-      unfolding mk_alt_consistency_def
-      by (metis (mono_tags, lifting) image_Un image_set mem_Collect_eq)
-  }
-qed
-
-lemma close_consistency:
-  assumes conc: \<open>consistency C\<close>
-  shows \<open>consistency (close C)\<close>
-  unfolding consistency_def
-proof safe
-  fix S ps qs
-  assume \<open>S \<in> close C\<close>
-  then obtain S' where S': \<open>S' \<in> C\<close> and \<open>S \<subseteq> S'\<close>
-    unfolding close_def by blast
-
-  assume \<open>set ps \<subseteq> S\<close>
-  then have *: \<open>set ps \<subseteq> S'\<close>
-    using \<open>S \<subseteq> S'\<close> by blast
-
-  {
-    fix q
-    assume **: \<open>ps \<leadsto> Confl qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
-    then have \<open>\<forall>q \<in> set qs. q \<notin> S'\<close>
-      using conc S' * by blast
-    then have \<open>\<forall>q \<in> set qs. q \<notin> S\<close>
-      using \<open>S \<subseteq> S'\<close> by blast
-    then show False
-      using ** by blast
-  }
-
-  {
-    assume \<open>ps \<leadsto> Alpha qs\<close>
-    then have \<open>set qs \<union> S' \<in> C\<close>
-      using conc S' * by blast
-    then show \<open>set qs \<union> S \<in> close C\<close>
-      using \<open>S \<subseteq> S'\<close> by (metis subset_in_close)
-  }
-
-  {
-    assume \<open>ps \<leadsto> Beta qs\<close>
-    then have \<open>\<exists>q \<in> set qs. {q} \<union> S' \<in> C\<close>
-      using conc S' * by blast
-    then show \<open>\<exists>q \<in> set qs. {q} \<union> S \<in> close C\<close>
-      using \<open>S \<subseteq> S'\<close> by (metis subset_in_close)
-  }
-
-  {
-    fix t P
-    assume \<open>ps \<leadsto> Gamma P qs\<close> \<open>t \<in> P S\<close>
-    moreover from this have \<open>t \<in> P S'\<close>
-      using mono_Gamma \<open>S \<subseteq> S'\<close> by blast
-    ultimately have \<open>set (qs t) \<union> S' \<in> C\<close>
-      using conc S' * by blast
-    then have \<open>set (qs t) \<union> S \<in> close C\<close>
-      using \<open>S \<subseteq> S'\<close> subset_in_close by blast
-    then show \<open>set (qs t) \<union> S \<in> close C\<close>
-      by (meson close_closed equalityE subset_closed_def sup.mono)
-  }
-
-  {
-    assume \<open>ps \<leadsto> Delta qs\<close>
-    then have \<open>\<exists>x. set (qs x) \<union> S' \<in> C\<close>
-      using conc S' * by blast
-    then show \<open>\<exists>x. set (qs x) \<union> S \<in> close C\<close>
-      using \<open>S \<subseteq> S'\<close> by (metis subset_in_close)
-  }
-qed
-
 lemma mk_alt_consistency_closed:
   assumes \<open>subset_closed C\<close>
   shows \<open>subset_closed (mk_alt_consistency C)\<close>
@@ -474,35 +255,277 @@ proof safe
     by blast
 qed
 
-lemma finite_alt_consistency:
-  assumes altconc: \<open>alt_consistency C\<close>
-    and \<open>subset_closed C\<close>
-  shows \<open>alt_consistency (mk_finite_char C)\<close>
-  unfolding alt_consistency_def
-proof safe
-  fix S ps qs
-  assume \<open>S \<in> mk_finite_char C\<close>
-  then have finc: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C\<close>
-    unfolding mk_finite_char_def by blast
+end
 
-  have sc: \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
-    using \<open>subset_closed C\<close> unfolding subset_closed_def by blast
-  then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
-    by blast
+locale Params_Fm = Map_Fm map_fm
+  for map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> +
+  fixes params_fm :: \<open>'fm \<Rightarrow> 'x set\<close>
+  assumes finite_params_fm [simp]: \<open>\<And>p. finite (params_fm p)\<close>
+    and map_params_fm: \<open>\<And>f g p. \<forall>x \<in> params_fm p. f x = g x \<Longrightarrow> map_fm f p = map_fm g p\<close>
+begin
 
-  assume *: \<open>set ps \<subseteq> S\<close>
+abbreviation params :: \<open>'fm set \<Rightarrow> 'x set\<close> where
+  \<open>params S \<equiv> \<Union>p \<in> S. params_fm p\<close>
 
-  {
-    fix q
-    assume **: \<open>ps \<leadsto> Confl qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
+lemma infinite_params: \<open>infinite (- params B) \<Longrightarrow> infinite (- params (set ps \<union> B))\<close>
+  using infinite_diff_finite finite_params_fm by (metis List.finite_set UN_Un finite_UN_I)
+
+lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |- params S| \<Longrightarrow> |A| \<le>o |- params (set ps \<union> S)|\<close>
+  using infinite_left by (metis List.finite_set UN_Un finite_UN_I finite_params_fm)
+
+end
+
+datatype ('x, 'fm) kind
+  = Cond \<open>'fm list \<Rightarrow> ('fm cprop \<Rightarrow> 'fm set \<Rightarrow> bool) \<Rightarrow> bool\<close> \<open>'fm set \<Rightarrow> bool\<close>
+  | Wits \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
+
+inductive CKind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  CKind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> CKind (Cond P H) C\<close>
+| CKind_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<union> S \<in> C) \<Longrightarrow> CKind (Wits W) C\<close>
+
+inductive_cases CKind_CondE[elim!]: \<open>CKind (Cond P H) C\<close>
+inductive_cases CKind_WitsE[elim!]: \<open>CKind (Wits W) C\<close>
+
+inductive (in Params_Fm) ACKind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  ACKind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> ACKind (Cond P H) C\<close>
+| ACKind_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> ACKind (Wits W) C\<close>
+
+inductive_cases (in Params_Fm) ACKind_CondE[elim!]: \<open>ACKind (Cond P H) C\<close>
+inductive_cases (in Params_Fm) ACKind_WitsE[elim!]: \<open>ACKind (Wits W) C\<close>
+
+definition CProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  \<open>CProp Ks C \<equiv> \<forall>K \<in> set Ks. CKind K C\<close>
+
+definition (in Params_Fm) ACProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+  \<open>ACProp Ks C \<equiv> \<forall>K \<in> set Ks. ACKind K C\<close>
+
+inductive HKind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  HKind_Cond [intro!]: \<open>H S \<Longrightarrow> HKind (Cond P H) S\<close>
+| HKind_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> S) \<Longrightarrow> HKind (Wits W) S\<close>
+
+inductive_cases HKind_CondE[elim!]: \<open>HKind (Cond P H) C\<close>
+inductive_cases HKind_WitsE[elim!]: \<open>HKind (Wits W) C\<close>
+
+definition HProp :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  \<open>HProp Ks S \<equiv> \<forall>K \<in> set Ks. HKind K S\<close>
+
+theorem HKind_Wits: \<open>CKind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind (Wits W) S\<close>
+  unfolding maximal_def by fast
+
+locale Consistency_Kind = Params_Fm map_fm params_fm
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes K :: \<open>('x, 'fm) kind\<close>
+  assumes respects_close: \<open>\<And>C. CKind K C \<Longrightarrow> CKind K (close C)\<close>
+    and respects_alt: \<open>\<And>C. CKind K C \<Longrightarrow> subset_closed C \<Longrightarrow> ACKind K (mk_alt_consistency C)\<close>
+    and respects_fin: \<open>\<And>C. subset_closed C \<Longrightarrow> ACKind K C \<Longrightarrow> ACKind K (mk_finite_char C)\<close>
+    and hintikka: \<open>\<And>C S. CKind K C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind K S\<close>
+
+subsection \<open>Conflicts\<close>
+
+locale Confl = Params_Fm map_fm params_fm
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50)
+  assumes confl_map: \<open>respects_map (\<leadsto>\<^sub>\<crossmark>)\<close>
+begin
+
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> pred ps (\<lambda>_ S. set qs \<inter> S = {})\<close>
+
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<notin> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
+
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred hint\<close>
+
+end
+
+sublocale Confl \<subseteq> Consistency_Kind map_fm params_fm kind
+proof
+  fix C
+  assume conflC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
+  proof safe
+    fix S ps qs q
+    assume \<open>S \<in> close C\<close>
+    then obtain S' where S': \<open>S' \<in> C\<close> and \<open>S \<subseteq> S'\<close>
+      unfolding close_def by blast
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set ps \<subseteq> S'\<close>
+      using \<open>S \<subseteq> S'\<close> by blast
+
+    assume **: \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close>
+    then have \<open>\<forall>q \<in> set qs. q \<notin> S'\<close>
+      using conflC S' * by blast
+    then have \<open>\<forall>q \<in> set qs. q \<notin> S\<close>
+      using \<open>S \<subseteq> S'\<close> by blast
+    moreover assume \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
+    ultimately show \<open>q \<in> {}\<close>
+      using ** by auto
+  qed
+next
+  fix C
+  assume conflC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
+  proof safe
+    fix S ps qs q
+
+    assume \<open>S \<in> mk_alt_consistency C\<close>
+    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+      unfolding mk_alt_consistency_def by blast
+
+    let ?C = \<open>mk_alt_consistency C\<close>
+    let ?S = \<open>map_fm f ` S\<close>
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set (map (map_fm f) ps) \<subseteq> ?S\<close>
+      by auto
+
+    assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close>
+    then have \<open>map (map_fm f) ps \<leadsto>\<^sub>\<crossmark> (map (map_fm f) qs)\<close>
+      using confl_map by blast
+    then have \<open>\<forall>q \<in> set  (map (map_fm f) qs). q \<notin> ?S\<close>
+      using conflC f * by blast
+    then have \<open>\<forall>q \<in> set qs. map_fm f q \<notin> ?S\<close>
+      by simp
+    then have \<open>\<forall>q \<in> set qs. q \<notin> S\<close>
+      by blast
+    moreover assume \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
+    ultimately show \<open>q \<in> {}\<close>
+      by auto
+  qed
+next
+  fix C
+  assume conflAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
+  proof safe
+    fix S ps qs q
+    assume \<open>S \<in> mk_finite_char C\<close>
+    then have finc: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C\<close>
+      unfolding mk_finite_char_def by blast
+
+    have sc: \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
+      using closedC unfolding subset_closed_def by blast
+    then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
+      by blast
+
+    assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
     then have \<open>{q} \<union> set ps \<in> C\<close>
       using \<open>set ps \<subseteq> S\<close> finc by simp
+    then have \<open>q \<in> {}\<close>
+      using * conflAC by blast
+    then show \<open>q \<in> {}\<close>
+      by auto
+  qed
+next
+  fix C S
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HKind kind S\<close>
+  proof safe
+    fix ps qs q
+    assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
     then show False
-      using ** altconc unfolding alt_consistency_def by fast
-  }
+      using * by blast
+  qed
+qed
 
-  {
-    assume **: \<open>ps \<leadsto> Alpha qs\<close>
+subsection \<open>Alpha\<close>
+
+locale Alpha = Params_Fm map_fm params_fm
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50)
+  assumes alpha_map: \<open>respects_map (\<leadsto>\<^sub>\<alpha>)\<close>
+begin
+
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> pred ps (\<lambda>C S. set qs \<union> S \<in> C)\<close>
+
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
+
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred hint\<close>
+
+end
+
+sublocale Alpha \<subseteq> Consistency_Kind map_fm params_fm kind
+proof
+  fix C
+  assume alphaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
+  proof safe
+    fix S ps qs q
+    assume \<open>S \<in> close C\<close>
+    then obtain S' where S': \<open>S' \<in> C\<close> and \<open>S \<subseteq> S'\<close>
+      unfolding close_def by blast
+
+    assume \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
+    then have *: \<open>set ps \<subseteq> S'\<close>
+      using \<open>S \<subseteq> S'\<close> by blast
+
+    assume **: \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
+    then have \<open>set qs \<union> S' \<in> C\<close>
+      using alphaC S' * by blast
+    then show  \<open>set qs \<union> S \<in> close C\<close>
+      using \<open>S \<subseteq> S'\<close> subset_in_close by blast
+  qed
+next
+  fix C
+  assume alphaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
+  proof safe
+    fix S ps qs
+
+    assume \<open>S \<in> mk_alt_consistency C\<close>
+    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+      unfolding mk_alt_consistency_def by blast
+
+    let ?C = \<open>mk_alt_consistency C\<close>
+    let ?S = \<open>map_fm f ` S\<close>
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set (map (map_fm f) ps) \<subseteq> ?S\<close>
+      by auto
+
+    assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
+    then have \<open>map (map_fm f) ps \<leadsto>\<^sub>\<alpha> (map (map_fm f) qs)\<close>
+      using alpha_map by blast
+    then have \<open>set (map (map_fm f) qs) \<union> ?S \<in> C\<close>
+      using alphaC * f by blast
+    then show \<open>set qs \<union> S \<in> ?C\<close>
+      unfolding mk_alt_consistency_def by (auto simp: image_Un)
+  qed
+next
+  fix C
+  assume alphaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
+  proof safe
+    fix S ps qs q
+    assume \<open>S \<in> mk_finite_char C\<close>
+    then have finc: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C\<close>
+      unfolding mk_finite_char_def by blast
+
+    have sc: \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
+      using closedC unfolding subset_closed_def by blast
+    then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
+      by blast
+
+    assume *: \<open>set ps \<subseteq> S\<close> and **: \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
+
     show \<open>set qs \<union> S \<in> mk_finite_char C\<close>
       unfolding mk_finite_char_def
     proof safe
@@ -517,20 +540,121 @@ proof safe
       ultimately have \<open>?S' \<in> C\<close>
         using finc by blast
       then have \<open>set qs \<union> ?S' \<in> C\<close>
-        using ** altconc unfolding alt_consistency_def by fast
+        using ** alphaAC by fast
       then show \<open>S' \<in> C\<close>
         using sc by fast
     qed
-  }
+  qed
+next
+  fix C S
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HKind kind S\<close>
+  proof safe
+    fix ps qs q
+    assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
+    then have \<open>set qs \<union> S \<in> C\<close>
+      using * by blast
+    moreover assume \<open>q \<in> set qs\<close>
+    ultimately show \<open>q \<in> S\<close>
+      using \<open>maximal C S\<close> unfolding maximal_def by fast
+  qed
+qed
 
-  {
-    assume **: \<open>ps \<leadsto> Beta qs\<close>
-    show \<open>\<exists>q \<in> set qs. {q} \<union> S \<in> mk_finite_char C\<close>
+subsection \<open>Beta\<close>
+
+locale Beta = Params_Fm map_fm params_fm
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50)
+  assumes beta_map: \<open>respects_map (\<leadsto>\<^sub>\<beta>)\<close>
+begin
+
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> pred ps (\<lambda>C S. \<exists>q \<in> set qs. {q} \<union> S \<in> C)\<close>
+
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps qs. ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<exists>q \<in> set qs. q \<in> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
+
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred hint\<close>
+
+end
+
+sublocale Beta \<subseteq> Consistency_Kind map_fm params_fm kind
+proof
+  fix C
+  assume betaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
+  proof safe
+    fix S ps qs q
+    assume \<open>S \<in> close C\<close>
+    then obtain S' where S': \<open>S' \<in> C\<close> and \<open>S \<subseteq> S'\<close>
+      unfolding close_def by blast
+
+    assume \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
+    then have *: \<open>set ps \<subseteq> S'\<close>
+      using \<open>S \<subseteq> S'\<close> by blast
+
+    assume **: \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
+    then have \<open>\<exists>q \<in> set qs. {q} \<union> S' \<in> C\<close>
+      using betaC S' * by blast
+    then show \<open>\<exists>q \<in> set qs. insert q S \<in> close C\<close>
+      using \<open>S \<subseteq> S'\<close> subset_in_close by (metis insert_is_Un)
+  qed
+next
+  fix C
+  assume betaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
+  proof safe
+    fix S ps qs
+
+    assume \<open>S \<in> mk_alt_consistency C\<close>
+    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+      unfolding mk_alt_consistency_def by blast
+
+    let ?C = \<open>mk_alt_consistency C\<close>
+    let ?S = \<open>map_fm f ` S\<close>
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set (map (map_fm f) ps) \<subseteq> ?S\<close>
+      by auto
+
+    assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
+    then have \<open>map (map_fm f) ps \<leadsto>\<^sub>\<beta> (map (map_fm f) qs)\<close>
+      using beta_map by blast
+    then have \<open>\<exists>q \<in> set (map (map_fm f) qs). {q} \<union> ?S \<in> C\<close>
+      using betaC * f by blast
+    then show \<open>\<exists>q \<in> set qs. insert q S \<in> ?C\<close>
+      unfolding mk_alt_consistency_def by (auto simp: image_Un)
+  qed
+next
+  fix C
+  assume betaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
+  proof safe
+    fix S ps qs q
+    assume \<open>S \<in> mk_finite_char C\<close>
+    then have finc: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C\<close>
+      unfolding mk_finite_char_def by blast
+
+    have sc: \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
+      using closedC unfolding subset_closed_def by blast
+    then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
+      by blast
+
+    assume *: \<open>set ps \<subseteq> S\<close> and **: \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
+
+    show \<open>\<exists>q \<in> set qs. insert q S \<in> mk_finite_char C\<close>
     proof (rule ccontr)
       assume \<open>\<not> ?thesis\<close>
-      then have \<open>\<forall>q \<in> set qs. \<exists>Sq. Sq \<subseteq> {q} \<union> S \<and> finite Sq \<and> Sq \<notin> C\<close>
+      then have \<open>\<forall>q \<in> set qs. \<exists>Sq. Sq \<subseteq> insert q S \<and> finite Sq \<and> Sq \<notin> C\<close>
         unfolding mk_finite_char_def by blast
-      then obtain f where f: \<open>\<forall>q \<in> set qs. f q \<subseteq> {q} \<union> S \<and> finite (f q) \<and> f q \<notin> C\<close>
+      then obtain f where f: \<open>\<forall>q \<in> set qs. f q \<subseteq> insert q S \<and> finite (f q) \<and> f q \<notin> C\<close>
         by metis
 
       let ?S' = \<open>set ps \<union> \<Union>{f q - {q} |q. q \<in> set qs}\<close>
@@ -542,17 +666,130 @@ proof safe
       ultimately have \<open>?S' \<in> C\<close>
         using finc by blast
       then have \<open>\<exists>q \<in> set qs. {q} \<union> ?S' \<in> C\<close>
-        using ** altconc unfolding alt_consistency_def by fast
+        using ** betaAC by fast
       then have \<open>\<exists>q \<in> set qs. f q \<in> C\<close>
         using sc' by blast
       then show False
         using f by blast
     qed
-  }
+  qed
+next
+  fix C S
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HKind kind S\<close>
+  proof safe
+    fix ps qs
+    assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
+    then have \<open>\<exists>q \<in> set qs. {q} \<union> S \<in> C\<close>
+      using * by blast
+    then show \<open>\<exists>q \<in> set qs. q \<in> S\<close>
+      using \<open>maximal C S\<close> unfolding maximal_def by fast
+  qed
+qed
 
-  {
-    fix t P
-    assume **: \<open>ps \<leadsto> Gamma P qs\<close> and t: \<open>t \<in> P S\<close>
+subsection \<open>Gamma\<close>
+
+locale Gamma = Map_Tm map_tm + Params_Fm map_fm params_fm
+  (* TODO: a sublocale when we don't need the F part? *)
+  for
+    map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50)
+  assumes gamma_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> \<exists>G rs. map (map_fm f) ps \<leadsto>\<^sub>\<gamma> (G, rs) \<and>
+      (\<forall>S. map_tm f ` F S \<subseteq> G (map_fm f ` S)) \<and>
+      (\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t))\<close>
+    and gamma_mono: \<open>\<And>ps F qs S S'. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> F S \<subseteq> F S'\<close>
+    and gamma_fin: \<open>\<And>ps F qs t A. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F A \<Longrightarrow> \<exists>B \<subseteq> A. finite B \<and> t \<in> F B\<close>
+begin
+
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> pred ps (\<lambda>C S. \<forall>t \<in> F S. set (qs t) \<union> S \<in> C)\<close>
+
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+
+inductive hint where
+  hint [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<forall>t \<in> F H. set (qs t) \<subseteq> H) \<Longrightarrow> hint H\<close>
+
+declare hint.simps[simp]
+
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred hint\<close>
+
+end
+
+sublocale Gamma \<subseteq> Consistency_Kind map_fm params_fm kind
+proof
+  fix C
+  assume gammaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
+  proof safe
+    fix S ps qs F t
+    assume \<open>S \<in> close C\<close>
+    then obtain S' where S': \<open>S' \<in> C\<close> and \<open>S \<subseteq> S'\<close>
+      unfolding close_def by blast
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set ps \<subseteq> S'\<close>
+      using \<open>S \<subseteq> S'\<close> by blast
+
+    assume **: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>t \<in> F S\<close>
+    then have \<open>t \<in> F S'\<close>
+      using ** gamma_mono \<open>S \<subseteq> S'\<close> by blast
+    then have \<open>set (qs t) \<union> S' \<in> C\<close>
+      using gammaC S' * ** by blast
+    then have \<open>set (qs t) \<union> S \<in> close C\<close>
+      using \<open>S \<subseteq> S'\<close> subset_in_close by blast
+    then show \<open>set (qs t) \<union> S \<in> close C\<close>
+      by (meson close_closed equalityE subset_closed_def sup.mono)
+  qed
+next
+  fix C
+  assume gammaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
+  proof safe
+    fix S ps F qs t
+
+    assume \<open>S \<in> mk_alt_consistency C\<close>
+    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+      unfolding mk_alt_consistency_def by blast
+
+    let ?C = \<open>mk_alt_consistency C\<close>
+    let ?S = \<open>map_fm f ` S\<close>
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set (map (map_fm f) ps) \<subseteq> ?S\<close>
+      by auto
+
+    assume **: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> and t: \<open>t \<in> F S\<close>
+    obtain rs G where rs:
+      \<open>map (map_fm f) ps \<leadsto>\<^sub>\<gamma> (G, rs)\<close>
+      \<open>\<forall>S. map_tm f ` F S \<subseteq> G (map_fm f ` S)\<close>
+      \<open>\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t)\<close>
+      using gamma_map ** by meson
+    then have \<open>set (rs (map_tm f t)) \<union> ?S \<in> C\<close>
+      using gammaC f * t by blast
+    then have \<open>set (map (map_fm f) (qs t)) \<union> ?S \<in> C\<close>
+      using rs by simp
+    then show \<open>set (qs t) \<union> S \<in> ?C\<close>
+      unfolding mk_alt_consistency_def by (auto simp: image_Un)
+  qed
+next
+  fix C
+  assume gammaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
+  proof safe
+    fix S ps F qs t
+    assume \<open>S \<in> mk_finite_char C\<close>
+    then have finc: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C\<close>
+      unfolding mk_finite_char_def by blast
+
+    have sc: \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
+      using closedC unfolding subset_closed_def by blast
+    then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
+      by blast
+
+    assume *: \<open>set ps \<subseteq> S\<close> and **: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> and t: \<open>t \<in> F S\<close>
    
     show \<open>set (qs t) \<union> S \<in> mk_finite_char C\<close>
       unfolding mk_finite_char_def 
@@ -560,12 +797,11 @@ proof safe
       fix S'
       assume 1: \<open>S' \<subseteq> set (qs t) \<union> S\<close> and 2: \<open>finite S'\<close>
  
-      (* Take the big S and boil it down to a finite one to get a better handle on instances. *)
-     obtain A where A: \<open>A \<subseteq> S\<close> \<open>finite A\<close> \<open>S' \<subseteq> set (qs t) \<union> A\<close> 
+      obtain A where A: \<open>A \<subseteq> S\<close> \<open>finite A\<close> \<open>S' \<subseteq> set (qs t) \<union> A\<close> 
         using 1 2 by (meson Diff_subset_conv equalityD2 finite_Diff)
 
-      obtain B where B: \<open>B \<subseteq> S\<close> \<open>finite B\<close> \<open>t \<in> P B\<close>
-        using ** t fin_Gamma by meson
+      obtain B where B: \<open>B \<subseteq> S\<close> \<open>finite B\<close> \<open>t \<in> F B\<close>
+        using ** t gamma_fin by meson
 
       let ?S = \<open>set ps \<union> A \<union> B\<close>
 
@@ -578,43 +814,313 @@ proof safe
 
       moreover have \<open>set ps \<subseteq> ?S\<close>
         by blast
-      moreover have \<open>t \<in> P ?S\<close>
-        using ** B(3) mono_Gamma by blast
+      moreover have \<open>t \<in> F ?S\<close>
+        using ** B(3) gamma_mono by blast
       ultimately have \<open>set (qs t) \<union> ?S \<in> C\<close>
-        using ** altconc unfolding alt_consistency_def by meson
+        using ** gammaAC by blast
     
       moreover have \<open>S' \<subseteq> set (qs t) \<union> ?S\<close>
         using A(3) by blast
       ultimately show \<open>S' \<in> C\<close>
         using sc by blast
     qed
-  }
+  qed
+next
+  fix C S
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>HKind kind S\<close>
+  proof safe
+    fix ps F qs t
+    assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close>
+    then have \<open>\<forall>t \<in> F S. set (qs t) \<union> S \<in> C\<close>
+      using * by blast
+    then have \<open>\<forall>t \<in> F S. set (qs t) \<subseteq> S\<close>
+      using \<open>maximal C S\<close> unfolding maximal_def by fast
+    then show \<open>t \<in> F S \<Longrightarrow> x \<in> set (qs t) \<Longrightarrow> x \<in> S\<close> for x
+      by blast
+  qed
+qed
 
-  {
-    fix x
-    assume **: \<open>ps \<leadsto> Delta qs\<close> and \<open>x \<notin> params S\<close>
-    show \<open>set (qs x) \<union> S \<in> mk_finite_char C\<close>
+subsection \<open>Delta\<close>
+
+locale Delta = Params_Fm map_fm params_fm
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
+  assumes delta_map: \<open>\<And>p f x. delta_fun (map_fm f p) (f x) = map (map_fm f) (delta_fun p x)\<close>
+begin
+
+abbreviation \<open>kind \<equiv> Wits delta_fun\<close>
+end
+
+sublocale Delta \<subseteq> Consistency_Kind map_fm params_fm kind
+proof
+  fix C
+  assume deltaC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
+  proof safe
+    fix S p qs q
+    assume \<open>S \<in> close C\<close>
+    then obtain S' where S': \<open>S' \<in> C\<close> and \<open>S \<subseteq> S'\<close>
+      unfolding close_def by blast
+
+    assume \<open>p \<in> S\<close>
+    then have *: \<open>p \<in> S'\<close>
+      using \<open>S \<subseteq> S'\<close> by blast
+
+    have \<open>\<exists>x. set (delta_fun p x) \<union> S' \<in> C\<close>
+      using deltaC S' * by blast
+    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> close C\<close>
+      using \<open>S \<subseteq> S'\<close> by (metis subset_in_close)
+
+  qed
+next
+  fix C
+  assume deltaC: \<open>CKind kind C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
+  proof safe
+    fix S p qs x
+
+    assume \<open>S \<in> mk_alt_consistency C\<close>
+    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+      unfolding mk_alt_consistency_def by blast
+
+    let ?C = \<open>mk_alt_consistency C\<close>
+    let ?S = \<open>map_fm f ` S\<close>
+
+    assume \<open>p \<in> S\<close>
+    then have *: \<open>map_fm f p \<in> ?S\<close>
+      by auto
+
+    assume x: \<open>x \<notin> params S\<close>
+    obtain y where y: \<open>set (delta_fun (map_fm f p) y) \<union> ?S \<in> C\<close>
+      using deltaC f * by blast
+
+    let ?g = \<open>f(x := y)\<close>
+
+    have \<open>\<forall>x \<in> params S. f x = ?g x\<close>
+      using x by simp
+    then have S: \<open>\<forall>q \<in> S. map_fm ?g q = map_fm f q\<close>
+      using map_params_fm by simp
+    then have \<open>map_fm ?g p = map_fm f p\<close>
+      using \<open>p \<in> S\<close> by auto
+
+    moreover have \<open>set (delta_fun (map_fm f p) (?g x)) \<union> ?S \<in> C\<close>
+      using y by simp
+    ultimately have \<open>set (map (map_fm ?g) (delta_fun p x)) \<union> ?S \<in> C\<close>
+      using delta_map by metis
+    then have \<open>\<exists>f. set (map (map_fm f) (delta_fun p x)) \<union> map_fm f ` S \<in> C\<close>
+      using S by (metis image_cong)
+    then show \<open>set (delta_fun p x) \<union> S \<in> ?C\<close>
+      unfolding mk_alt_consistency_def
+      by (metis (mono_tags, lifting) image_Un image_set mem_Collect_eq)
+  qed
+next
+  fix C
+  assume deltaAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
+  proof safe
+    fix S p qs x
+    assume \<open>S \<in> mk_finite_char C\<close>
+    then have finc: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C\<close>
+      unfolding mk_finite_char_def by blast
+
+    have sc: \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
+      using closedC unfolding subset_closed_def by blast
+    then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
+      by blast
+
+    assume *: \<open>p \<in> S\<close> and x: \<open>x \<notin> params S\<close>
+    show \<open>set (delta_fun p x) \<union> S \<in> mk_finite_char C\<close>
       unfolding mk_finite_char_def
     proof safe
       fix S'
-      let ?S' = \<open>set ps \<union> (S' - set (qs x))\<close>
+      let ?S' = \<open>{p} \<union> (S' - set (delta_fun p x))\<close>
 
-      assume \<open>S' \<subseteq> set (qs x) \<union> S\<close> and \<open>finite S'\<close>
+      assume \<open>S' \<subseteq> set (delta_fun p x) \<union> S\<close> and \<open>finite S'\<close>
       then have \<open>?S' \<subseteq> S\<close>
-        using * by blast
+        using * by fast
       moreover have \<open>finite ?S'\<close>
         using \<open>finite S'\<close> by blast
       ultimately have \<open>?S' \<in> C\<close>
         using finc by blast
       moreover have \<open>\<forall>a \<in> ?S'. x \<notin> params_fm a\<close>
-        using \<open>x \<notin> params S\<close> \<open>?S' \<subseteq> S\<close> by blast
-      ultimately have \<open>set (qs x) \<union> ?S' \<in> C\<close>
-        using ** altconc unfolding alt_consistency_def by fast
+        using x \<open>?S' \<subseteq> S\<close> by blast
+      ultimately have \<open>set (delta_fun p x) \<union> ?S' \<in> C\<close>
+        using deltaAC by blast
       then show \<open>S' \<in> C\<close>
         using sc by fast
     qed
-  }
+  qed
+next
+  show \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind kind S\<close>
+    using HKind_Wits .
 qed
+
+subsection \<open>Modal\<close>
+
+text \<open>
+  The Hintikka property you want depends on the concrete logic.
+  See Term-Modal Logics by Fitting, Thalmann and Voronkov, p. 156 bottom.
+\<close>
+
+locale Modal = Params_Fm map_fm params_fm
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50)
+    and hint :: \<open>'fm set \<Rightarrow> bool\<close>
+  assumes modal_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<exists>G. map (map_fm f) ps \<leadsto>\<^sub>\<box> (G, map (map_fm f) qs) \<and>
+      (\<forall>S. map_fm f ` F S \<subseteq> G (map_fm f ` S))\<close>
+    and modal_mono: \<open>\<And>ps F qs S S'. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> F S \<subseteq> F S'\<close>
+    and modal_fin: \<open>\<And>ps F qs S A. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> finite A \<Longrightarrow> A \<subseteq> F S \<Longrightarrow> \<exists>S' \<subseteq> S. finite S' \<and> A \<subseteq> F S'\<close>
+begin
+
+inductive pred where
+  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> pred ps (\<lambda>C S. set qs \<union> F S \<in> C)\<close>
+
+inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+
+abbreviation kind :: \<open>('x, 'fm) kind\<close> where
+  \<open>kind \<equiv> Cond pred hint\<close>
+
+end
+
+locale ModalH = Modal map_fm params_fm classify hint
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) and
+    hint :: \<open>'fm set \<Rightarrow> bool\<close> +
+  assumes modal_hintikka: \<open>\<And>C S. CKind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> HKind kind S\<close>
+
+sublocale ModalH \<subseteq> Consistency_Kind map_fm params_fm kind
+proof
+  fix C
+  assume modalC: \<open>CKind kind C\<close>
+  then show \<open>CKind kind (close C)\<close>
+  proof safe
+    fix S ps F qs
+    assume \<open>S \<in> close C\<close>
+    then obtain S' where S': \<open>S' \<in> C\<close> and \<open>S \<subseteq> S'\<close>
+      unfolding close_def by blast
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set ps \<subseteq> S'\<close>
+      using \<open>S \<subseteq> S'\<close> by blast
+
+    assume **: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close>
+    then have \<open>set qs \<union> F S' \<in> C\<close>
+      using modalC S' * ** by blast
+    then show \<open>set qs \<union> F S \<in> close C\<close>
+      using \<open>S \<subseteq> S'\<close> subset_in_close ** modal_mono by metis
+  qed
+next
+  fix C
+  assume modalC: \<open>CKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_alt_consistency C)\<close>
+  proof safe
+    fix S ps F qs
+
+    assume \<open>S \<in> mk_alt_consistency C\<close>
+    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+      unfolding mk_alt_consistency_def by blast
+
+    let ?C = \<open>mk_alt_consistency C\<close>
+    let ?S = \<open>map_fm f ` S\<close>
+
+    assume \<open>set ps \<subseteq> S\<close>
+    then have *: \<open>set (map (map_fm f) ps) \<subseteq> ?S\<close>
+      by auto
+
+    assume **: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close>
+    obtain G where G:
+      \<open>map (map_fm f) ps \<leadsto>\<^sub>\<box> (G, map (map_fm f) qs)\<close>
+      \<open>\<forall>S. map_fm f ` F S \<subseteq> G (map_fm f ` S)\<close>
+      using modal_map ** by meson
+    then have \<open>set (map (map_fm f) qs) \<union> G ?S \<in> C\<close>
+      using modalC f * by blast
+    then have \<open>set (map (map_fm f) qs) \<union> map_fm f ` F S \<in> C\<close>
+      using G closedC unfolding subset_closed_def by (meson Un_mono order_refl)
+    then show \<open>set qs \<union> F S \<in> ?C\<close>
+      unfolding mk_alt_consistency_def
+      by (auto split: option.splits simp: image_Un)
+  qed
+next
+  fix C
+  assume modalAC: \<open>ACKind kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>ACKind kind (mk_finite_char C)\<close>
+  proof safe
+    fix S ps F qs t
+    assume S: \<open>S \<in> mk_finite_char C\<close>
+    then have finc: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C\<close>
+      unfolding mk_finite_char_def by blast
+
+    have sc: \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
+      using closedC unfolding subset_closed_def by blast
+    then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
+      by blast
+
+    assume *: \<open>set ps \<subseteq> S\<close> and **: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close>
+
+   show \<open>set qs \<union> F S \<in> mk_finite_char C\<close>
+      unfolding mk_finite_char_def 
+    proof safe
+      fix S'
+      assume 1: \<open>S' \<subseteq> set qs \<union> F S\<close> and 2: \<open>finite S'\<close>
+ 
+      obtain A where A: \<open>A \<subseteq> S\<close> \<open>finite A\<close> \<open>S' \<subseteq> set qs \<union> F A\<close> 
+        using 1 2 ** modal_fin by (meson Diff_subset_conv finite_Diff)
+
+      let ?S = \<open>set ps \<union> A\<close>
+
+      have \<open>finite ?S\<close>
+        using A(2) by blast
+      moreover have \<open>?S \<subseteq> S\<close>
+        using * A(1) by simp
+      ultimately have \<open>?S \<in> C\<close>
+        using finc by simp
+
+      moreover have \<open>set ps \<subseteq> ?S\<close>
+        by blast
+      ultimately have \<open>set qs \<union> F ?S \<in> C\<close>
+        using ** modalAC by blast
+
+      moreover have \<open>S' \<subseteq> set qs \<union> F ?S\<close>
+        using A(3) ** modal_mono by (meson Diff_subset_conv inf_sup_ord(4) subset_trans)
+      ultimately show \<open>S' \<in> C\<close>
+        using sc by blast
+    qed
+  qed
+next
+  fix C S
+  assume *: \<open>CKind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  then show \<open>HKind kind S\<close>
+    using modal_hintikka by simp
+qed
+
+subsection \<open>Consistency Property\<close>
+
+locale Consistency_Prop = Params_Fm map_fm params_fm
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes Ks :: \<open>('x, 'fm) kind list\<close>
+  assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Kind map_fm params_fm K\<close>
+begin
+
+lemma CProp_CKind: \<open>K \<in> set Ks \<Longrightarrow> CProp Ks C \<Longrightarrow> CKind K C\<close>
+  unfolding CProp_def by blast
+
+lemma CProp_close: \<open>CProp Ks C \<Longrightarrow> CProp Ks (close C)\<close>
+  unfolding CProp_def using all_kinds Consistency_Kind.respects_close by fast
+
+lemma CProp_alt: \<open>CProp Ks C \<Longrightarrow> subset_closed C \<Longrightarrow> ACProp Ks (mk_alt_consistency C)\<close>
+  unfolding CProp_def ACProp_def using all_kinds Consistency_Kind.respects_alt by fast
+
+lemma CProp_fin: \<open>subset_closed C \<Longrightarrow> ACProp Ks C \<Longrightarrow> ACProp Ks (mk_finite_char C)\<close>
+  unfolding ACProp_def using all_kinds Consistency_Kind.respects_fin by fast
 
 definition mk_cprop :: \<open>'fm cprop \<Rightarrow> 'fm cprop\<close> where
   \<open>mk_cprop C \<equiv> mk_finite_char (mk_alt_consistency (close C))\<close>
@@ -625,22 +1131,42 @@ lemma mk_cprop_subset_closed: \<open>subset_closed (mk_cprop C)\<close>
 lemma mk_cprop_finite_char: \<open>finite_char (mk_cprop C)\<close>
   unfolding mk_cprop_def using finite_char by blast
 
-lemma mk_cprop_alt_consistency: \<open>consistency C \<Longrightarrow> alt_consistency (mk_cprop C)\<close>
-  unfolding mk_cprop_def using alt_consistency close_closed close_consistency
-    finite_alt_consistency mk_alt_consistency_closed 
-  by blast
+lemma mk_cprop_in: \<open>S \<in> C \<Longrightarrow> S \<in> mk_cprop C\<close>
+  unfolding mk_cprop_def
+  by (meson close_closed close_subset finite_char_subset in_mono mk_alt_consistency_closed mk_alt_consistency_subset)
 
-lemma mk_cprop_in: \<open>S \<in> C \<Longrightarrow> S \<in> mk_cprop C\<close>  
-  by (metis close_closed close_subset finite_char_subset mk_alt_consistency_closed
-      mk_alt_consistency_subset mk_cprop_def subsetD)
+theorem CProp: \<open>CProp Ks C \<Longrightarrow> ACProp Ks (mk_cprop C)\<close>
+  unfolding mk_cprop_def
+  by (simp add: CProp_alt CProp_close CProp_fin close_closed mk_alt_consistency_closed)
 
 end
 
-locale Maximal_Consistency = Consistency params_fm map_fm map_tm classify
-  for params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and map_fm map_tm and classify (infix \<open>\<leadsto>\<close> 50) +
+fun (in Params_Fm) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
+  \<open>witness_kinds [] p S = {}\<close>
+| \<open>witness_kinds (Cond _ _ # Qs) p S = witness_kinds Qs p S\<close>
+| \<open>witness_kinds (Wits W # Qs) p S =
+  (let
+    rest = witness_kinds Qs p S;
+    a = SOME x. x \<notin> params (rest \<union> {p} \<union> S)
+   in set (W p a) \<union> rest)\<close>
+
+lemma (in Params_Fm) witness_kinds:
+  assumes \<open>Wits W \<in> set Qs\<close>
+  shows \<open>\<exists>x. set (W p x) \<subseteq> witness_kinds Qs p S\<close>
+  using assms
+  by (induct Qs p S rule: witness_kinds.induct) (auto simp add: Let_def)
+
+locale Maximal_Consistency = Consistency_Prop map_fm params_fm Ks
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes r :: \<open>'fm rel\<close>
   assumes Cinfinite_r: \<open>Cinfinite r\<close>
 begin
+
+lemma inf_univ: \<open>infinite (UNIV :: 'fm set)\<close>
+  using Cinfinite_r card_of_UNIV card_of_ordLeq_infinite unfolding cinfinite_def by blast
 
 lemma wo_rel_r: \<open>wo_rel r\<close>
   by (simp add: Card_order_wo_rel Cinfinite_r)
@@ -662,19 +1188,7 @@ lemma params_left: \<open>r \<le>o |- params S| \<Longrightarrow> r \<le>o |- pa
       Field_card_of card_of_Card_order cinfinite_def cinfinite_mono ordLeq_transitive)
 
 definition witness :: \<open>'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
-  \<open>witness p S \<equiv> if \<exists>qs. [p] \<leadsto> Delta qs
-    then let a = SOME x. x \<notin> params ({p} \<union> S) in set ((THE qs. [p] \<leadsto> Delta qs) a)
-    else {}\<close>
-
-lemma witness:
-  assumes \<open>[p] \<leadsto> Delta qs\<close>
-  shows \<open>witness p S = set (qs (SOME x. x \<notin> params ({p} \<union> S)))\<close>
-  unfolding witness_def using assms unique_Delta by (metis the_equality)
-
-lemma no_witness:
-  assumes \<open>\<nexists>qs. [p] \<leadsto> Delta qs\<close>
-  shows \<open>witness p S = {}\<close>
-  unfolding witness_def using assms by meson
+  \<open>witness \<equiv> witness_kinds Ks\<close>
 
 definition extendS :: \<open>'fm cprop \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>extendS C n prev \<equiv> if {n} \<union> prev \<in> C then witness n prev \<union> {n} \<union> prev else prev\<close>
@@ -691,8 +1205,17 @@ lemma adm_woL_extendL: \<open>adm_woL r (extendL C)\<close>
 definition Extend :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>Extend C S \<equiv> \<Union>n \<in> Field r. extend C S n\<close>
 
+lemma finite_witness_kinds: \<open>finite (witness_kinds Qs p S)\<close>
+  unfolding witness_def by (induct Qs p S rule: witness_kinds.induct) (simp_all add: Let_def)
+
+lemma finite_witness: \<open>finite (witness p S)\<close>
+  unfolding witness_def using finite_witness_kinds .
+
+lemma finite_witness_kinds_params: \<open>finite (params (witness_kinds Qs p S))\<close>
+  using finite_witness_kinds by simp
+
 lemma finite_witness_params: \<open>finite (params (witness p S))\<close>
-  unfolding witness_def by (auto split: sort.split)
+  using finite_witness by simp
 
 lemma extend_zero [simp]: \<open>extend C S (zero r) = S\<close>
   unfolding extend_def wo_rel.worecZSL_zero[OF wo_rel_r adm_woL_extendL] ..
@@ -793,29 +1316,60 @@ lemma is_chain_extend: \<open>wo_rel.is_chain r (extend C S)\<close>
   by (simp add: extend_under wo_rel.is_chain_def wo_rel_r)
 
 lemma extend_in_C_step:
-  assumes \<open>alt_consistency C\<close> \<open>{n} \<union> extend C S n \<in> C\<close>
-    and \<open>\<exists>x. x \<notin> params ({n} \<union> extend C S n)\<close> \<open>n \<in> Field r\<close> 
+  assumes \<open>ACProp Ks C\<close> \<open>{n} \<union> extend C S n \<in> C\<close>
+    and inf: \<open>infinite (UNIV - params ({n} \<union> extend C S n))\<close> and n: \<open>n \<in> Field r\<close> 
   shows \<open>extend C S (succ r n) \<in> C\<close>
-proof (cases \<open>\<exists>qs. [n] \<leadsto> Delta qs\<close>)
-  case True
-  then obtain qs where Delta: \<open>[n] \<leadsto> Delta qs\<close>
-    by blast
+proof -
+  have \<open>set Qs \<subseteq> set Ks \<Longrightarrow> witness_kinds Qs n (extend C S n) \<union> {n} \<union> extend C S n \<in> C\<close> for Qs
+  proof (induct Qs)
+    case Nil
+    then show ?case
+      using assms(2) by simp
+  next
+    case (Cons Q Qs)
+    let ?S = \<open>extend C S n\<close>
+    let ?rest = \<open>witness_kinds Qs n ?S\<close>
 
-  let ?S' = \<open>{n} \<union> extend C S n\<close>
-  let ?a = \<open>SOME x. x \<notin> params ?S'\<close>
+    have Q: \<open>Q \<in> set Ks\<close>
+      using Cons.prems by simp
 
-  have \<open>set [n] \<subseteq> ?S'\<close>
-    by simp
-  then have \<open>\<forall>x. x \<notin> params ?S' \<longrightarrow> set (qs x) \<union> ?S' \<in> C\<close>
-    using Delta \<open>?S' \<in> C\<close> \<open>alt_consistency C\<close> unfolding alt_consistency_def by meson
-  then have \<open>set (qs ?a) \<union> ?S' \<in> C\<close>
-    using assms(3) by (metis (mono_tags, lifting) someI2)
-  then show \<open>extend C S (succ r n) \<in> C\<close>
-    using witness Delta assms unfolding extend_succ[OF assms(4)] by simp
-next
-  case False
+    have *: \<open>?rest \<union> {n} \<union> ?S \<in> C\<close>
+      using Cons by simp
+
+    show ?case
+    proof (cases Q)
+      case (Wits W)
+
+      have \<open>infinite (UNIV - params (?rest \<union> {n} \<union> ?S))\<close>
+        using finite_witness_kinds_params inf by (metis UN_Un Un_assoc infinite_Diff_fin_Un)
+      then have \<open>\<exists>x. x \<notin> params (?rest \<union> {n} \<union> ?S)\<close>
+        by (metis diff_shunt finite.simps subset_eq)
+      then obtain a where a:
+        \<open>(SOME x. x \<notin> params (?rest \<union> {n} \<union> ?S)) = a\<close>
+        \<open>a \<notin> params (?rest \<union> {n} \<union> ?S)\<close>
+        by (meson someI_ex)
+
+      have \<open>n \<in> ?rest \<union> {n} \<union> ?S\<close>
+        by simp
+      then have \<open>\<forall>x. x \<notin> params (?rest \<union> {n} \<union> ?S) \<longrightarrow> set (W n x) \<union> ?rest \<union> {n} \<union> ?S \<in> C\<close>
+        using assms(1) * Q Wits unfolding ACProp_def Un_assoc by fast
+      then have \<open>set (W n a) \<union> ?rest \<union>  {n} \<union> ?S \<in> C\<close>
+        using a by fast
+
+      moreover have \<open>witness_kinds (Q # Qs) n ?S = set (W n a) \<union> ?rest\<close>
+        using Cons Wits a by (simp add: Let_def)
+      ultimately show ?thesis
+        by simp
+    next
+      case (Cond P)
+      then show ?thesis
+        using * by simp
+    qed
+  qed
+  then have \<open>witness n (extend C S n) \<union> {n} \<union> extend C S n \<in> C\<close>
+    unfolding witness_def by blast
   then show ?thesis
-    using assms(2, 4) no_witness by simp
+    unfolding extend_succ[OF n] using assms(2) by simp
 qed
 
 lemma extend_in_C_stop:
@@ -826,7 +1380,7 @@ lemma extend_in_C_stop:
   using assms extend_succ by auto
 
 lemma extend_in_C:
-  assumes \<open>alt_consistency C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close> \<open>n \<in> Field r\<close>
+  assumes \<open>ACProp Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close> \<open>n \<in> Field r\<close>
   shows \<open>extend C S n \<in> C\<close>
   using assms
 proof (induct n rule: wo_rel.well_order_inductZSL[OF wo_rel_r])
@@ -875,14 +1429,10 @@ next
   ultimately have \<open>infinite (- params (extend C S i))\<close>
     using infinite_Diff_subset by (metis (no_types, lifting) Compl_eq_Diff_UNIV Set_Diff_Un)
   then have \<open>infinite (- params ({i} \<union> extend C S i))\<close>
-    using finite_params_fm[of i]
-      (* TODO: silly smt *)
-    by (smt (verit) Compl_eq_Diff_UNIV Diff_infinite_finite SUP_insert Set_Diff_Un Un_commute insert_is_Un)
-  then have \<open>\<exists>x. x \<notin> params ({i} \<union> extend C S i)\<close>
-    by (meson Compl_iff finite_params_fm rev_finite_subset subsetI)
+    using finite_params_fm by (simp add: Compl_eq_Diff_UNIV infinite_Diff_fin_Un)
   then show ?case
     using assms 2(2) extend_in_C_step extend_in_C_stop wo_rel.succ_in[OF wo_rel_r, of i]
-      \<open>i \<in> Field r\<close> by metis
+      \<open>i \<in> Field r\<close>  by (metis Compl_eq_Diff_UNIV)
 next
   case (3 i)
   show ?case
@@ -910,19 +1460,19 @@ next
 qed
 
 lemma Extend_in_C:
-  assumes \<open>alt_consistency C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>ACProp Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>Extend C S \<in> C\<close>
   unfolding Extend_def
   using assms wo_rel.chain_union_closed[OF wo_rel_r] is_chain_extend extend_in_C nonempty_Field_r
   by blast
 
-definition maximal :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
-  \<open>maximal C S \<equiv> \<forall>S' \<in> C. S' \<subseteq> Field r \<longrightarrow> S \<subseteq> S' \<longrightarrow> S = S'\<close>
+definition rmaximal :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  \<open>rmaximal C S \<equiv> \<forall>S' \<in> C. S' \<subseteq> Field r \<longrightarrow> S \<subseteq> S' \<longrightarrow> S = S'\<close>
 
-theorem Extend_maximal:
+theorem Extend_rmaximal:
   assumes \<open>finite_char C\<close>
-  shows \<open>maximal C (Extend C S)\<close>
-  unfolding maximal_def Extend_def
+  shows \<open>rmaximal C (Extend C S)\<close>
+  unfolding rmaximal_def Extend_def
 proof (intro ballI impI)
   fix S'
   assume *: \<open>S' \<subseteq> Field r\<close> \<open>S' \<in> C\<close> \<open>(\<Union>x \<in> Field r. extend C S x) \<subseteq> S'\<close>
@@ -954,7 +1504,7 @@ definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
   \<open>witnessed S \<equiv> \<forall>p \<in> S. p \<in> Field r \<longrightarrow> (\<exists>S'. witness p S' \<subseteq> S)\<close>
 
 theorem Extend_witnessed:
-  assumes \<open>alt_consistency C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>ACProp Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>witnessed (Extend C S)\<close>
   unfolding witnessed_def
 proof safe
@@ -980,23 +1530,24 @@ qed
 abbreviation mk_mcs :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>mk_mcs C S \<equiv> Extend (mk_cprop C) S\<close>
 
-theorem mk_mcs_maximal: \<open>maximal C (mk_mcs C S)\<close>
-  using Extend_maximal maximal_def mk_cprop_finite_char mk_cprop_in by meson
+theorem mk_mcs_rmaximal: \<open>rmaximal C (mk_mcs C S)\<close>
+  using Extend_rmaximal rmaximal_def mk_cprop_finite_char mk_cprop_in by meson
 
 theorem mk_mcs_witnessed:
-  assumes \<open>consistency C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>CProp Ks C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>witnessed (mk_mcs C S)\<close>
-  using assms Extend_witnessed mk_cprop_alt_consistency mk_cprop_finite_char mk_cprop_in by blast
+  using assms Extend_witnessed CProp mk_cprop_finite_char mk_cprop_in by blast
 
 end
 
-locale Maximal_Consistency_UNIV =
-  Consistency params_fm map_fm map_tm classify
-  for params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and map_fm map_tm and classify (\<open>_ \<leadsto> _\<close> [50, 50] 50) +
+locale Maximal_Consistency_UNIV = Consistency_Prop map_fm params_fm Ks
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> +
   assumes inf_UNIV: \<open>infinite (UNIV :: 'fm set)\<close>
 
-sublocale Maximal_Consistency_UNIV \<subseteq>
-  Maximal_Consistency params_fm map_fm map_tm classify \<open>|UNIV :: 'fm set|\<close>
+sublocale Maximal_Consistency_UNIV \<subseteq> Maximal_Consistency map_fm params_fm Ks \<open>|UNIV :: 'fm set|\<close>
 proof
   show \<open>Cinfinite |UNIV :: 'fm set|\<close>
     using inf_UNIV unfolding cinfinite_def by simp
@@ -1005,155 +1556,324 @@ qed
 context Maximal_Consistency_UNIV
 begin
 
-lemma maximal: \<open>maximal C S \<longleftrightarrow> (\<forall>S' \<in> C. S \<subseteq> S' \<longrightarrow> S = S')\<close>
-  unfolding maximal_def by simp
+lemma maximal: \<open>rmaximal C S \<longleftrightarrow> maximal C S\<close>
+  unfolding maximal_def rmaximal_def by simp
 
 lemma witnessed: \<open>witnessed S \<longleftrightarrow> (\<forall>p \<in> S. \<exists>S'. witness p S' \<subseteq> S)\<close>
   unfolding witnessed_def by simp
 
 end
 
-locale Hintikka = Consistency params_fm map_fm map_tm classify
-  for params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and map_fm map_tm and classify (\<open>_ \<leadsto> _\<close> [50, 50] 50)
-    +
-  fixes H :: \<open>'fm set\<close>
-  assumes
-    confl: \<open>\<And>ps qs. set ps \<subseteq> H \<Longrightarrow> ps \<leadsto> Confl qs \<Longrightarrow> \<forall>q \<in> set qs. q \<notin> H\<close> and
-    alpha: \<open>\<And>ps qs. set ps \<subseteq> H \<Longrightarrow> ps \<leadsto> Alpha qs \<Longrightarrow> \<forall>q \<in> set qs. q \<in> H\<close> and
-    beta: \<open>\<And>ps qs. set ps \<subseteq> H \<Longrightarrow> ps \<leadsto> Beta qs \<Longrightarrow> \<exists>q \<in> set qs. q \<in> H\<close> and
-    gamma: \<open>\<And>ps P qs. set ps \<subseteq> H \<Longrightarrow> ps \<leadsto> Gamma P qs \<Longrightarrow> \<forall>t \<in> P H. set (qs t) \<subseteq> H\<close> and
-    delta: \<open>\<And>ps qs. set ps \<subseteq> H \<Longrightarrow> ps \<leadsto> Delta qs \<Longrightarrow> \<exists>x. set (qs x) \<subseteq> H\<close>
+section \<open>Hintikka Sets\<close>
 
 context Maximal_Consistency_UNIV
 begin
 
-theorem Hintikka_MCS:
-  assumes \<open>alt_consistency C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> \<open>witnessed S\<close>
-  shows \<open>Hintikka params_fm map_fm map_tm classify S\<close>
+lemma mk_mcs_HProp:
+  assumes \<open>CProp Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  shows \<open>HProp Ks (mk_mcs C S)\<close>
+  unfolding HProp_def
 proof
-  fix ps qs
-  assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto> Confl qs\<close>
-  then show \<open>\<forall>q \<in> set qs. q \<notin> S\<close>
-    using \<open>S \<in> C\<close> \<open>alt_consistency C\<close> unfolding alt_consistency_def by fast
-next
-  fix ps qs
-  assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto> Alpha qs\<close>
-  then have \<open>set qs \<union> S \<in> C\<close>
-    using * \<open>S \<in> C\<close> \<open>alt_consistency C\<close> unfolding alt_consistency_def by fast
-  then show \<open>\<forall>q \<in> set qs. q \<in> S\<close>
-    using \<open>maximal C S\<close> unfolding maximal by fast
-next
-  fix ps qs
-  assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto> Beta qs\<close>
-  then have \<open>\<exists>q \<in> set qs. {q} \<union> S \<in> C\<close>
-    using * \<open>S \<in> C\<close> \<open>alt_consistency C\<close> unfolding alt_consistency_def by fast
-  then show \<open>\<exists>q \<in> set qs. q \<in> S\<close>
-    using \<open>maximal C S\<close> unfolding maximal by fast
-next
-  fix ps P qs
-  assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto> Gamma P qs\<close>
-  then have \<open>t \<in> P S \<Longrightarrow> set (qs t) \<union> S \<in> C\<close> for t
-    using * \<open>S \<in> C\<close> \<open>alt_consistency C\<close> unfolding alt_consistency_def by fast
-  then show \<open>\<forall>t \<in> P S. set (qs t) \<subseteq> S\<close>
-    using \<open>maximal C S\<close> unfolding maximal by fast
-next
-  fix ps qs
-  assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto> Delta qs\<close>
-  then have \<open>\<exists>x. set (qs x) \<union> S \<in> C\<close>
-    using assms(2, 4) witness unfolding witnessed
-    by (metis in_mono list.set_intros(1) singleton_Delta subset_Un_eq)
-  then show \<open>\<exists>x. set (qs x) \<subseteq> S\<close>
-    using \<open>maximal C S\<close> unfolding maximal by fast
+  fix K
+  assume K: \<open>K \<in> set Ks\<close>
+  show \<open>HKind K (mk_mcs C S)\<close>
+  proof (cases K)
+    case (Cond P H)
+    moreover have \<open>maximal (mk_cprop C) (mk_mcs C S)\<close>
+      using Extend_rmaximal mk_cprop_finite_char unfolding maximal by blast
+    moreover have \<open>ACProp Ks (mk_cprop C)\<close>
+      using assms(1) CProp by blast
+    then have \<open>mk_mcs C S \<in> mk_cprop C\<close>
+      using assms(2-3) Extend_in_C mk_cprop_finite_char mk_cprop_in by blast
+    moreover have \<open>CKind (Cond P H) (mk_cprop C)\<close>
+      using \<open>ACProp Ks (mk_cprop C)\<close> Cond K unfolding ACProp_def by fast 
+    ultimately show ?thesis
+      using K all_kinds Consistency_Kind.hintikka by meson
+  next
+    case (Wits W)
+    have \<open>witnessed (mk_mcs C S)\<close>
+      using mk_mcs_witnessed[OF assms(1-3)] .
+    then have \<open>\<forall>p \<in> mk_mcs C S. \<exists>x. set (W p x) \<subseteq> mk_mcs C S \<close>
+      unfolding witnessed witness_def using Wits witness_kinds K by fast 
+    then show ?thesis
+      using Wits by fast
+  qed
 qed
-
-corollary Hintikka_mk_mcs:
-  fixes S :: \<open>'fm set\<close>
-  assumes \<open>consistency C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
-  shows \<open>Hintikka params_fm map_fm map_tm classify (mk_mcs C S)\<close>
-  using assms Extend_in_C Extend_maximal Hintikka_MCS mk_cprop_alt_consistency
-      mk_cprop_finite_char mk_cprop_in mk_mcs_witnessed
-  by meson
 
 end
 
-locale Derivational_Consistency = Maximal_Consistency params_fm map_fm map_tm classify r
-  for params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and map_fm and map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close>
-    and classify (infix \<open>\<leadsto>\<close> 50) and r +
-  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes refute_confl: \<open>\<And>ps qs A q. ps \<leadsto> Confl qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_alpha: \<open>\<And>ps qs A. ps \<leadsto> Alpha qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> \<turnstile> set qs \<union> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_beta: \<open>\<And>ps qs A. ps \<leadsto> Beta qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> \<forall>q \<in> set qs. \<turnstile> {q} \<union> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_gamma: \<open>\<And>ps P qs A t. ps \<leadsto> Gamma P qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> t \<in> P A \<Longrightarrow> \<turnstile> set (qs t) \<union> A \<Longrightarrow> \<turnstile> A\<close>
-    and refute_delta: \<open>\<And>ps qs A a. ps \<leadsto> Delta qs \<Longrightarrow> set ps \<subseteq> A \<Longrightarrow> a \<notin> params A \<Longrightarrow> \<turnstile> set (qs a) \<union> A \<Longrightarrow> \<turnstile> A\<close>
+locale Hintikka = Maximal_Consistency_UNIV map_fm params_fm Ks
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> +
+  fixes H :: \<open>'fm set\<close>
+  assumes hintikka: \<open>HProp Ks H\<close>
 begin
 
-theorem Consistency: \<open>consistency {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-  unfolding consistency_def
-proof safe
-  fix S :: \<open>'fm set\<close> and ps qs
-  assume
-    *: \<open>\<not> \<turnstile> S\<close> and
-    inf': \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> and
-    ps: \<open>set ps \<subseteq> S\<close>
-  
-  have inf: \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> S)|\<close> for qs
-    using inf' infinite_params_left Cinfinite_r card_of_UNIV card_of_ordLeq_finite cinfinite_def
-    by blast
-
-  {
-    assume \<open>ps \<leadsto> Alpha qs\<close>
-    then show \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> S)|\<close>
-      using inf by blast
-  }
-
-  {
-    fix t and P :: \<open>'fm set \<Rightarrow> 'tm set\<close>
-    assume \<open>ps \<leadsto> Gamma P qs\<close>
-    then show \<open>|UNIV :: 'fm set| \<le>o |- params (set (qs t) \<union> S)|\<close>
-      using inf by blast
-  }
-
-  {
-    fix q
-    assume \<open>ps \<leadsto> Confl qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
-    then show False
-      using * ps refute_confl by blast
-  }
-
-  {
-    assume \<open>ps \<leadsto> Alpha qs\<close> \<open>\<turnstile> set qs \<union> S\<close>
-    then show False
-      using * ps refute_alpha by blast
-  }
-
-  {
-    assume \<open>ps \<leadsto> Beta qs\<close>
-    then show \<open>\<exists>q \<in> set qs. {q} \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-      using * ps inf refute_beta[of ps qs]
-      by (metis (no_types, lifting) finite.emptyI finite.insertI finite_list mem_Collect_eq)
-    }
-
-  {
-    fix t P
-    assume \<open>ps \<leadsto> Gamma P qs\<close> \<open>t \<in> P S\<close> \<open>\<turnstile> set (qs t) \<union> S\<close>
-    then show False
-      using * ps refute_gamma by blast
-  }
-
-  {
-    assume \<open>ps \<leadsto> Delta qs\<close>
-    moreover have \<open>infinite (- (params (set ps \<union> S)))\<close>
-      using ps inf' card_of_ordLeq_finite infinite_params
-      by (metis Cinfinite_r card_of_UNIV cinfinite_def)
-    then obtain x where **: \<open>x \<notin> params (set ps \<union> S)\<close>
-      using infinite_imp_nonempty by blast
-    ultimately have \<open>\<exists>x. set (qs x) \<union> S \<in> {A. \<not> \<turnstile> A}\<close>
-      using * ps refute_delta[of ps qs] by auto
-    then show \<open>\<exists>x. set (qs x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-      using ps inf by blast
-  }
-qed
+lemma hkind: \<open>K \<in> set Ks \<Longrightarrow> HKind K H\<close>
+  using hintikka unfolding HProp_def by blast
 
 end
+
+context Maximal_Consistency_UNIV
+begin
+
+theorem mk_mcs_Hintikka:
+  assumes \<open>CProp Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  shows \<open>Hintikka map_fm params_fm Ks (mk_mcs C S)\<close>
+  using assms mk_mcs_HProp by unfold_locales
+
+end
+
+section \<open>Derivational Consistency\<close>
+
+locale Derivational_Kind = Consistency_Kind map_fm params_fm K
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    K :: \<open>('x, 'fm) kind\<close> +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> CKind K {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+
+locale Derivational_Confl = Confl map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>S ps qs x. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> S \<Longrightarrow> \<turnstile> S\<close>
+
+sublocale Derivational_Confl \<subseteq> Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
+
+locale Derivational_Alpha = Alpha map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> set qs \<union> S \<Longrightarrow> \<turnstile> S\<close>
+
+sublocale Derivational_Alpha \<subseteq> Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
+
+locale Derivational_Beta = Beta map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<forall>q \<in> set qs. \<turnstile> {q} \<union> S \<Longrightarrow> \<turnstile> S\<close>
+
+sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm kind refute
+proof
+  assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
+  then show \<open>CKind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix S ps qs
+    assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> \<turnstile> S\<close>
+    then have \<open>\<exists>q \<in> set qs. \<not> \<turnstile> ({q} \<union> S)\<close>
+      using refute by blast
+    moreover assume \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> 
+    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+      using infinite_params_left[OF inf]
+      by (metis (no_types, lifting) empty_set insert_code(1) insert_is_Un mem_Collect_eq)
+  qed
+qed
+
+locale Derivational_Gamma = Gamma map_tm map_fm params_fm classify
+  for
+    map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>S ps F qs t. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F S \<Longrightarrow> \<turnstile> set (qs t) \<union> S \<Longrightarrow> \<turnstile> S \<close>
+
+sublocale Derivational_Gamma \<subseteq> Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
+
+locale Derivational_Delta = Delta map_fm params_fm delta_fun
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> set (delta_fun p x) \<union> S \<Longrightarrow> \<turnstile> S\<close>
+
+sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind refute
+proof
+  assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
+  show \<open>CKind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix S p
+    assume *: \<open>p \<in> S\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>\<not> \<turnstile> S\<close>
+    then have \<open>infinite (- (params ({p} \<union> S)))\<close>
+      using card_of_ordLeq_finite inf by auto
+    then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
+      using infinite_imp_nonempty by blast
+    then have \<open>\<exists>x. \<not> \<turnstile> set (delta_fun p x) \<union> S\<close>
+      using *(1,3) refute \<open>\<not> \<turnstile> S\<close> by fast
+    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+      using * inf infinite_params_left by blast
+  qed
+qed
+
+locale Derivational_Modal = ModalH map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>S ps F qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<turnstile> set qs \<union> F S \<Longrightarrow> \<turnstile> S\<close>
+    and params_subset: \<open>\<And>ps F qs S. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> params (F S) \<subseteq> params S\<close>
+
+sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm kind refute
+proof
+  assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
+  then show \<open>CKind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+   fix S ps F qs
+    assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+    then have \<open>|UNIV :: 'fm set| \<le>o |- params (F S)|\<close>
+      using * params_subset by (meson Compl_subset_Compl_iff card_of_mono1 ordLeq_transitive)
+    then show \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> F S)|\<close>
+      using infinite_params_left[OF inf] by blast
+  qed (use refute in blast)
+qed
+
+locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> and
+    r :: \<open>'fm rel\<close> +
+  fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes all_refute: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> CProp Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+begin
+
+theorem Consistency: \<open>CProp Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  using all_refute inf_univ unfolding CProp_def by fast
+
+end
+
+section \<open>Weak Derivational Consistency\<close>
+
+locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm K
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    K :: \<open>('x, 'fm) kind\<close> +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> CKind K {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+
+locale Weak_Derivational_Confl = Confl map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps qs x. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> set A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Confl \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+  using infinite_params_left refute by unfold_locales blast+
+
+locale Weak_Derivational_Alpha = Alpha map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> qs @ A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Alpha \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix ps qs A
+    assume \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> \<open>\<not> \<turnstile> A\<close>
+    then show \<open>\<exists>B. set B = set qs \<union> set A \<and> \<not> \<turnstile> B\<close>
+      using refute[of ps A qs] by (meson set_append)
+  qed
+qed
+
+locale Weak_Derivational_Beta = Beta map_fm params_fm classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<forall>q \<in> set qs. \<turnstile> q # A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Beta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix ps qs A
+    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> \<turnstile> A\<close>
+    then have \<open>\<exists>q \<in> set qs. \<not> \<turnstile> q # A\<close>
+      using refute by blast
+    then show \<open>\<exists>q\<in>set qs. insert q (set A) \<in> {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+      by (metis (mono_tags, lifting) CollectI list.simps(15))
+  qed
+qed
+
+locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm classify
+  for
+    map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A ps F qs t. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F (set A) \<Longrightarrow> \<turnstile> qs t @ A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Gamma \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix ps qs A F t
+    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>\<not> \<turnstile> A\<close> \<open>t \<in> F (set A)\<close>
+    then show \<open>\<exists>B. set B = set (qs t) \<union> set A \<and> \<not> \<turnstile> B\<close>
+      using refute[of ps A F qs t] by (meson set_append)
+  qed
+qed
+
+locale Weak_Derivational_Delta = Delta map_fm params_fm delta_fun
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes refute: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> delta_fun p x @ A \<Longrightarrow> \<turnstile> A\<close>
+
+sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
+proof
+  assume inf: \<open>infinite (UNIV :: 'x set)\<close>
+  show \<open>CKind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  proof safe
+    fix p A
+    assume *: \<open>p \<in> set A\<close> \<open>\<not> \<turnstile> A\<close>
+    then have \<open>infinite (- (params (set (p # A))))\<close>
+      using inf finite_compl by fastforce
+    then obtain x where \<open>x \<notin> params (set (p # A))\<close>
+      using infinite_imp_nonempty by blast
+    then have \<open>\<exists>x. \<not> \<turnstile> delta_fun p x @ A\<close>
+      using * refute[of p A x] by auto
+    then show \<open>\<exists>x. set (delta_fun p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+      by (metis (mono_tags, lifting) CollectI set_append)
+  qed
+qed
+
+(* TODO: Weak for Modal requires that F works on lists rather than sets. *)
+
+locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    Ks :: \<open>('x, 'fm) kind list\<close> and
+    r :: \<open>'fm rel\<close> +
+  fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> CProp Ks {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
 
 end

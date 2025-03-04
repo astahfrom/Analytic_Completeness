@@ -658,51 +658,75 @@ qed
 
 section \<open>Model Existence\<close>
 
-inductive classify :: \<open>'x lbd list \<Rightarrow> ('x lbd list, 'x lbd set \<Rightarrow> _, 'x fm \<Rightarrow> _, 'x \<Rightarrow> _) sort \<Rightarrow> bool\<close>
-  (\<open>_ \<leadsto> _\<close> [50, 50] 50) where
-  CRefl: \<open>[] \<leadsto> Gamma (\<lambda>_. UNIV) (\<lambda>p. case p of \<^bold>\<bullet>i \<Rightarrow> [ (i, \<^bold>\<bullet>i) ] | _ \<Rightarrow> [])\<close>
-| CSym: \<open>[ (i, \<^bold>\<bullet>k) ] \<leadsto> Alpha [(k, \<^bold>\<bullet>i)]\<close>
-| CAnti: \<open>[ (i, \<^bold>\<not> \<^bold>\<bullet>k) ] \<leadsto> Alpha [(k, \<^bold>\<not> \<^bold>\<bullet>i)]\<close>
-| CNom: \<open>[ (i, \<^bold>\<bullet>k), (i, p) ] \<leadsto> Alpha [(k, p)]\<close>
-| CNegP: \<open>[ (i, \<^bold>\<not> p) ] \<leadsto> Confl [(i, p)]\<close>
-| CNegN: \<open>[ (i, \<^bold>\<not> \<^bold>\<not> p) ] \<leadsto> Alpha [(i, p)]\<close>
-| CConP: \<open>[ (i, p \<^bold>\<and> q) ] \<leadsto> Alpha [(i, p), (i, q)]\<close>
-| CConN: \<open>[ (i, \<^bold>\<not> (p \<^bold>\<and> q)) ] \<leadsto> Beta [(i, \<^bold>\<not> p), (i, \<^bold>\<not> q)]\<close>
-| CSatP: \<open>[ (i, \<^bold>@k p) ] \<leadsto> Alpha [(k, p)]\<close>
-| CSatN: \<open>[ (i, \<^bold>\<not> \<^bold>@k p) ] \<leadsto> Alpha [(k, \<^bold>\<not> p)]\<close>
-| CBoxP: \<open>[ (i, \<^bold>\<box>p), (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) ] \<leadsto> Alpha [(k, p)]\<close>
-| CBoxN: \<open>[ (i, \<^bold>\<not> \<^bold>\<box>p) ] \<leadsto> Delta (\<lambda>k. [(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k)))])\<close>
-| CGloP: \<open>[ (i, \<^bold>A p) ] \<leadsto> Gamma (\<lambda>_. UNIV) (\<lambda>q. case q of \<^bold>\<bullet>k \<Rightarrow> [ (k, p) ] | _ \<Rightarrow> [])\<close>
-| CGloN: \<open>[ (i, \<^bold>\<not> \<^bold>A p) ] \<leadsto> Delta (\<lambda>k. [ (\<^bold>\<circle>k, \<^bold>\<not> p) ])\<close>
-| CDwnP: \<open>[ (i, \<^bold>\<down> p) ] \<leadsto> Alpha [ (i, \<langle>i\<rangle>\<^sub>i p) ]\<close>
-| CDwnN: \<open>[ (i, \<^bold>\<not> \<^bold>\<down> p) ] \<leadsto> Alpha [ (i, \<^bold>\<not> \<langle>i\<rangle>\<^sub>i p) ]\<close>
-| CAllP: \<open>[ (i, \<^bold>\<forall> p) ] \<leadsto> Gamma (\<lambda>_. {q. softqdf q}) (\<lambda>q. [ (i, \<langle>q\<rangle>\<^sub>p p) ])\<close>
-| CAllN: \<open>[ (i, \<^bold>\<not> \<^bold>\<forall> p) ] \<leadsto> Delta (\<lambda>P. [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ])\<close>
+inductive confl_class :: \<open>'x lbd list \<Rightarrow> 'x lbd list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
+  CNegP: \<open>[ (i, \<^bold>\<not> p) ] \<leadsto>\<^sub>\<crossmark> [(i, p)]\<close>
 
-declare classify.intros(2-)[intro]
+inductive alpha_class :: \<open>'x lbd list \<Rightarrow> 'x lbd list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
+  CSym: \<open>[ (i, \<^bold>\<bullet>k) ] \<leadsto>\<^sub>\<alpha> [(k, \<^bold>\<bullet>i)]\<close>
+| CAnti: \<open>[ (i, \<^bold>\<not> \<^bold>\<bullet>k) ] \<leadsto>\<^sub>\<alpha> [(k, \<^bold>\<not> \<^bold>\<bullet>i)]\<close>
+| CNom: \<open>[ (i, \<^bold>\<bullet>k), (i, p) ] \<leadsto>\<^sub>\<alpha> [(k, p)]\<close>
+| CNegN: \<open>[ (i, \<^bold>\<not> \<^bold>\<not> p) ] \<leadsto>\<^sub>\<alpha> [(i, p)]\<close>
+| CConP: \<open>[ (i, p \<^bold>\<and> q) ] \<leadsto>\<^sub>\<alpha> [(i, p), (i, q)]\<close>
+| CSatP: \<open>[ (i, \<^bold>@k p) ] \<leadsto>\<^sub>\<alpha> [(k, p)]\<close>
+| CSatN: \<open>[ (i, \<^bold>\<not> \<^bold>@k p) ] \<leadsto>\<^sub>\<alpha> [(k, \<^bold>\<not> p)]\<close>
+| CBoxP: \<open>[ (i, \<^bold>\<box>p), (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) ] \<leadsto>\<^sub>\<alpha> [(k, p)]\<close>
+| CDwnP: \<open>[ (i, \<^bold>\<down> p) ] \<leadsto>\<^sub>\<alpha> [ (i, \<langle>i\<rangle>\<^sub>i p) ]\<close>
+| CDwnN: \<open>[ (i, \<^bold>\<not> \<^bold>\<down> p) ] \<leadsto>\<^sub>\<alpha> [ (i, \<^bold>\<not> \<langle>i\<rangle>\<^sub>i p) ]\<close>
 
-interpretation Maximal_Consistency_UNIV symbols_lbd map_lbd map_fm classify
+inductive beta_class :: \<open>'x lbd list \<Rightarrow> 'x lbd list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
+  CConN: \<open>[ (i, \<^bold>\<not> (p \<^bold>\<and> q)) ] \<leadsto>\<^sub>\<beta> [(i, \<^bold>\<not> p), (i, \<^bold>\<not> q)]\<close>
+
+inductive gamma_class_nom :: \<open>'x lbd list \<Rightarrow> ('x lbd set \<Rightarrow> 'x tm set) \<times> ('x tm \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>i\<close> 50) where
+  CRefl: \<open>[] \<leadsto>\<^sub>\<gamma>\<^sub>i (\<lambda>_. UNIV, \<lambda>i. [ (i, \<^bold>\<bullet>i) ])\<close>
+| CGloP: \<open>[ (i, \<^bold>A p) ] \<leadsto>\<^sub>\<gamma>\<^sub>i (\<lambda>_. UNIV, \<lambda>k. [ (k, p) ])\<close>
+  
+inductive gamma_class_fm :: \<open>'x lbd list \<Rightarrow> ('x lbd set \<Rightarrow> 'x fm set) \<times> ('x fm \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>p\<close> 50) where
+  CAllP: \<open>[ (i, \<^bold>\<forall> p) ] \<leadsto>\<^sub>\<gamma>\<^sub>p (\<lambda>_. {q. softqdf q}, \<lambda>q. [ (i, \<langle>q\<rangle>\<^sub>p p) ])\<close>
+
+fun delta_fun :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close> where
+  CBoxN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>\<box>p) k = [(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k)))]\<close>
+| CGloN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>A p) k = [ (\<^bold>\<circle>k, \<^bold>\<not> p) ]\<close>
+| CAllN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
+| \<open>delta_fun _ _ = []\<close>
+
+interpretation C: Confl map_lbd symbols_lbd confl_class
+  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0
+      elim!: confl_class.cases intro: confl_class.intros)
+
+interpretation A: Alpha map_lbd symbols_lbd alpha_class
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros)
+
+interpretation B: Beta map_lbd symbols_lbd beta_class
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros)
+
+interpretation GI: Gamma map_tm map_lbd symbols_lbd gamma_class_nom
+  by unfold_locales (fastforce elim: gamma_class_nom.cases intro: gamma_class_nom.intros)+
+
+interpretation GP: Gamma map_fm map_lbd symbols_lbd gamma_class_fm
+  by unfold_locales (fastforce elim: gamma_class_fm.cases intro: gamma_class_fm.intros)+
+
+interpretation D: Delta map_lbd symbols_lbd delta_fun
 proof
-  show \<open>\<And>p. finite (symbols_lbd p)\<close>
-    by auto
-  show \<open>map_lbd id = id\<close>
-    by (simp add: fm.map_id0 prod.map_id0 tm.map_id0)
-  show \<open>\<And>f g. \<forall>x\<in>symbols_lbd p. f x = g x \<Longrightarrow> map_lbd f p = map_lbd g p\<close> for p :: \<open>'x lbd\<close>
-    by (cases p) (simp cong: tm.map_cong0 fm.map_cong0)
-  show \<open>\<And>f ps qs. ps \<leadsto> qs \<Longrightarrow> \<exists>rs. map (map_lbd f) ps \<leadsto> rs \<and>
-          rel_sort (\<lambda>qs. (=) (map (map_lbd f) qs)) (\<lambda>P Q. \<forall>S. map_fm f ` P S \<subseteq> Q (map_lbd f ` S))
-           (\<lambda>qs rs. \<forall>t. map (map_lbd f) (qs t) = rs (map_fm f t)) (\<lambda>qs rs. \<forall>x. map (map_lbd f) (qs x) = rs (f x))
-           qs rs\<close>
-    by (fastforce elim: classify.cases intro: classify.intros(1) split: fm.splits(1))
-  show \<open>\<And>ps P qs S S'. ps \<leadsto> Gamma P qs \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> P S \<subseteq> P S'\<close>
-    by (auto elim!: classify.cases)
-  show \<open>\<And>ps P qs t A. ps \<leadsto> Gamma P qs \<Longrightarrow> t \<in> P A \<Longrightarrow> \<exists>B\<subseteq>A. finite B \<and> t \<in> P B\<close>
-    by (auto elim!: classify.cases)
-  show \<open>\<And>ps qs. ps \<leadsto> Delta qs \<Longrightarrow> \<exists>p. ps = [p]\<close>
-    by (auto elim: classify.cases)
-  show \<open>\<And>p ps qs. p \<leadsto> Delta ps \<Longrightarrow> p \<leadsto> Delta qs \<Longrightarrow> ps = qs\<close>
-    by (auto elim: classify.cases)
-  have \<open>infinite (UNIV :: 'x fm set)\<close>
+  show \<open>\<And>f. delta_fun (map_lbd f p) (f x) = map (map_lbd f) (delta_fun p x)\<close> for p :: \<open>'x lbd\<close> and x
+    by (induct p x rule: delta_fun.induct) simp_all
+qed
+
+abbreviation Kinds :: \<open>('x, 'x lbd) kind list\<close> where
+  \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, GI.kind, GP.kind, D.kind]\<close>
+
+lemma CProp_Kinds:
+  assumes \<open>CKind C.kind C\<close> \<open>CKind A.kind C\<close> \<open>CKind B.kind C\<close> \<open>CKind GI.kind C\<close> \<open>CKind GP.kind C\<close> \<open>CKind D.kind C\<close>
+  shows \<open>CProp Kinds C\<close>
+  unfolding CProp_def using assms by simp
+
+interpretation Consistency_Prop map_lbd symbols_lbd Kinds
+  using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
+    GI.Consistency_Kind_axioms GP.Consistency_Kind_axioms D.Consistency_Kind_axioms
+  by (auto intro!: Consistency_Prop.intro C.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+
+interpretation Maximal_Consistency_UNIV map_lbd symbols_lbd Kinds
+proof
+ have \<open>infinite (UNIV :: 'x fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
   then show \<open>infinite (UNIV :: 'x lbd set)\<close>
     using finite_prod by blast
@@ -710,35 +734,35 @@ qed
 
 context begin
 
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p) \<notin> S \<or> (i, \<^bold>\<not> p) \<notin> S\<close>
-  using confl[OF _ _ _ CNegP] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p) \<notin> S \<or> (i, \<^bold>\<not> p) \<notin> S\<close>
+  using CProp_CKind[of C.kind] by (force intro: CNegP)
 
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
-  using alpha[OF _ _ _ CConP] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
+  using CProp_CKind[of A.kind] by (force intro: CConP)
 
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
-  using beta[OF _ _ _ CConN] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
+  using CProp_CKind[of B.kind] by (force intro: CConN)
   
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
-  using alpha[OF _ _ _ CBoxP] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
+  using CProp_CKind[of A.kind] by (force intro: CBoxP)
 
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
-  using delta[OF _ _ _ CBoxN] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
+  using CProp_CKind[of D.kind] by fastforce
   
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
-  using gamma[OF _ _ _ CRefl] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
+  using CProp_CKind[of GI.kind] by (force intro: CRefl)
 
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
-  using gamma[OF _ _ _ CGloP] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
+  using CProp_CKind[of GI.kind] by (force intro: CGloP)
  
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
-  using delta[OF _ _ _ CGloN] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
+  using CProp_CKind[of D.kind] by fastforce
 
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
-  using gamma[OF _ _ _ CAllP] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+  using CProp_CKind[of GP.kind] by (force intro: CAllP)
 
-lemma \<open>consistency C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
- using delta[OF _ _ _ CAllN] by fastforce
+lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+  using CProp_CKind[of D.kind] by fastforce
 
 end
 
@@ -891,17 +915,25 @@ lemma canonical_tm_eta [simp]: \<open>case_tm (\<lambda>i. [\<^bold># i]\<^sub>S
 corollary canonical_tm_eta' [simp]: \<open>case_tm (\<NN> (canonical S)) (\<N> (canonical S)) k = [k]\<^sub>S\<close>
   unfolding canonical_def unfolds by simp
 
-locale MyHintikka = Hintikka symbols_lbd map_lbd map_fm classify S
-  for S :: \<open>('x tm \<times> 'x fm) set\<close>
+locale MyHintikka = Hintikka map_lbd symbols_lbd Kinds S
+  for S :: \<open>'x lbd set\<close>
 begin
 
+lemmas
+  confl = hkind[of C.kind] and
+  alpha = hkind[of A.kind] and
+  beta = hkind[of B.kind] and
+  gammaI = hkind[of GI.kind] and
+  gammaP = hkind[of GP.kind] and
+  delta = hkind[of D.kind]
+
 lemma Nom_refl: \<open>(i, \<^bold>\<bullet>i) \<in> S\<close>
-  using gamma by (force intro: CRefl split: fm.splits)
+  using gammaI by (fastforce intro: CRefl)
 
 lemma Nom_sym:
   assumes \<open>(i, \<^bold>\<bullet>k) \<in> S\<close>
   shows \<open>(k, \<^bold>\<bullet>i) \<in> S\<close>
-  using assms alpha by force
+  using assms alpha by (fastforce intro: CSym)
 
 lemma Nom_trans:
   assumes \<open>(i, \<^bold>\<bullet>j) \<in> S\<close> \<open>(j, \<^bold>\<bullet>k) \<in> S\<close>
@@ -911,7 +943,7 @@ proof -
   have \<open>(j, \<^bold>\<bullet>i) \<in> S\<close>
     using assms Nom_sym by blast
   then show ?thesis
-    using assms(2) alpha by force
+    using assms(2) alpha by (fastforce intro: CNom)
 qed
 
 lemma equiv_nom_ne: \<open>{k. equiv_nom S i k} \<noteq> {}\<close>
@@ -928,7 +960,7 @@ proof -
   have \<open>(i, \<^bold>\<bullet>k) \<in> S\<close>
     using assms unfolding equiv_nom_def by blast
   then show ?thesis
-    using assms alpha by force
+    using assms alpha by (fastforce intro: CNom)
 qed
 
 lemma assign_in_W: \<open>[i]\<^sub>S \<in> \<W> (canonical S)\<close>
@@ -957,11 +989,11 @@ next
     next
       assume \<open>x = \<^bold>\<bullet>k\<close> \<open>(i, \<^bold>\<not> \<^bold>\<bullet>k) \<in> S\<close>
       then have \<open>(i, \<^bold>\<bullet>k) \<notin> S\<close>
-        using confl by force
+        using confl by (fastforce intro: CNegP)
       then have \<open>\<not> equiv_nom S i k\<close>
         unfolding equiv_nom_def by blast
       moreover have \<open>(k, \<^bold>\<not> \<^bold>\<bullet>i) \<in> S\<close>
-        using \<open>(i, \<^bold>\<not> \<^bold>\<bullet>k) \<in> S\<close> alpha by force
+        using \<open>(i, \<^bold>\<not> \<^bold>\<bullet>k) \<in> S\<close> alpha by (fastforce intro: CAnti)
       ultimately have \<open>[i]\<^sub>S \<noteq> [k]\<^sub>S\<close>
         using Nom_sym Nom_trans equiv_nom_assign unfolding equiv_nom_def by metis
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>\<bullet>k\<close>
@@ -979,7 +1011,7 @@ next
     next
       assume \<open>x = \<^bold>\<cdot>P\<close> \<open>(i, \<^bold>\<not> \<^bold>\<cdot>P) \<in> S\<close>
       then have \<open>(i, \<^bold>\<cdot>P) \<notin> S\<close>
-        by (metis CNegP confl empty_set empty_subsetI insertI1 insert_subset list.set(2))
+        using confl by (fastforce intro: CNegP)
       then have \<open>\<And>k. [k]\<^sub>S = [i]\<^sub>S \<Longrightarrow> (k, \<^bold>\<cdot>P) \<notin> S\<close>
         by (metis Nom_refl equiv_nom_Nom equiv_nom_assign equiv_nom_def)
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>\<cdot>P\<close>
@@ -996,7 +1028,7 @@ next
     next
       assume \<open>x = \<^bold>\<not> p\<close> \<open>(i, \<^bold>\<not> \<^bold>\<not> p) \<in> S\<close>
       then have \<open>(i, p) \<in> S\<close>
-        using alpha by force
+        using alpha by (fastforce intro: CNegN)
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>\<not> p\<close>
         using 2 Neg unfolding canonical_ctx_def by auto
     qed
@@ -1006,23 +1038,23 @@ next
     proof (safe del: notI)
       assume \<open>x = (p \<^bold>\<and> q)\<close> \<open>(i, p \<^bold>\<and> q) \<in> S\<close>
       then have \<open>(i, p) \<in> S \<and> (i, q) \<in> S\<close>
-        using alpha by force
+        using alpha by (fastforce intro: CConP)
       moreover have
-        \<open>(p, p \<^bold>\<and> q) \<in> measures [qs_fm, sz_fm]\<close>
-        \<open>(q, p \<^bold>\<and> q) \<in> measures [qs_fm, sz_fm]\<close>
-        by auto
+        \<open>(p, x) \<in> measures [qs_fm, sz_fm]\<close>
+        \<open>(q, x) \<in> measures [qs_fm, sz_fm]\<close>
+        using Con by auto
       ultimately show \<open>\<lbrakk>S, i\<rbrakk> \<Turnstile> (p \<^bold>\<and> q)\<close>
-        using 2 Con unfolding canonical_ctx_def by auto
+        using 2 unfolding canonical_ctx_def by auto
     next
       assume \<open>x = (p \<^bold>\<and> q)\<close> \<open>(i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S\<close>
       then have \<open>(i, \<^bold>\<not> p) \<in> S \<or> (i, \<^bold>\<not> q) \<in> S\<close>
-        using beta by force
+        using beta by (fastforce intro: CConN)
       moreover have
-        \<open>(\<^bold>\<not> p, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> measures [qs_fm, sz_fm]\<close>
-        \<open>(\<^bold>\<not> q, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> measures [qs_fm, sz_fm]\<close>
-        by auto
+        \<open>(\<^bold>\<not> p, \<^bold>\<not> x) \<in> measures [qs_fm, sz_fm]\<close>
+        \<open>(\<^bold>\<not> q, \<^bold>\<not> x) \<in> measures [qs_fm, sz_fm]\<close>
+        using Con by auto
       ultimately show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> (p \<^bold>\<and> q)\<close>
-        using 2 Con unfolding canonical_ctx_def by auto
+        using 2 unfolding canonical_ctx_def by auto
     qed
   next
     case (Box p)
@@ -1037,7 +1069,7 @@ next
         then have \<open>(i, \<^bold>\<diamond> (\<^bold>\<bullet>k')) \<in> S\<close>
           using Nom_sym equiv_nom_Nom equiv_nom_assign equiv_nom_def by blast
         then have \<open>(k', p) \<in> S\<close>
-          using \<open>(i, \<^bold>\<box> p) \<in> S\<close> alpha by force
+          using \<open>(i, \<^bold>\<box> p) \<in> S\<close> alpha by (fastforce intro: CBoxP)
         then have \<open>\<lbrakk>S, k'\<rbrakk> \<Turnstile> p\<close>
           using 2 Box by simp
         then have \<open>\<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close>
@@ -1049,8 +1081,7 @@ next
     next
       assume \<open>x = \<^bold>\<box> p\<close> \<open>(i, \<^bold>\<not> (\<^bold>\<box> p)) \<in> S\<close>
       then obtain k where k: \<open>(k, \<^bold>\<not> p) \<in> S\<close> \<open>(i, \<^bold>\<diamond> (\<^bold>\<bullet> k)) \<in> S\<close>
-        using delta CBoxN[of i p]
-        by (metis (mono_tags, lifting) bot.extremum empty_set insert_subset list.simps(15))
+        using delta by force
       then have \<open>\<not> \<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close>
         using 2 Box by simp
       moreover have \<open>([i]\<^sub>S, \<^bold>\<diamond> (\<^bold>\<bullet>k)) \<in> S\<close>
@@ -1067,7 +1098,7 @@ next
     proof (safe del: notI)
       assume \<open>x = \<^bold>@k p\<close> \<open>(i, \<^bold>@k p) \<in> S\<close>
       then have \<open>(k, p) \<in> S\<close>
-        using alpha by force
+        using alpha by (fastforce intro: CSatP)
       then have \<open>\<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close>
         using 2 Sat by simp
       then show \<open>\<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>@k p\<close>
@@ -1076,7 +1107,7 @@ next
     next
       assume \<open>x = \<^bold>@k p\<close> \<open>(i, \<^bold>\<not> \<^bold>@k p) \<in> S\<close>
       then have \<open>(k, \<^bold>\<not> p) \<in> S\<close>
-        using alpha by force
+        using alpha by (fastforce intro: CSatN)
       then have \<open>\<not> \<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close>
         using 2 Sat by simp
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>@k p\<close>
@@ -1089,7 +1120,7 @@ next
     proof (safe del: notI)
       assume \<open>x = \<^bold>A p\<close> \<open>(i, \<^bold>A p) \<in> S\<close>
       then have \<open>(k, p) \<in> S\<close> for k
-        using gamma by (force split: fm.splits)
+        using gammaI by (fastforce intro: CGloP)
       then have \<open>\<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close> for k
         using 2 Glo by simp
       then show \<open>\<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>A p\<close>
@@ -1098,7 +1129,7 @@ next
     next
       assume \<open>x = \<^bold>A p\<close> \<open>(i, \<^bold>\<not> \<^bold>A p) \<in> S\<close>
       then have \<open>\<exists>k. (k, \<^bold>\<not> p) \<in> S\<close>
-        using delta[of \<open>[(i, \<^bold>\<not> \<^bold>A p)]\<close>] by fastforce
+        using delta by fastforce
       then have \<open>\<exists>k. \<not> \<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close>
         using 2 Glo by auto
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>A p\<close>
@@ -1111,22 +1142,22 @@ next
     proof (safe del: notI)
       assume \<open>x = \<^bold>\<down> p\<close> \<open>(i, \<^bold>\<down> p) \<in> S\<close>
       then have \<open>(i, \<langle>i\<rangle>\<^sub>i p) \<in> S\<close>
-        using alpha by force
-      moreover have \<open>(\<langle>i\<rangle>\<^sub>i p, \<^bold>\<down> p) \<in> measures [qs_fm, sz_fm]\<close>
-        by simp
+        using alpha by (fastforce intro: CDwnP)
+      moreover have \<open>(\<langle>i\<rangle>\<^sub>i p, x) \<in> measures [qs_fm, sz_fm]\<close>
+        using Dwn by simp
       ultimately have \<open>\<lbrakk>S, i\<rbrakk> \<Turnstile> \<langle>i\<rangle>\<^sub>i p\<close>
-        using 2 Dwn by (meson in_measure)
+        using 2 by (meson in_measure)
       then show \<open>\<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>\<down> p\<close>
         unfolding canonical_ctx_def canonical_def gframe.defs
         by simp
     next
       assume \<open>x = \<^bold>\<down> p\<close> \<open>(i, \<^bold>\<not> \<^bold>\<down> p) \<in> S\<close>
       then have \<open>(i, \<^bold>\<not> \<langle>i\<rangle>\<^sub>i p) \<in> S\<close>
-        using alpha by force
-      moreover have \<open>(\<langle>i\<rangle>\<^sub>i p, \<^bold>\<down> p) \<in> measures [qs_fm, sz_fm]\<close>
-        by simp
+        using alpha by (fastforce intro: CDwnN)
+      moreover have \<open>(\<langle>i\<rangle>\<^sub>i p, x) \<in> measures [qs_fm, sz_fm]\<close>
+        using Dwn by simp
       ultimately have \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<langle>i\<rangle>\<^sub>i p\<close>
-        using 2 Dwn by (meson in_measure)
+        using 2 by (meson in_measure)
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>\<down> p\<close>
         unfolding canonical_ctx_def canonical_def gframe.defs
         by simp
@@ -1137,11 +1168,11 @@ next
     proof (safe del: notI)
       assume \<open>x = \<^bold>\<forall> p\<close> \<open>(i, \<^bold>\<forall> p) \<in> S\<close>
       then have \<open>softqdf q \<Longrightarrow> (i, \<langle>q\<rangle>\<^sub>p p) \<in> S\<close> for q
-        using gamma by (force split: fm.splits)
-      moreover have \<open>softqdf q \<Longrightarrow> (\<langle>q\<rangle>\<^sub>p p, \<^bold>\<forall> p) \<in> measures [qs_fm, sz_fm]\<close> for q
-        by (metis less_add_one measures_less qs_fm.simps(9) qs_fm_sub_pro softqdf_add_env)
+        using gammaP by (fastforce intro: CAllP)
+      moreover have \<open>softqdf q \<Longrightarrow> (\<langle>q\<rangle>\<^sub>p p, x) \<in> measures [qs_fm, sz_fm]\<close> for q
+        using All by (metis less_add_one measures_less qs_fm.simps(9) qs_fm_sub_pro softqdf_add_env)
       ultimately have *: \<open>softqdf q \<Longrightarrow> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<langle>q\<rangle>\<^sub>p p\<close> for q
-        using 2 All by (meson in_measure)
+        using 2 by (meson in_measure)
       
       moreover note wf_canonical[of S] assign_in_W[of i]
       ultimately have \<open>softqdf q \<Longrightarrow>
@@ -1156,11 +1187,12 @@ next
     next
       assume \<open>x = \<^bold>\<forall> p\<close> \<open>(i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S\<close>
       then obtain P where \<open>(i, \<^bold>\<not> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p) \<in> S\<close>
-        using delta[OF _ CAllN] by auto
-      moreover have \<open>(\<^bold>\<not> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p, \<^bold>\<forall> p) \<in> measures [qs_fm, sz_fm]\<close>
+        using delta by auto
+      moreover have \<open>(\<^bold>\<not> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p, x) \<in> measures [qs_fm, sz_fm]\<close>
+        using All
         by (metis less_add_one measures_less qs_fm.simps(3) qs_fm.simps(9) qs_fm_sub_pro softqdf.simps(2) softqdf_add_env)
       ultimately have \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p\<close>
-        using 2 All unfolding canonical_ctx_def by auto
+        using 2 unfolding canonical_ctx_def by auto
       moreover have \<open>softqdf (\<^bold>\<cdot> (\<^bold>\<circle> P))\<close>
         by simp
       moreover note wf_canonical[of S] assign_in_W[of i]
@@ -1182,13 +1214,22 @@ end
 
 theorem model_existence:
   fixes S :: \<open>'x lbd set\<close>
-  assumes \<open>consistency C\<close>
+  assumes \<open>CProp Kinds C\<close>
     and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: 'x lbd set| \<le>o |- params S|\<close>
+    and \<open>|UNIV :: 'x lbd set| \<le>o |- C.params S|\<close>
     and \<open>(i, p) \<in> S\<close>
   shows \<open>\<lbrakk>mk_mcs C S, i\<rbrakk> \<Turnstile> p\<close>
-  using assms MyHintikka.model Hintikka_mk_mcs Extend_subset MyHintikka.intro by fast
-
+proof -
+  have *: \<open>MyHintikka (mk_mcs C S)\<close>
+  proof
+    show \<open>HProp Kinds (mk_mcs C S)\<close>
+      using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
+  qed
+  moreover have \<open>(i, p) \<in> mk_mcs C S\<close>
+    using assms(4) Extend_subset by blast
+  ultimately show ?thesis
+    using MyHintikka.model by blast
+qed
 
 section \<open>Natural Deduction\<close>
 
@@ -1318,8 +1359,7 @@ next
   then have \<open>\<forall>X \<in> Pi. (Model W R Pi N e (V(P := X)) (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
     by simp
   then have \<open>\<forall>X \<in> Pi. (Model W R Pi N e V (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
-    using AllI.hyps(3) 
-    by (metis (no_types, lifting) UN_Un UN_insert Un_iff fun_upd_other semantics_symbols_cong_pro symbols_lbd.simps)
+    using AllI.hyps(3) by simp
   then show ?case
     by simp
 next
@@ -1374,7 +1414,7 @@ lemma FlsE [dest]: \<open>A \<tturnstile> (i, \<^bold>\<bottom>) \<Longrightarro
 subsection \<open>Derivational Consistency\<close>
 
 lemma calculus_confl:
-  assumes \<open>ps \<leadsto> Confl qs\<close> \<open>set ps \<subseteq> A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> A\<close> 
+  assumes \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> A\<close> 
   shows \<open>A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   using assms
 proof cases
@@ -1385,7 +1425,7 @@ proof cases
 qed
 
 lemma calculus_alpha:
-  assumes \<open>ps \<leadsto> Alpha qs\<close> \<open>set ps \<subseteq> A\<close> \<open>set qs \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
+  assumes \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> \<open>set ps \<subseteq> A\<close> \<open>set qs \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   shows \<open>A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   using assms
 proof cases
@@ -1449,7 +1489,7 @@ next
 qed
 
 lemma calculus_beta:
-  assumes \<open>ps \<leadsto> Beta qs\<close> \<open>set ps \<subseteq> A\<close> \<open>\<forall>q \<in> set qs. {q} \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
+  assumes \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>set ps \<subseteq> A\<close> \<open>\<forall>q \<in> set qs. {q} \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   shows \<open>A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   using assms
 proof cases
@@ -1459,84 +1499,97 @@ proof cases
     by (metis Assm Clas FlsE NotE UnI2 insert_is_Un list.set_intros(1) list.simps(15) subset_iff)
 qed
 
-lemma calculus_gamma:
-  assumes \<open>ps \<leadsto> Gamma P qs\<close> \<open>set ps \<subseteq> A\<close> \<open>k \<in> P A\<close> \<open>set (qs k) \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
+lemma calculus_gammaI:
+  assumes \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>i (F, qs)\<close> \<open>set ps \<subseteq> A\<close> \<open>set (qs k) \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   shows \<open>A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   using assms
 proof cases
   case CRefl
   then show ?thesis
-    using assms(4)
-  proof (cases \<open>k\<close>)
-    case (TmI k)
-    then show ?thesis
-      using CRefl assms(2-) Ref[of A k]
-      by (metis (mono_tags, lifting) AndD1 AndD2 NotE NotI empty_set fm.simps(82) list.simps(15))
-  qed auto
+    using CRefl assms(2-) Ref[of A k] 
+    by (metis (mono_tags, lifting) AndD1 AndD2 NotE NotI empty_set list.simps(15))
 next
   case (CGloP i p)
   then show ?thesis
-    using assms(4)
-  proof (cases k)
-    case (TmI k)
-    then show ?thesis
-      using CGloP assms(2-) GloE[of A i p k]
-      by (metis (no_types, lifting) Assm_head NotE NotI empty_set fm.simps(82) le_iff_sup list.simps(15))
-  qed auto
-next
+    using CGloP assms(2-) GloE[of A i p k]
+    by (metis (no_types, lifting) Assm_head NotE NotI empty_set le_iff_sup list.simps(15))
+qed
+
+lemma calculus_gammaP:
+  assumes \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>p (F, qs)\<close> \<open>set ps \<subseteq> A\<close> \<open>k \<in> F A\<close> \<open>set (qs k) \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
+  shows \<open>A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
+  using assms
+proof cases
   case (CAllP i p)
   then show ?thesis
     using assms(2-) AllE[of A i p]
-    by (metis (no_types, lifting) Assm_head NotE NotI empty_set le_iff_sup list.simps(15) mem_Collect_eq)
+    by (metis (no_types, lifting) Assm_head NotE NotI le_iff_sup list.set(1) list.simps(15) mem_Collect_eq)
 qed
 
 lemma calculus_delta:
-  assumes \<open>ps \<leadsto> Delta qs\<close> \<open>set ps \<subseteq> A\<close> \<open>k \<notin> symbols A\<close> \<open>set (qs k) \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  assumes \<open>p \<in> A\<close> \<open>k \<notin> symbols A\<close> \<open>set (delta_fun p k) \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   shows \<open>A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using assms
-proof cases
-  case (CBoxN i p)
+proof (induct p k rule: delta_fun.induct)
+  case (1 i p k)
   then have \<open>{(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>(\<^bold>\<circle>k)))} \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close> \<open>(i, \<^bold>\<not> \<^bold>\<box> p) \<in> A\<close>
-    using assms(2-) by simp_all
+    by simp_all
   then have \<open>{(i, \<^bold>\<diamond> (\<^bold>\<bullet>(\<^bold>\<circle>k)))} \<union> A \<tturnstile> (\<^bold>\<circle>k, p)\<close>
     using Boole by auto
   moreover have \<open>k \<notin> symbols ({(i, p)} \<union> A)\<close>
-    using assms(2-3) CBoxN by auto
+    using 1 by auto
   ultimately have \<open>A \<tturnstile> (i, \<^bold>\<box> p)\<close>
     using BoxI by blast
   then show ?thesis
     using \<open>(i, \<^bold>\<not> \<^bold>\<box> p) \<in> A\<close> by (meson Assm NotE)
 next
-  case (CGloN i p)
+  case (2 i p k)
   then have \<open>{(\<^bold>\<circle>k, \<^bold>\<not> p)} \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close> \<open>(i, \<^bold>\<not> \<^bold>A p) \<in> A\<close>
-    using assms(2-) by simp_all
+    by simp_all
   then have \<open>{(\<^bold>\<circle>k, \<^bold>\<not> p)} \<union> A \<tturnstile> (\<^bold>\<circle>k, \<^bold>\<bottom>)\<close>
     by fast
   then have \<open>A \<tturnstile> (\<^bold>\<circle>k, p)\<close>
     by (meson Boole)
   moreover have \<open>k \<notin> symbols ({(i, p)} \<union> A)\<close>
-    using assms(2-3) CGloN by auto
+    using 2 CGloN by auto
   ultimately have \<open>A \<tturnstile> (i, \<^bold>A p)\<close>
     by blast
   then show ?thesis
     using \<open>(i, \<^bold>\<not> \<^bold>A p) \<in> A\<close> Assm NotE by meson
 next
-  case (CAllN i p)
-  then have \<open>{(i, \<^bold>\<not> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> k)\<rangle>\<^sub>p p)} \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close> \<open>(i, \<^bold>\<not> \<^bold>\<forall> p) \<in> A\<close>
-    using assms(2-) by simp_all
-  then have \<open>A \<tturnstile> (i, \<langle>\<^bold>\<cdot> (\<^bold>\<circle> k)\<rangle>\<^sub>p p)\<close>
+  case (3 i p P)
+  then have \<open>{(i, \<^bold>\<not> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p)} \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close> \<open>(i, \<^bold>\<not> \<^bold>\<forall> p) \<in> A\<close>
+    by simp_all
+  then have \<open>A \<tturnstile> (i, \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p)\<close>
     using Clas by blast
-  moreover have \<open>k \<notin> symbols ({(i, p)} \<union> A)\<close>
-    using assms(2-3) CAllN by auto
+  moreover have \<open>P \<notin> symbols ({(i, p)} \<union> A)\<close>
+    using 3 by auto
   ultimately have \<open>A \<tturnstile> (i, \<^bold>\<forall> p)\<close>
     by blast
   then show ?thesis
     using \<open>(i, \<^bold>\<not> \<^bold>\<forall> p) \<in> A\<close> Assm NotE by meson
-qed
+qed simp_all
 
-interpretation Derivational_Consistency symbols_lbd map_lbd map_fm classify \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using calculus_confl calculus_alpha calculus_beta calculus_gamma calculus_delta
-  by unfold_locales
+interpretation DC: Derivational_Confl map_lbd symbols_lbd confl_class \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_confl by unfold_locales
+
+interpretation DA: Derivational_Alpha map_lbd symbols_lbd alpha_class \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_alpha by unfold_locales
+
+interpretation DB: Derivational_Beta map_lbd symbols_lbd beta_class \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_beta by unfold_locales
+
+interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd gamma_class_nom \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_gammaI by unfold_locales
+
+interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_gammaP by unfold_locales
+
+interpretation DD: Derivational_Delta map_lbd symbols_lbd delta_fun \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_delta by unfold_locales
+
+interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using CProp_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -1559,13 +1612,13 @@ proof (rule ccontr)
 
   have \<open>infinite (UNIV :: 'x set)\<close>
     using inf by (meson card_of_ordLeq_infinite inf_UNIV rev_finite_subset subset_UNIV)
-  then have \<open>consistency ?C\<close>
+  then have \<open>CProp Kinds ?C\<close>
     using Consistency by fast
   moreover have \<open>?S \<in> ?C\<close>
     using * FlsE params_left
     by (metis (no_types, lifting) List.set_insert empty_set inf mem_Collect_eq )
-  moreover have \<open>|UNIV :: 'x lbd set| \<le>o |- params ?S|\<close>
-    using inf by (metis Un_insert_left list.set(1) list.simps(15) params_left sup_bot_left)
+  moreover from this have \<open>|UNIV :: 'x lbd set| \<le>o |- C.params ?S|\<close>
+    using inf by blast
   ultimately have **: \<open>\<forall>(k, q) \<in> ?S. \<lbrakk>?H, k\<rbrakk> \<Turnstile> q\<close>
     using model_existence[of ?C ?S] by blast
   then have \<open>\<forall>(k, q) \<in> ?S. (?M, case_tm (\<NN> ?M) (\<N> ?M) k) \<Turnstile> q\<close>
@@ -1587,26 +1640,26 @@ qed
 
 section \<open>Natural Deduction with Lists\<close>
 
-inductive Calculus :: \<open>'x lbd list \<Rightarrow> 'x lbd \<Rightarrow> bool\<close> (\<open>_ \<turnstile>\<^sub>@ _\<close> [50, 50] 50) where
-  Assm [dest]: \<open>(i, p) \<in> set A \<Longrightarrow> A \<turnstile>\<^sub>@ (i, p)\<close>
-| Ref [simp]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>\<bullet>i)\<close>
-| Nom [dest]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>\<bullet>k) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, p) \<Longrightarrow> A \<turnstile>\<^sub>@ (k, p)\<close>
-| NotI [intro]: \<open>(i, p) # A \<turnstile>\<^sub>@ (i, \<^bold>\<bottom>) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<^bold>\<not> p)\<close>
-| NotE [elim]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>\<not> p) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, p) \<Longrightarrow> A \<turnstile>\<^sub>@ (k, q)\<close>
-| AndI [intro]: \<open>A \<turnstile>\<^sub>@ (i, p) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, q) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, p \<^bold>\<and> q)\<close>
-| AndD1 [dest]: \<open>A \<turnstile>\<^sub>@ (i, p \<^bold>\<and> q) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, p)\<close>
-| AndD2 [dest]: \<open>A \<turnstile>\<^sub>@ (i, p \<^bold>\<and> q) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, q)\<close>
-| SatI [intro]: \<open>A \<turnstile>\<^sub>@ (i, p) \<Longrightarrow> A \<turnstile>\<^sub>@ (k, \<^bold>@i p)\<close>
-| SatE [dest]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>@k p) \<Longrightarrow> A \<turnstile>\<^sub>@ (k, p)\<close>
-| BoxI [intro]: \<open>(i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle>k))) # A \<turnstile>\<^sub>@ (\<^bold>\<circle>k, p) \<Longrightarrow> k \<notin> symbols ({(i, p)} \<union> set A) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<^bold>\<box> p)\<close>
-| BoxE [elim]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>\<box> p) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<^bold>\<diamond> (\<^bold>\<bullet>k)) \<Longrightarrow> A \<turnstile>\<^sub>@ (k, p)\<close>
-| GloI [intro]: \<open>A \<turnstile>\<^sub>@ (\<^bold>\<circle>k, p) \<Longrightarrow> k \<notin> symbols ({(i, p)} \<union> set A) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<^bold>A p)\<close>
-| GloE [dest]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>A p) \<Longrightarrow> A \<turnstile>\<^sub>@ (k, p)\<close>
-| DwnI [intro]: \<open>A \<turnstile>\<^sub>@ (i, \<langle>i\<rangle>\<^sub>i p) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<^bold>\<down> p)\<close>
-| DwnE [dest]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>\<down> p) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<langle>i\<rangle>\<^sub>i p)\<close>
-| AllI [intro]: \<open>A \<turnstile>\<^sub>@ (i, \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) \<Longrightarrow> P \<notin> symbols ({(i, p)} \<union> set A) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<^bold>\<forall> p)\<close>
-| AllE [dest]: \<open>A \<turnstile>\<^sub>@ (i, \<^bold>\<forall> p) \<Longrightarrow> softqdf q \<Longrightarrow> A \<turnstile>\<^sub>@ (i, \<langle>q\<rangle>\<^sub>p p)\<close>
-| Clas: \<open>(i, \<^bold>\<not> p) # A \<turnstile>\<^sub>@ (i, p) \<Longrightarrow> A \<turnstile>\<^sub>@ (i, p)\<close>
+inductive Calculus :: \<open>'x lbd list \<Rightarrow> 'x lbd \<Rightarrow> bool\<close> (infix \<open>\<turnstile>\<close> 50) where
+  Assm [dest]: \<open>(i, p) \<in> set A \<Longrightarrow> A \<turnstile> (i, p)\<close>
+| Ref [simp]: \<open>A \<turnstile> (i, \<^bold>\<bullet>i)\<close>
+| Nom [dest]: \<open>A \<turnstile> (i, \<^bold>\<bullet>k) \<Longrightarrow> A \<turnstile> (i, p) \<Longrightarrow> A \<turnstile> (k, p)\<close>
+| NotI [intro]: \<open>(i, p) # A \<turnstile> (i, \<^bold>\<bottom>) \<Longrightarrow> A \<turnstile> (i, \<^bold>\<not> p)\<close>
+| NotE [elim]: \<open>A \<turnstile> (i, \<^bold>\<not> p) \<Longrightarrow> A \<turnstile> (i, p) \<Longrightarrow> A \<turnstile> (k, q)\<close>
+| AndI [intro]: \<open>A \<turnstile> (i, p) \<Longrightarrow> A \<turnstile> (i, q) \<Longrightarrow> A \<turnstile> (i, p \<^bold>\<and> q)\<close>
+| AndD1 [dest]: \<open>A \<turnstile> (i, p \<^bold>\<and> q) \<Longrightarrow> A \<turnstile> (i, p)\<close>
+| AndD2 [dest]: \<open>A \<turnstile> (i, p \<^bold>\<and> q) \<Longrightarrow> A \<turnstile> (i, q)\<close>
+| SatI [intro]: \<open>A \<turnstile> (i, p) \<Longrightarrow> A \<turnstile> (k, \<^bold>@i p)\<close>
+| SatE [dest]: \<open>A \<turnstile> (i, \<^bold>@k p) \<Longrightarrow> A \<turnstile> (k, p)\<close>
+| BoxI [intro]: \<open>(i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle>k))) # A \<turnstile> (\<^bold>\<circle>k, p) \<Longrightarrow> k \<notin> symbols ({(i, p)} \<union> set A) \<Longrightarrow> A \<turnstile> (i, \<^bold>\<box> p)\<close>
+| BoxE [elim]: \<open>A \<turnstile> (i, \<^bold>\<box> p) \<Longrightarrow> A \<turnstile> (i, \<^bold>\<diamond> (\<^bold>\<bullet>k)) \<Longrightarrow> A \<turnstile> (k, p)\<close>
+| GloI [intro]: \<open>A \<turnstile> (\<^bold>\<circle>k, p) \<Longrightarrow> k \<notin> symbols ({(i, p)} \<union> set A) \<Longrightarrow> A \<turnstile> (i, \<^bold>A p)\<close>
+| GloE [dest]: \<open>A \<turnstile> (i, \<^bold>A p) \<Longrightarrow> A \<turnstile> (k, p)\<close>
+| DwnI [intro]: \<open>A \<turnstile> (i, \<langle>i\<rangle>\<^sub>i p) \<Longrightarrow> A \<turnstile> (i, \<^bold>\<down> p)\<close>
+| DwnE [dest]: \<open>A \<turnstile> (i, \<^bold>\<down> p) \<Longrightarrow> A \<turnstile> (i, \<langle>i\<rangle>\<^sub>i p)\<close>
+| AllI [intro]: \<open>A \<turnstile> (i, \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) \<Longrightarrow> P \<notin> symbols ({(i, p)} \<union> set A) \<Longrightarrow> A \<turnstile> (i, \<^bold>\<forall> p)\<close>
+| AllE [dest]: \<open>A \<turnstile> (i, \<^bold>\<forall> p) \<Longrightarrow> softqdf q \<Longrightarrow> A \<turnstile> (i, \<langle>q\<rangle>\<^sub>p p)\<close>
+| Clas: \<open>(i, \<^bold>\<not> p) # A \<turnstile> (i, p) \<Longrightarrow> A \<turnstile> (i, p)\<close>
 
 definition bounded :: \<open>'a list \<Rightarrow> 'a set \<Rightarrow> ('a list \<Rightarrow> bool) \<Rightarrow> bool\<close> where
   \<open>bounded K A P \<equiv> set K \<subseteq> A \<and> (\<forall>B. set K \<subseteq> set B \<longrightarrow> set B \<subseteq> A \<longrightarrow> P B)\<close>
@@ -1628,11 +1681,11 @@ lemma bounded_removeAll [dest]:
   by (metis Diff_subset_conv insert_is_Un insert_mono list.simps(15) set_removeAll)
 
 lemma bounded_params:
-  assumes \<open>a \<notin> params ({p} \<union> A)\<close> \<open>bounded K A P\<close>
-  shows \<open>bounded K A (\<lambda>B. a \<notin> params (set (p # B)))\<close>
+  assumes \<open>a \<notin> C.params ({p} \<union> A)\<close> \<open>bounded K A P\<close>
+  shows \<open>bounded K A (\<lambda>B. a \<notin> C.params (set (p # B)))\<close>
   using assms unfolding bounded_def by auto
 
-lemma finite_kernel: \<open>A \<tturnstile> (i, p) \<Longrightarrow> \<exists>K. bounded K A (\<lambda>B. B \<turnstile>\<^sub>@ (i, p))\<close>
+lemma finite_kernel: \<open>A \<tturnstile> (i, p) \<Longrightarrow> \<exists>K. bounded K A (\<lambda>B. B \<turnstile> (i, p))\<close>
 proof (induct A \<open>(i, p)\<close> arbitrary: i p pred: Calculus_Set)
   case (Assm i p A)
   then show ?case
@@ -1649,46 +1702,46 @@ next
     by force
 next
   case (NotI i p A)
-  then have \<open>\<exists>K. bounded K A (\<lambda>B. (i, p) # B \<turnstile>\<^sub>@ (i, \<^bold>\<bottom>))\<close>
+  then have \<open>\<exists>K. bounded K A (\<lambda>B. (i, p) # B \<turnstile> (i, \<^bold>\<bottom>))\<close>
     by blast
   then show ?case
     by fast
 next
   case (BoxI i k A p)
-  then have \<open>\<exists>K. bounded K A (\<lambda>B. (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k))) # B \<turnstile>\<^sub>@ (\<^bold>\<circle> k, p))\<close>
+  then have \<open>\<exists>K. bounded K A (\<lambda>B. (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k))) # B \<turnstile> (\<^bold>\<circle> k, p))\<close>
     by blast
-  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> params ({(i, p)} \<union> set B))\<close>
+  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> C.params ({(i, p)} \<union> set B))\<close>
     using BoxI(2-3) bounded_params by fastforce
   ultimately show ?case
     by fastforce
 next
   case (GloI A k p i)
-  then have \<open>\<exists>K. bounded K A (\<lambda>B. B \<turnstile>\<^sub>@ (\<^bold>\<circle> k, p))\<close>
+  then have \<open>\<exists>K. bounded K A (\<lambda>B. B \<turnstile> (\<^bold>\<circle> k, p))\<close>
     by blast
-  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> params ({(i, p)} \<union> set B))\<close>
+  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> C.params ({(i, p)} \<union> set B))\<close>
     using GloI(3) bounded_params by fastforce
   ultimately show ?case
     by fastforce
 next
   case (AllI A i P p)
-  then have \<open>\<exists>K. bounded K A (\<lambda>B. B \<turnstile>\<^sub>@ (i, \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p))\<close>
+  then have \<open>\<exists>K. bounded K A (\<lambda>B. B \<turnstile> (i, \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p))\<close>
     by blast
-  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. P \<notin> params ({(i, p)} \<union> set B))\<close>
+  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. P \<notin> C.params ({(i, p)} \<union> set B))\<close>
     using AllI(3) bounded_params by fastforce
   ultimately show ?case
     by fastforce
 next
   case (Clas i p A)
-  then have \<open>\<exists>K. bounded K A (\<lambda>B. (i, \<^bold>\<not> p) # B \<turnstile>\<^sub>@ (i, p))\<close>
+  then have \<open>\<exists>K. bounded K A (\<lambda>B. (i, \<^bold>\<not> p) # B \<turnstile> (i, p))\<close>
     by fast
   then show ?case
     using Calculus.Clas by force
 qed fast+
 
-corollary finite_assumptions: \<open>A \<tturnstile> (i, p) \<Longrightarrow> \<exists>B. set B \<subseteq> A \<and> B \<turnstile>\<^sub>@ (i, p)\<close>
+corollary finite_assumptions: \<open>A \<tturnstile> (i, p) \<Longrightarrow> \<exists>B. set B \<subseteq> A \<and> B \<turnstile> (i, p)\<close>
   using finite_kernel unfolding bounded_def by blast
 
-lemma calculus_set: \<open>A \<turnstile>\<^sub>@ (i, p) \<Longrightarrow> set A \<tturnstile> (i, p)\<close>
+lemma calculus_set: \<open>A \<turnstile> (i, p) \<Longrightarrow> set A \<tturnstile> (i, p)\<close>
 proof (induct A \<open>(i, p)\<close> arbitrary: i p pred: Calculus)
   case (Clas p q A)
   then show ?case
@@ -1696,17 +1749,17 @@ proof (induct A \<open>(i, p)\<close> arbitrary: i p pred: Calculus)
 qed auto
 
 corollary soundness_list:
-  assumes \<open>A \<turnstile>\<^sub>@ (i, p)\<close> \<open>\<forall>(k, q) \<in> set A. (M, case_tm (\<NN> M) (\<N> M) k) \<Turnstile> q\<close>
+  assumes \<open>A \<turnstile> (i, p)\<close> \<open>\<forall>(k, q) \<in> set A. (M, case_tm (\<NN> M) (\<N> M) k) \<Turnstile> q\<close>
     and \<open>wf_model M\<close>
   shows \<open>(M, case_tm (\<NN> M) (\<N> M) i) \<Turnstile> p\<close>
   using assms soundness calculus_set
   by (metis (mono_tags, lifting) model.surjective unit.exhaust split_cong)
 
 corollary soundness_nil:
-  \<open>[] \<turnstile>\<^sub>@ (\<^bold>\<circle>i, p) \<Longrightarrow> i \<notin> symbols_fm p \<Longrightarrow> wf_model M \<Longrightarrow> w \<in> \<W> M \<Longrightarrow> (M, w) \<Turnstile> p\<close>
+  \<open>[] \<turnstile> (\<^bold>\<circle>i, p) \<Longrightarrow> i \<notin> symbols_fm p \<Longrightarrow> wf_model M \<Longrightarrow> w \<in> \<W> M \<Longrightarrow> (M, w) \<Turnstile> p\<close>
   by (metis calculus_set empty_set soundness')
   
-corollary \<open>\<not> ([] \<turnstile>\<^sub>@ (i, \<^bold>\<bottom>))\<close>
+corollary \<open>\<not> ([] \<turnstile> (i, \<^bold>\<bottom>))\<close>
   by (metis equals0D no_bot set_empty2 soundness_list wf_canonical)
 
 corollary strong_completeness_list:
@@ -1714,13 +1767,13 @@ corollary strong_completeness_list:
   assumes mod: \<open>\<And>(M :: ('x, 'x tm) model) w. wf_model M \<Longrightarrow> w \<in> \<W> M \<Longrightarrow>
       \<forall>(k, q) \<in> A. (M, case_tm (\<NN> M) (\<N> M) k) \<Turnstile> q \<Longrightarrow> (M, w) \<Turnstile> p\<close>
     and inf: \<open>|UNIV :: 'x lbd set| \<le>o  |- symbols A|\<close>
-  shows \<open>\<exists>B. set B \<subseteq> A \<and> B \<turnstile>\<^sub>@ (i, p)\<close>
+  shows \<open>\<exists>B. set B \<subseteq> A \<and> B \<turnstile> (i, p)\<close>
   using assms strong_completeness finite_assumptions by blast
 
 theorem main:
   fixes p :: \<open>'x fm\<close>
   assumes \<open>i \<notin> symbols_fm p\<close> \<open>|UNIV :: 'x lbd set| \<le>o  |UNIV :: 'x set|\<close>
-  shows \<open>[] \<turnstile>\<^sub>@ (\<^bold>\<circle>i, p) \<longleftrightarrow> (\<forall>(M :: ('x, 'x tm) model). \<forall>w \<in> \<W> M. wf_model M \<longrightarrow> (M, w) \<Turnstile> p)\<close>
+  shows \<open>[] \<turnstile> (\<^bold>\<circle>i, p) \<longleftrightarrow> (\<forall>(M :: ('x, 'x tm) model). \<forall>w \<in> \<W> M. wf_model M \<longrightarrow> (M, w) \<Turnstile> p)\<close>
   using assms strong_completeness_list[where A=\<open>{}\<close>] soundness_nil by fastforce
 
 end

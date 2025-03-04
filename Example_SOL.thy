@@ -1,11 +1,13 @@
 (*
-  File:      SOL_Axiomatic.thy
+  File:      Example_SOL.thy
   Author:    Anders Schlichtkrull
   Author:    Asta Halkjær From
 
 *)
 
-theory SOL_Axiomatic_Fun2 imports Analytic_Completeness2 begin
+theory Example_SOL imports
+  Analytic_Completeness
+begin
 
 section \<open>Syntax\<close>
 
@@ -1135,6 +1137,7 @@ end
 
 (***** OLD ******)
 
+(*
 section \<open>Consistent\<close>
 
 definition \<open>consistent S \<equiv> \<nexists>S'. set S' \<subseteq> S \<and> S' \<turnstile> \<^bold>\<bottom>\<close>
@@ -1856,5 +1859,7 @@ abbreviation valid :: \<open>(nat, nat) fm \<Rightarrow> bool\<close> where
 
 theorem main: \<open>valid p \<longleftrightarrow> (\<turnstile> p)\<close> 
   using completeness[of p] soundness[of p] by auto
+
+*)
 
 end
