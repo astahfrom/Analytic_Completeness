@@ -388,7 +388,7 @@ lemma softqdf_lift_fm_nom [simp]: \<open>softqdf (lift_fm_nom m q) \<longleftrig
 lemma softqdf_lift_fm_pro [simp]: \<open>softqdf (lift_fm_pro m q) \<longleftrightarrow> softqdf q\<close>
   by (induct q) auto
 
-subsection \<open>\<then>\<close>
+subsection \<open>Add env\<close>
 
 lemma range_add_env:
   assumes \<open>range f \<subseteq> A\<close> \<open>a \<in> A\<close>

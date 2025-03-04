@@ -2,7 +2,7 @@
   Author: Asta Halkjær From, 2025.
 *)
 
-theory Example_Bounded_First_Order_Logic imports
+theory Example_Bounded_FOL imports
   Analytic_Completeness
 begin
 

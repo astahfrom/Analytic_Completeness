@@ -1027,6 +1027,10 @@ theorem completeness:
   shows \<open>\<turnstile> p\<close>
   using assms weak_completeness[where ps=\<open>[]\<close>, of p] by simp
 
+end
+
+(*
+
 section \<open>Hmm\<close>
 
 locale Strong
@@ -1121,6 +1125,7 @@ proof
   qed
 qed
 
+
 interpretation DB: Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
 proof
   fix A and ps qs :: \<open>'x fm list\<close>
@@ -1137,7 +1142,6 @@ end
 
 (***** OLD ******)
 
-(*
 section \<open>Consistent\<close>
 
 definition \<open>consistent S \<equiv> \<nexists>S'. set S' \<subseteq> S \<and> S' \<turnstile> \<^bold>\<bottom>\<close>
@@ -1860,6 +1864,6 @@ abbreviation valid :: \<open>(nat, nat) fm \<Rightarrow> bool\<close> where
 theorem main: \<open>valid p \<longleftrightarrow> (\<turnstile> p)\<close> 
   using completeness[of p] soundness[of p] by auto
 
-*)
-
 end
+
+*)

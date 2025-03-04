@@ -1,44 +1,65 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage[T1]{fontenc}
 \usepackage{isabelle,isabellesym}
-\usepackage{graphicx}
+
+% further packages required for unusual symbols (see also
+% isabellesym.sty), use only when needed
+
+\usepackage{amssymb}
+  %for \<leadsto>, \<box>, \<diamond>, \<sqsupset>, \<mho>, \<Join>,
+  %\<lhd>, \<lesssim>, \<greatersim>, \<lessapprox>, \<greaterapprox>,
+  %\<triangleq>, \<yen>, \<lozenge>
+
+%\usepackage{eurosym}
+  %for \<euro>
+
+\usepackage[only,bigsqcap,bigparallel,fatsemi,interleave,sslash]{stmaryrd}
+  %for \<Sqinter>, \<Parallel>, \<Zsemi>, \<Parallel>, \<sslash>
+
+%\usepackage{eufrak}
+  %for \<AA> ... \<ZZ>, \<aa> ... \<zz> (also included in amssymb)
+
+\usepackage{textcomp}
+  %for \<onequarter>, \<onehalf>, \<threequarters>, \<degree>, \<cent>,
+  %\<currency>
+
+\usepackage{wasysym}
+\usepackage{pifont}
+
+% this should be the last package used
 \usepackage{pdfsetup}
 
 % urls in roman style, theory text in math-similar italics
 \urlstyle{rm}
 \isabellestyle{it}
 
-\isadroptag{theory}
+% for uniform font size
+%\renewcommand{\isastyle}{\isastyleminor}
 
-\newcommand{\isasymnotturnstile}{\isamath{\not\vdash}}
-\newcommand{\isasymnotTurnstile}{\isamath{\not\models}}
-
-\newcommand{\secref}[1]{\S\ref{#1}}
-\newcommand{\figref}[1]{Figure \ref{#1}}
 
 \begin{document}
 
-\title{Meta-theory of first-order predicate logic}
-\author{Stefan Berghofer}
+\title{analytic}
+\author{lnr875}
 \maketitle
-
-\begin{abstract}
-We present a formalization of parts of Melvin Fitting's book
-``First-Order Logic and Automated Theorem Proving'' \cite{Fitting}.
-The formalization covers the syntax of first-order logic, its semantics,
-the model existence theorem, a natural deduction proof calculus together
-with a proof of correctness and completeness, as well as the
-L\"owenheim-Skolem theorem.
-\end{abstract}
 
 \tableofcontents
 
+% sane default for proof documents
 \parindent 0pt\parskip 0.5ex
 
-% include generated text of all theories
+% generated text of all theories
 \input{session}
 
+\nocite{*}
+
+% optional bibliography
 \bibliographystyle{abbrv}
 \bibliography{root}
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
