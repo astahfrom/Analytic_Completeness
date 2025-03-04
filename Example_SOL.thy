@@ -149,7 +149,7 @@ primrec inst_sym (\<open>\<llangle>_'/_\<rrangle>\<^sub>2\<close>) where
   \<open>\<llangle>s/m\<rrangle>\<^sub>2 (\<^bold>#\<^sub>2 n) = (if n < m then \<^bold>#\<^sub>2 n else if n = m then s else \<^bold>#\<^sub>2 (n-1))\<close>
 | \<open>\<llangle>s/m\<rrangle>\<^sub>2 (\<^bold>\<circle>\<^sub>2 p) = \<^bold>\<circle>\<^sub>2 p\<close>
 
-primrec inst_tm2Ftm (\<open>\<llangle>_'/_\<rrangle>\<^sub>F\<close>) where
+primrec inst_fn (\<open>\<llangle>_'/_\<rrangle>\<^sub>F\<close>) where
   \<open>\<llangle>s/m\<rrangle>\<^sub>F(\<^bold>#n) = (\<^bold>#n)\<close>
 | \<open>\<llangle>s/m\<rrangle>\<^sub>F(\<^bold>\<circle>f ts) = \<^bold>\<circle>(\<llangle>s/m\<rrangle>\<^sub>2 f) (map \<llangle>s/m\<rrangle>\<^sub>F ts)\<close>
 | \<open>\<llangle>s/m\<rrangle>\<^sub>F(\<^bold>\<star>c) = (\<^bold>\<star>c)\<close>
@@ -162,7 +162,7 @@ primrec inst_fm (\<open>\<langle>_'/_\<rangle>\<close>) where
 | \<open>\<langle>s/m\<rangle>(\<^bold>\<forall>\<^sub>Pp) = \<^bold>\<forall>\<^sub>P(\<langle>s/m\<rangle>p)\<close>
 | \<open>\<langle>s/m\<rangle>(\<^bold>\<forall>\<^sub>Fp) = \<^bold>\<forall>\<^sub>F(\<langle>\<^bold>\<up>\<^sub>F s/m\<rangle>p)\<close>
 
-primrec inst_fm2P (\<open>\<langle>_'/_\<rangle>\<^sub>P\<close>) where
+primrec inst_fm_P (\<open>\<langle>_'/_\<rangle>\<^sub>P\<close>) where
   \<open>\<langle>_/_\<rangle>\<^sub>P\<^bold>\<bottom> = \<^bold>\<bottom>\<close>
 | \<open>\<langle>s/m\<rangle>\<^sub>P(\<^bold>\<cdot>P ts) = \<^bold>\<cdot>(\<llangle>s/m\<rrangle>\<^sub>2 P) ts\<close>
 | \<open>\<langle>s/m\<rangle>\<^sub>P(p \<^bold>\<longrightarrow> q) = \<langle>s/m\<rangle>\<^sub>Pp \<^bold>\<longrightarrow> \<langle>s/m\<rangle>\<^sub>Pq\<close>
@@ -170,7 +170,7 @@ primrec inst_fm2P (\<open>\<langle>_'/_\<rangle>\<^sub>P\<close>) where
 | \<open>\<langle>s/m\<rangle>\<^sub>P(\<^bold>\<forall>\<^sub>Pp) = \<^bold>\<forall>\<^sub>P(\<langle>\<^bold>\<up>\<^sub>2 s/m+1\<rangle>\<^sub>Pp)\<close>
 | \<open>\<langle>s/m\<rangle>\<^sub>P(\<^bold>\<forall>\<^sub>Fp) = \<^bold>\<forall>\<^sub>F(\<langle>s/m\<rangle>\<^sub>Pp)\<close>
 
-primrec inst_fm2F (\<open>\<langle>_'/_\<rangle>\<^sub>F\<close>) where
+primrec inst_fm_F (\<open>\<langle>_'/_\<rangle>\<^sub>F\<close>) where
   \<open>\<langle>_/_\<rangle>\<^sub>F\<^bold>\<bottom> = \<^bold>\<bottom>\<close>
 | \<open>\<langle>s/m\<rangle>\<^sub>F(\<^bold>\<cdot>P ts) = \<^bold>\<cdot>P (map \<llangle>s/m\<rrangle>\<^sub>F ts)\<close>
 | \<open>\<langle>s/m\<rangle>\<^sub>F(p \<^bold>\<longrightarrow> q) = \<langle>s/m\<rangle>\<^sub>Fp \<^bold>\<longrightarrow> \<langle>s/m\<rangle>\<^sub>Fq\<close>
@@ -181,10 +181,10 @@ primrec inst_fm2F (\<open>\<langle>_'/_\<rangle>\<^sub>F\<close>) where
 lemma lift_lemma [simp]: \<open>\<lblot>E\<langle>0:x\<rangle>, E\<^sub>F, C, F\<rblot> (\<^bold>\<up>t) = \<lblot>E, E\<^sub>F, C, F\<rblot> t\<close>
   by (induct t) (auto cong: map_cong)
 
-lemma lift_lemma2P [simp]: \<open>\<lblot>E\<^sub>P\<langle>0:x\<rangle>, G\<rblot>\<^sub>2 (\<^bold>\<up>\<^sub>2 P) = \<lblot>E\<^sub>P, G\<rblot>\<^sub>2 P\<close>
+lemma lift_lemma_P [simp]: \<open>\<lblot>E\<^sub>P\<langle>0:x\<rangle>, G\<rblot>\<^sub>2 (\<^bold>\<up>\<^sub>2 P) = \<lblot>E\<^sub>P, G\<rblot>\<^sub>2 P\<close>
   by (induct P) (auto cong: map_cong)
 
-lemma lift_lemma2Ftm [simp]: \<open>\<lblot>E, E\<^sub>F\<langle>0:x\<rangle>, C, F\<rblot> (\<^bold>\<up>\<^sub>F tm) = \<lblot>E, E\<^sub>F, C, F\<rblot> tm\<close>
+lemma lift_lemma_F [simp]: \<open>\<lblot>E, E\<^sub>F\<langle>0:x\<rangle>, C, F\<rblot> (\<^bold>\<up>\<^sub>F tm) = \<lblot>E, E\<^sub>F, C, F\<rblot> tm\<close>
   by (induct tm) (auto cong: map_cong)
 
 lemma inst_tm_semantics [simp]: \<open>\<lblot>E, E\<^sub>F, C, F\<rblot> (\<llangle>s/m\<rrangle>t) = \<lblot>E\<langle>m:\<lblot>E, E\<^sub>F, C, F\<rblot> s\<rangle>, E\<^sub>F, C, F\<rblot> t\<close>
@@ -193,43 +193,18 @@ lemma inst_tm_semantics [simp]: \<open>\<lblot>E, E\<^sub>F, C, F\<rblot> (\<lla
 lemma inst_sym_semantics [simp]: \<open>\<lblot>E\<^sub>F, G\<rblot>\<^sub>2 (\<llangle>s/m\<rrangle>\<^sub>2 fn) = \<lblot>E\<^sub>F\<langle>m:\<lblot>E\<^sub>F, G\<rblot>\<^sub>2 s\<rangle>, G\<rblot>\<^sub>2 fn\<close>
   by (induct fn) (auto cong: map_cong)
 
-lemma inst_tm_semantics2 [simp]: \<open>\<lblot>E, E\<^sub>F, C, F\<rblot> (\<llangle>s/m\<rrangle>\<^sub>F t) = \<lblot>E, E\<^sub>F\<langle>m:\<lblot>E\<^sub>F, F\<rblot>\<^sub>2 s\<rangle>, C, F\<rblot> t\<close>
+lemma inst_tm_semantics_F [simp]: \<open>\<lblot>E, E\<^sub>F, C, F\<rblot> (\<llangle>s/m\<rrangle>\<^sub>F t) = \<lblot>E, E\<^sub>F\<langle>m:\<lblot>E\<^sub>F, F\<rblot>\<^sub>2 s\<rangle>, C, F\<rblot> t\<close>
   by (induct t) (auto cong: map_cong)
 
-lemma inst_fm_semantics''' [simp]:
+lemma inst_fm_semantics_F [simp]:
    \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<langle>t/m\<rangle>\<^sub>F p) \<longleftrightarrow> (E, E\<^sub>F\<langle>m:\<lblot>E\<^sub>F, F\<rblot>\<^sub>2 t\<rangle>, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
   by (induct p arbitrary: E E\<^sub>P E\<^sub>F m t) (auto cong: map_cong)
 
-
 lemma inst_fm_semantics [simp]:
    \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<langle>t/m\<rangle>p) \<longleftrightarrow> (E\<langle>m:\<lblot>E, E\<^sub>F, C, F\<rblot> t\<rangle>, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
-proof (induct p arbitrary: E E\<^sub>P E\<^sub>F m t)
-  case Falsity
-  then show ?case
-    by auto
-next
-  case (Pre x1 x2)
-  then show ?case 
-    by (auto cong: map_cong)
-next
-  case (Imp p1 p2)
-  then show ?case 
-    by auto
-next
-  case (Uni p)
-  then show ?case 
-    by auto
-next
-  case (UniP p)
-  then show ?case 
-    by auto
-next
-  case (UniF p)
-  then show ?case 
-    by (auto cong: map_cong)
-qed
+  by (induct p arbitrary: E E\<^sub>P E\<^sub>F m t) (auto cong: map_cong)
 
-lemma inst_fm_semantics2 [simp]: \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<langle>P/m\<rangle>\<^sub>Pp) \<longleftrightarrow> (E, E\<^sub>F, E\<^sub>P\<langle>m:\<lblot>E\<^sub>P, G\<rblot>\<^sub>2 P\<rangle>, C, F, G, PS, FS) \<Turnstile> p\<close>
+lemma inst_fm_semantics_P [simp]: \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<langle>P/m\<rangle>\<^sub>Pp) \<longleftrightarrow> (E, E\<^sub>F, E\<^sub>P\<langle>m:\<lblot>E\<^sub>P, G\<rblot>\<^sub>2 P\<rangle>, C, F, G, PS, FS) \<Turnstile> p\<close>
   by (induct p arbitrary: E E\<^sub>F E\<^sub>P m P) (auto cong: map_cong)
 
 subsection \<open>Size\<close>
@@ -247,15 +222,13 @@ primrec size_fm where
 lemma size_inst_fm [simp]: \<open>size_fm (\<langle>t/m\<rangle>p) = size_fm p\<close>
   by (induct p arbitrary: m t) simp_all
 
-lemma size_inst_fm2P [simp]: \<open>size_fm (\<langle>t/m\<rangle>\<^sub>Pp) = size_fm p\<close>
+lemma size_inst_fm_P [simp]: \<open>size_fm (\<langle>t/m\<rangle>\<^sub>Pp) = size_fm p\<close>
   by (induct p arbitrary: m t) simp_all
 
-lemma size_inst_fm2F [simp]: \<open>size_fm (\<langle>t/m\<rangle>\<^sub>Fp) = size_fm p\<close>
+lemma size_inst_fm_F [simp]: \<open>size_fm (\<langle>t/m\<rangle>\<^sub>Fp) = size_fm p\<close>
   by (induct p arbitrary: m t) simp_all
 
 section \<open>Propositional Semantics\<close>
-
-(* TODO: put rules in for propositional connectives? *)
 
 primrec boolean where
   \<open>boolean _ _ \<^bold>\<bottom> = False\<close>
@@ -280,7 +253,7 @@ qed
 lemma tautology[simp]: \<open>tautology p \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
   using boolean_semantics by metis
 
-proposition \<open>\<exists>p. (\<forall>E E\<^sub>F E\<^sub>P F G PS FS. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p) \<and> \<not> tautology p\<close>
+proposition \<open>\<exists>p. (\<forall>E E\<^sub>F E\<^sub>P C F G PS FS. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p) \<and> \<not> tautology p\<close>
   by (metis boolean.simps(4) fun_upd_same semantics_fm.simps(3) semantics_fm.simps(4) tautology)
 
 
@@ -288,17 +261,15 @@ section \<open>Calculus\<close>
 
 text \<open>Adapted from System Q1 by Smullyan in First-Order Logic (1968).\<close>
 
-(* TODO: change to natural deduction? *)
-
 inductive Axiomatic (\<open>\<turnstile> _\<close> [50] 50) where
   TA: \<open>tautology p \<Longrightarrow> \<turnstile> p\<close>
 | IA: \<open>\<turnstile> \<^bold>\<forall>p \<^bold>\<longrightarrow> \<langle>t/0\<rangle>p\<close> 
-| IA2P: \<open>\<turnstile> \<^bold>\<forall>\<^sub>Pp \<^bold>\<longrightarrow> \<langle>P/0\<rangle>\<^sub>Pp\<close> 
-| IA2F: \<open>\<turnstile> \<^bold>\<forall>\<^sub>Fp \<^bold>\<longrightarrow> \<langle>P/0\<rangle>\<^sub>Fp\<close> 
+| IA\<^sub>P: \<open>\<turnstile> \<^bold>\<forall>\<^sub>Pp \<^bold>\<longrightarrow> \<langle>s/0\<rangle>\<^sub>Pp\<close> 
+| IA\<^sub>F: \<open>\<turnstile> \<^bold>\<forall>\<^sub>Fp \<^bold>\<longrightarrow> \<langle>s/0\<rangle>\<^sub>Fp\<close> 
 | MP: \<open>\<turnstile> p \<^bold>\<longrightarrow> q \<Longrightarrow> \<turnstile> p \<Longrightarrow> \<turnstile> q\<close> 
 | GR: \<open>\<turnstile> q \<^bold>\<longrightarrow> \<langle>\<^bold>\<star>a/0\<rangle>p \<Longrightarrow> a \<notin> params {p, q} \<Longrightarrow> \<turnstile> q \<^bold>\<longrightarrow> \<^bold>\<forall>p\<close> 
-| GR2P: \<open>\<turnstile> q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2 P/0\<rangle>\<^sub>Pp \<Longrightarrow> P \<notin> params {p, q} \<Longrightarrow> \<turnstile> q \<^bold>\<longrightarrow> \<^bold>\<forall>\<^sub>Pp\<close>
-| GR2F: \<open>\<turnstile> q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2 P/0\<rangle>\<^sub>Fp \<Longrightarrow> P \<notin> params {p, q} \<Longrightarrow> \<turnstile> q \<^bold>\<longrightarrow> \<^bold>\<forall>\<^sub>Fp\<close>
+| GR\<^sub>P: \<open>\<turnstile> q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>Pp \<Longrightarrow> a \<notin> params {p, q} \<Longrightarrow> \<turnstile> q \<^bold>\<longrightarrow> \<^bold>\<forall>\<^sub>Pp\<close>
+| GR\<^sub>F: \<open>\<turnstile> q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>Fp \<Longrightarrow> a \<notin> params {p, q} \<Longrightarrow> \<turnstile> q \<^bold>\<longrightarrow> \<^bold>\<forall>\<^sub>Fp\<close>
 
 text \<open>We simulate assumptions on the lhs of \<open>\<turnstile>\<close> with a chain of implications on the rhs.\<close>
 
@@ -322,16 +293,16 @@ next
   then show ?case
     by auto
 next
-  case (IA2P p P)
+  case (IA\<^sub>P p s)
   then show ?case
-    apply (cases P)
+    apply (cases s)
     apply auto
      apply (meson rangeI subsetD)
     by (meson range_subsetD)
 next
-  case (IA2F p P)
+  case (IA\<^sub>F p s)
   then show ?case
-    apply  (cases P)
+    apply  (cases s)
     apply auto
      apply (simp add: subset_eq)
     by (meson rangeI subsetD)
@@ -346,14 +317,14 @@ next
   ultimately show ?case
     by fastforce
 next
-  case (GR2P q P p)
-  moreover from this have \<open>\<forall>x. x \<in> PS \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G(P := x), PS,FS) \<Turnstile> (q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2P/0\<rangle>\<^sub>Pp)\<close>
+  case (GR\<^sub>P q a p)
+  moreover from this have \<open>\<forall>x. x \<in> PS \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G(a := x), PS,FS) \<Turnstile> (q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>Pp)\<close>
     by (smt (verit, best) fun_upd_def imageE rev_image_eqI subset_eq)
   ultimately show ?case
     by fastforce
 next
-  case (GR2F q P p)
-  moreover from this have \<open>\<forall>x. x \<in> FS \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F(P := x), G, PS,FS) \<Turnstile> (q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2P/0\<rangle>\<^sub>Fp)\<close>
+  case (GR\<^sub>F q a p)
+  moreover from this have \<open>\<forall>x. x \<in> FS \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F(a := x), G, PS,FS) \<Turnstile> (q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2a/0\<rangle>\<^sub>Fp)\<close>
     by (smt (verit, best) fun_upd_def imageE rev_image_eqI subset_eq)
   ultimately show ?case
     by fastforce
@@ -408,7 +379,7 @@ proof -
   then have \<open>\<turnstile> \<^bold>\<not> q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2P/0\<rangle>\<^sub>Pp\<close>
     using Neg Tran MP by metis
   then have \<open>\<turnstile> \<^bold>\<not> q \<^bold>\<longrightarrow> \<^bold>\<forall>\<^sub>Pp\<close>
-    using a by (auto intro: GR2P)
+    using a by (auto intro: GR\<^sub>P)
   then have \<open>\<turnstile> \<^bold>\<not> (\<^bold>\<forall>\<^sub>Pp) \<^bold>\<longrightarrow> \<^bold>\<not> \<^bold>\<not> q\<close>
     using Tran MP by metis
   then show ?thesis
@@ -423,7 +394,7 @@ proof -
   then have \<open>\<turnstile> \<^bold>\<not> q \<^bold>\<longrightarrow> \<langle>\<^bold>\<circle>\<^sub>2F/0\<rangle>\<^sub>Fp\<close>
     using Neg Tran MP by metis
   then have \<open>\<turnstile> \<^bold>\<not> q \<^bold>\<longrightarrow> \<^bold>\<forall>\<^sub>Fp\<close>
-    using a by (auto intro: GR2F)
+    using a by (auto intro: GR\<^sub>F)
   then have \<open>\<turnstile> \<^bold>\<not> (\<^bold>\<forall>\<^sub>Fp) \<^bold>\<longrightarrow> \<^bold>\<not> \<^bold>\<not> q\<close>
     using Tran MP by metis
   then show ?thesis
@@ -547,7 +518,7 @@ lemma map_sym_inst_sym [simp]: \<open>map_sym f (\<llangle>t/m\<rrangle>\<^sub>2
 lemma psub_inst_single' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>P p) = \<langle>map_sym f t/m\<rangle>\<^sub>P(map_fm f p)\<close>
   by (induct p arbitrary: t m) simp_all
 
-lemma map_tm_inst_tm2Ftm [simp]: \<open>map_tm f (\<llangle>t/m\<rrangle>\<^sub>F s) = \<llangle>map_sym f t/m\<rrangle>\<^sub>F (map_tm f s)\<close>
+lemma map_tm_inst_fn [simp]: \<open>map_tm f (\<llangle>t/m\<rrangle>\<^sub>F s) = \<llangle>map_sym f t/m\<rrangle>\<^sub>F (map_tm f s)\<close>
   by (induct s) auto
 
 lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>F p) = \<langle>map_sym f t/m\<rangle>\<^sub>F(map_fm f p)\<close>
@@ -916,7 +887,7 @@ proof
   proof cases
     case (CAllPP p)
     then show ?thesis
-      using * IA2P[of p t] MP'
+      using * IA\<^sub>P[of p t] MP'
       by (metis (mono_tags, lifting) imply.simps(1-2) imply_append imply_swap_append imply_weaken)
   qed
 qed
@@ -929,7 +900,7 @@ proof
   proof cases
     case (CAllFP p)
     then show ?thesis
-      using * IA2F[of p t] MP'
+      using * IA\<^sub>F[of p t] MP'
       by (metis (mono_tags, lifting) imply.simps(1-2) imply_append imply_swap_append imply_weaken)
   qed
 qed
@@ -1285,7 +1256,7 @@ proof
   then obtain S' where \<open>set S' \<subseteq> S\<close> and \<open>\<langle>P/0\<rangle>\<^sub>Pp # S' \<turnstile> \<^bold>\<bottom>\<close>
     using assms inconsistent_fm unfolding consistent_def by blast
   moreover have \<open>\<turnstile> \<^bold>\<forall>\<^sub>Pp \<^bold>\<longrightarrow> \<langle>P/0\<rangle>\<^sub>Pp\<close>
-    using IA2P by blast
+    using IA\<^sub>P by blast
   ultimately have \<open>\<^bold>\<forall>\<^sub>Pp # S' \<turnstile> \<^bold>\<bottom>\<close>
     by (meson add_imply cut deduct(1))
   moreover have \<open>set ((\<^bold>\<forall>\<^sub>Pp) # S') \<subseteq> S\<close>
@@ -1303,7 +1274,7 @@ proof
   then obtain S' where \<open>set S' \<subseteq> S\<close> and \<open>\<langle>F/0\<rangle>\<^sub>Fp # S' \<turnstile> \<^bold>\<bottom>\<close>
     using assms inconsistent_fm unfolding consistent_def by blast
   moreover have \<open>\<turnstile> \<^bold>\<forall>\<^sub>Fp \<^bold>\<longrightarrow> \<langle>F/0\<rangle>\<^sub>Fp\<close>
-    using IA2F by blast
+    using IA\<^sub>F by blast
   ultimately have \<open>\<^bold>\<forall>\<^sub>Fp # S' \<turnstile> \<^bold>\<bottom>\<close>
     by (meson add_imply cut deduct(1))
   moreover have \<open>set ((\<^bold>\<forall>\<^sub>Fp) # S') \<subseteq> S\<close>
