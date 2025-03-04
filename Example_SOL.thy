@@ -26,8 +26,8 @@ datatype (params_fm: 'f) fm
   | is_Pre: Pre \<open>'f sym\<close> \<open>'f tm list\<close> (\<open>\<^bold>\<cdot>\<close>)
   | Imp \<open>'f fm\<close> \<open>'f fm\<close> (infixr \<open>\<^bold>\<longrightarrow>\<close> 55)
   | Uni \<open>'f fm\<close> (\<open>\<^bold>\<forall>\<close>)
-  | Uni2P \<open>'f fm\<close> (\<open>\<^bold>\<forall>\<^sub>P\<close>)
-  | Uni2F \<open>'f fm\<close> (\<open>\<^bold>\<forall>\<^sub>F\<close>)
+  | UniP \<open>'f fm\<close> (\<open>\<^bold>\<forall>\<^sub>P\<close>)
+  | UniF \<open>'f fm\<close> (\<open>\<^bold>\<forall>\<^sub>F\<close>)
 
 abbreviation Neg (\<open>\<^bold>\<not> _\<close> [70] 70) where \<open>\<^bold>\<not> p \<equiv> p \<^bold>\<longrightarrow> \<^bold>\<bottom>\<close>
 
@@ -37,9 +37,9 @@ abbreviation Iff (infix \<open>\<^bold>\<longleftrightarrow>\<close> 50) where \
 
 abbreviation Eql (\<open>_ \<^bold>= _\<close>) where \<open>t1 \<^bold>= t2 \<equiv> (\<^bold>\<forall>\<^sub>P ((\<^bold>\<cdot>(\<^bold>#\<^sub>2 0) [t1]) \<^bold>\<longleftrightarrow> (\<^bold>\<cdot>(\<^bold>#\<^sub>2 0) [t2])))\<close>
 
-abbreviation Exi2F (\<open>\<^bold>\<exists>\<^sub>F\<close>) where \<open>\<^bold>\<exists>\<^sub>F p \<equiv> \<^bold>\<not>(\<^bold>\<forall>\<^sub>F(\<^bold>\<not>p))\<close>
+abbreviation ExiF (\<open>\<^bold>\<exists>\<^sub>F\<close>) where \<open>\<^bold>\<exists>\<^sub>F p \<equiv> \<^bold>\<not>(\<^bold>\<forall>\<^sub>F(\<^bold>\<not>p))\<close>
 
-abbreviation Exi2P (\<open>\<^bold>\<exists>\<^sub>P\<close>) where \<open>\<^bold>\<exists>\<^sub>P p \<equiv> \<^bold>\<not>(\<^bold>\<forall>\<^sub>P(\<^bold>\<not>p))\<close>
+abbreviation ExiP (\<open>\<^bold>\<exists>\<^sub>P\<close>) where \<open>\<^bold>\<exists>\<^sub>P p \<equiv> \<^bold>\<not>(\<^bold>\<forall>\<^sub>P(\<^bold>\<not>p))\<close>
 
 term \<open>\<^bold>\<forall>(\<^bold>\<bottom> \<^bold>\<longrightarrow> (\<^bold>\<cdot>(\<^bold>\<circle>\<^sub>2 ''P'') [\<^bold>\<circle>(\<^bold>\<circle>\<^sub>2 ''f'') [\<^bold>#0]]))\<close>
 
@@ -48,18 +48,18 @@ section \<open>Semantics\<close>
 definition shift (\<open>_\<langle>_:_\<rangle>\<close>) where
   \<open>E\<langle>n:x\<rangle> m \<equiv> if m < n then E m else if m = n then x else E (m-1)\<close>
 
-primrec semantics_fn (\<open>\<lparr>_, _\<rparr>2\<close>) where
-  \<open>\<lparr>E2F, F\<rparr>2 (\<^bold>#\<^sub>2 n) = E2F n\<close>
-| \<open>\<lparr>E2F, F\<rparr>2 (\<^bold>\<circle>\<^sub>2 f) = F f\<close>
+primrec semantics_fn (\<open>\<lblot>_, _\<rblot>2\<close>) where
+  \<open>\<lblot>E2F, F\<rblot>2 (\<^bold>#\<^sub>2 n) = E2F n\<close>
+| \<open>\<lblot>E2F, F\<rblot>2 (\<^bold>\<circle>\<^sub>2 f) = F f\<close>
 
-primrec semantics_tm (\<open>\<lparr>_,_, _, _\<rparr>\<close>) where
-  \<open>\<lparr>E, E2F, C, F\<rparr> (\<^bold>#n) = E n\<close>
-| \<open>\<lparr>E, E2F, C, F\<rparr> (\<^bold>\<circle>f ts) = (\<lparr>E2F, F\<rparr>2 f) (map \<lparr>E, E2F, C, F\<rparr> ts)\<close>
-| \<open>\<lparr>E, E2F, C, F\<rparr> (\<^bold>\<star> c) = C c\<close>
+primrec semantics_tm (\<open>\<lblot>_,_, _, _\<rblot>\<close>) where
+  \<open>\<lblot>E, E2F, C, F\<rblot> (\<^bold>#n) = E n\<close>
+| \<open>\<lblot>E, E2F, C, F\<rblot> (\<^bold>\<circle>f ts) = (\<lblot>E2F, F\<rblot>2 f) (map \<lblot>E, E2F, C, F\<rblot> ts)\<close>
+| \<open>\<lblot>E, E2F, C, F\<rblot> (\<^bold>\<star> c) = C c\<close>
 
 primrec semantics_fm (\<open>\<lbrakk>_, _, _, _, _, _, _, _\<rbrakk>\<close>) where
   \<open>\<lbrakk>_, _, _, _, _, _, _, _\<rbrakk> \<^bold>\<bottom> = False\<close>
-| \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<^bold>\<cdot>P ts) = \<lparr>E2P, G\<rparr>2 P (map \<lparr>E, E2F, C, F\<rparr> ts)\<close>
+| \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<^bold>\<cdot>P ts) = \<lblot>E2P, G\<rblot>2 P (map \<lblot>E, E2F, C, F\<rblot> ts)\<close>
 | \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (p \<^bold>\<longrightarrow> q) = (\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p \<longrightarrow> \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> q)\<close>
 | \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<^bold>\<forall>p) = (\<forall>x. \<lbrakk>E\<langle>0:x\<rangle>, E2F, E2P, C, F, G, PS, FS\<rbrakk> p)\<close>
 | \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<^bold>\<forall>\<^sub>Pp) = (\<forall>x \<in> PS. \<lbrakk>E, E2F, E2P\<langle>0:x\<rangle>, C, F, G, PS, FS\<rbrakk> p)\<close>
@@ -99,13 +99,13 @@ abbreviation \<open>params S \<equiv> \<Union>p \<in> S. params_fm p\<close>
 abbreviation reasg ("_ (_ ::= _)") where
   "reasg ==  \<lambda>f. \<lambda>(b1,b2). \<lambda>c a1 a2. if a1 = b1 \<and> a2 = b2 then c else f a1 a2"
 
-lemma upd_params_sym [simp]: \<open>f \<notin> params_sym fn \<Longrightarrow> \<lparr>E2F, F(f := x)\<rparr>2 fn = \<lparr>E2F, F\<rparr>2 fn\<close>
+lemma upd_params_sym [simp]: \<open>f \<notin> params_sym fn \<Longrightarrow> \<lblot>E2F, F(f := x)\<rblot>2 fn = \<lblot>E2F, F\<rblot>2 fn\<close>
   by (induct fn) (auto cong: map_cong)
 
-lemma upd_params_tm [simp]: \<open>f \<notin> params_tm t \<Longrightarrow> \<lparr>E, E2F, C, F(f := x)\<rparr> t = \<lparr>E, E2F, C, F\<rparr> t\<close>
+lemma upd_params_tm [simp]: \<open>f \<notin> params_tm t \<Longrightarrow> \<lblot>E, E2F, C, F(f := x)\<rblot> t = \<lblot>E, E2F, C, F\<rblot> t\<close>
   by (induct t) (auto cong: map_cong)
 
-lemma upd_params_tm_c [simp]: \<open>c \<notin> params_tm t \<Longrightarrow> \<lparr>E, E2F, C(c := x), F\<rparr> t = \<lparr>E, E2F, C, F\<rparr> t\<close>
+lemma upd_params_tm_c [simp]: \<open>c \<notin> params_tm t \<Longrightarrow> \<lblot>E, E2F, C(c := x), F\<rblot> t = \<lblot>E, E2F, C, F\<rblot> t\<close>
   by (induct t) (auto cong: map_cong)
 
 lemma upd_params_fm [simp]: \<open>f \<notin> params_fm p \<Longrightarrow> \<lbrakk>E, E2F, E2P, C, F(f := x), G, PS, FS\<rbrakk> p = \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
@@ -185,31 +185,31 @@ primrec inst_fm2F (\<open>\<langle>_'/_\<rangle>2Ffm\<close>) where
 | \<open>\<langle>s/m\<rangle>2Ffm(\<^bold>\<forall>\<^sub>Pp) = \<^bold>\<forall>\<^sub>P(\<langle>s/m\<rangle>2Ffmp)\<close>
 | \<open>\<langle>s/m\<rangle>2Ffm(\<^bold>\<forall>\<^sub>Fp) = \<^bold>\<forall>\<^sub>F(\<langle>\<^bold>\<up>2sym s/m+1\<rangle>2Ffmp)\<close>
 
-lemma lift_lemma [simp]: \<open>\<lparr>E\<langle>0:x\<rangle>, E2F, C, F\<rparr> (\<^bold>\<up>t) = \<lparr>E, E2F, C, F\<rparr> t\<close>
+lemma lift_lemma [simp]: \<open>\<lblot>E\<langle>0:x\<rangle>, E2F, C, F\<rblot> (\<^bold>\<up>t) = \<lblot>E, E2F, C, F\<rblot> t\<close>
   by (induct t) (auto cong: map_cong)
 
-lemma lift_lemma2P [simp]: \<open>\<lparr>E2P\<langle>0:x\<rangle>, G\<rparr>2 (\<^bold>\<up>2sym P) = \<lparr>E2P, G\<rparr>2 P\<close>
+lemma lift_lemma2P [simp]: \<open>\<lblot>E2P\<langle>0:x\<rangle>, G\<rblot>2 (\<^bold>\<up>2sym P) = \<lblot>E2P, G\<rblot>2 P\<close>
   by (induct P) (auto cong: map_cong)
 
-lemma lift_lemma2Ftm [simp]: \<open>\<lparr>E, E2F\<langle>0:x\<rangle>, C, F\<rparr> (\<^bold>\<up>2Ftm tm) = \<lparr>E, E2F, C, F\<rparr> tm\<close>
+lemma lift_lemma2Ftm [simp]: \<open>\<lblot>E, E2F\<langle>0:x\<rangle>, C, F\<rblot> (\<^bold>\<up>2Ftm tm) = \<lblot>E, E2F, C, F\<rblot> tm\<close>
   by (induct tm) (auto cong: map_cong)
 
-lemma inst_tm_semantics [simp]: \<open>\<lparr>E, E2F, C, F\<rparr> (\<llangle>s/m\<rrangle>t) = \<lparr>E\<langle>m:\<lparr>E, E2F, C, F\<rparr> s\<rangle>, E2F, C, F\<rparr> t\<close>
+lemma inst_tm_semantics [simp]: \<open>\<lblot>E, E2F, C, F\<rblot> (\<llangle>s/m\<rrangle>t) = \<lblot>E\<langle>m:\<lblot>E, E2F, C, F\<rblot> s\<rangle>, E2F, C, F\<rblot> t\<close>
   by (induct t) (auto cong: map_cong)
 
-lemma inst_sym_semantics [simp]: \<open>\<lparr>E2F, G\<rparr>2 (\<llangle>s/m\<rrangle>2 fn) = \<lparr>E2F\<langle>m:\<lparr>E2F, G\<rparr>2 s\<rangle>, G\<rparr>2 fn\<close>
+lemma inst_sym_semantics [simp]: \<open>\<lblot>E2F, G\<rblot>2 (\<llangle>s/m\<rrangle>2 fn) = \<lblot>E2F\<langle>m:\<lblot>E2F, G\<rblot>2 s\<rangle>, G\<rblot>2 fn\<close>
   by (induct fn) (auto cong: map_cong)
 
-lemma inst_tm_semantics2 [simp]: \<open>\<lparr>E, E2F, C, F\<rparr> (\<langle>s/m\<rangle>2Ftm t) = \<lparr>E, E2F\<langle>m:\<lparr>E2F, F\<rparr>2 s\<rangle>, C, F\<rparr> t\<close>
+lemma inst_tm_semantics2 [simp]: \<open>\<lblot>E, E2F, C, F\<rblot> (\<langle>s/m\<rangle>2Ftm t) = \<lblot>E, E2F\<langle>m:\<lblot>E2F, F\<rblot>2 s\<rangle>, C, F\<rblot> t\<close>
   by (induct t) (auto cong: map_cong)
 
 lemma inst_fm_semantics''' [simp]:
-   \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<langle>t/m\<rangle>2Ffm p) = \<lbrakk>E, E2F\<langle>m:\<lparr>E2F, F\<rparr>2 t\<rangle>, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
+   \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<langle>t/m\<rangle>2Ffm p) = \<lbrakk>E, E2F\<langle>m:\<lblot>E2F, F\<rblot>2 t\<rangle>, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
   by (induct p arbitrary: E E2P E2F m t) (auto cong: map_cong)
 
 
 lemma inst_fm_semantics [simp]:
-   \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<langle>t/m\<rangle>p) = \<lbrakk>E\<langle>m:\<lparr>E, E2F, C, F\<rparr> t\<rangle>, E2F, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
+   \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<langle>t/m\<rangle>p) = \<lbrakk>E\<langle>m:\<lblot>E, E2F, C, F\<rblot> t\<rangle>, E2F, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
 proof (induct p arbitrary: E E2P E2F m t)
   case Falsity
   then show ?case
@@ -227,16 +227,16 @@ next
   then show ?case 
     by auto
 next
-  case (Uni2P p)
+  case (UniP p)
   then show ?case 
     by auto
 next
-  case (Uni2F p)
+  case (UniF p)
   then show ?case 
     by (auto cong: map_cong)
 qed
 
-lemma inst_fm_semantics2 [simp]: \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<langle>P/m\<rangle>2Pp) = \<lbrakk>E, E2F, E2P\<langle>m:\<lparr>E2P, G\<rparr>2 P\<rangle>, C, F, G, PS, FS\<rbrakk> p\<close>
+lemma inst_fm_semantics2 [simp]: \<open>\<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> (\<langle>P/m\<rangle>2Pp) = \<lbrakk>E, E2F, E2P\<langle>m:\<lblot>E2P, G\<rblot>2 P\<rangle>, C, F, G, PS, FS\<rbrakk> p\<close>
   by (induct p arbitrary: E E2F E2P m P) (auto cong: map_cong)
 
 subsection \<open>Size\<close>
@@ -277,10 +277,10 @@ abbreviation \<open>tautology p \<equiv> \<forall>G A. boolean G A p\<close>
 proposition \<open>tautology (\<^bold>\<forall>(\<^bold>\<cdot>P [\<^bold>#0]) \<^bold>\<longrightarrow> \<^bold>\<forall>(\<^bold>\<cdot>P [\<^bold>#0]))\<close>
   by simp
 
-lemma boolean_semantics: \<open>boolean (\<lambda>a. \<lparr>E2P,G\<rparr>2 a \<circ> map \<lparr>E, E2F, C, F\<rparr>) \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> = \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk>\<close>
+lemma boolean_semantics: \<open>boolean (\<lambda>a. \<lblot>E2P,G\<rblot>2 a \<circ> map \<lblot>E, E2F, C, F\<rblot>) \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> = \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk>\<close>
 proof
   fix p
-  show \<open>boolean (\<lambda>a. \<lparr>E2P,G\<rparr>2 a \<circ> map \<lparr>E, E2F, C, F\<rparr>) \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p = \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
+  show \<open>boolean (\<lambda>a. \<lblot>E2P,G\<rblot>2 a \<circ> map \<lblot>E, E2F, C, F\<rblot>) \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p = \<lbrakk>E, E2F, E2P, C, F, G, PS, FS\<rbrakk> p\<close>
     by (induct p) simp_all
 qed
 
@@ -672,7 +672,7 @@ definition hdomF where "hdomF == range henv2F \<union> range hfun"
 
 abbreviation (input) hmodel (\<open>\<lbrakk>_\<rbrakk>\<close>) where \<open>\<lbrakk>H\<rbrakk> \<equiv> \<lbrakk>\<^bold>#, henv2F, henv2P H, \<^bold>\<star>, hfun, hpred H, hdomP H, hdomF\<rbrakk>\<close>
 
-lemma semantics_tm_id [simp]: \<open>\<lparr>\<^bold>#, henv2F , \<^bold>\<star> , \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rparr> t = t\<close>
+lemma semantics_tm_id [simp]: \<open>\<lblot>\<^bold>#, henv2F , \<^bold>\<star> , \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rblot> t = t\<close>
 proof (induct t)
   case (Var x)
   then show ?case 
@@ -687,13 +687,13 @@ next
     by auto
 qed
 
-lemma semantics_tm_id_map [simp]: \<open>map \<lparr>\<^bold>#, \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2 f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rparr> ts = ts\<close>
+lemma semantics_tm_id_map [simp]: \<open>map \<lblot>\<^bold>#, \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2 f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2 f) \<rblot> ts = ts\<close>
   by (auto cong: map_cong)
 
-lemma semantics_fn_h [simp]: \<open>\<lparr>henv2P S, hpred S\<rparr>2 P ts \<longleftrightarrow> \<^bold>\<cdot>P ts \<in> S\<close>
+lemma semantics_fn_h [simp]: \<open>\<lblot>henv2P S, hpred S\<rblot>2 P ts \<longleftrightarrow> \<^bold>\<cdot>P ts \<in> S\<close>
   by (cases P) simp_all
 
-lemma hdomP_range: \<open>hdomP S \<subseteq> range \<lparr>henv2P S, hpred S\<rparr>2\<close>
+lemma hdomP_range: \<open>hdomP S \<subseteq> range \<lblot>henv2P S, hpred S\<rblot>2\<close>
   by fastforce
 
 locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\<close>
@@ -776,7 +776,7 @@ next
         by auto
     qed
   next
-    case (Uni2P p)
+    case (UniP p)
     then show ?thesis
     proof (safe del: notI)
       assume \<open>x = \<^bold>\<forall>\<^sub>P p\<close> \<open>\<^bold>\<forall>\<^sub>P p \<in> S\<close>
@@ -806,7 +806,7 @@ next
         by auto
     qed
   next
-    case (Uni2F p)
+    case (UniF p)
     then show ?thesis
     proof (safe del: notI)
       assume \<open>x = \<^bold>\<forall>\<^sub>F p\<close> \<open>\<^bold>\<forall>\<^sub>F p \<in> S\<close>
@@ -1367,11 +1367,11 @@ next
   then show ?case
     by auto
 next
-  case (Uni2P p)
+  case (UniP p)
   then show ?case
     by auto
 next
-  case (Uni2F p)
+  case (UniF p)
   then show ?case
     by auto
 qed
@@ -1394,11 +1394,11 @@ next
   then show ?case
     by auto
 next
-  case (Uni2P p)
+  case (UniP p)
   then show ?case
     by auto
 next
-  case (Uni2F p)
+  case (UniF p)
   then show ?case
     by auto
 qed
@@ -1683,7 +1683,7 @@ definition hdomF where "hdomF == range henv2F \<union> range hfun"
 
 abbreviation (input) hmodel (\<open>\<lbrakk>_\<rbrakk>\<close>) where \<open>\<lbrakk>H\<rbrakk> \<equiv> \<lbrakk>\<^bold>#, henv2F, henv2P H, \<^bold>\<star>, hfun, hpred H, hdomP H, hdomF\<rbrakk>\<close>
 
-lemma semantics_tm_id [simp]: \<open>\<lparr>\<^bold>#, henv2F , \<^bold>\<star> , \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2F f) \<rparr> t = t\<close>
+lemma semantics_tm_id [simp]: \<open>\<lblot>\<^bold>#, henv2F , \<^bold>\<star> , \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2F f) \<rblot> t = t\<close>
 proof (induct t)
   case (Var x)
   then show ?case 
@@ -1698,7 +1698,7 @@ next
     by auto
 qed
 
-lemma semantics_tm_id_map [simp]: \<open>map \<lparr>\<^bold>#, \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2F f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2F f) \<rparr> ts = ts\<close>
+lemma semantics_tm_id_map [simp]: \<open>map \<lblot>\<^bold>#, \<lambda>f. \<^bold>\<circle> (\<^bold>#\<^sub>2F f) , \<^bold>\<star>, \<lambda>f. \<^bold>\<circle> (\<^bold>\<circle>\<^sub>2F f) \<rblot> ts = ts\<close>
   by (auto cong: map_cong)
 
 theorem Hintikka_model:
