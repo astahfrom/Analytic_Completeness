@@ -250,9 +250,9 @@ inductive gamma_class_F :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarr
   CAllFP: \<open>[ \<^bold>\<forall>\<^sub>F p ] \<leadsto>\<^sub>\<gamma>\<^sub>F (\<lambda>_. UNIV, \<lambda>s. [ \<langle>s/0\<rangle>\<^sub>F p ])\<close>
 
 fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
-  CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p ]\<close> 
-| CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>\<^sub>P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>Pp ]\<close>
-| CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F  p ]\<close>
+  CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle> p ]\<close> 
+| CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>\<^sub>P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p ]\<close>
+| CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p ]\<close>
 | NOMATCH: \<open>delta_fun _ _ = []\<close>
 
 interpretation C: Confl map_fm params_fm confl_class
