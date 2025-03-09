@@ -206,8 +206,11 @@ fun delta_fun :: \<open>('f, 'p) fm \<Rightarrow> 'f \<Rightarrow> ('f, 'p) fm l
   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p ]\<close>
 | \<open>delta_fun _ _ = []\<close>
 
+interpretation P: Params_Fm psub params_fm
+  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0)
+
 interpretation C: Confl psub params_fm confl_class
-  by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: confl_class.cases)
+  by unfold_locales (auto elim!: confl_class.cases)
 
 interpretation A: Alpha psub params_fm alpha_class
   by unfold_locales (auto elim!: alpha_class.cases)
@@ -237,7 +240,7 @@ lemma CProp_Kinds:
 
 interpretation Consistency_Prop psub params_fm Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms G.Consistency_Kind_axioms D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro C.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro!: Consistency_Prop.intro P.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
 
 interpretation Maximal_Consistency_UNIV psub params_fm Kinds
 proof
@@ -358,7 +361,7 @@ theorem model_existence:
   fixes S :: \<open>('f, 'p) fm set\<close>
   assumes \<open>CProp Kinds C\<close>
     and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- C.params S|\<close>
+    and \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params S|\<close>
     and \<open>terms S \<noteq> {}\<close>
     and \<open>p \<in> S\<close>
   shows \<open>canonical (mk_mcs C S) \<Turnstile> p\<close>
@@ -387,7 +390,7 @@ inductive ND_Set :: \<open>('f, 'p) fm set \<Rightarrow> ('f, 'p) fm \<Rightarro
 | FlsE [elim]: \<open>A \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> A \<tturnstile> p\<close>
 | ImpI [intro]: \<open>{p} \<union> A \<tturnstile> q \<Longrightarrow> A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
 | ImpE [dest]: \<open>A \<tturnstile> p \<^bold>\<longrightarrow> q \<Longrightarrow> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> q\<close>
-| UniI [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<star>a\<rangle>p \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>p\<close>
+| UniI [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<star>a\<rangle>p \<Longrightarrow> a \<notin> P.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>p\<close>
 | UniE [dest]: \<open>A \<tturnstile> \<^bold>\<forall>p \<Longrightarrow> t \<in> terms ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<langle>t\<rangle>p\<close>
 | Clas: \<open>{p \<^bold>\<longrightarrow> q} \<union> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> p\<close>
 
@@ -468,11 +471,11 @@ qed
 sublocale DD: Derivational_Delta psub params_fm delta_fun \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
 proof
   fix A a and p :: \<open>('f, 'p) fm\<close>
-  assume \<open>p \<in> A\<close> \<open>a \<notin> C.params A\<close> \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
   proof (induct p a rule: delta_fun.induct)
     case (1 p x)
-    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+    then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<star> x\<rangle> p\<close>
       using "1.prems"(3) Boole by auto
@@ -492,7 +495,7 @@ lemma with_subterm_elim: \<open>A \<tturnstile> with_subterm p \<Longrightarrow>
 theorem strong_completeness:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- C.params A|\<close>
+    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- P.params A|\<close>
   shows \<open>A \<tturnstile> p\<close>
 proof (rule ccontr)
   assume \<open>\<not> A \<tturnstile> p\<close>
@@ -502,7 +505,7 @@ proof (rule ccontr)
     using Boole by (metis insert_is_Un)
 
   let ?S = \<open>set [\<^bold>\<not> with_subterm p] \<union> A\<close>
-  let ?C = \<open>{A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- C.params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+  let ?C = \<open>{A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- P.params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
   let ?M = \<open>canonical (mk_mcs ?C ?S)\<close>
 
   have ne: \<open>terms ?S \<noteq> {}\<close>
@@ -514,7 +517,7 @@ proof (rule ccontr)
 
   have \<open>CProp Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- C.params ?S|\<close>
+  moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params ?S|\<close>
     using inf params_left by blast
   moreover from this have \<open>?S \<in> ?C\<close>
     using * by simp
@@ -533,7 +536,7 @@ inductive ND_List :: \<open>('f, 'p) fm list \<Rightarrow> ('f, 'p) fm \<Rightar
 | FlsE [elim]: \<open>A \<turnstile> \<^bold>\<bottom> \<Longrightarrow> A \<turnstile> p\<close>
 | ImpI [intro]: \<open>p # A \<turnstile> q \<Longrightarrow> A \<turnstile> p \<^bold>\<longrightarrow> q\<close>
 | ImpE [dest]: \<open>A \<turnstile> p \<^bold>\<longrightarrow> q \<Longrightarrow> A \<turnstile> p \<Longrightarrow> A \<turnstile> q\<close>
-| UniI [intro]: \<open>A \<turnstile> \<langle>\<^bold>\<star>a\<rangle>p \<Longrightarrow> a \<notin> C.params ({p} \<union> set A) \<Longrightarrow> A \<turnstile> \<^bold>\<forall>p\<close>
+| UniI [intro]: \<open>A \<turnstile> \<langle>\<^bold>\<star>a\<rangle>p \<Longrightarrow> a \<notin> P.params ({p} \<union> set A) \<Longrightarrow> A \<turnstile> \<^bold>\<forall>p\<close>
 | UniE [dest]: \<open>A \<turnstile> \<^bold>\<forall>p \<Longrightarrow> t \<in> terms ({p} \<union> set A) \<Longrightarrow> A \<turnstile> \<langle>t\<rangle>p\<close>
 | Clas: \<open>(p \<^bold>\<longrightarrow> q) # A \<turnstile> p \<Longrightarrow> A \<turnstile> p\<close>
 
@@ -563,8 +566,8 @@ lemma bounded_terms:
   using assms unfolding terms_def bounded_def by auto
 
 lemma bounded_params:
-  assumes \<open>a \<notin> C.params ({p} \<union> A)\<close> \<open>bounded K A P\<close>
-  shows \<open>bounded K A (\<lambda>B. a \<notin> C.params (set (p # B)))\<close>
+  assumes \<open>a \<notin> P.params ({p} \<union> A)\<close> \<open>bounded K A P\<close>
+  shows \<open>bounded K A (\<lambda>B. a \<notin> P.params (set (p # B)))\<close>
   using assms unfolding bounded_def by auto
 
 lemma finite_kernel: \<open>A \<tturnstile> p \<Longrightarrow> \<exists>K. bounded K A (\<lambda>B. B \<turnstile> p)\<close>
@@ -608,7 +611,7 @@ corollary \<open>\<not> ([] \<turnstile> \<^bold>\<bottom>)\<close>
 corollary strong_completeness_list:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- C.params A|\<close>
+    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- P.params A|\<close>
   shows \<open>\<exists>B. set B \<subseteq> A \<and> B \<turnstile> p\<close>
   using assms strong_completeness finite_assumptions by blast
 
@@ -633,7 +636,7 @@ inductive TC :: \<open>('f, 'p) fm set \<Rightarrow> bool\<close> (\<open>\<turn
 | ImpP [intro]: \<open>\<turnstile> {\<^bold>\<not> p} \<union> A \<Longrightarrow> \<turnstile> {q} \<union> A \<Longrightarrow> \<turnstile> {p \<^bold>\<longrightarrow> q} \<union> A\<close>
 | ImpN [intro]: \<open>\<turnstile> {p, \<^bold>\<not> q} \<union> A \<Longrightarrow> \<turnstile> {\<^bold>\<not> (p \<^bold>\<longrightarrow> q)} \<union> A\<close>
 | UniP [intro]: \<open>\<turnstile> {\<langle>t\<rangle>p} \<union> A \<Longrightarrow> t \<in> terms ({p} \<union> A) \<Longrightarrow> \<turnstile> {\<^bold>\<forall>p} \<union> A\<close>
-| UniN [intro]: \<open>\<turnstile> {\<^bold>\<not> \<langle>\<^bold>\<star>a\<rangle>p} \<union> A \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> \<turnstile> {\<^bold>\<not> \<^bold>\<forall>p} \<union> A\<close>
+| UniN [intro]: \<open>\<turnstile> {\<^bold>\<not> \<langle>\<^bold>\<star>a\<rangle>p} \<union> A \<Longrightarrow> a \<notin> P.params ({p} \<union> A) \<Longrightarrow> \<turnstile> {\<^bold>\<not> \<^bold>\<forall>p} \<union> A\<close>
 
 subsection \<open>Soundness\<close>
 
@@ -723,11 +726,11 @@ qed
 sublocale DD: Derivational_Delta psub params_fm delta_fun TC
 proof
   fix A a and p :: \<open>('f, 'p) fm\<close>
-  assume \<open>p \<in> A\<close> \<open>a \<notin> C.params A\<close> \<open>\<turnstile> set (delta_fun p a) \<union> A\<close>
+  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<turnstile> set (delta_fun p a) \<union> A\<close>
   then show \<open>\<turnstile> A\<close>
   proof (induct p a rule: delta_fun.induct)
     case (1 p x)
-    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+    then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     then show ?thesis
       using 1 UniN[of x p A]
@@ -743,13 +746,13 @@ subsection \<open>Strong Completeness\<close>
 theorem strong_completeness:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- C.params A|\<close>
+    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- P.params A|\<close>
   shows \<open>\<turnstile> {\<^bold>\<not> with_subterm p} \<union> A\<close>
 proof (rule ccontr)
   assume *: \<open>\<not> \<turnstile> {\<^bold>\<not> with_subterm p} \<union> A\<close>
   
   let ?S = \<open>set [\<^bold>\<not> with_subterm p] \<union> A\<close>
-  let ?C = \<open>{A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- C.params A| \<and> \<not> \<turnstile> A}\<close>
+  let ?C = \<open>{A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- P.params A| \<and> \<not> \<turnstile> A}\<close>
   let ?M = \<open>canonical (mk_mcs ?C ?S)\<close>
 
   have ne: \<open>terms ?S \<noteq> {}\<close>
@@ -761,7 +764,7 @@ proof (rule ccontr)
 
   have \<open>CProp Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- C.params ?S|\<close>
+  moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params ?S|\<close>
     using inf params_left by blast
   moreover from this have \<open>?S \<in> ?C\<close>
     using * by simp

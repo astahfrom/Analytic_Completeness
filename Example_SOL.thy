@@ -255,9 +255,11 @@ fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> 
 | CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p ]\<close>
 | NOMATCH: \<open>delta_fun _ _ = []\<close>
 
+interpretation P: Params_Fm map_fm params_fm
+  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
+
 interpretation C: Confl map_fm params_fm confl_class
-  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0
-      elim!: confl_class.cases intro: confl_class.intros)
+  by unfold_locales (auto elim!: confl_class.cases intro: confl_class.intros)
 
 interpretation A: Alpha map_fm params_fm alpha_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros)
@@ -320,7 +322,7 @@ interpretation Consistency_Prop map_fm params_fm Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     G.Consistency_Kind_axioms G\<^sub>P.Consistency_Kind_axioms G\<^sub>F.Consistency_Kind_axioms
     D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro C.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro!: Consistency_Prop.intro P.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
 
 interpretation Maximal_Consistency_UNIV map_fm params_fm Kinds
 proof
@@ -515,7 +517,7 @@ theorem model_existence:
   fixes S :: \<open>'x fm set\<close>
   assumes \<open>CProp Kinds C\<close>
     and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: 'x fm set| \<le>o |- C.params S|\<close>
+    and \<open>|UNIV :: 'x fm set| \<le>o |- P.params S|\<close>
     and \<open>p \<in> S\<close>
   shows \<open>\<lbrakk>mk_mcs C S\<rbrakk> \<Turnstile> p\<close>
 proof -
@@ -846,11 +848,11 @@ lemma imply_params_fm: \<open>params_fm (ps \<^bold>\<leadsto> q) = params_fm q 
 interpretation DD: Weak_Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   fix A a and p :: \<open>'x fm\<close>
-  assume \<open>p \<in> set A\<close> \<open>a \<notin> C.params (set A)\<close> \<open>delta_fun p a @ A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> set A\<close> \<open>a \<notin> P.params (set A)\<close> \<open>delta_fun p a @ A \<turnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
   proof (induct p a rule: delta_fun.induct)
     case (1 p x)
-    have \<open>x \<notin> C.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
+    have \<open>x \<notin> P.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
       using 1(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
     moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p # A \<turnstile> \<^bold>\<bottom>\<close>
       using 1(3) by simp
@@ -860,7 +862,7 @@ proof
       using 1(1) by (meson Boole MP' imply_mem)
   next
     case (2 p x)
-    have \<open>x \<notin> C.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
+    have \<open>x \<notin> P.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
       using 2(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
     moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p # A \<turnstile> \<^bold>\<bottom>\<close>
       using 2(3) by simp
@@ -870,7 +872,7 @@ proof
       using 2(1) by (meson Boole MP' imply_mem)
   next
     case (3 p x)
-    have \<open>x \<notin> C.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
+    have \<open>x \<notin> P.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
       using 3(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
     moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p # A \<turnstile> \<^bold>\<bottom>\<close>
       using 3(3) by simp
@@ -893,7 +895,7 @@ qed
 theorem weak_completeness:
   fixes p :: \<open>'x fm\<close>
   assumes mod: \<open>\<forall>(E :: _ \<Rightarrow> 'x tm) E\<^sub>F E\<^sub>P C F G PS FS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longrightarrow> (\<forall>q \<in> set ps. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q) \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: 'x fm set| \<le>o  |- C.params (set ps)|\<close>
+    and inf: \<open>|UNIV :: 'x fm set| \<le>o  |- P.params (set ps)|\<close>
   shows \<open>ps \<turnstile> p\<close>
 proof (rule ccontr)
   assume \<open>\<not> ps \<turnstile> p\<close>
@@ -910,7 +912,7 @@ proof (rule ccontr)
     using Consistency by blast
   moreover have \<open>?S \<in> ?C\<close>
     using * by blast
-  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- C.params ?S|\<close>
+  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- P.params ?S|\<close>
     using inf by (metis UN_insert finite_params_fm inf_univ infinite_left list.simps(15))
   ultimately have *: \<open>\<forall>p \<in> ?S. ?M \<Turnstile> p\<close>
     using model_existence by blast 
@@ -937,11 +939,11 @@ inductive ND_Set :: \<open>'x fm set \<Rightarrow> 'x fm \<Rightarrow> bool\<clo
 | FlsE [elim]: \<open>A \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> A \<tturnstile> p\<close>
 | ImpI [intro]: \<open>{p} \<union> A \<tturnstile> q \<Longrightarrow> A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
 | ImpE [dest]: \<open>A \<tturnstile> p \<^bold>\<longrightarrow> q \<Longrightarrow> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> q\<close>
-| UniI [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<star>a/0\<rangle>p \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>p\<close>
+| UniI [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<star>a/0\<rangle>p \<Longrightarrow> a \<notin> P.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>p\<close>
 | UniE [dest]: \<open>A \<tturnstile> \<^bold>\<forall>p \<Longrightarrow> A \<tturnstile> \<langle>t/0\<rangle>p\<close>
-| UniI\<^sub>P [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>\<^sub>P p\<close>
+| UniI\<^sub>P [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p \<Longrightarrow> a \<notin> P.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>\<^sub>P p\<close>
 | UniE\<^sub>P [dest]: \<open>A \<tturnstile> \<^bold>\<forall>\<^sub>P p \<Longrightarrow> A \<tturnstile> \<langle>s/0\<rangle>\<^sub>P p\<close>
-| UniI\<^sub>F [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p \<Longrightarrow> a \<notin> C.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>\<^sub>F p\<close>
+| UniI\<^sub>F [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p \<Longrightarrow> a \<notin> P.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>\<^sub>F p\<close>
 | UniE\<^sub>F [dest]: \<open>A \<tturnstile> \<^bold>\<forall>\<^sub>F p \<Longrightarrow> A \<tturnstile> \<langle>s/0\<rangle>\<^sub>F p\<close>
 | Clas: \<open>{p \<^bold>\<longrightarrow> q} \<union> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> p\<close>
 
@@ -1072,11 +1074,11 @@ qed
 sublocale DD: Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
 proof
   fix A a and p :: \<open>'x fm\<close>
-  assume \<open>p \<in> A\<close> \<open>a \<notin> C.params A\<close> \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
   proof (induct p a rule: delta_fun.induct)
     case (1 p x)
-    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+    then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<star>x/0\<rangle> p\<close>
       using "1.prems"(3) Boole by auto
@@ -1084,7 +1086,7 @@ proof
       using 1(1) UniI by blast
   next
     case (2 p x)
-    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+    then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p\<close>
       using "2.prems"(3) Boole by auto
@@ -1092,7 +1094,7 @@ proof
       using 2(1) UniI\<^sub>P by blast
   next
     case (3 p x)
-    then have \<open>x \<notin> C.params ({p} \<union> A)\<close>
+    then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p\<close>
       using "3.prems"(3) Boole by auto
@@ -1110,7 +1112,7 @@ theorem strong_completeness:
   fixes p :: \<open>'x fm\<close>
   assumes mod: \<open>\<And>(E :: nat \<Rightarrow> 'x tm) E\<^sub>F E\<^sub>P C F G PS FS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Longrightarrow>
       (\<forall>q \<in> A. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q) \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: 'x fm set| \<le>o |- C.params A|\<close>
+    and inf: \<open>|UNIV :: 'x fm set| \<le>o |- P.params A|\<close>
   shows \<open>A \<tturnstile> p\<close>
 proof (rule ccontr)
   assume \<open>\<not> A \<tturnstile> p\<close>
@@ -1118,7 +1120,7 @@ proof (rule ccontr)
     using Boole by (metis insert_is_Un)
 
   let ?S = \<open>set [\<^bold>\<not> p] \<union> A\<close>
-  let ?C = \<open>{A :: 'x fm set. |UNIV :: 'x fm set| \<le>o |- C.params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+  let ?C = \<open>{A :: 'x fm set. |UNIV :: 'x fm set| \<le>o |- P.params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
   let ?M = \<open>\<lbrakk>mk_mcs ?C ?S\<rbrakk>\<close>
 
   have wf: \<open>wf_model ?M\<close>
@@ -1126,7 +1128,7 @@ proof (rule ccontr)
 
   have \<open>CProp Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- C.params ?S|\<close>
+  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- P.params ?S|\<close>
     using inf params_left by blast
   moreover from this have \<open>?S \<in> ?C\<close>
     using * by simp

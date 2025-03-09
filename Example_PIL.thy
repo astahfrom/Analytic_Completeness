@@ -689,9 +689,11 @@ fun delta_fun :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close
 | CAllN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
 | \<open>delta_fun _ _ = []\<close>
 
+interpretation P: Params_Fm map_lbd symbols_lbd
+  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
+
 interpretation C: Confl map_lbd symbols_lbd confl_class
-  by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0
-      elim!: confl_class.cases intro: confl_class.intros)
+  by unfold_locales (auto elim!: confl_class.cases intro: confl_class.intros)
 
 interpretation A: Alpha map_lbd symbols_lbd alpha_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros)
@@ -722,7 +724,7 @@ lemma CProp_Kinds:
 interpretation Consistency_Prop map_lbd symbols_lbd Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     GI.Consistency_Kind_axioms GP.Consistency_Kind_axioms D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro C.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro!: Consistency_Prop.intro P.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
 
 interpretation Maximal_Consistency_UNIV map_lbd symbols_lbd Kinds
 proof
@@ -1216,7 +1218,7 @@ theorem model_existence:
   fixes S :: \<open>'x lbd set\<close>
   assumes \<open>CProp Kinds C\<close>
     and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: 'x lbd set| \<le>o |- C.params S|\<close>
+    and \<open>|UNIV :: 'x lbd set| \<le>o |- P.params S|\<close>
     and \<open>(i, p) \<in> S\<close>
   shows \<open>\<lbrakk>mk_mcs C S, i\<rbrakk> \<Turnstile> p\<close>
 proof -
@@ -1617,7 +1619,7 @@ proof (rule ccontr)
   moreover have \<open>?S \<in> ?C\<close>
     using * FlsE params_left
     by (metis (no_types, lifting) List.set_insert empty_set inf mem_Collect_eq )
-  moreover from this have \<open>|UNIV :: 'x lbd set| \<le>o |- C.params ?S|\<close>
+  moreover from this have \<open>|UNIV :: 'x lbd set| \<le>o |- P.params ?S|\<close>
     using inf by blast
   ultimately have **: \<open>\<forall>(k, q) \<in> ?S. \<lbrakk>?H, k\<rbrakk> \<Turnstile> q\<close>
     using model_existence[of ?C ?S] by blast
@@ -1681,8 +1683,8 @@ lemma bounded_removeAll [dest]:
   by (metis Diff_subset_conv insert_is_Un insert_mono list.simps(15) set_removeAll)
 
 lemma bounded_params:
-  assumes \<open>a \<notin> C.params ({p} \<union> A)\<close> \<open>bounded K A P\<close>
-  shows \<open>bounded K A (\<lambda>B. a \<notin> C.params (set (p # B)))\<close>
+  assumes \<open>a \<notin> P.params ({p} \<union> A)\<close> \<open>bounded K A P\<close>
+  shows \<open>bounded K A (\<lambda>B. a \<notin> P.params (set (p # B)))\<close>
   using assms unfolding bounded_def by auto
 
 lemma finite_kernel: \<open>A \<tturnstile> (i, p) \<Longrightarrow> \<exists>K. bounded K A (\<lambda>B. B \<turnstile> (i, p))\<close>
@@ -1710,7 +1712,7 @@ next
   case (BoxI i k A p)
   then have \<open>\<exists>K. bounded K A (\<lambda>B. (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k))) # B \<turnstile> (\<^bold>\<circle> k, p))\<close>
     by blast
-  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> C.params ({(i, p)} \<union> set B))\<close>
+  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> P.params ({(i, p)} \<union> set B))\<close>
     using BoxI(2-3) bounded_params by fastforce
   ultimately show ?case
     by fastforce
@@ -1718,7 +1720,7 @@ next
   case (GloI A k p i)
   then have \<open>\<exists>K. bounded K A (\<lambda>B. B \<turnstile> (\<^bold>\<circle> k, p))\<close>
     by blast
-  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> C.params ({(i, p)} \<union> set B))\<close>
+  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. k \<notin> P.params ({(i, p)} \<union> set B))\<close>
     using GloI(3) bounded_params by fastforce
   ultimately show ?case
     by fastforce
@@ -1726,7 +1728,7 @@ next
   case (AllI A i P p)
   then have \<open>\<exists>K. bounded K A (\<lambda>B. B \<turnstile> (i, \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p))\<close>
     by blast
-  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. P \<notin> C.params ({(i, p)} \<union> set B))\<close>
+  moreover from this have \<open>\<exists>K. bounded K A (\<lambda>B. P \<notin> P.params ({(i, p)} \<union> set B))\<close>
     using AllI(3) bounded_params by fastforce
   ultimately show ?case
     by fastforce
