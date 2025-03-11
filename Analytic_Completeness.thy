@@ -330,21 +330,21 @@ lemma has_kinds_alt: \<open>has_kinds Ks C \<Longrightarrow> subset_closed C \<L
 lemma has_kinds_fin: \<open>subset_closed C \<Longrightarrow> has_alt_kinds Ks C \<Longrightarrow> has_alt_kinds Ks (mk_finite_char C)\<close>
   unfolding has_alt_kinds_def using all_kinds Consistency_Kind.respects_fin by fast
 
-definition mk_cprop :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
-  \<open>mk_cprop C \<equiv> mk_finite_char (mk_alt_consistency (close C))\<close>
+definition mk_alt_fin :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
+  \<open>mk_alt_fin C \<equiv> mk_finite_char (mk_alt_consistency (close C))\<close>
 
-lemma mk_cprop_subset_closed: \<open>subset_closed (mk_cprop C)\<close>
-  unfolding mk_cprop_def using finite_char finite_char_closed by blast
+lemma mk_alt_fin_subset_closed: \<open>subset_closed (mk_alt_fin C)\<close>
+  unfolding mk_alt_fin_def using finite_char finite_char_closed by blast
 
-lemma mk_cprop_finite_char: \<open>finite_char (mk_cprop C)\<close>
-  unfolding mk_cprop_def using finite_char by blast
+lemma mk_alt_fin_finite_char: \<open>finite_char (mk_alt_fin C)\<close>
+  unfolding mk_alt_fin_def using finite_char by blast
 
-lemma mk_cprop_in: \<open>S \<in> C \<Longrightarrow> S \<in> mk_cprop C\<close>
-  unfolding mk_cprop_def
+lemma mk_alt_fin_in: \<open>S \<in> C \<Longrightarrow> S \<in> mk_alt_fin C\<close>
+  unfolding mk_alt_fin_def
   by (meson close_closed close_subset finite_char_subset in_mono mk_alt_consistency_closed mk_alt_consistency_subset)
 
-theorem has_kinds: \<open>has_kinds Ks C \<Longrightarrow> has_alt_kinds Ks (mk_cprop C)\<close>
-  unfolding mk_cprop_def
+theorem has_kinds: \<open>has_kinds Ks C \<Longrightarrow> has_alt_kinds Ks (mk_alt_fin C)\<close>
+  unfolding mk_alt_fin_def
   by (simp add: has_kinds_alt has_kinds_close has_kinds_fin close_closed mk_alt_consistency_closed)
 
 end
@@ -734,15 +734,15 @@ proof safe
 qed
 
 abbreviation mk_mcs :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
-  \<open>mk_mcs C S \<equiv> Extend (mk_cprop C) S\<close>
+  \<open>mk_mcs C S \<equiv> Extend (mk_alt_fin C) S\<close>
 
 theorem mk_mcs_rmaximal: \<open>rmaximal C (mk_mcs C S)\<close>
-  using Extend_rmaximal rmaximal_def mk_cprop_in mk_cprop_subset_closed by meson
+  using Extend_rmaximal rmaximal_def mk_alt_fin_in mk_alt_fin_subset_closed by meson
 
 theorem mk_mcs_witnessed:
   assumes \<open>has_kinds Ks C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>witnessed (mk_mcs C S)\<close>
-  using assms Extend_witnessed has_kinds mk_cprop_finite_char mk_cprop_in by blast
+  using assms Extend_witnessed has_kinds mk_alt_fin_finite_char mk_alt_fin_in by blast
 
 end
 
@@ -785,14 +785,14 @@ proof
   show \<open>has_hint K (mk_mcs C S)\<close>
   proof (cases K)
     case (Cond P H)
-    moreover have \<open>maximal (mk_cprop C) (mk_mcs C S)\<close>
-      using Extend_rmaximal mk_cprop_subset_closed unfolding maximal by blast
-    moreover have \<open>has_alt_kinds Ks (mk_cprop C)\<close>
+    moreover have \<open>maximal (mk_alt_fin C) (mk_mcs C S)\<close>
+      using Extend_rmaximal mk_alt_fin_subset_closed unfolding maximal by blast
+    moreover have \<open>has_alt_kinds Ks (mk_alt_fin C)\<close>
       using assms(1) has_kinds by blast
-    then have \<open>mk_mcs C S \<in> mk_cprop C\<close>
-      using assms(2-3) Extend_in_C mk_cprop_finite_char mk_cprop_in by blast
-    moreover have \<open>has_kind (Cond P H) (mk_cprop C)\<close>
-      using \<open>has_alt_kinds Ks (mk_cprop C)\<close> Cond K unfolding has_alt_kinds_def by fast 
+    then have \<open>mk_mcs C S \<in> mk_alt_fin C\<close>
+      using assms(2-3) Extend_in_C mk_alt_fin_finite_char mk_alt_fin_in by blast
+    moreover have \<open>has_kind (Cond P H) (mk_alt_fin C)\<close>
+      using \<open>has_alt_kinds Ks (mk_alt_fin C)\<close> Cond K unfolding has_alt_kinds_def by fast 
     ultimately show ?thesis
       using K all_kinds Consistency_Kind.hintikka by meson
   next
