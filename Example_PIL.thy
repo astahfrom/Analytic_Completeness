@@ -716,10 +716,10 @@ qed
 abbreviation Kinds :: \<open>('x, 'x lbd) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, GI.kind, GP.kind, D.kind]\<close>
 
-lemma CProp_Kinds:
-  assumes \<open>CKind C.kind C\<close> \<open>CKind A.kind C\<close> \<open>CKind B.kind C\<close> \<open>CKind GI.kind C\<close> \<open>CKind GP.kind C\<close> \<open>CKind D.kind C\<close>
-  shows \<open>CProp Kinds C\<close>
-  unfolding CProp_def using assms by simp
+lemma has_kinds_Kinds:
+  assumes \<open>has_kind C.kind C\<close> \<open>has_kind A.kind C\<close> \<open>has_kind B.kind C\<close> \<open>has_kind GI.kind C\<close> \<open>has_kind GP.kind C\<close> \<open>has_kind D.kind C\<close>
+  shows \<open>has_kinds Kinds C\<close>
+  unfolding has_kinds_def using assms by simp
 
 interpretation Consistency_Prop map_lbd symbols_lbd Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
@@ -736,35 +736,35 @@ qed
 
 context begin
 
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p) \<notin> S \<or> (i, \<^bold>\<not> p) \<notin> S\<close>
-  using CProp_CKind[of C.kind] by (force intro: CNegP)
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p) \<notin> S \<or> (i, \<^bold>\<not> p) \<notin> S\<close>
+  using has_kind[of C.kind] by (force intro: CNegP)
 
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
-  using CProp_CKind[of A.kind] by (force intro: CConP)
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
+  using has_kind[of A.kind] by (force intro: CConP)
 
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
-  using CProp_CKind[of B.kind] by (force intro: CConN)
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
+  using has_kind[of B.kind] by (force intro: CConN)
   
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
-  using CProp_CKind[of A.kind] by (force intro: CBoxP)
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
+  using has_kind[of A.kind] by (force intro: CBoxP)
 
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
-  using CProp_CKind[of D.kind] by fastforce
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
+  using has_kind[of D.kind] by fastforce
   
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
-  using CProp_CKind[of GI.kind] by (force intro: CRefl)
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
+  using has_kind[of GI.kind] by (force intro: CRefl)
 
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
-  using CProp_CKind[of GI.kind] by (force intro: CGloP)
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
+  using has_kind[of GI.kind] by (force intro: CGloP)
  
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
-  using CProp_CKind[of D.kind] by fastforce
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
+  using has_kind[of D.kind] by fastforce
 
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
-  using CProp_CKind[of GP.kind] by (force intro: CAllP)
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+  using has_kind[of GP.kind] by (force intro: CAllP)
 
-lemma \<open>CProp Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
-  using CProp_CKind[of D.kind] by fastforce
+lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+  using has_kind[of D.kind] by fastforce
 
 end
 
@@ -922,12 +922,12 @@ locale MyHintikka = Hintikka map_lbd symbols_lbd Kinds S
 begin
 
 lemmas
-  confl = hkind[of C.kind] and
-  alpha = hkind[of A.kind] and
-  beta = hkind[of B.kind] and
-  gammaI = hkind[of GI.kind] and
-  gammaP = hkind[of GP.kind] and
-  delta = hkind[of D.kind]
+  confl = has_hint[of C.kind] and
+  alpha = has_hint[of A.kind] and
+  beta = has_hint[of B.kind] and
+  gammaI = has_hint[of GI.kind] and
+  gammaP = has_hint[of GP.kind] and
+  delta = has_hint[of D.kind]
 
 lemma Nom_refl: \<open>(i, \<^bold>\<bullet>i) \<in> S\<close>
   using gammaI by (fastforce intro: CRefl)
@@ -1216,7 +1216,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>'x lbd set\<close>
-  assumes \<open>CProp Kinds C\<close>
+  assumes \<open>has_kinds Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>|UNIV :: 'x lbd set| \<le>o |- P.params S|\<close>
     and \<open>(i, p) \<in> S\<close>
@@ -1224,7 +1224,7 @@ theorem model_existence:
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
-    show \<open>HProp Kinds (mk_mcs C S)\<close>
+    show \<open>has_hints Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>(i, p) \<in> mk_mcs C S\<close>
@@ -1591,7 +1591,7 @@ interpretation DD: Derivational_Delta map_lbd symbols_lbd delta_fun \<open>\<lam
   using calculus_delta by unfold_locales
 
 interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using CProp_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
+  using has_kinds_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -1614,7 +1614,7 @@ proof (rule ccontr)
 
   have \<open>infinite (UNIV :: 'x set)\<close>
     using inf by (meson card_of_ordLeq_infinite inf_UNIV rev_finite_subset subset_UNIV)
-  then have \<open>CProp Kinds ?C\<close>
+  then have \<open>has_kinds Kinds ?C\<close>
     using Consistency by fast
   moreover have \<open>?S \<in> ?C\<close>
     using * FlsE params_left

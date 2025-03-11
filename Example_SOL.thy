@@ -313,10 +313,10 @@ qed
 abbreviation Kinds :: \<open>('x, 'x fm) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, G\<^sub>P.kind, G\<^sub>F.kind, D.kind]\<close>
 
-lemma CProp_Kinds:
-  assumes \<open>CKind C.kind C\<close> \<open>CKind A.kind C\<close> \<open>CKind B.kind C\<close> \<open>CKind G.kind C\<close> \<open>CKind G\<^sub>P.kind C\<close> \<open>CKind G\<^sub>F.kind C\<close> \<open>CKind D.kind C\<close>
-  shows \<open>CProp Kinds C\<close>
-  unfolding CProp_def using assms by simp
+lemma has_kinds_Kinds:
+  assumes \<open>has_kind C.kind C\<close> \<open>has_kind A.kind C\<close> \<open>has_kind B.kind C\<close> \<open>has_kind G.kind C\<close> \<open>has_kind G\<^sub>P.kind C\<close> \<open>has_kind G\<^sub>F.kind C\<close> \<open>has_kind D.kind C\<close>
+  shows \<open>has_kinds Kinds C\<close>
+  unfolding has_kinds_def using assms by simp
 
 interpretation Consistency_Prop map_fm params_fm Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
@@ -373,13 +373,13 @@ locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\
 begin
 
 lemmas
-  confl = hkind[of C.kind] and
-  alpha = hkind[of A.kind] and
-  beta = hkind[of B.kind] and
-  gammaFO = hkind[of G.kind] and
-  gamma2P = hkind[of G\<^sub>P.kind] and
-  gamma2F = hkind[of G\<^sub>F.kind] and
-  delta = hkind[of D.kind]
+  confl = has_hint[of C.kind] and
+  alpha = has_hint[of A.kind] and
+  beta = has_hint[of B.kind] and
+  gammaFO = has_hint[of G.kind] and
+  gamma2P = has_hint[of G\<^sub>P.kind] and
+  gamma2F = has_hint[of G\<^sub>F.kind] and
+  delta = has_hint[of D.kind]
 
 theorem model: \<open>(p \<in> S \<longrightarrow> \<lbrakk>S\<rbrakk> \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> \<lbrakk>S\<rbrakk> \<Turnstile> p)\<close>
 proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
@@ -515,7 +515,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>'x fm set\<close>
-  assumes \<open>CProp Kinds C\<close>
+  assumes \<open>has_kinds Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>|UNIV :: 'x fm set| \<le>o |- P.params S|\<close>
     and \<open>p \<in> S\<close>
@@ -523,7 +523,7 @@ theorem model_existence:
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
-    show \<open>HProp Kinds (mk_mcs C S)\<close>
+    show \<open>has_hints Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>p \<in> mk_mcs C S\<close>
@@ -887,8 +887,8 @@ interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
   then
-  show \<open>CProp Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
-    using CProp_Kinds[OF DC.kind[OF inf] DA.kind DB.kind DG.kind DG\<^sub>P.kind DG\<^sub>F.kind DD.kind]
+  show \<open>has_kinds Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
+    using has_kinds_Kinds[OF DC.kind[OF inf] DA.kind DB.kind DG.kind DG\<^sub>P.kind DG\<^sub>F.kind DD.kind]
     by blast
 qed
 
@@ -908,7 +908,7 @@ proof (rule ccontr)
 
   have \<open>infinite (UNIV :: 'x set)\<close>
     using inf card_of_ordLeq_infinite finite_subset inf_UNIV subset_UNIV by blast
-  then have \<open>CProp Kinds ?C\<close>
+  then have \<open>has_kinds Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>?S \<in> ?C\<close>
     using * by blast
@@ -1104,7 +1104,7 @@ proof
 qed
 
 sublocale Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-  using CProp_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
+  using has_kinds_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -1126,7 +1126,7 @@ proof (rule ccontr)
   have wf: \<open>wf_model ?M\<close>
     unfolding hdom\<^sub>F_def by simp
 
-  have \<open>CProp Kinds ?C\<close>
+  have \<open>has_kinds Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>|UNIV :: 'x fm set| \<le>o |- P.params ?S|\<close>
     using inf params_left by blast

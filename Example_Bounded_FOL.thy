@@ -233,10 +233,10 @@ qed
 abbreviation Kinds :: \<open>('f, ('f, 'p) fm) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, D.kind]\<close>
 
-lemma CProp_Kinds:
-  assumes \<open>CKind C.kind C\<close> \<open>CKind A.kind C\<close> \<open>CKind B.kind C\<close> \<open>CKind G.kind C\<close> \<open>CKind D.kind C\<close>
-  shows \<open>CProp Kinds C\<close>
-  unfolding CProp_def using assms by simp
+lemma has_kinds_Kinds:
+  assumes \<open>has_kind C.kind C\<close> \<open>has_kind A.kind C\<close> \<open>has_kind B.kind C\<close> \<open>has_kind G.kind C\<close> \<open>has_kind D.kind C\<close>
+  shows \<open>has_kinds Kinds C\<close>
+  unfolding has_kinds_def using assms by simp
 
 interpretation Consistency_Prop psub params_fm Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms G.Consistency_Kind_axioms D.Consistency_Kind_axioms
@@ -276,11 +276,11 @@ locale MyHintikka = Hintikka psub params_fm Kinds S
 begin
 
 lemmas
-  confl = hkind[of C.kind] and
-  alpha = hkind[of A.kind] and
-  beta = hkind[of B.kind] and
-  gamma = hkind[of G.kind] and
-  delta = hkind[of D.kind]
+  confl = has_hint[of C.kind] and
+  alpha = has_hint[of A.kind] and
+  beta = has_hint[of B.kind] and
+  gamma = has_hint[of G.kind] and
+  delta = has_hint[of D.kind]
 
 theorem model: \<open>(p \<in> S \<longrightarrow> canonical S \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> canonical S \<Turnstile> p)\<close>
 proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
@@ -359,7 +359,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>('f, 'p) fm set\<close>
-  assumes \<open>CProp Kinds C\<close>
+  assumes \<open>has_kinds Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params S|\<close>
     and \<open>terms S \<noteq> {}\<close>
@@ -371,7 +371,7 @@ proof -
     show \<open>terms (mk_mcs C S) \<noteq> {}\<close>
       using assms(4) terms_mono Extend_subset by blast
   next
-    show \<open>HProp Kinds (mk_mcs C S)\<close>
+    show \<open>has_hints Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>p \<in> mk_mcs C S\<close>
@@ -485,7 +485,7 @@ proof
 qed
 
 sublocale Derivational_Consistency psub params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-  using CProp_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
+  using has_kinds_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -515,7 +515,7 @@ proof (rule ccontr)
   then have wf: \<open>wf_model ?M\<close>
     using wf_canonical by fast
 
-  have \<open>CProp Kinds ?C\<close>
+  have \<open>has_kinds Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params ?S|\<close>
     using inf params_left by blast
@@ -739,7 +739,7 @@ proof
 qed
 
 sublocale Derivational_Consistency psub params_fm Kinds \<open>|UNIV|\<close> TC
-  using CProp_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
+  using has_kinds_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -762,7 +762,7 @@ proof (rule ccontr)
   then have wf: \<open>wf_model ?M\<close>
     using wf_canonical by fast
 
-  have \<open>CProp Kinds ?C\<close>
+  have \<open>has_kinds Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params ?S|\<close>
     using inf params_left by blast
