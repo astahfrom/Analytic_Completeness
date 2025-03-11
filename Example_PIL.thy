@@ -716,15 +716,15 @@ qed
 abbreviation Kinds :: \<open>('x, 'x lbd) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, GI.kind, GP.kind, D.kind]\<close>
 
-lemma has_kinds_Kinds:
-  assumes \<open>has_kind C.kind C\<close> \<open>has_kind A.kind C\<close> \<open>has_kind B.kind C\<close> \<open>has_kind GI.kind C\<close> \<open>has_kind GP.kind C\<close> \<open>has_kind D.kind C\<close>
-  shows \<open>has_kinds Kinds C\<close>
-  unfolding has_kinds_def using assms by simp
+lemma prop\<^sub>E_Kinds:
+  assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E GI.kind C\<close> \<open>sat\<^sub>E GP.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
+  shows \<open>prop\<^sub>E Kinds C\<close>
+  unfolding prop\<^sub>E_def using assms by simp
 
-interpretation Consistency_Prop map_lbd symbols_lbd Kinds
-  using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
+interpretation Consistency_Kinds map_lbd symbols_lbd Kinds
+  using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     GI.Consistency_Kind_axioms GP.Consistency_Kind_axioms D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro P.Params_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
 interpretation Maximal_Consistency_UNIV map_lbd symbols_lbd Kinds
 proof
@@ -736,35 +736,35 @@ qed
 
 context begin
 
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p) \<notin> S \<or> (i, \<^bold>\<not> p) \<notin> S\<close>
-  using has_kind[of C.kind] by (force intro: CNegP)
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p) \<notin> S \<or> (i, \<^bold>\<not> p) \<notin> S\<close>
+  using sat\<^sub>E[of C.kind] by (force intro: CNegP)
 
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
-  using has_kind[of A.kind] by (force intro: CConP)
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
+  using sat\<^sub>E[of A.kind] by (force intro: CConP)
 
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
-  using has_kind[of B.kind] by (force intro: CConN)
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
+  using sat\<^sub>E[of B.kind] by (force intro: CConN)
   
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
-  using has_kind[of A.kind] by (force intro: CBoxP)
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
+  using sat\<^sub>E[of A.kind] by (force intro: CBoxP)
 
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
-  using has_kind[of D.kind] by fastforce
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
+  using sat\<^sub>E[of D.kind] by fastforce
   
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
-  using has_kind[of GI.kind] by (force intro: CRefl)
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
+  using sat\<^sub>E[of GI.kind] by (force intro: CRefl)
 
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
-  using has_kind[of GI.kind] by (force intro: CGloP)
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
+  using sat\<^sub>E[of GI.kind] by (force intro: CGloP)
  
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
-  using has_kind[of D.kind] by fastforce
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
+  using sat\<^sub>E[of D.kind] by fastforce
 
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
-  using has_kind[of GP.kind] by (force intro: CAllP)
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+  using sat\<^sub>E[of GP.kind] by (force intro: CAllP)
 
-lemma \<open>has_kinds Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
-  using has_kind[of D.kind] by fastforce
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+  using sat\<^sub>E[of D.kind] by fastforce
 
 end
 
@@ -922,12 +922,12 @@ locale MyHintikka = Hintikka map_lbd symbols_lbd Kinds S
 begin
 
 lemmas
-  confl = has_hint[of C.kind] and
-  alpha = has_hint[of A.kind] and
-  beta = has_hint[of B.kind] and
-  gammaI = has_hint[of GI.kind] and
-  gammaP = has_hint[of GP.kind] and
-  delta = has_hint[of D.kind]
+  confl = sat\<^sub>H[of C.kind] and
+  alpha = sat\<^sub>H[of A.kind] and
+  beta = sat\<^sub>H[of B.kind] and
+  gammaI = sat\<^sub>H[of GI.kind] and
+  gammaP = sat\<^sub>H[of GP.kind] and
+  delta = sat\<^sub>H[of D.kind]
 
 lemma Nom_refl: \<open>(i, \<^bold>\<bullet>i) \<in> S\<close>
   using gammaI by (fastforce intro: CRefl)
@@ -1216,7 +1216,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>'x lbd set\<close>
-  assumes \<open>has_kinds Kinds C\<close>
+  assumes \<open>prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>|UNIV :: 'x lbd set| \<le>o |- P.params S|\<close>
     and \<open>(i, p) \<in> S\<close>
@@ -1224,7 +1224,7 @@ theorem model_existence:
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
-    show \<open>has_hints Kinds (mk_mcs C S)\<close>
+    show \<open>prop\<^sub>H Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>(i, p) \<in> mk_mcs C S\<close>
@@ -1591,7 +1591,7 @@ interpretation DD: Derivational_Delta map_lbd symbols_lbd delta_fun \<open>\<lam
   using calculus_delta by unfold_locales
 
 interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using has_kinds_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
+  using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -1614,7 +1614,7 @@ proof (rule ccontr)
 
   have \<open>infinite (UNIV :: 'x set)\<close>
     using inf by (meson card_of_ordLeq_infinite inf_UNIV rev_finite_subset subset_UNIV)
-  then have \<open>has_kinds Kinds ?C\<close>
+  then have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by fast
   moreover have \<open>?S \<in> ?C\<close>
     using * FlsE params_left

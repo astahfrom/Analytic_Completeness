@@ -217,7 +217,7 @@ locale Params =
 begin
 
 abbreviation respects_map :: \<open>('fm list \<Rightarrow> 'fm list \<Rightarrow> bool) \<Rightarrow> bool\<close> where
-  \<open>respects_map K \<equiv> \<forall>ps qs f. K ps qs \<longrightarrow> K (map (map_fm f) ps) (map (map_fm f) qs)\<close>
+  \<open>respects_map P \<equiv> \<forall>ps qs f. P ps qs \<longrightarrow> P (map (map_fm f) ps) (map (map_fm f) qs)\<close>
 
 definition mk_alt_consistency :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
   \<open>mk_alt_consistency C = {S. \<exists>f. map_fm f ` S \<in> C}\<close>
@@ -265,37 +265,37 @@ datatype ('x, 'fm) kind
   = Cond \<open>'fm list \<Rightarrow> ('fm set set \<Rightarrow> 'fm set \<Rightarrow> bool) \<Rightarrow> bool\<close> \<open>'fm set \<Rightarrow> bool\<close>
   | Wits \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
 
-inductive has_kind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
-  has_kind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> has_kind (Cond P H) C\<close>
-| has_kind_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<union> S \<in> C) \<Longrightarrow> has_kind (Wits W) C\<close>
+inductive sat\<^sub>E :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
+  sat\<^sub>E_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> sat\<^sub>E (Cond P H) C\<close>
+| sat\<^sub>E_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<union> S \<in> C) \<Longrightarrow> sat\<^sub>E (Wits W) C\<close>
 
-inductive_cases has_kind_CondE[elim!]: \<open>has_kind (Cond P H) C\<close>
-inductive_cases has_kind_WitsE[elim!]: \<open>has_kind (Wits W) C\<close>
+inductive_cases sat\<^sub>E_CondE[elim!]: \<open>sat\<^sub>E (Cond P H) C\<close>
+inductive_cases sat\<^sub>E_WitsE[elim!]: \<open>sat\<^sub>E (Wits W) C\<close>
 
-inductive (in Params) has_alt_kind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
-  has_alt_kind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> has_alt_kind (Cond P H) C\<close>
-| has_alt_kind_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> has_alt_kind (Wits W) C\<close>
+inductive (in Params) sat\<^sub>A :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
+  sat\<^sub>A_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> sat\<^sub>A (Cond P H) C\<close>
+| sat\<^sub>A_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> sat\<^sub>A (Wits W) C\<close>
 
-inductive_cases (in Params) has_alt_kind_CondE[elim!]: \<open>has_alt_kind (Cond P H) C\<close>
-inductive_cases (in Params) has_alt_kind_WitsE[elim!]: \<open>has_alt_kind (Wits W) C\<close>
+inductive_cases (in Params) sat\<^sub>A_CondE[elim!]: \<open>sat\<^sub>A (Cond P H) C\<close>
+inductive_cases (in Params) sat\<^sub>A_WitsE[elim!]: \<open>sat\<^sub>A (Wits W) C\<close>
 
-definition has_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
-  \<open>has_kinds Ks C \<equiv> \<forall>K \<in> set Ks. has_kind K C\<close>
+definition prop\<^sub>E :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
+  \<open>prop\<^sub>E Ks C \<equiv> \<forall>K \<in> set Ks. sat\<^sub>E K C\<close>
 
-definition (in Params) has_alt_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
-  \<open>has_alt_kinds Ks C \<equiv> \<forall>K \<in> set Ks. has_alt_kind K C\<close>
+definition (in Params) prop\<^sub>A :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
+  \<open>prop\<^sub>A Ks C \<equiv> \<forall>K \<in> set Ks. sat\<^sub>A K C\<close>
 
-inductive has_hint :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
-  has_hint_Cond [intro!]: \<open>H S \<Longrightarrow> has_hint (Cond P H) S\<close>
-| has_hint_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> S) \<Longrightarrow> has_hint (Wits W) S\<close>
+inductive sat\<^sub>H :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  sat\<^sub>H_Cond [intro!]: \<open>H S \<Longrightarrow> sat\<^sub>H (Cond P H) S\<close>
+| sat\<^sub>H_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> S) \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
 
-inductive_cases has_hint_CondE[elim!]: \<open>has_hint (Cond P H) C\<close>
-inductive_cases has_hint_WitsE[elim!]: \<open>has_hint (Wits W) C\<close>
+inductive_cases sat\<^sub>H_CondE[elim!]: \<open>sat\<^sub>H (Cond P H) C\<close>
+inductive_cases sat\<^sub>H_WitsE[elim!]: \<open>sat\<^sub>H (Wits W) C\<close>
 
-definition has_hints :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
-  \<open>has_hints Ks S \<equiv> \<forall>K \<in> set Ks. has_hint K S\<close>
+definition prop\<^sub>H :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+  \<open>prop\<^sub>H Ks S \<equiv> \<forall>K \<in> set Ks. sat\<^sub>H K S\<close>
 
-theorem has_hint_Wits: \<open>has_kind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> has_hint (Wits W) S\<close>
+theorem sat\<^sub>H_Wits: \<open>sat\<^sub>E (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
   unfolding maximal_def by fast
 
 locale Consistency_Kind = Params map_fm params_fm
@@ -303,14 +303,14 @@ locale Consistency_Kind = Params map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes K :: \<open>('x, 'fm) kind\<close>
-  assumes respects_close: \<open>\<And>C. has_kind K C \<Longrightarrow> has_kind K (close C)\<close>
-    and respects_alt: \<open>\<And>C. has_kind K C \<Longrightarrow> subset_closed C \<Longrightarrow> has_alt_kind K (mk_alt_consistency C)\<close>
-    and respects_fin: \<open>\<And>C. subset_closed C \<Longrightarrow> has_alt_kind K C \<Longrightarrow> has_alt_kind K (mk_finite_char C)\<close>
-    and hintikka: \<open>\<And>C S. has_kind K C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> has_hint K S\<close>
+  assumes respects_close: \<open>\<And>C. sat\<^sub>E K C \<Longrightarrow> sat\<^sub>E K (close C)\<close>
+    and respects_alt: \<open>\<And>C. sat\<^sub>E K C \<Longrightarrow> subset_closed C \<Longrightarrow> sat\<^sub>A K (mk_alt_consistency C)\<close>
+    and respects_fin: \<open>\<And>C. subset_closed C \<Longrightarrow> sat\<^sub>A K C \<Longrightarrow> sat\<^sub>A K (mk_finite_char C)\<close>
+    and hintikka: \<open>\<And>C S. sat\<^sub>E K C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H K S\<close>
 
 subsection \<open>Consistency Property\<close>
 
-locale Consistency_Prop = Params map_fm params_fm
+locale Consistency_Kinds = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -318,17 +318,17 @@ locale Consistency_Prop = Params map_fm params_fm
   assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Kind map_fm params_fm K\<close>
 begin
 
-lemma has_kind: \<open>K \<in> set Ks \<Longrightarrow> has_kinds Ks C \<Longrightarrow> has_kind K C\<close>
-  unfolding has_kinds_def by blast
+lemma sat\<^sub>E: \<open>K \<in> set Ks \<Longrightarrow> prop\<^sub>E Ks C \<Longrightarrow> sat\<^sub>E K C\<close>
+  unfolding prop\<^sub>E_def by blast
 
-lemma has_kinds_close: \<open>has_kinds Ks C \<Longrightarrow> has_kinds Ks (close C)\<close>
-  unfolding has_kinds_def using all_kinds Consistency_Kind.respects_close by fast
+lemma prop\<^sub>E_close: \<open>prop\<^sub>E Ks C \<Longrightarrow> prop\<^sub>E Ks (close C)\<close>
+  unfolding prop\<^sub>E_def using all_kinds Consistency_Kind.respects_close by fast
 
-lemma has_kinds_alt: \<open>has_kinds Ks C \<Longrightarrow> subset_closed C \<Longrightarrow> has_alt_kinds Ks (mk_alt_consistency C)\<close>
-  unfolding has_kinds_def has_alt_kinds_def using all_kinds Consistency_Kind.respects_alt by fast
+lemma prop\<^sub>E_alt: \<open>prop\<^sub>E Ks C \<Longrightarrow> subset_closed C \<Longrightarrow> prop\<^sub>A Ks (mk_alt_consistency C)\<close>
+  unfolding prop\<^sub>E_def prop\<^sub>A_def using all_kinds Consistency_Kind.respects_alt by fast
 
-lemma has_kinds_fin: \<open>subset_closed C \<Longrightarrow> has_alt_kinds Ks C \<Longrightarrow> has_alt_kinds Ks (mk_finite_char C)\<close>
-  unfolding has_alt_kinds_def using all_kinds Consistency_Kind.respects_fin by fast
+lemma prop\<^sub>E_fin: \<open>subset_closed C \<Longrightarrow> prop\<^sub>A Ks C \<Longrightarrow> prop\<^sub>A Ks (mk_finite_char C)\<close>
+  unfolding prop\<^sub>A_def using all_kinds Consistency_Kind.respects_fin by fast
 
 definition mk_alt_fin :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
   \<open>mk_alt_fin C \<equiv> mk_finite_char (mk_alt_consistency (close C))\<close>
@@ -343,28 +343,25 @@ lemma mk_alt_fin_in: \<open>S \<in> C \<Longrightarrow> S \<in> mk_alt_fin C\<cl
   unfolding mk_alt_fin_def
   by (meson close_closed close_subset finite_char_subset in_mono mk_alt_consistency_closed mk_alt_consistency_subset)
 
-theorem has_kinds: \<open>has_kinds Ks C \<Longrightarrow> has_alt_kinds Ks (mk_alt_fin C)\<close>
+theorem prop\<^sub>E: \<open>prop\<^sub>E Ks C \<Longrightarrow> prop\<^sub>A Ks (mk_alt_fin C)\<close>
   unfolding mk_alt_fin_def
-  by (simp add: has_kinds_alt has_kinds_close has_kinds_fin close_closed mk_alt_consistency_closed)
+  by (simp add: prop\<^sub>E_alt prop\<^sub>E_close prop\<^sub>E_fin close_closed mk_alt_consistency_closed)
 
 end
 
 fun (in Params) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>witness_kinds [] p S = {}\<close>
-| \<open>witness_kinds (Cond _ _ # Qs) p S = witness_kinds Qs p S\<close>
-| \<open>witness_kinds (Wits W # Qs) p S =
+| \<open>witness_kinds (Cond _ _ # Ks) p S = witness_kinds Ks p S\<close>
+| \<open>witness_kinds (Wits W # Ks) p S =
   (let
-    rest = witness_kinds Qs p S;
+    rest = witness_kinds Ks p S;
     a = SOME x. x \<notin> params (rest \<union> {p} \<union> S)
    in set (W p a) \<union> rest)\<close>
 
-lemma (in Params) witness_kinds:
-  assumes \<open>Wits W \<in> set Qs\<close>
-  shows \<open>\<exists>x. set (W p x) \<subseteq> witness_kinds Qs p S\<close>
-  using assms
-  by (induct Qs p S rule: witness_kinds.induct) (auto simp add: Let_def)
+lemma (in Params) witness_kinds: \<open>Wits W \<in> set Ks \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> witness_kinds Ks p S\<close>
+  by (induct Ks p S rule: witness_kinds.induct) (auto simp add: Let_def)
 
-locale Maximal_Consistency = Consistency_Prop map_fm params_fm Ks
+locale Maximal_Consistency = Consistency_Kinds map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
@@ -524,7 +521,7 @@ lemma is_chain_extend: \<open>wo_rel.is_chain r (extend C S)\<close>
   by (simp add: extend_under wo_rel.is_chain_def wo_rel_r)
 
 lemma extend_in_C_step:
-  assumes \<open>has_alt_kinds Ks C\<close> \<open>{n} \<union> extend C S n \<in> C\<close>
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>{n} \<union> extend C S n \<in> C\<close>
     and inf: \<open>infinite (UNIV - params ({n} \<union> extend C S n))\<close> and n: \<open>n \<in> Field r\<close> 
   shows \<open>extend C S (succ r n) \<in> C\<close>
 proof -
@@ -560,7 +557,7 @@ proof -
       have \<open>n \<in> ?rest \<union> {n} \<union> ?S\<close>
         by simp
       then have \<open>\<forall>x. x \<notin> params (?rest \<union> {n} \<union> ?S) \<longrightarrow> set (W n x) \<union> ?rest \<union> {n} \<union> ?S \<in> C\<close>
-        using assms(1) * Q Wits unfolding has_alt_kinds_def Un_assoc by fast
+        using assms(1) * Q Wits unfolding prop\<^sub>A_def Un_assoc by fast
       then have \<open>set (W n a) \<union> ?rest \<union>  {n} \<union> ?S \<in> C\<close>
         using a by fast
 
@@ -588,7 +585,7 @@ lemma extend_in_C_stop:
   using assms extend_succ by auto
 
 lemma extend_in_C:
-  assumes \<open>has_alt_kinds Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close> \<open>n \<in> Field r\<close>
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close> \<open>n \<in> Field r\<close>
   shows \<open>extend C S n \<in> C\<close>
   using assms
 proof (induct n rule: wo_rel.well_order_inductZSL[OF wo_rel_r])
@@ -668,7 +665,7 @@ next
 qed
 
 lemma Extend_in_C:
-  assumes \<open>has_alt_kinds Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>Extend C S \<in> C\<close>
   unfolding Extend_def
   using assms wo_rel.chain_union_closed[OF wo_rel_r] is_chain_extend extend_in_C nonempty_Field_r
@@ -710,7 +707,7 @@ definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
   \<open>witnessed S \<equiv> \<forall>p \<in> S. p \<in> Field r \<longrightarrow> (\<exists>S'. witness p S' \<subseteq> S)\<close>
 
 theorem Extend_witnessed:
-  assumes \<open>has_alt_kinds Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>witnessed (Extend C S)\<close>
   unfolding witnessed_def
 proof safe
@@ -740,13 +737,13 @@ theorem mk_mcs_rmaximal: \<open>rmaximal C (mk_mcs C S)\<close>
   using Extend_rmaximal rmaximal_def mk_alt_fin_in mk_alt_fin_subset_closed by meson
 
 theorem mk_mcs_witnessed:
-  assumes \<open>has_kinds Ks C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
   shows \<open>witnessed (mk_mcs C S)\<close>
-  using assms Extend_witnessed has_kinds mk_alt_fin_finite_char mk_alt_fin_in by blast
+  using assms Extend_witnessed prop\<^sub>E mk_alt_fin_finite_char mk_alt_fin_in by blast
 
 end
 
-locale Maximal_Consistency_UNIV = Consistency_Prop map_fm params_fm Ks
+locale Maximal_Consistency_UNIV = Consistency_Kinds map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
@@ -776,23 +773,23 @@ context Maximal_Consistency_UNIV
 begin
 
 lemma mk_mcs_hintikka:
-  assumes \<open>has_kinds Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
-  shows \<open>has_hints Ks (mk_mcs C S)\<close>
-  unfolding has_hints_def
+  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  shows \<open>prop\<^sub>H Ks (mk_mcs C S)\<close>
+  unfolding prop\<^sub>H_def
 proof
   fix K
   assume K: \<open>K \<in> set Ks\<close>
-  show \<open>has_hint K (mk_mcs C S)\<close>
+  show \<open>sat\<^sub>H K (mk_mcs C S)\<close>
   proof (cases K)
     case (Cond P H)
     moreover have \<open>maximal (mk_alt_fin C) (mk_mcs C S)\<close>
       using Extend_rmaximal mk_alt_fin_subset_closed unfolding maximal by blast
-    moreover have \<open>has_alt_kinds Ks (mk_alt_fin C)\<close>
-      using assms(1) has_kinds by blast
+    moreover have \<open>prop\<^sub>A Ks (mk_alt_fin C)\<close>
+      using assms(1) prop\<^sub>E by blast
     then have \<open>mk_mcs C S \<in> mk_alt_fin C\<close>
       using assms(2-3) Extend_in_C mk_alt_fin_finite_char mk_alt_fin_in by blast
-    moreover have \<open>has_kind (Cond P H) (mk_alt_fin C)\<close>
-      using \<open>has_alt_kinds Ks (mk_alt_fin C)\<close> Cond K unfolding has_alt_kinds_def by fast 
+    moreover have \<open>sat\<^sub>E (Cond P H) (mk_alt_fin C)\<close>
+      using \<open>prop\<^sub>A Ks (mk_alt_fin C)\<close> Cond K unfolding prop\<^sub>A_def by fast 
     ultimately show ?thesis
       using K all_kinds Consistency_Kind.hintikka by meson
   next
@@ -814,11 +811,11 @@ locale Hintikka = Maximal_Consistency_UNIV map_fm params_fm Ks
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes H :: \<open>'fm set\<close>
-  assumes hintikka: \<open>has_hints Ks H\<close>
+  assumes hintikka: \<open>prop\<^sub>H Ks H\<close>
 begin
 
-lemma has_hint: \<open>K \<in> set Ks \<Longrightarrow> has_hint K H\<close>
-  using hintikka unfolding has_hints_def by blast
+lemma sat\<^sub>H: \<open>K \<in> set Ks \<Longrightarrow> sat\<^sub>H K H\<close>
+  using hintikka unfolding prop\<^sub>H_def by blast
 
 end
 
@@ -826,7 +823,7 @@ context Maximal_Consistency_UNIV
 begin
 
 theorem mk_mcs_Hintikka:
-  assumes \<open>has_kinds Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
   shows \<open>Hintikka map_fm params_fm Ks (mk_mcs C S)\<close>
   using assms mk_mcs_hintikka by unfold_locales
 
@@ -840,7 +837,7 @@ locale Derivational_Kind = Consistency_Kind map_fm params_fm K
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> has_kind K {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> sat\<^sub>E K {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
 
 locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
   for
@@ -849,11 +846,11 @@ locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
     Ks :: \<open>('x, 'fm) kind list\<close> and
     r :: \<open>'fm rel\<close> +
   fixes refute :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes all_refute: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> has_kinds Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  assumes all_refute: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
 begin
 
-theorem Consistency: \<open>has_kinds Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
-  using all_refute inf_univ unfolding has_kinds_def by fast
+theorem Consistency: \<open>prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  using all_refute inf_univ unfolding prop\<^sub>E_def by fast
 
 end
 
@@ -865,7 +862,7 @@ locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm K
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
   fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> has_kind K {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> sat\<^sub>E K {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
 
 locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
   for
@@ -874,7 +871,7 @@ locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
     Ks :: \<open>('x, 'fm) kind list\<close> and
     r :: \<open>'fm rel\<close> +
   fixes refute :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> has_kinds Ks {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> prop\<^sub>E Ks {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
 
 
 section \<open>Conflicts\<close>
@@ -905,8 +902,8 @@ end
 sublocale Confl \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
-  assume conflC: \<open>has_kind kind C\<close>
-  then show \<open>has_kind kind (close C)\<close>
+  assume conflC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>E kind (close C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> close C\<close>
@@ -928,8 +925,8 @@ proof
   qed
 next
   fix C
-  assume conflC: \<open>has_kind kind C\<close>
-  then show \<open>has_alt_kind kind (mk_alt_consistency C)\<close>
+  assume conflC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>A kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps qs q
 
@@ -959,8 +956,8 @@ next
   qed
 next
   fix C
-  assume conflAC: \<open>has_alt_kind kind C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>has_alt_kind kind (mk_finite_char C)\<close>
+  assume conflAC: \<open>sat\<^sub>A kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>sat\<^sub>A kind (mk_finite_char C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -982,8 +979,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>has_kind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>has_hint kind S\<close>
+  assume *: \<open>sat\<^sub>E kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>sat\<^sub>H kind S\<close>
   proof safe
     fix ps qs q
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
@@ -1043,8 +1040,8 @@ end
 sublocale Alpha \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
-  assume alphaC: \<open>has_kind kind C\<close>
-  then show \<open>has_kind kind (close C)\<close>
+  assume alphaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>E kind (close C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> close C\<close>
@@ -1063,8 +1060,8 @@ proof
   qed
 next
   fix C
-  assume alphaC: \<open>has_kind kind C\<close>
-  then show \<open>has_alt_kind kind (mk_alt_consistency C)\<close>
+  assume alphaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>A kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps qs
 
@@ -1089,8 +1086,8 @@ next
   qed
 next
   fix C
-  assume alphaAC: \<open>has_alt_kind kind C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>has_alt_kind kind (mk_finite_char C)\<close>
+  assume alphaAC: \<open>sat\<^sub>A kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>sat\<^sub>A kind (mk_finite_char C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -1125,8 +1122,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>has_kind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>has_hint kind S\<close>
+  assume *: \<open>sat\<^sub>E kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>sat\<^sub>H kind S\<close>
   proof safe
     fix ps qs q
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
@@ -1160,7 +1157,7 @@ locale Weak_Derivational_Alpha = Alpha map_fm params_fm classify
 
 sublocale Weak_Derivational_Alpha \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
 proof
-  show \<open>has_kind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix ps qs A
     assume \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> \<open>\<not> \<turnstile> A\<close>
@@ -1197,8 +1194,8 @@ end
 sublocale Beta \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
-  assume betaC: \<open>has_kind kind C\<close>
-  then show \<open>has_kind kind (close C)\<close>
+  assume betaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>E kind (close C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> close C\<close>
@@ -1217,8 +1214,8 @@ proof
   qed
 next
   fix C
-  assume betaC: \<open>has_kind kind C\<close>
-  then show \<open>has_alt_kind kind (mk_alt_consistency C)\<close>
+  assume betaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>A kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps qs
 
@@ -1243,8 +1240,8 @@ next
   qed
 next
   fix C
-  assume betaAC: \<open>has_alt_kind kind C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>has_alt_kind kind (mk_finite_char C)\<close>
+  assume betaAC: \<open>sat\<^sub>A kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>sat\<^sub>A kind (mk_finite_char C)\<close>
   proof safe
     fix S ps qs q
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -1284,8 +1281,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>has_kind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>has_hint kind S\<close>
+  assume *: \<open>sat\<^sub>E kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>sat\<^sub>H kind S\<close>
   proof safe
     fix ps qs
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
@@ -1307,7 +1304,7 @@ locale Derivational_Beta = Beta map_fm params_fm classify
 sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm kind refute
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>has_kind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix S ps qs
     assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> \<turnstile> S\<close>
@@ -1330,7 +1327,7 @@ locale Weak_Derivational_Beta = Beta map_fm params_fm classify
 
 sublocale Weak_Derivational_Beta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
 proof
-  show \<open>has_kind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix ps qs A
     assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> \<turnstile> A\<close>
@@ -1375,8 +1372,8 @@ end
 sublocale Gamma \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
-  assume gammaC: \<open>has_kind kind C\<close>
-  then show \<open>has_kind kind (close C)\<close>
+  assume gammaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>E kind (close C)\<close>
   proof safe
     fix S ps qs F t
     assume \<open>S \<in> close C\<close>
@@ -1399,8 +1396,8 @@ proof
   qed
 next
   fix C
-  assume gammaC: \<open>has_kind kind C\<close>
-  then show \<open>has_alt_kind kind (mk_alt_consistency C)\<close>
+  assume gammaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>A kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps F qs t
 
@@ -1430,8 +1427,8 @@ next
   qed
 next
   fix C
-  assume gammaAC: \<open>has_alt_kind kind C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>has_alt_kind kind (mk_finite_char C)\<close>
+  assume gammaAC: \<open>sat\<^sub>A kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>sat\<^sub>A kind (mk_finite_char C)\<close>
   proof safe
     fix S ps F qs t
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -1481,8 +1478,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>has_kind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  show \<open>has_hint kind S\<close>
+  assume *: \<open>sat\<^sub>E kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  show \<open>sat\<^sub>H kind S\<close>
   proof safe
     fix ps F qs t
     assume **: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close>
@@ -1518,7 +1515,7 @@ locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm classify
 
 sublocale Weak_Derivational_Gamma \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
 proof
-  show \<open>has_kind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix ps qs A F t
     assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>\<not> \<turnstile> A\<close> \<open>t \<in> F (set A)\<close>
@@ -1543,8 +1540,8 @@ end
 sublocale Delta \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
-  assume deltaC: \<open>has_kind kind C\<close>
-  then show \<open>has_kind kind (close C)\<close>
+  assume deltaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>E kind (close C)\<close>
   proof safe
     fix S p qs q
     assume \<open>S \<in> close C\<close>
@@ -1563,8 +1560,8 @@ proof
   qed
 next
   fix C
-  assume deltaC: \<open>has_kind kind C\<close>
-  then show \<open>has_alt_kind kind (mk_alt_consistency C)\<close>
+  assume deltaC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>A kind (mk_alt_consistency C)\<close>
   proof safe
     fix S p qs x
 
@@ -1604,8 +1601,8 @@ next
   qed
 next
   fix C
-  assume deltaAC: \<open>has_alt_kind kind C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>has_alt_kind kind (mk_finite_char C)\<close>
+  assume deltaAC: \<open>sat\<^sub>A kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>sat\<^sub>A kind (mk_finite_char C)\<close>
   proof safe
     fix S p qs x
     assume \<open>S \<in> mk_finite_char C\<close>
@@ -1640,8 +1637,8 @@ next
     qed
   qed
 next
-  show \<open>\<And>C S. has_kind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> has_hint kind S\<close>
-    using has_hint_Wits .
+  show \<open>\<And>C S. sat\<^sub>E kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H kind S\<close>
+    using sat\<^sub>H_Wits .
 qed
 
 locale Derivational_Delta = Delta map_fm params_fm delta_fun
@@ -1655,7 +1652,7 @@ locale Derivational_Delta = Delta map_fm params_fm delta_fun
 sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind refute
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  show \<open>has_kind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix S p
     assume *: \<open>p \<in> S\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>\<not> \<turnstile> S\<close>
@@ -1681,7 +1678,7 @@ locale Weak_Derivational_Delta = Delta map_fm params_fm delta_fun
 sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind refute
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
-  show \<open>has_kind kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix p A
     assume *: \<open>p \<in> set A\<close> \<open>\<not> \<turnstile> A\<close>
@@ -1731,13 +1728,13 @@ locale ModalH = Modal map_fm params_fm classify hint
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) and
     hint :: \<open>'fm set \<Rightarrow> bool\<close> +
-  assumes modal_hintikka: \<open>\<And>C S. has_kind kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> has_hint kind S\<close>
+  assumes modal_hintikka: \<open>\<And>C S. sat\<^sub>E kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H kind S\<close>
 
 sublocale ModalH \<subseteq> Consistency_Kind map_fm params_fm kind
 proof
   fix C
-  assume modalC: \<open>has_kind kind C\<close>
-  then show \<open>has_kind kind (close C)\<close>
+  assume modalC: \<open>sat\<^sub>E kind C\<close>
+  then show \<open>sat\<^sub>E kind (close C)\<close>
   proof safe
     fix S ps F qs
     assume \<open>S \<in> close C\<close>
@@ -1756,8 +1753,8 @@ proof
   qed
 next
   fix C
-  assume modalC: \<open>has_kind kind C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>has_alt_kind kind (mk_alt_consistency C)\<close>
+  assume modalC: \<open>sat\<^sub>E kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>sat\<^sub>A kind (mk_alt_consistency C)\<close>
   proof safe
     fix S ps F qs
 
@@ -1787,8 +1784,8 @@ next
   qed
 next
   fix C
-  assume modalAC: \<open>has_alt_kind kind C\<close> and closedC: \<open>subset_closed C\<close>
-  then show \<open>has_alt_kind kind (mk_finite_char C)\<close>
+  assume modalAC: \<open>sat\<^sub>A kind C\<close> and closedC: \<open>subset_closed C\<close>
+  then show \<open>sat\<^sub>A kind (mk_finite_char C)\<close>
   proof safe
     fix S ps F qs t
     assume S: \<open>S \<in> mk_finite_char C\<close>
@@ -1833,8 +1830,8 @@ next
   qed
 next
   fix C S
-  assume *: \<open>has_kind kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
-  then show \<open>has_hint kind S\<close>
+  assume *: \<open>sat\<^sub>E kind C\<close> \<open>S \<in> C\<close> \<open>maximal C S\<close> 
+  then show \<open>sat\<^sub>H kind S\<close>
     using modal_hintikka by simp
 qed
 
@@ -1850,7 +1847,7 @@ locale Derivational_Modal = ModalH map_fm params_fm classify
 sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm kind refute
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>has_kind kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
+  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> \<turnstile> A}\<close>
   proof safe
     fix S ps F qs
     assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>

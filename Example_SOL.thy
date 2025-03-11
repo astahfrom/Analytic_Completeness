@@ -313,23 +313,22 @@ qed
 abbreviation Kinds :: \<open>('x, 'x fm) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, G\<^sub>P.kind, G\<^sub>F.kind, D.kind]\<close>
 
-lemma has_kinds_Kinds:
-  assumes \<open>has_kind C.kind C\<close> \<open>has_kind A.kind C\<close> \<open>has_kind B.kind C\<close> \<open>has_kind G.kind C\<close> \<open>has_kind G\<^sub>P.kind C\<close> \<open>has_kind G\<^sub>F.kind C\<close> \<open>has_kind D.kind C\<close>
-  shows \<open>has_kinds Kinds C\<close>
-  unfolding has_kinds_def using assms by simp
+lemma prop\<^sub>E_Kinds:
+  assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E G.kind C\<close> \<open>sat\<^sub>E G\<^sub>P.kind C\<close> \<open>sat\<^sub>E G\<^sub>F.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
+  shows \<open>prop\<^sub>E Kinds C\<close>
+  unfolding prop\<^sub>E_def using assms by simp
 
-interpretation Consistency_Prop map_fm params_fm Kinds
-  using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
+interpretation Consistency_Kinds map_fm params_fm Kinds
+  using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     G.Consistency_Kind_axioms G\<^sub>P.Consistency_Kind_axioms G\<^sub>F.Consistency_Kind_axioms
     D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro P.Params_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
 interpretation Maximal_Consistency_UNIV map_fm params_fm Kinds
 proof
   show \<open>infinite (UNIV :: 'x fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
 qed
-
 
 abbreviation henv\<^sub>P where "henv\<^sub>P H == \<lambda>n ts. \<^bold>\<cdot>(\<^bold>#\<^sub>2 n) ts \<in> H"
 
@@ -373,13 +372,13 @@ locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\
 begin
 
 lemmas
-  confl = has_hint[of C.kind] and
-  alpha = has_hint[of A.kind] and
-  beta = has_hint[of B.kind] and
-  gammaFO = has_hint[of G.kind] and
-  gamma2P = has_hint[of G\<^sub>P.kind] and
-  gamma2F = has_hint[of G\<^sub>F.kind] and
-  delta = has_hint[of D.kind]
+  confl = sat\<^sub>H[of C.kind] and
+  alpha = sat\<^sub>H[of A.kind] and
+  beta = sat\<^sub>H[of B.kind] and
+  gammaFO = sat\<^sub>H[of G.kind] and
+  gamma2P = sat\<^sub>H[of G\<^sub>P.kind] and
+  gamma2F = sat\<^sub>H[of G\<^sub>F.kind] and
+  delta = sat\<^sub>H[of D.kind]
 
 theorem model: \<open>(p \<in> S \<longrightarrow> \<lbrakk>S\<rbrakk> \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> \<lbrakk>S\<rbrakk> \<Turnstile> p)\<close>
 proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
@@ -515,7 +514,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>'x fm set\<close>
-  assumes \<open>has_kinds Kinds C\<close>
+  assumes \<open>prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>|UNIV :: 'x fm set| \<le>o |- P.params S|\<close>
     and \<open>p \<in> S\<close>
@@ -523,7 +522,7 @@ theorem model_existence:
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
-    show \<open>has_hints Kinds (mk_mcs C S)\<close>
+    show \<open>prop\<^sub>H Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>p \<in> mk_mcs C S\<close>
@@ -887,8 +886,8 @@ interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
   then
-  show \<open>has_kinds Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
-    using has_kinds_Kinds[OF DC.kind[OF inf] DA.kind DB.kind DG.kind DG\<^sub>P.kind DG\<^sub>F.kind DD.kind]
+  show \<open>prop\<^sub>E Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
+    using prop\<^sub>E_Kinds[OF DC.kind[OF inf] DA.kind DB.kind DG.kind DG\<^sub>P.kind DG\<^sub>F.kind DD.kind]
     by blast
 qed
 
@@ -908,7 +907,7 @@ proof (rule ccontr)
 
   have \<open>infinite (UNIV :: 'x set)\<close>
     using inf card_of_ordLeq_infinite finite_subset inf_UNIV subset_UNIV by blast
-  then have \<open>has_kinds Kinds ?C\<close>
+  then have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>?S \<in> ?C\<close>
     using * by blast
@@ -1104,7 +1103,7 @@ proof
 qed
 
 sublocale Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-  using has_kinds_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
+  using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -1126,7 +1125,7 @@ proof (rule ccontr)
   have wf: \<open>wf_model ?M\<close>
     unfolding hdom\<^sub>F_def by simp
 
-  have \<open>has_kinds Kinds ?C\<close>
+  have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>|UNIV :: 'x fm set| \<le>o |- P.params ?S|\<close>
     using inf params_left by blast
