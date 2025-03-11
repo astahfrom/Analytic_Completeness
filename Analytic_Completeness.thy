@@ -208,14 +208,12 @@ definition maximal :: \<open>'a set set \<Rightarrow> 'a set \<Rightarrow> bool\
 
 section \<open>Locale\<close>
 
-type_synonym 'fm cprop = \<open>'fm set set\<close>
-
-locale Map_Tm =
-  fixes map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close>
-
-locale Map_Fm =
+locale Params =
   fixes map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close>
+    and params_fm :: \<open>'fm \<Rightarrow> 'x set\<close>
   assumes map_fm_id: \<open>map_fm id = id\<close>
+    and finite_params_fm [simp]: \<open>\<And>p. finite (params_fm p)\<close>
+    and map_params_fm: \<open>\<And>f g p. \<forall>x \<in> params_fm p. f x = g x \<Longrightarrow> map_fm f p = map_fm g p\<close>
 begin
 
 abbreviation respects_map :: \<open>('fm list \<Rightarrow> 'fm list \<Rightarrow> bool) \<Rightarrow> bool\<close> where
@@ -252,15 +250,6 @@ proof safe
     by blast
 qed
 
-end
-
-locale Params_Fm = Map_Fm map_fm
-  for map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> +
-  fixes params_fm :: \<open>'fm \<Rightarrow> 'x set\<close>
-  assumes finite_params_fm [simp]: \<open>\<And>p. finite (params_fm p)\<close>
-    and map_params_fm: \<open>\<And>f g p. \<forall>x \<in> params_fm p. f x = g x \<Longrightarrow> map_fm f p = map_fm g p\<close>
-begin
-
 abbreviation params :: \<open>'fm set \<Rightarrow> 'x set\<close> where
   \<open>params S \<equiv> \<Union>p \<in> S. params_fm p\<close>
 
@@ -273,27 +262,27 @@ lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |- pa
 end
 
 datatype ('x, 'fm) kind
-  = Cond \<open>'fm list \<Rightarrow> ('fm cprop \<Rightarrow> 'fm set \<Rightarrow> bool) \<Rightarrow> bool\<close> \<open>'fm set \<Rightarrow> bool\<close>
+  = Cond \<open>'fm list \<Rightarrow> ('fm set set \<Rightarrow> 'fm set \<Rightarrow> bool) \<Rightarrow> bool\<close> \<open>'fm set \<Rightarrow> bool\<close>
   | Wits \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
 
-inductive has_kind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+inductive has_kind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   has_kind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> has_kind (Cond P H) C\<close>
 | has_kind_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<union> S \<in> C) \<Longrightarrow> has_kind (Wits W) C\<close>
 
 inductive_cases has_kind_CondE[elim!]: \<open>has_kind (Cond P H) C\<close>
 inductive_cases has_kind_WitsE[elim!]: \<open>has_kind (Wits W) C\<close>
 
-inductive (in Params_Fm) has_alt_kind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+inductive (in Params) has_alt_kind :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   has_alt_kind_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> has_alt_kind (Cond P H) C\<close>
 | has_alt_kind_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> has_alt_kind (Wits W) C\<close>
 
-inductive_cases (in Params_Fm) has_alt_kind_CondE[elim!]: \<open>has_alt_kind (Cond P H) C\<close>
-inductive_cases (in Params_Fm) has_alt_kind_WitsE[elim!]: \<open>has_alt_kind (Wits W) C\<close>
+inductive_cases (in Params) has_alt_kind_CondE[elim!]: \<open>has_alt_kind (Cond P H) C\<close>
+inductive_cases (in Params) has_alt_kind_WitsE[elim!]: \<open>has_alt_kind (Wits W) C\<close>
 
-definition has_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+definition has_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   \<open>has_kinds Ks C \<equiv> \<forall>K \<in> set Ks. has_kind K C\<close>
 
-definition (in Params_Fm) has_alt_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm cprop \<Rightarrow> bool\<close> where
+definition (in Params) has_alt_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   \<open>has_alt_kinds Ks C \<equiv> \<forall>K \<in> set Ks. has_alt_kind K C\<close>
 
 inductive has_hint :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
@@ -309,7 +298,7 @@ definition has_hints :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Right
 theorem has_hint_Wits: \<open>has_kind (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> has_hint (Wits W) S\<close>
   unfolding maximal_def by fast
 
-locale Consistency_Kind = Params_Fm map_fm params_fm
+locale Consistency_Kind = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -321,7 +310,7 @@ locale Consistency_Kind = Params_Fm map_fm params_fm
 
 subsection \<open>Consistency Property\<close>
 
-locale Consistency_Prop = Params_Fm map_fm params_fm
+locale Consistency_Prop = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -341,7 +330,7 @@ lemma has_kinds_alt: \<open>has_kinds Ks C \<Longrightarrow> subset_closed C \<L
 lemma has_kinds_fin: \<open>subset_closed C \<Longrightarrow> has_alt_kinds Ks C \<Longrightarrow> has_alt_kinds Ks (mk_finite_char C)\<close>
   unfolding has_alt_kinds_def using all_kinds Consistency_Kind.respects_fin by fast
 
-definition mk_cprop :: \<open>'fm cprop \<Rightarrow> 'fm cprop\<close> where
+definition mk_cprop :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
   \<open>mk_cprop C \<equiv> mk_finite_char (mk_alt_consistency (close C))\<close>
 
 lemma mk_cprop_subset_closed: \<open>subset_closed (mk_cprop C)\<close>
@@ -360,7 +349,7 @@ theorem has_kinds: \<open>has_kinds Ks C \<Longrightarrow> has_alt_kinds Ks (mk_
 
 end
 
-fun (in Params_Fm) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
+fun (in Params) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>witness_kinds [] p S = {}\<close>
 | \<open>witness_kinds (Cond _ _ # Qs) p S = witness_kinds Qs p S\<close>
 | \<open>witness_kinds (Wits W # Qs) p S =
@@ -369,7 +358,7 @@ fun (in Params_Fm) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm
     a = SOME x. x \<notin> params (rest \<union> {p} \<union> S)
    in set (W p a) \<union> rest)\<close>
 
-lemma (in Params_Fm) witness_kinds:
+lemma (in Params) witness_kinds:
   assumes \<open>Wits W \<in> set Qs\<close>
   shows \<open>\<exists>x. set (W p x) \<subseteq> witness_kinds Qs p S\<close>
   using assms
@@ -409,19 +398,19 @@ lemma params_left: \<open>r \<le>o |- params S| \<Longrightarrow> r \<le>o |- pa
 definition witness :: \<open>'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>witness \<equiv> witness_kinds Ks\<close>
 
-definition extendS :: \<open>'fm cprop \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
+definition extendS :: \<open>'fm set set \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>extendS C n prev \<equiv> if {n} \<union> prev \<in> C then witness n prev \<union> {n} \<union> prev else prev\<close>
 
-definition extendL :: \<open>'fm cprop \<Rightarrow> ('fm \<Rightarrow> 'fm set) \<Rightarrow> 'fm \<Rightarrow> 'fm set\<close> where
+definition extendL :: \<open>'fm set set \<Rightarrow> ('fm \<Rightarrow> 'fm set) \<Rightarrow> 'fm \<Rightarrow> 'fm set\<close> where
   \<open>extendL C rec n \<equiv> \<Union>m \<in> underS r n. rec m\<close>
 
-definition extend :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> 'fm \<Rightarrow> 'fm set\<close> where
+definition extend :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm \<Rightarrow> 'fm set\<close> where
   \<open>extend C S n \<equiv> worecZSL r S (extendS C) (extendL C) n\<close>
 
 lemma adm_woL_extendL: \<open>adm_woL r (extendL C)\<close>
   unfolding extendL_def wo_rel.adm_woL_def[OF wo_rel_r] by blast
 
-definition Extend :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
+definition Extend :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>Extend C S \<equiv> \<Union>n \<in> Field r. extend C S n\<close>
 
 lemma finite_witness_kinds: \<open>finite (witness_kinds Qs p S)\<close>
@@ -685,7 +674,7 @@ lemma Extend_in_C:
   using assms wo_rel.chain_union_closed[OF wo_rel_r] is_chain_extend extend_in_C nonempty_Field_r
   by blast
 
-definition rmaximal :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+definition rmaximal :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
   \<open>rmaximal C S \<equiv> \<forall>S' \<in> C. S' \<subseteq> Field r \<longrightarrow> S \<subseteq> S' \<longrightarrow> S = S'\<close>
 
 theorem Extend_rmaximal:
@@ -744,7 +733,7 @@ proof safe
     by fastforce
 qed
 
-abbreviation mk_mcs :: \<open>'fm cprop \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
+abbreviation mk_mcs :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>mk_mcs C S \<equiv> Extend (mk_cprop C) S\<close>
 
 theorem mk_mcs_rmaximal: \<open>rmaximal C (mk_mcs C S)\<close>
@@ -890,7 +879,7 @@ locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
 
 section \<open>Conflicts\<close>
 
-locale Confl = Params_Fm map_fm params_fm
+locale Confl = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -1028,7 +1017,7 @@ sublocale Weak_Derivational_Confl \<subseteq> Weak_Derivational_Kind map_fm para
 
 section \<open>Alpha\<close>
 
-locale Alpha = Params_Fm map_fm params_fm
+locale Alpha = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -1182,7 +1171,7 @@ qed
 
 section \<open>Beta\<close>
 
-locale Beta = Params_Fm map_fm params_fm
+locale Beta = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -1354,7 +1343,7 @@ qed
 
 section \<open>Gamma\<close>
 
-locale Gamma = Map_Tm map_tm + Params_Fm map_fm params_fm
+locale Gamma = Params map_fm params_fm
   (* TODO: a sublocale when we don't need the F part? *)
   for
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
@@ -1540,7 +1529,7 @@ qed
 
 section \<open>Delta\<close>
 
-locale Delta = Params_Fm map_fm params_fm
+locale Delta = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
@@ -1714,7 +1703,7 @@ text \<open>
   See Term-Modal Logics by Fitting, Thalmann and Voronkov, p. 156 bottom.
 \<close>
 
-locale Modal = Params_Fm map_fm params_fm
+locale Modal = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +

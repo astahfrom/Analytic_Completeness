@@ -689,7 +689,7 @@ fun delta_fun :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close
 | CAllN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
 | \<open>delta_fun _ _ = []\<close>
 
-interpretation P: Params_Fm map_lbd symbols_lbd
+interpretation P: Params map_lbd symbols_lbd
   by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
 
 interpretation C: Confl map_lbd symbols_lbd confl_class
@@ -724,7 +724,7 @@ lemma has_kinds_Kinds:
 interpretation Consistency_Prop map_lbd symbols_lbd Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     GI.Consistency_Kind_axioms GP.Consistency_Kind_axioms D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro P.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro!: Consistency_Prop.intro P.Params_axioms simp: Consistency_Prop_axioms_def)
 
 interpretation Maximal_Consistency_UNIV map_lbd symbols_lbd Kinds
 proof

@@ -255,7 +255,7 @@ fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> 
 | CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p ]\<close>
 | NOMATCH: \<open>delta_fun _ _ = []\<close>
 
-interpretation P: Params_Fm map_fm params_fm
+interpretation P: Params map_fm params_fm
   by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
 
 interpretation C: Confl map_fm params_fm confl_class
@@ -322,7 +322,7 @@ interpretation Consistency_Prop map_fm params_fm Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     G.Consistency_Kind_axioms G\<^sub>P.Consistency_Kind_axioms G\<^sub>F.Consistency_Kind_axioms
     D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro P.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro!: Consistency_Prop.intro P.Params_axioms simp: Consistency_Prop_axioms_def)
 
 interpretation Maximal_Consistency_UNIV map_fm params_fm Kinds
 proof

@@ -206,7 +206,7 @@ fun delta_fun :: \<open>('f, 'p) fm \<Rightarrow> 'f \<Rightarrow> ('f, 'p) fm l
   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p ]\<close>
 | \<open>delta_fun _ _ = []\<close>
 
-interpretation P: Params_Fm psub params_fm
+interpretation P: Params psub params_fm
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0)
 
 interpretation C: Confl psub params_fm confl_class
@@ -240,7 +240,7 @@ lemma has_kinds_Kinds:
 
 interpretation Consistency_Prop psub params_fm Kinds
   using C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms G.Consistency_Kind_axioms D.Consistency_Kind_axioms
-  by (auto intro!: Consistency_Prop.intro P.Params_Fm_axioms simp: Consistency_Prop_axioms_def)
+  by (auto intro!: Consistency_Prop.intro P.Params_axioms simp: Consistency_Prop_axioms_def)
 
 interpretation Maximal_Consistency_UNIV psub params_fm Kinds
 proof
