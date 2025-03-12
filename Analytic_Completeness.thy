@@ -216,9 +216,6 @@ locale Params =
     and map_params_fm: \<open>\<And>f g p. \<forall>x \<in> params_fm p. f x = g x \<Longrightarrow> map_fm f p = map_fm g p\<close>
 begin
 
-abbreviation respects_map :: \<open>('fm list \<Rightarrow> 'fm list \<Rightarrow> bool) \<Rightarrow> bool\<close> where
-  \<open>respects_map P \<equiv> \<forall>ps qs f. P ps qs \<longrightarrow> P (map (map_fm f) ps) (map (map_fm f) qs)\<close>
-
 definition mk_alt_consistency :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
   \<open>mk_alt_consistency C = {S. \<exists>f. map_fm f ` S \<in> C}\<close>
 
@@ -703,13 +700,13 @@ proof (intro ballI impI)
     by simp
 qed
 
-definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
-  \<open>witnessed S \<equiv> \<forall>p \<in> S. p \<in> Field r \<longrightarrow> (\<exists>S'. witness p S' \<subseteq> S)\<close>
+definition rwitnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
+  \<open>rwitnessed S \<equiv> \<forall>p \<in> S. p \<in> Field r \<longrightarrow> (\<exists>S'. witness p S' \<subseteq> S)\<close>
 
-theorem Extend_witnessed:
+theorem Extend_rwitnessed:
   assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
-  shows \<open>witnessed (Extend C S)\<close>
-  unfolding witnessed_def
+  shows \<open>rwitnessed (Extend C S)\<close>
+  unfolding rwitnessed_def
 proof safe
   fix p
   assume \<open>p \<in> Field r\<close> \<open>p \<in> Extend C S\<close>
@@ -736,10 +733,10 @@ abbreviation mk_mcs :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'f
 theorem mk_mcs_rmaximal: \<open>rmaximal C (mk_mcs C S)\<close>
   using Extend_rmaximal rmaximal_def mk_alt_fin_in mk_alt_fin_subset_closed by meson
 
-theorem mk_mcs_witnessed:
+theorem mk_mcs_rwitnessed:
   assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
-  shows \<open>witnessed (mk_mcs C S)\<close>
-  using assms Extend_witnessed prop\<^sub>E mk_alt_fin_finite_char mk_alt_fin_in by blast
+  shows \<open>rwitnessed (mk_mcs C S)\<close>
+  using assms Extend_rwitnessed prop\<^sub>E mk_alt_fin_finite_char mk_alt_fin_in by blast
 
 end
 
@@ -762,8 +759,19 @@ begin
 lemma maximal: \<open>rmaximal C S \<longleftrightarrow> maximal C S\<close>
   unfolding maximal_def rmaximal_def by simp
 
-lemma witnessed: \<open>witnessed S \<longleftrightarrow> (\<forall>p \<in> S. \<exists>S'. witness p S' \<subseteq> S)\<close>
-  unfolding witnessed_def by simp
+definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
+  \<open>witnessed S \<equiv> \<forall>p \<in> S. \<exists>S'. witness p S' \<subseteq> S\<close>
+
+lemma witnessed: \<open>rwitnessed S \<longleftrightarrow> witnessed S\<close>
+  unfolding rwitnessed_def witnessed_def by simp
+
+corollary mk_mcs_maximal: \<open>maximal C (mk_mcs C S)\<close>
+  using maximal mk_mcs_rmaximal by blast
+
+corollary mk_mcs_witnessed:
+  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  shows \<open>witnessed (mk_mcs C S)\<close>
+  using assms mk_mcs_rwitnessed witnessed by blast
 
 end
 
@@ -797,7 +805,7 @@ proof
     have \<open>witnessed (mk_mcs C S)\<close>
       using mk_mcs_witnessed[OF assms(1-3)] .
     then have \<open>\<forall>p \<in> mk_mcs C S. \<exists>x. set (W p x) \<subseteq> mk_mcs C S \<close>
-      unfolding witnessed witness_def using Wits witness_kinds K by fast 
+      unfolding witnessed_def witness_def using Wits witness_kinds K by fast 
     then show ?thesis
       using Wits by fast
   qed
@@ -881,13 +889,13 @@ locale Confl = Params map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50)
-  assumes confl_map: \<open>respects_map (\<leadsto>\<^sub>\<crossmark>)\<close>
+  assumes confl_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<crossmark> qs \<longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<crossmark> map (map_fm f) qs\<close>
 begin
 
-inductive pred where
-  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> pred ps (\<lambda>_ S. set qs \<inter> S = {})\<close>
+inductive cond where
+  cond [intro!]: \<open>ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> cond ps (\<lambda>_ S. set qs \<inter> S = {})\<close>
 
-inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+inductive_cases condE[elim!]: \<open>cond ps Q\<close>
 
 inductive hint where
   hint [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<notin> H) \<Longrightarrow> hint H\<close>
@@ -895,7 +903,7 @@ inductive hint where
 declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred hint\<close>
+  \<open>kind \<equiv> Cond cond hint\<close>
 
 end
 
@@ -1019,13 +1027,13 @@ locale Alpha = Params map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50)
-  assumes alpha_map: \<open>respects_map (\<leadsto>\<^sub>\<alpha>)\<close>
+  assumes alpha_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<alpha> qs \<longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<alpha> map (map_fm f) qs\<close>
 begin
 
-inductive pred where
-  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> pred ps (\<lambda>C S. set qs \<union> S \<in> C)\<close>
+inductive cond where
+  cond [intro!]: \<open>ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> cond ps (\<lambda>C S. set qs \<union> S \<in> C)\<close>
 
-inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+inductive_cases condE[elim!]: \<open>cond ps Q\<close>
 
 inductive hint where
   hint [intro!]: \<open>(\<And>ps qs q. ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> q \<in> set qs \<Longrightarrow> q \<in> H) \<Longrightarrow> hint H\<close>
@@ -1033,7 +1041,7 @@ inductive hint where
 declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred hint\<close>
+  \<open>kind \<equiv> Cond cond hint\<close>
 
 end
 
@@ -1173,13 +1181,13 @@ locale Beta = Params map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50)
-  assumes beta_map: \<open>respects_map (\<leadsto>\<^sub>\<beta>)\<close>
+  assumes beta_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<beta> qs \<longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<beta> map (map_fm f) qs\<close>
 begin
 
-inductive pred where
-  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> pred ps (\<lambda>C S. \<exists>q \<in> set qs. {q} \<union> S \<in> C)\<close>
+inductive cond where
+  cond [intro!]: \<open>ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> cond ps (\<lambda>C S. \<exists>q \<in> set qs. {q} \<union> S \<in> C)\<close>
 
-inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+inductive_cases condE[elim!]: \<open>cond ps Q\<close>
 
 inductive hint where
   hint [intro!]: \<open>(\<And>ps qs. ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<exists>q \<in> set qs. q \<in> H) \<Longrightarrow> hint H\<close>
@@ -1187,7 +1195,7 @@ inductive hint where
 declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred hint\<close>
+  \<open>kind \<equiv> Cond cond hint\<close>
 
 end
 
@@ -1354,10 +1362,10 @@ locale Gamma = Params map_fm params_fm
     and gamma_fin: \<open>\<And>ps F qs t A. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F A \<Longrightarrow> \<exists>B \<subseteq> A. finite B \<and> t \<in> F B\<close>
 begin
 
-inductive pred where
-  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> pred ps (\<lambda>C S. \<forall>t \<in> F S. set (qs t) \<union> S \<in> C)\<close>
+inductive cond where
+  cond [intro!]: \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> cond ps (\<lambda>C S. \<forall>t \<in> F S. set (qs t) \<union> S \<in> C)\<close>
 
-inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+inductive_cases condE[elim!]: \<open>cond ps Q\<close>
 
 inductive hint where
   hint [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<forall>t \<in> F H. set (qs t) \<subseteq> H) \<Longrightarrow> hint H\<close>
@@ -1365,7 +1373,7 @@ inductive hint where
 declare hint.simps[simp]
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred hint\<close>
+  \<open>kind \<equiv> Cond cond hint\<close>
 
 end
 
@@ -1712,13 +1720,13 @@ locale Modal = Params map_fm params_fm
     and modal_fin: \<open>\<And>ps F qs S A. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> finite A \<Longrightarrow> A \<subseteq> F S \<Longrightarrow> \<exists>S' \<subseteq> S. finite S' \<and> A \<subseteq> F S'\<close>
 begin
 
-inductive pred where
-  pred [intro!]: \<open>ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> pred ps (\<lambda>C S. set qs \<union> F S \<in> C)\<close>
+inductive cond where
+  cond [intro!]: \<open>ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> cond ps (\<lambda>C S. set qs \<union> F S \<in> C)\<close>
 
-inductive_cases predE[elim!]: \<open>pred ps Q\<close>
+inductive_cases condE[elim!]: \<open>cond ps Q\<close>
 
 abbreviation kind :: \<open>('x, 'fm) kind\<close> where
-  \<open>kind \<equiv> Cond pred hint\<close>
+  \<open>kind \<equiv> Cond cond hint\<close>
 
 end
 
