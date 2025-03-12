@@ -676,9 +676,9 @@ inductive alpha_class :: \<open>'x lbd list \<Rightarrow> 'x lbd list \<Rightarr
 inductive beta_class :: \<open>'x lbd list \<Rightarrow> 'x lbd list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CConN: \<open>[ (i, \<^bold>\<not> (p \<^bold>\<and> q)) ] \<leadsto>\<^sub>\<beta> [(i, \<^bold>\<not> p), (i, \<^bold>\<not> q)]\<close>
 
-inductive gamma_class_nom :: \<open>'x lbd list \<Rightarrow> ('x lbd set \<Rightarrow> 'x tm set) \<times> ('x tm \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>i\<close> 50) where
-  CRefl: \<open>[] \<leadsto>\<^sub>\<gamma>\<^sub>i (\<lambda>_. UNIV, \<lambda>i. [ (i, \<^bold>\<bullet>i) ])\<close>
-| CGloP: \<open>[ (i, \<^bold>A p) ] \<leadsto>\<^sub>\<gamma>\<^sub>i (\<lambda>_. UNIV, \<lambda>k. [ (k, p) ])\<close>
+inductive gamma_class_nom :: \<open>'x lbd list \<Rightarrow> ('x tm \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>i\<close> 50) where
+  CRefl: \<open>[] \<leadsto>\<^sub>\<gamma>\<^sub>i (\<lambda>i. [ (i, \<^bold>\<bullet>i) ])\<close>
+| CGloP: \<open>[ (i, \<^bold>A p) ] \<leadsto>\<^sub>\<gamma>\<^sub>i (\<lambda>k. [ (k, p) ])\<close>
   
 inductive gamma_class_fm :: \<open>'x lbd list \<Rightarrow> ('x lbd set \<Rightarrow> 'x fm set) \<times> ('x fm \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>p\<close> 50) where
   CAllP: \<open>[ (i, \<^bold>\<forall> p) ] \<leadsto>\<^sub>\<gamma>\<^sub>p (\<lambda>_. {q. softqdf q}, \<lambda>q. [ (i, \<langle>q\<rangle>\<^sub>p p) ])\<close>
@@ -701,7 +701,7 @@ interpretation A: Alpha map_lbd symbols_lbd alpha_class
 interpretation B: Beta map_lbd symbols_lbd beta_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros)
 
-interpretation GI: Gamma map_tm map_lbd symbols_lbd gamma_class_nom
+interpretation GI: Gamma_UNIV map_tm map_lbd symbols_lbd gamma_class_nom
   by unfold_locales (fastforce elim: gamma_class_nom.cases intro: gamma_class_nom.intros)+
 
 interpretation GP: Gamma map_fm map_lbd symbols_lbd gamma_class_fm
@@ -1502,7 +1502,7 @@ proof cases
 qed
 
 lemma calculus_gammaI:
-  assumes \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>i (F, qs)\<close> \<open>set ps \<subseteq> A\<close> \<open>set (qs k) \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
+  assumes \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>i qs\<close> \<open>set ps \<subseteq> A\<close> \<open>set (qs k) \<union> A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   shows \<open>A \<tturnstile> (i, \<^bold>\<bottom>)\<close>
   using assms
 proof cases
@@ -1581,8 +1581,8 @@ interpretation DA: Derivational_Alpha map_lbd symbols_lbd alpha_class \<open>\<l
 interpretation DB: Derivational_Beta map_lbd symbols_lbd beta_class \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_beta by unfold_locales
 
-interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd gamma_class_nom \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using calculus_gammaI by unfold_locales
+interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd GI.classify_UNIV \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_gammaI by unfold_locales blast
 
 interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_gammaP by unfold_locales

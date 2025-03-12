@@ -240,14 +240,14 @@ inductive alpha_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow
 inductive beta_class :: \<open>'f fm list \<Rightarrow> 'f fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CImpP: \<open>[ p \<^bold>\<longrightarrow> q ] \<leadsto>\<^sub>\<beta> [ \<^bold>\<not> p, q ]\<close>
 
-inductive gamma_class :: \<open>'f fm list \<Rightarrow>  ('f fm set \<Rightarrow> 'f tm set) \<times> ('f tm \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
-  CAllP: \<open>[ \<^bold>\<forall>p ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. UNIV, \<lambda>t. [ \<langle>t/0\<rangle>p ])\<close>
+inductive gamma_class :: \<open>'f fm list \<Rightarrow>  ('f tm \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
+  CAllP: \<open>[ \<^bold>\<forall>p ] \<leadsto>\<^sub>\<gamma> (\<lambda>t. [ \<langle>t/0\<rangle>p ])\<close>
 
-inductive gamma_class_P :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>P\<close> 50) where
-  CAllPP: \<open>[ \<^bold>\<forall>\<^sub>P p ] \<leadsto>\<^sub>\<gamma>\<^sub>P (\<lambda>_. UNIV, \<lambda>s. [ \<langle>s/0\<rangle>\<^sub>P p ])\<close>
+inductive gamma_class_P :: \<open>'f fm list \<Rightarrow> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>P\<close> 50) where
+  CAllPP: \<open>[ \<^bold>\<forall>\<^sub>P p ] \<leadsto>\<^sub>\<gamma>\<^sub>P (\<lambda>s. [ \<langle>s/0\<rangle>\<^sub>P p ])\<close>
 
-inductive gamma_class_F :: \<open>'f fm list \<Rightarrow> ('f fm set \<Rightarrow> 'f sym set) \<times> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>F\<close> 50) where
-  CAllFP: \<open>[ \<^bold>\<forall>\<^sub>F p ] \<leadsto>\<^sub>\<gamma>\<^sub>F (\<lambda>_. UNIV, \<lambda>s. [ \<langle>s/0\<rangle>\<^sub>F p ])\<close>
+inductive gamma_class_F :: \<open>'f fm list \<Rightarrow> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>F\<close> 50) where
+  CAllFP: \<open>[ \<^bold>\<forall>\<^sub>F p ] \<leadsto>\<^sub>\<gamma>\<^sub>F (\<lambda>s. [ \<langle>s/0\<rangle>\<^sub>F p ])\<close>
 
 fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
   CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle> p ]\<close> 
@@ -295,13 +295,13 @@ lemma map_tm_inst_fn [simp]: \<open>map_tm f (\<llangle>t/m\<rrangle>\<^sub>F s)
 lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>F p) = \<langle>map_sym f t/m\<rangle>\<^sub>F(map_fm f p)\<close>
   by (induct p arbitrary: t m) simp_all
 
-interpretation G: Gamma map_tm map_fm params_fm gamma_class
+interpretation G: Gamma_UNIV map_tm map_fm params_fm gamma_class
   by unfold_locales (fastforce elim: gamma_class.cases intro: gamma_class.intros)+
 
-interpretation G\<^sub>P: Gamma map_sym map_fm params_fm gamma_class_P
+interpretation G\<^sub>P: Gamma_UNIV map_sym map_fm params_fm gamma_class_P
   by unfold_locales (fastforce elim: gamma_class_P.cases intro: gamma_class_P.intros)+
 
-interpretation G\<^sub>F: Gamma map_sym map_fm params_fm gamma_class_F
+interpretation G\<^sub>F: Gamma_UNIV map_sym map_fm params_fm gamma_class_F
   by unfold_locales (fastforce elim: gamma_class_F.cases intro: gamma_class_F.intros)+
 
 interpretation D: Delta map_fm params_fm delta_fun
@@ -802,10 +802,10 @@ proof
   qed
 qed
 
-interpretation DG: Weak_Derivational_Gamma map_tm map_fm params_fm gamma_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
-proof
-  fix A F qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG: Weak_Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof (unfold_locales; safe)
+  fix A qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CAllP p)
@@ -815,10 +815,10 @@ proof
   qed
 qed
 
-interpretation DG\<^sub>P: Weak_Derivational_Gamma map_sym map_fm params_fm gamma_class_P \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
-proof
-  fix A F qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P (F, qs)\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG\<^sub>P: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof (unfold_locales; safe)
+  fix A qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CAllPP p)
@@ -828,10 +828,10 @@ proof
   qed
 qed
 
-interpretation DG\<^sub>F: Weak_Derivational_Gamma map_sym map_fm params_fm gamma_class_F \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
-proof
-  fix A F qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F (F, qs)\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG\<^sub>F: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+proof (unfold_locales; safe)
+  fix A qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CAllFP p)
@@ -1034,10 +1034,10 @@ proof
   qed
 qed
 
-sublocale DG: Derivational_Gamma map_tm map_fm params_fm gamma_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-proof
-  fix A F qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>t \<in> F A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DG: Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof (unfold_locales; safe)
+  fix A qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CAllP p)
@@ -1046,10 +1046,10 @@ proof
   qed
 qed
 
-sublocale DGP: Derivational_Gamma map_sym map_fm params_fm gamma_class_P \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-proof
-  fix A F qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P (F, qs)\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>t \<in> F A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DGP: Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof (unfold_locales; safe)
+  fix A qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CAllPP p)
@@ -1058,10 +1058,10 @@ proof
   qed
 qed
 
-sublocale DGF: Derivational_Gamma map_sym map_fm params_fm gamma_class_F \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-proof
-  fix A F qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F (F, qs)\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>t \<in> F A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DGF: Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+proof (unfold_locales; safe)
+  fix A qs t and ps :: \<open>'x fm list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CAllFP p)

@@ -1349,7 +1349,6 @@ qed
 section \<open>Gamma\<close>
 
 locale Gamma = Params map_fm params_fm
-  (* TODO: a sublocale when we don't need the F part? *)
   for
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
@@ -1530,6 +1529,35 @@ proof
     then show \<open>\<exists>B. set B = set (qs t) \<union> set A \<and> \<not> \<turnstile> B\<close>
       using refute[of ps A F qs t] by (meson set_append)
   qed
+qed
+
+locale Gamma_UNIV = Params map_fm params_fm
+  for
+    map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+  fixes classify :: \<open>'fm list \<Rightarrow> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>''\<close> 50)
+  assumes gamma_map_UNIV: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<gamma>' qs \<Longrightarrow> \<exists>rs. map (map_fm f) ps \<leadsto>\<^sub>\<gamma>' rs \<and>
+      (\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t))\<close>
+begin
+
+abbreviation (input) classify_UNIV where
+  \<open>classify_UNIV \<equiv> \<lambda>ps (F, qs). (F = (\<lambda>_. UNIV)) \<and> ps \<leadsto>\<^sub>\<gamma>' qs\<close>
+
+end
+
+sublocale Gamma_UNIV \<subseteq> Gamma map_tm map_fm params_fm classify_UNIV
+proof
+  show \<open>\<And>ps F qs f.
+       (case (F, qs) of (F, qs) \<Rightarrow> F = (\<lambda>_. UNIV) \<and> ps \<leadsto>\<^sub>\<gamma>' qs) \<Longrightarrow>
+       \<exists>G rs.
+          (case (G, rs) of (F, qs) \<Rightarrow> F = (\<lambda>_. UNIV) \<and> map (map_fm f) ps \<leadsto>\<^sub>\<gamma>' qs) \<and>
+          (\<forall>S. map_tm f ` F S \<subseteq> G (map_fm f ` S)) \<and> (\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t))\<close>
+    using gamma_map_UNIV image_subset_iff by fastforce
+  show \<open>\<And>ps F qs S S'. (case (F, qs) of (F, qs) \<Rightarrow> F = (\<lambda>_. UNIV) \<and> ps \<leadsto>\<^sub>\<gamma>' qs) \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> F S \<subseteq> F S'\<close>
+    by simp
+  show \<open>\<And>ps F qs t A. (case (F, qs) of (F, qs) \<Rightarrow> F = (\<lambda>_. UNIV) \<and> ps \<leadsto>\<^sub>\<gamma>' qs) \<Longrightarrow> t \<in> F A \<Longrightarrow> \<exists>B\<subseteq>A. finite B \<and> t \<in> F B\<close>
+    by blast
 qed
 
 section \<open>Delta\<close>
