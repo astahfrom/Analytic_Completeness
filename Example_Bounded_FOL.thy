@@ -202,9 +202,9 @@ inductive
   | CImpP [intro]: \<open>[ p \<^bold>\<longrightarrow> q ] \<leadsto>\<^sub>\<beta> [ \<^bold>\<not> p, q ]\<close>
   | CAllP [intro]: \<open>[ \<^bold>\<forall>p ] \<leadsto>\<^sub>\<gamma> (terms, \<lambda>t. [ \<langle>t\<rangle>p ])\<close>
 
-fun delta_fun :: \<open>('f, 'p) fm \<Rightarrow> 'f \<Rightarrow> ('f, 'p) fm list\<close> where
-  \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p ]\<close>
-| \<open>delta_fun _ _ = []\<close>
+fun \<delta> :: \<open>('f, 'p) fm \<Rightarrow> 'f \<Rightarrow> ('f, 'p) fm list\<close> where
+  \<open>\<delta> (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p ]\<close>
+| \<open>\<delta> _ _ = []\<close>
 
 interpretation P: Params psub params_fm
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0)
@@ -224,10 +224,10 @@ proof
     by (elim gamma_class.cases) (auto simp: terms_source)  
 qed (fastforce simp: terms_def elim: gamma_class.cases)+
 
-interpretation D: Delta psub params_fm delta_fun
+interpretation D: Delta psub params_fm \<delta>
 proof
-  show \<open>\<And>f. delta_fun (psub f p) (f x) = map (psub f) (delta_fun p x)\<close> for p :: \<open>('f, 'p) fm\<close> and x
-    by (induct p x rule: delta_fun.induct) simp_all
+  show \<open>\<And>f. \<delta> (psub f p) (f x) = map (psub f) (\<delta> p x)\<close> for p :: \<open>('f, 'p) fm\<close> and x
+    by (induct p x rule: \<delta>.induct) simp_all
 qed
 
 abbreviation Kinds :: \<open>('f, ('f, 'p) fm) kind list\<close> where
@@ -469,12 +469,12 @@ proof
   qed
 qed
 
-sublocale DD: Derivational_Delta psub params_fm delta_fun \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DD: Derivational_Delta psub params_fm \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (standard; safe)
   fix A a and p :: \<open>('f, 'p) fm\<close>
-  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (\<delta> p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   then show False
-  proof (induct p a rule: delta_fun.induct)
+  proof (induct p a rule: \<delta>.induct)
     case (1 p x)
     then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
@@ -724,12 +724,12 @@ proof
   qed
 qed
 
-sublocale DD: Derivational_Delta psub params_fm delta_fun \<open>\<lambda>A. \<not> \<turnstile> A\<close>
+sublocale DD: Derivational_Delta psub params_fm \<delta> \<open>\<lambda>A. \<not> \<turnstile> A\<close>
 proof
   fix A a and p :: \<open>('f, 'p) fm\<close>
   assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<not> \<turnstile> A\<close>
-  then show \<open>\<not> \<turnstile> set (delta_fun p a) \<union> A\<close>
-  proof (induct p a rule: delta_fun.induct)
+  then show \<open>\<not> \<turnstile> set (\<delta> p a) \<union> A\<close>
+  proof (induct p a rule: \<delta>.induct)
     case (1 p x)
     then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto

@@ -249,11 +249,11 @@ inductive gamma_class_P :: \<open>'f fm list \<Rightarrow> ('f sym \<Rightarrow>
 inductive gamma_class_F :: \<open>'f fm list \<Rightarrow> ('f sym \<Rightarrow> 'f fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>F\<close> 50) where
   CAllFP: \<open>[ \<^bold>\<forall>\<^sub>F p ] \<leadsto>\<^sub>\<gamma>\<^sub>F (\<lambda>s. [ \<langle>s/0\<rangle>\<^sub>F p ])\<close>
 
-fun delta_fun :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
-  CAllN:   \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle> p ]\<close> 
-| CAll2PN: \<open>delta_fun (\<^bold>\<not> \<^bold>\<forall>\<^sub>P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p ]\<close>
-| CAll2FN: \<open>delta_fun ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p ]\<close>
-| NOMATCH: \<open>delta_fun _ _ = []\<close>
+fun \<delta> :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> where
+  CAllN:   \<open>\<delta> (\<^bold>\<not> \<^bold>\<forall>p) x = [ \<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle> p ]\<close> 
+| CAll2PN: \<open>\<delta> (\<^bold>\<not> \<^bold>\<forall>\<^sub>P p) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p ]\<close>
+| CAll2FN: \<open>\<delta> ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p ]\<close>
+| NOMATCH: \<open>\<delta> _ _ = []\<close>
 
 interpretation P: Params map_fm params_fm
   by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
@@ -304,10 +304,10 @@ interpretation G\<^sub>P: Gamma_UNIV map_sym map_fm params_fm gamma_class_P
 interpretation G\<^sub>F: Gamma_UNIV map_sym map_fm params_fm gamma_class_F
   by unfold_locales (fastforce elim: gamma_class_F.cases intro: gamma_class_F.intros)+
 
-interpretation D: Delta map_fm params_fm delta_fun
+interpretation D: Delta map_fm params_fm \<delta>
 proof
-  show \<open>\<And>f. delta_fun (map_fm f p) (f x) = map (map_fm f) (delta_fun p x)\<close> for p :: \<open>'x fm\<close> and x
-    by (induct p x rule: delta_fun.induct) simp_all
+  show \<open>\<And>f. \<delta> (map_fm f p) (f x) = map (map_fm f) (\<delta> p x)\<close> for p :: \<open>'x fm\<close> and x
+    by (induct p x rule: \<delta>.induct) simp_all
 qed
 
 abbreviation Kinds :: \<open>('x, 'x fm) kind list\<close> where
@@ -844,12 +844,12 @@ qed
 lemma imply_params_fm: \<open>params_fm (ps \<^bold>\<leadsto> q) = params_fm q \<union> (\<Union>p \<in> set ps. params_fm p)\<close>
   by (induct ps) auto
 
-interpretation DD: Weak_Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DD: Weak_Derivational_Delta map_fm params_fm \<delta> \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (standard; safe)
   fix A a and p :: \<open>'x fm\<close>
-  assume \<open>p \<in> set A\<close> \<open>a \<notin> P.params (set A)\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>delta_fun p a @ A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> set A\<close> \<open>a \<notin> P.params (set A)\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>\<delta> p a @ A \<turnstile> \<^bold>\<bottom>\<close>
   then show False
-  proof (induct p a rule: delta_fun.induct)
+  proof (induct p a rule: \<delta>.induct)
     case (1 p x)
     have \<open>x \<notin> P.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
       using 1(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
@@ -1069,12 +1069,12 @@ proof (unfold_locales; safe)
   qed
 qed
 
-sublocale DD: Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DD: Derivational_Delta map_fm params_fm \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (standard; safe)
   fix A a and p :: \<open>'x fm\<close>
-  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close>  \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close>  \<open>set (\<delta> p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   then show False
-  proof (induct p a rule: delta_fun.induct)
+  proof (induct p a rule: \<delta>.induct)
     case (1 p x)
     then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto

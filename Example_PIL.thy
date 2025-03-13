@@ -683,11 +683,11 @@ inductive gamma_class_nom :: \<open>'x lbd list \<Rightarrow> ('x tm \<Rightarro
 inductive gamma_class_fm :: \<open>'x lbd list \<Rightarrow> ('x lbd set \<Rightarrow> 'x fm set) \<times> ('x fm \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>p\<close> 50) where
   CAllP: \<open>[ (i, \<^bold>\<forall> p) ] \<leadsto>\<^sub>\<gamma>\<^sub>p (\<lambda>_. {q. softqdf q}, \<lambda>q. [ (i, \<langle>q\<rangle>\<^sub>p p) ])\<close>
 
-fun delta :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close> where
-  CBoxN: \<open>delta (i, \<^bold>\<not> \<^bold>\<box>p) k = [(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k)))]\<close>
-| CGloN: \<open>delta (i, \<^bold>\<not> \<^bold>A p) k = [ (\<^bold>\<circle>k, \<^bold>\<not> p) ]\<close>
-| CAllN: \<open>delta (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
-| \<open>delta _ _ = []\<close>
+fun \<delta> :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close> where
+  CBoxN: \<open>\<delta> (i, \<^bold>\<not> \<^bold>\<box>p) k = [(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k)))]\<close>
+| CGloN: \<open>\<delta> (i, \<^bold>\<not> \<^bold>A p) k = [ (\<^bold>\<circle>k, \<^bold>\<not> p) ]\<close>
+| CAllN: \<open>\<delta> (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
+| \<open>\<delta> _ _ = []\<close>
 
 interpretation P: Params map_lbd symbols_lbd
   by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
@@ -707,10 +707,10 @@ interpretation GI: Gamma_UNIV map_tm map_lbd symbols_lbd gamma_class_nom
 interpretation GP: Gamma map_fm map_lbd symbols_lbd gamma_class_fm
   by unfold_locales (fastforce elim: gamma_class_fm.cases intro: gamma_class_fm.intros)+
 
-interpretation D: Delta map_lbd symbols_lbd delta
+interpretation D: Delta map_lbd symbols_lbd \<delta>
 proof
-  show \<open>\<And>f. delta (map_lbd f p) (f x) = map (map_lbd f) (delta p x)\<close> for p :: \<open>'x lbd\<close> and x
-    by (induct p x rule: delta.induct) simp_all
+  show \<open>\<And>f. \<delta> (map_lbd f p) (f x) = map (map_lbd f) (\<delta> p x)\<close> for p :: \<open>'x lbd\<close> and x
+    by (induct p x rule: \<delta>.induct) simp_all
 qed
 
 abbreviation Kinds :: \<open>('x, 'x lbd) kind list\<close> where
@@ -789,32 +789,32 @@ lemma admissible_Pow: \<open>admissible F (Pow (\<W> F))\<close>
 definition admits :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> 'w set set \<Rightarrow> bool\<close> where
   \<open>admits F B Pi \<equiv> Pi \<noteq> {} \<and> Pi \<subseteq> Pow (\<W> F) \<and> B \<subseteq> Pi \<and> admissible F Pi\<close>
 
-definition adm_delta :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> 'w set set\<close> where
-  \<open>adm_delta M Pi \<equiv>
+definition adm_\<delta> :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> 'w set set\<close> where
+  \<open>adm_\<delta> M Pi \<equiv>
     { \<W> M - X | X. X \<in> Pi } \<union>
     { X \<inter> Y | X Y. X \<in> Pi \<and> Y \<in> Pi } \<union>
     { {w \<in> \<W> M. \<forall>v \<in> \<R> M w. v \<in> X} | X. X \<in> Pi }\<close>
 
-abbreviation \<open>grow F B \<equiv> \<lambda>Pi. B \<union> Pi \<union> adm_delta F (B \<union> Pi)\<close>
+abbreviation \<open>grow F B \<equiv> \<lambda>Pi. B \<union> Pi \<union> adm_\<delta> F (B \<union> Pi)\<close>
 
 definition admit :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> 'w set set\<close> where
   \<open>admit F B \<equiv> lfp (grow F B)\<close>
 
 lemma mono_grow: \<open>mono (grow F B)\<close>
-  unfolding adm_delta_def mono_def by (auto simp: subset_eq)
+  unfolding adm_\<delta>_def mono_def by (auto simp: subset_eq)
 
-lemma admissible_delta: \<open>admissible F B \<longleftrightarrow> adm_delta F B \<subseteq> B\<close>
-  unfolding admissible_def adm_delta_def by auto
+lemma admissible_\<delta>: \<open>admissible F B \<longleftrightarrow> adm_\<delta> F B \<subseteq> B\<close>
+  unfolding admissible_def adm_\<delta>_def by auto
 
 lemma admit_B: \<open>B \<subseteq> admit F B\<close>
   unfolding admit_def by (meson le_sup_iff lfp_greatest)
 
 lemma admit_Pow: \<open>B \<subseteq> Pow (\<W> F) \<Longrightarrow> admit F B \<subseteq> Pow (\<W> F)\<close>
-  unfolding admit_def using admissible_Pow admissible_delta lfp_lowerbound 
+  unfolding admit_def using admissible_Pow admissible_\<delta> lfp_lowerbound 
   by (metis (no_types, lifting) order_class.order_eq_iff subset_Un_eq sup.absorb_iff1)
 
 lemma admissible_grow: \<open>admissible F B \<longleftrightarrow> grow F B B = B\<close>
-  using admissible_delta by auto
+  using admissible_\<delta> by auto
 
 lemma lfp_grow: \<open>grow F B (lfp (grow F B)) = lfp (grow F B)\<close>
   using lfp_unfold mono_grow by blast
@@ -825,7 +825,7 @@ proof -
   have "B \<union> lfp (grow F B) = lfp (grow F B)"
     using lfp_grow by blast
   then show "admissible F (lfp (grow F B))"
-    using lfp_grow[of B F] by (simp add: admissible_delta sup.order_iff)
+    using lfp_grow[of B F] by (simp add: admissible_\<delta> sup.order_iff)
 qed
 
 lemma admits_admit: \<open>B \<noteq> {} \<Longrightarrow> B \<subseteq> Pow (\<W> F) \<Longrightarrow> admits F B (admit F B)\<close>
@@ -927,7 +927,7 @@ lemmas
   beta = sat\<^sub>H[of B.kind] and
   gammaI = sat\<^sub>H[of GI.kind] and
   gammaP = sat\<^sub>H[of GP.kind] and
-  delta = sat\<^sub>H[of D.kind]
+  \<delta> = sat\<^sub>H[of D.kind]
 
 lemma Nom_refl: \<open>(i, \<^bold>\<bullet>i) \<in> S\<close>
   using gammaI by (fastforce intro: CRefl)
@@ -1083,7 +1083,7 @@ next
     next
       assume \<open>x = \<^bold>\<box> p\<close> \<open>(i, \<^bold>\<not> (\<^bold>\<box> p)) \<in> S\<close>
       then obtain k where k: \<open>(k, \<^bold>\<not> p) \<in> S\<close> \<open>(i, \<^bold>\<diamond> (\<^bold>\<bullet> k)) \<in> S\<close>
-        using delta by force
+        using \<delta> by force
       then have \<open>\<not> \<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close>
         using 2 Box by simp
       moreover have \<open>([i]\<^sub>S, \<^bold>\<diamond> (\<^bold>\<bullet>k)) \<in> S\<close>
@@ -1131,7 +1131,7 @@ next
     next
       assume \<open>x = \<^bold>A p\<close> \<open>(i, \<^bold>\<not> \<^bold>A p) \<in> S\<close>
       then have \<open>\<exists>k. (k, \<^bold>\<not> p) \<in> S\<close>
-        using delta by fastforce
+        using \<delta> by fastforce
       then have \<open>\<exists>k. \<not> \<lbrakk>S, k\<rbrakk> \<Turnstile> p\<close>
         using 2 Glo by auto
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>A p\<close>
@@ -1189,7 +1189,7 @@ next
     next
       assume \<open>x = \<^bold>\<forall> p\<close> \<open>(i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S\<close>
       then obtain P where \<open>(i, \<^bold>\<not> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p) \<in> S\<close>
-        using delta by auto
+        using \<delta> by auto
       moreover have \<open>(\<^bold>\<not> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p, x) \<in> measures [qs_fm, sz_fm]\<close>
         using All
         by (metis less_add_one measures_less qs_fm.simps(3) qs_fm.simps(9) qs_fm_sub_pro softqdf.simps(2) softqdf_add_env)
@@ -1527,11 +1527,11 @@ proof cases
     by (metis (no_types, lifting) Assm_head NotE NotI le_iff_sup list.set(1) list.simps(15) mem_Collect_eq)
 qed
 
-lemma calculus_delta:
-  assumes \<open>p \<in> A\<close> \<open>k \<notin> symbols A\<close> \<open>set (delta p k) \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+lemma calculus_\<delta>:
+  assumes \<open>p \<in> A\<close> \<open>k \<notin> symbols A\<close> \<open>set (\<delta> p k) \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   shows \<open>A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using assms
-proof (induct p k rule: delta.induct)
+proof (induct p k rule: \<delta>.induct)
   case (1 i p k)
   then have \<open>{(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>(\<^bold>\<circle>k)))} \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close> \<open>(i, \<^bold>\<not> \<^bold>\<box> p) \<in> A\<close>
     by simp_all
@@ -1586,8 +1586,8 @@ interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd GI.classify_UN
 interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_gammaP by unfold_locales blast
 
-interpretation DD: Derivational_Delta map_lbd symbols_lbd delta \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  by unfold_locales (meson calculus_delta)
+interpretation DD: Derivational_Delta map_lbd symbols_lbd \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  by unfold_locales (meson calculus_\<delta>)
   
 interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales

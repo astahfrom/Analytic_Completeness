@@ -1566,11 +1566,11 @@ locale Delta = Params map_fm params_fm
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
-  fixes delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
-  assumes delta_map: \<open>\<And>p f x. delta_fun (map_fm f p) (f x) = map (map_fm f) (delta_fun p x)\<close>
+  fixes \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
+  assumes delta_map: \<open>\<And>p f x. \<delta> (map_fm f p) (f x) = map (map_fm f) (\<delta> p x)\<close>
 begin
 
-abbreviation \<open>kind \<equiv> Wits delta_fun\<close>
+abbreviation \<open>kind \<equiv> Wits \<delta>\<close>
 end
 
 sublocale Delta \<subseteq> Consistency_Kind map_fm params_fm kind
@@ -1588,9 +1588,9 @@ proof
     then have *: \<open>p \<in> S'\<close>
       using \<open>S \<subseteq> S'\<close> by blast
 
-    have \<open>\<exists>x. set (delta_fun p x) \<union> S' \<in> C\<close>
+    have \<open>\<exists>x. set (\<delta> p x) \<union> S' \<in> C\<close>
       using deltaC S' * by blast
-    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> close C\<close>
+    then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> close C\<close>
       using \<open>S \<subseteq> S'\<close> by (metis subset_in_close)
 
   qed
@@ -1613,7 +1613,7 @@ next
       by auto
 
     assume x: \<open>x \<notin> params S\<close>
-    obtain y where y: \<open>set (delta_fun (map_fm f p) y) \<union> ?S \<in> C\<close>
+    obtain y where y: \<open>set (\<delta> (map_fm f p) y) \<union> ?S \<in> C\<close>
       using deltaC f * by blast
 
     let ?g = \<open>f(x := y)\<close>
@@ -1625,13 +1625,13 @@ next
     then have \<open>map_fm ?g p = map_fm f p\<close>
       using \<open>p \<in> S\<close> by auto
 
-    moreover have \<open>set (delta_fun (map_fm f p) (?g x)) \<union> ?S \<in> C\<close>
+    moreover have \<open>set (\<delta> (map_fm f p) (?g x)) \<union> ?S \<in> C\<close>
       using y by simp
-    ultimately have \<open>set (map (map_fm ?g) (delta_fun p x)) \<union> ?S \<in> C\<close>
+    ultimately have \<open>set (map (map_fm ?g) (\<delta> p x)) \<union> ?S \<in> C\<close>
       using delta_map by metis
-    then have \<open>\<exists>f. set (map (map_fm f) (delta_fun p x)) \<union> map_fm f ` S \<in> C\<close>
+    then have \<open>\<exists>f. set (map (map_fm f) (\<delta> p x)) \<union> map_fm f ` S \<in> C\<close>
       using S by (metis image_cong)
-    then show \<open>set (delta_fun p x) \<union> S \<in> ?C\<close>
+    then show \<open>set (\<delta> p x) \<union> S \<in> ?C\<close>
       unfolding mk_alt_consistency_def
       by (metis (mono_tags, lifting) image_Un image_set mem_Collect_eq)
   qed
@@ -1651,13 +1651,13 @@ next
       by blast
 
     assume *: \<open>p \<in> S\<close> and x: \<open>x \<notin> params S\<close>
-    show \<open>set (delta_fun p x) \<union> S \<in> mk_finite_char C\<close>
+    show \<open>set (\<delta> p x) \<union> S \<in> mk_finite_char C\<close>
       unfolding mk_finite_char_def
     proof safe
       fix S'
-      let ?S' = \<open>{p} \<union> (S' - set (delta_fun p x))\<close>
+      let ?S' = \<open>{p} \<union> (S' - set (\<delta> p x))\<close>
 
-      assume \<open>S' \<subseteq> set (delta_fun p x) \<union> S\<close> and \<open>finite S'\<close>
+      assume \<open>S' \<subseteq> set (\<delta> p x) \<union> S\<close> and \<open>finite S'\<close>
       then have \<open>?S' \<subseteq> S\<close>
         using * by fast
       moreover have \<open>finite ?S'\<close>
@@ -1666,7 +1666,7 @@ next
         using finc by blast
       moreover have \<open>\<forall>a \<in> ?S'. x \<notin> params_fm a\<close>
         using x \<open>?S' \<subseteq> S\<close> by blast
-      ultimately have \<open>set (delta_fun p x) \<union> ?S' \<in> C\<close>
+      ultimately have \<open>set (\<delta> p x) \<union> ?S' \<in> C\<close>
         using deltaAC by blast
       then show \<open>S' \<in> C\<close>
         using sc by fast
@@ -1677,13 +1677,13 @@ next
     using sat\<^sub>H_Wits .
 qed
 
-locale Derivational_Delta = Delta map_fm params_fm delta_fun
+locale Derivational_Delta = Delta map_fm params_fm \<delta>
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
+    \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes consistent: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (delta_fun p x) \<union> S\<close>
+  assumes consistent: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (\<delta> p x) \<union> S\<close>
 
 sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind consistent
 proof
@@ -1696,20 +1696,20 @@ proof
       using card_of_ordLeq_finite inf by auto
     then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
       using infinite_imp_nonempty by blast
-    then have \<open>\<exists>x. \<turnstile> set (delta_fun p x) \<union> S\<close>
+    then have \<open>\<exists>x. \<turnstile> set (\<delta> p x) \<union> S\<close>
       using *(1,3) consistent \<open>\<turnstile> S\<close> by fast
-    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+    then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
       using * inf infinite_params_left by blast
   qed
 qed
 
-locale Weak_Derivational_Delta = Delta map_fm params_fm delta_fun
+locale Weak_Derivational_Delta = Delta map_fm params_fm \<delta>
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
+    \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes consistent: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> delta_fun p x @ A\<close>
+  assumes consistent: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> \<delta> p x @ A\<close>
 
 sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
 proof
@@ -1722,9 +1722,9 @@ proof
       using inf finite_compl by fastforce
     then obtain x where \<open>x \<notin> params (set (p # A))\<close>
       using infinite_imp_nonempty by blast
-    then have \<open>\<exists>x. \<turnstile> delta_fun p x @ A\<close>
+    then have \<open>\<exists>x. \<turnstile> \<delta> p x @ A\<close>
       using * consistent[of p A x] by auto
-    then show \<open>\<exists>x. set (delta_fun p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
+    then show \<open>\<exists>x. set (\<delta> p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
       by (metis (mono_tags, lifting) CollectI set_append)
   qed
 qed
