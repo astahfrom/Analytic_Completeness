@@ -496,7 +496,7 @@ lemma with_subterm_elim: \<open>A \<tturnstile> with_subterm p \<Longrightarrow>
 theorem strong_completeness:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- P.params A|\<close>
+    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params A|\<close>
   shows \<open>A \<tturnstile> p\<close>
 proof (rule ccontr)
   assume \<open>\<not> A \<tturnstile> p\<close>
