@@ -844,8 +844,8 @@ locale Derivational_Kind = Consistency_Kind map_fm params_fm K
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> sat\<^sub>E K {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> sat\<^sub>E K {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
 
 locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
   for
@@ -853,12 +853,12 @@ locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> and
     r :: \<open>'fm rel\<close> +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes all_contradictory: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes all_consistent: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
 begin
 
-theorem Consistency: \<open>prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
-  using all_contradictory inf_univ unfolding prop\<^sub>E_def by fast
+theorem Consistency: \<open>prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+  using all_consistent inf_univ unfolding prop\<^sub>E_def by fast
 
 end
 
@@ -869,8 +869,8 @@ locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm K
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
-  fixes contradictory :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> sat\<^sub>E K {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> sat\<^sub>E K {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
 
 locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
   for
@@ -878,8 +878,8 @@ locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> and
     r :: \<open>'fm rel\<close> +
-  fixes contradictory :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> prop\<^sub>E Ks {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> prop\<^sub>E Ks {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
 
 
 section \<open>Conflicts\<close>
@@ -1002,11 +1002,11 @@ locale Derivational_Confl = Confl map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>S ps qs x. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> S \<Longrightarrow> S \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>S ps qs x. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> S \<Longrightarrow> \<not> \<turnstile> S\<close>
 
-sublocale Derivational_Confl \<subseteq> Derivational_Kind map_fm params_fm kind contradictory
-  using infinite_params_left contradictory by unfold_locales blast+
+sublocale Derivational_Confl \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+  using infinite_params_left consistent by unfold_locales blast+
 
 
 locale Weak_Derivational_Confl = Confl map_fm params_fm classify
@@ -1014,11 +1014,11 @@ locale Weak_Derivational_Confl = Confl map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
-  fixes contradictory :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>A ps qs x. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> set A \<Longrightarrow> A \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>A ps qs x. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> set A \<Longrightarrow> \<not> \<turnstile> A\<close>
 
-sublocale Weak_Derivational_Confl \<subseteq> Weak_Derivational_Kind map_fm params_fm kind contradictory
-  using infinite_params_left contradictory by unfold_locales blast+
+sublocale Weak_Derivational_Confl \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
+  using infinite_params_left consistent by unfold_locales blast+
 
 section \<open>Alpha\<close>
 
@@ -1148,11 +1148,11 @@ locale Derivational_Alpha = Alpha map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> set qs \<union> S \<turnstile> \<bottom> \<Longrightarrow> S \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set qs \<union> S\<close>
 
-sublocale Derivational_Alpha \<subseteq> Derivational_Kind map_fm params_fm kind contradictory
-  using infinite_params_left contradictory by unfold_locales blast+
+sublocale Derivational_Alpha \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+  using infinite_params_left consistent by unfold_locales blast+
 
 
 locale Weak_Derivational_Alpha = Alpha map_fm params_fm classify
@@ -1160,17 +1160,17 @@ locale Weak_Derivational_Alpha = Alpha map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
-  fixes contradictory :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> qs @ A \<turnstile> \<bottom> \<Longrightarrow> A \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> qs @ A\<close>
 
-sublocale Weak_Derivational_Alpha \<subseteq> Weak_Derivational_Kind map_fm params_fm kind contradictory
+sublocale Weak_Derivational_Alpha \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
 proof
-  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
     fix ps qs A
-    assume \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> \<open>\<not> A \<turnstile> \<bottom>\<close>
-    then show \<open>\<exists>B. set B = set qs \<union> set A \<and> \<not> B \<turnstile> \<bottom>\<close>
-      using contradictory[of ps A qs] by (meson set_append)
+    assume \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> \<open>\<turnstile> A\<close>
+    then show \<open>\<exists>B. set B = set qs \<union> set A \<and> \<turnstile> B\<close>
+      using consistent[of ps A qs] by (meson set_append)
   qed
 qed
 
@@ -1306,20 +1306,20 @@ locale Derivational_Beta = Beta map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<forall>q \<in> set qs. {q} \<union> S \<turnstile> \<bottom> \<Longrightarrow> S \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<exists>q \<in> set qs. \<turnstile> {q} \<union> S\<close>
 
-sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm kind contradictory
+sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
   proof safe
     fix S ps qs
-    assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> S \<turnstile> \<bottom>\<close>
-    then have \<open>\<exists>q \<in> set qs. \<not> ({q} \<union> S \<turnstile> \<bottom>)\<close>
-      using contradictory by blast
+    assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<turnstile> S\<close>
+    then have \<open>\<exists>q \<in> set qs. \<turnstile> {q} \<union> S\<close>
+      using consistent by blast
     moreover assume \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> 
-    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
+    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
       using infinite_params_left[OF inf]
       by (metis (no_types, lifting) empty_set insert_code(1) insert_is_Un mem_Collect_eq)
   qed
@@ -1330,18 +1330,18 @@ locale Weak_Derivational_Beta = Beta map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
-  fixes contradictory :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<forall>q \<in> set qs. q # A \<turnstile> \<bottom> \<Longrightarrow> A \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<exists>q \<in> set qs. \<turnstile> q # A\<close>
 
-sublocale Weak_Derivational_Beta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind contradictory
+sublocale Weak_Derivational_Beta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
 proof
-  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
     fix ps qs A
-    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<not> A \<turnstile> \<bottom>\<close>
-    then have \<open>\<exists>q \<in> set qs. \<not> q # A \<turnstile> \<bottom>\<close>
-      using contradictory by blast
-    then show \<open>\<exists>q\<in>set qs. insert q (set A) \<in> {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<turnstile> A\<close>
+    then have \<open>\<exists>q \<in> set qs. \<turnstile> q # A\<close>
+      using consistent by blast
+    then show \<open>\<exists>q\<in>set qs. insert q (set A) \<in> {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
       by (metis (mono_tags, lifting) CollectI list.simps(15))
   qed
 qed
@@ -1505,11 +1505,11 @@ locale Derivational_Gamma = Gamma map_tm map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>S ps F qs t. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F S \<Longrightarrow> set (qs t) \<union> S \<turnstile> \<bottom> \<Longrightarrow> S \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>S ps F qs t. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (qs t) \<union> S\<close>
 
-sublocale Derivational_Gamma \<subseteq> Derivational_Kind map_fm params_fm kind contradictory
-  using infinite_params_left contradictory by unfold_locales blast+
+sublocale Derivational_Gamma \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+  using infinite_params_left consistent by unfold_locales blast+
 
 locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm classify
   for
@@ -1517,17 +1517,17 @@ locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
-  fixes contradictory :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>A ps F qs t. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F (set A) \<Longrightarrow> qs t @ A \<turnstile> \<bottom> \<Longrightarrow> A \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>A ps F qs t. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> qs t @ A\<close>
 
-sublocale Weak_Derivational_Gamma \<subseteq> Weak_Derivational_Kind map_fm params_fm kind contradictory
+sublocale Weak_Derivational_Gamma \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
 proof
-  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
     fix ps qs A F t
-    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>\<not> A \<turnstile> \<bottom>\<close> \<open>t \<in> F (set A)\<close>
-    then show \<open>\<exists>B. set B = set (qs t) \<union> set A \<and> \<not> B \<turnstile> \<bottom>\<close>
-      using contradictory[of ps A F qs t] by (meson set_append)
+    assume *: \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>\<turnstile> A\<close> \<open>t \<in> F (set A)\<close>
+    then show \<open>\<exists>B. set B = set (qs t) \<union> set A \<and> \<turnstile> B\<close>
+      using consistent[of ps A F qs t] by (meson set_append)
   qed
 qed
 
@@ -1682,23 +1682,23 @@ locale Derivational_Delta = Delta map_fm params_fm delta_fun
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (delta_fun p x) \<union> S \<turnstile> \<bottom> \<Longrightarrow> S \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (delta_fun p x) \<union> S\<close>
 
-sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind contradictory
+sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
   proof safe
     fix S p
-    assume *: \<open>p \<in> S\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>\<not> S \<turnstile> \<bottom>\<close>
+    assume *: \<open>p \<in> S\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>\<turnstile> S\<close>
     then have \<open>infinite (- (params ({p} \<union> S)))\<close>
       using card_of_ordLeq_finite inf by auto
     then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
       using infinite_imp_nonempty by blast
-    then have \<open>\<exists>x. \<not> set (delta_fun p x) \<union> S \<turnstile> \<bottom>\<close>
-      using *(1,3) contradictory \<open>\<not> S \<turnstile> \<bottom>\<close> by fast
-    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
+    then have \<open>\<exists>x. \<turnstile> set (delta_fun p x) \<union> S\<close>
+      using *(1,3) consistent \<open>\<turnstile> S\<close> by fast
+    then show \<open>\<exists>x. set (delta_fun p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
       using * inf infinite_params_left by blast
   qed
 qed
@@ -1708,23 +1708,23 @@ locale Weak_Derivational_Delta = Delta map_fm params_fm delta_fun
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     delta_fun :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
-  fixes contradictory :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> delta_fun p x @ A \<turnstile> \<bottom> \<Longrightarrow> A \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> delta_fun p x @ A\<close>
 
-sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind contradictory
+sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
-  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
     fix p A
-    assume *: \<open>p \<in> set A\<close> \<open>\<not> A \<turnstile> \<bottom>\<close>
+    assume *: \<open>p \<in> set A\<close> \<open>\<turnstile> A\<close>
     then have \<open>infinite (- (params (set (p # A))))\<close>
       using inf finite_compl by fastforce
     then obtain x where \<open>x \<notin> params (set (p # A))\<close>
       using infinite_imp_nonempty by blast
-    then have \<open>\<exists>x. \<not> delta_fun p x @ A \<turnstile> \<bottom>\<close>
-      using * contradictory[of p A x] by auto
-    then show \<open>\<exists>x. set (delta_fun p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<bottom>}\<close>
+    then have \<open>\<exists>x. \<turnstile> delta_fun p x @ A\<close>
+      using * consistent[of p A x] by auto
+    then show \<open>\<exists>x. set (delta_fun p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
       by (metis (mono_tags, lifting) CollectI set_append)
   qed
 qed
@@ -1876,14 +1876,14 @@ locale Derivational_Modal = ModalH map_fm params_fm classify
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) +
-  fixes contradictory :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>_ \<turnstile> \<bottom>\<close> [51] 50)
-  assumes contradictory: \<open>\<And>S ps F qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> set qs \<union> F S \<turnstile> \<bottom> \<Longrightarrow> S \<turnstile> \<bottom>\<close>
+  fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>S ps F qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set qs \<union> F S\<close>
     and params_subset: \<open>\<And>ps F qs S. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> params (F S) \<subseteq> params S\<close>
 
-sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm kind contradictory
+sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<not> A \<turnstile> \<bottom>}\<close>
+  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
   proof safe
     fix S ps F qs
     assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
@@ -1891,7 +1891,7 @@ proof
       using * params_subset by (meson Compl_subset_Compl_iff card_of_mono1 ordLeq_transitive)
     then show \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> F S)|\<close>
       using infinite_params_left[OF inf] by blast
-  qed (use contradictory in blast)
+  qed (use consistent in blast)
 qed
 
 (* TODO: Weak for Modal requires that F works on lists rather than sets. *)

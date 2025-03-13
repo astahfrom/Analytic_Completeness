@@ -1572,25 +1572,25 @@ next
     using \<open>(i, \<^bold>\<not> \<^bold>\<forall> p) \<in> A\<close> Assm NotE by meson
 qed simp_all
 
-interpretation DC: Derivational_Confl map_lbd symbols_lbd confl_class \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using calculus_confl by unfold_locales
+interpretation DC: Derivational_Confl map_lbd symbols_lbd confl_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_confl by unfold_locales blast
 
-interpretation DA: Derivational_Alpha map_lbd symbols_lbd alpha_class \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using calculus_alpha by unfold_locales
+interpretation DA: Derivational_Alpha map_lbd symbols_lbd alpha_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_alpha by unfold_locales blast
 
-interpretation DB: Derivational_Beta map_lbd symbols_lbd beta_class \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using calculus_beta by unfold_locales
+interpretation DB: Derivational_Beta map_lbd symbols_lbd beta_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_beta by unfold_locales blast
 
-interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd GI.classify_UNIV \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd GI.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_gammaI by unfold_locales blast
 
-interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using calculus_gammaP by unfold_locales
+interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  using calculus_gammaP by unfold_locales blast
 
-interpretation DD: Derivational_Delta map_lbd symbols_lbd delta_fun \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
-  using calculus_delta by unfold_locales
-
-interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DD: Derivational_Delta map_lbd symbols_lbd delta_fun \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  by unfold_locales (meson calculus_delta)
+  
+interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>

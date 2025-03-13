@@ -764,36 +764,36 @@ lemma imply_weaken: \<open>ps \<turnstile> q \<Longrightarrow> set ps \<subseteq
 
 section \<open>Derivational Consistency\<close>
 
-interpretation DC: Weak_Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DC: Weak_Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   fix A ps qs and q :: \<open>'x fm\<close>
   assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> set A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> set A\<close>
-  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>\<not> \<not> A \<turnstile> \<^bold>\<bottom>\<close>
     by cases (simp, metis MP' empty_set equals0D imply_head imply_mem imply_weaken set_ConsD)
 qed
 
-interpretation DA: Weak_Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
-proof
+interpretation DA: Weak_Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+proof (standard; safe)
   fix A and ps qs :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs @ A \<turnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CImpN p q)
     then have \<open>A \<turnstile> \<^bold>\<not> (p \<^bold>\<longrightarrow> q)\<close>
       using *(1) by simp
     moreover have \<open>A \<turnstile> p \<^bold>\<longrightarrow> q\<close>
-      using CImpN(2) *(2) Boole[of q]
+      using CImpN(2) * Boole[of q]
       by (metis deduct2 imply.simps(1) imply.simps(2) imply_append)
     ultimately show ?thesis
-      using MP' by blast
+      using MP' * by blast
   qed
 qed
 
-interpretation DB: Weak_Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DB: Weak_Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   fix A and ps qs :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<forall>q \<in> set qs. q # A \<turnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close>
+  then show \<open>\<exists>q \<in> set qs. \<not> q # A \<turnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CImpP p q)
     then show ?thesis
@@ -802,11 +802,11 @@ proof
   qed
 qed
 
-interpretation DG: Weak_Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG: Weak_Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CAllP p)
     then show ?thesis
@@ -815,11 +815,11 @@ proof (unfold_locales; safe)
   qed
 qed
 
-interpretation DG\<^sub>P: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG\<^sub>P: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CAllPP p)
     then show ?thesis
@@ -828,11 +828,11 @@ proof (unfold_locales; safe)
   qed
 qed
 
-interpretation DG\<^sub>F: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG\<^sub>F: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CAllFP p)
     then show ?thesis
@@ -844,49 +844,48 @@ qed
 lemma imply_params_fm: \<open>params_fm (ps \<^bold>\<leadsto> q) = params_fm q \<union> (\<Union>p \<in> set ps. params_fm p)\<close>
   by (induct ps) auto
 
-interpretation DD: Weak_Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
-proof
+interpretation DD: Weak_Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+proof (standard; safe)
   fix A a and p :: \<open>'x fm\<close>
-  assume \<open>p \<in> set A\<close> \<open>a \<notin> P.params (set A)\<close> \<open>delta_fun p a @ A \<turnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<turnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> set A\<close> \<open>a \<notin> P.params (set A)\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>delta_fun p a @ A \<turnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof (induct p a rule: delta_fun.induct)
     case (1 p x)
     have \<open>x \<notin> P.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
       using 1(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
     moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<star>x/0\<rangle>p # A \<turnstile> \<^bold>\<bottom>\<close>
-      using 1(3) by simp
+      using 1(4) by simp
     ultimately have \<open>\<^bold>\<not> \<^bold>\<forall>p # A \<turnstile> \<^bold>\<bottom>\<close>
       using GR'[of x p] by simp
     then show ?thesis
-      using 1(1) by (meson Boole MP' imply_mem)
+      using 1 by (meson Boole MP' imply_mem)
   next
     case (2 p x)
     have \<open>x \<notin> P.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
       using 2(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
     moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p # A \<turnstile> \<^bold>\<bottom>\<close>
-      using 2(3) by simp
+      using 2(4) by simp
     ultimately have \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>P p # A \<turnstile> \<^bold>\<bottom>\<close>
       using GR\<^sub>P'[of x p] by simp
     then show ?thesis
-      using 2(1) by (meson Boole MP' imply_mem)
+      using 2 by (meson Boole MP' imply_mem)
   next
     case (3 p x)
     have \<open>x \<notin> P.params {p, A \<^bold>\<leadsto> \<^bold>\<bottom>}\<close>
       using 3(1-2) imply_params_fm[of A \<open>\<^bold>\<bottom>\<close>] by auto
     moreover have \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p # A \<turnstile> \<^bold>\<bottom>\<close>
-      using 3(3) by simp
+      using 3(4) by simp
     ultimately have \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>F p # A \<turnstile> \<^bold>\<bottom>\<close>
       using GR\<^sub>F'[of x p] by simp
     then show ?thesis
-      using 3(1) by (meson Boole MP' imply_mem)
+      using 3 by (meson Boole MP' imply_mem)
   qed simp_all
 qed
 
-interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
-  then
-  show \<open>prop\<^sub>E Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
+  then show \<open>prop\<^sub>E Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
     using prop\<^sub>E_Kinds[OF DC.kind[OF inf] DA.kind DB.kind DG.kind DG\<^sub>P.kind DG\<^sub>F.kind DD.kind]
     by blast
 qed
@@ -997,35 +996,35 @@ subsection \<open>Derivational Consistency\<close>
 lemma Boole: \<open>{\<^bold>\<not> p} \<union> A \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> A \<tturnstile> p\<close>
   using Clas FlsE by blast
 
-sublocale DC: Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DC: Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof
   fix A ps qs and q :: \<open>'x fm\<close>
   assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> A\<close>
-  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>\<not> \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
     by cases auto
 qed
 
-sublocale DA: Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-proof
+sublocale DA: Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+proof (standard; safe)
   fix A and ps qs :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set qs \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set qs \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CImpN p q)
     then have \<open>A \<tturnstile> \<^bold>\<not> (p \<^bold>\<longrightarrow> q)\<close>
       using *(1) by auto
     moreover have \<open>A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
-      using CImpN(2) *(2) Boole[of q \<open>{p} \<union> A\<close>] by auto
+      using CImpN(2) * Boole[of q \<open>{p} \<union> A\<close>] by auto
     ultimately show ?thesis
-      by blast
+      using * by blast
   qed
 qed
 
-sublocale DB: Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DB: Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof
   fix A and ps qs :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<forall>q \<in> set qs. {q} \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show \<open>\<exists>q \<in> set qs. \<not> {q} \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
   proof cases
     case (CImpP p q)
     then show ?thesis
@@ -1034,11 +1033,11 @@ proof
   qed
 qed
 
-sublocale DG: Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DG: Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CAllP p)
     then show ?thesis
@@ -1046,11 +1045,11 @@ proof (unfold_locales; safe)
   qed
 qed
 
-sublocale DGP: Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DGP: Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CAllPP p)
     then show ?thesis
@@ -1058,11 +1057,11 @@ proof (unfold_locales; safe)
   qed
 qed
 
-sublocale DGF: Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DGF: Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof cases
     case (CAllFP p)
     then show ?thesis
@@ -1070,39 +1069,39 @@ proof (unfold_locales; safe)
   qed
 qed
 
-sublocale DD: Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
-proof
+sublocale DD: Derivational_Delta map_fm params_fm delta_fun \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+proof (standard; safe)
   fix A a and p :: \<open>'x fm\<close>
-  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
-  then show \<open>A \<tturnstile> \<^bold>\<bottom>\<close>
+  assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close>  \<open>set (delta_fun p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
+  then show False
   proof (induct p a rule: delta_fun.induct)
     case (1 p x)
     then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<star>x/0\<rangle> p\<close>
-      using "1.prems"(3) Boole by auto
+      using 1(4) Boole by auto
     ultimately show ?case
-      using 1(1) UniI by blast
+      using 1 UniI by blast
   next
     case (2 p x)
     then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>P p\<close>
-      using "2.prems"(3) Boole by auto
+      using 2(4) Boole by auto
     ultimately show ?case
-      using 2(1) UniI\<^sub>P by blast
+      using 2 UniI\<^sub>P by blast
   next
     case (3 p x)
     then have \<open>x \<notin> P.params ({p} \<union> A)\<close>
       by auto
     moreover have \<open>A \<tturnstile> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p\<close>
-      using "3.prems"(3) Boole by auto
+      using 3(4) Boole by auto
     ultimately show ?case
-      using 3(1) UniI\<^sub>F by blast
+      using 3 UniI\<^sub>F by blast
   qed simp_all
 qed
 
-sublocale Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
   using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
