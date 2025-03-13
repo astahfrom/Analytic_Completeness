@@ -659,11 +659,11 @@ qed
 section \<open>Model Existence\<close>
 
 inductive confl_class :: \<open>'x lbd list \<Rightarrow> 'x lbd list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
-  CNegP: \<open>[ (i, \<^bold>\<not> p) ] \<leadsto>\<^sub>\<crossmark> [(i, p)]\<close>
+  CNegP: \<open>[ (i, \<^bold>\<not> \<^bold>\<cdot>P) ] \<leadsto>\<^sub>\<crossmark> [(i, \<^bold>\<cdot>P)]\<close>
+| CNegI: \<open>[ (i, \<^bold>\<not> \<^bold>\<bullet>k) ] \<leadsto>\<^sub>\<crossmark> [(i, \<^bold>\<bullet>k)]\<close>
 
 inductive alpha_class :: \<open>'x lbd list \<Rightarrow> 'x lbd list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
   CSym: \<open>[ (i, \<^bold>\<bullet>k) ] \<leadsto>\<^sub>\<alpha> [(k, \<^bold>\<bullet>i)]\<close>
-| CAnti: \<open>[ (i, \<^bold>\<not> \<^bold>\<bullet>k) ] \<leadsto>\<^sub>\<alpha> [(k, \<^bold>\<not> \<^bold>\<bullet>i)]\<close>
 | CNom: \<open>[ (i, \<^bold>\<bullet>k), (i, p) ] \<leadsto>\<^sub>\<alpha> [(k, p)]\<close>
 | CNegN: \<open>[ (i, \<^bold>\<not> \<^bold>\<not> p) ] \<leadsto>\<^sub>\<alpha> [(i, p)]\<close>
 | CConP: \<open>[ (i, p \<^bold>\<and> q) ] \<leadsto>\<^sub>\<alpha> [(i, p), (i, q)]\<close>
@@ -683,11 +683,11 @@ inductive gamma_class_nom :: \<open>'x lbd list \<Rightarrow> ('x tm \<Rightarro
 inductive gamma_class_fm :: \<open>'x lbd list \<Rightarrow> ('x lbd set \<Rightarrow> 'x fm set) \<times> ('x fm \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<^sub>p\<close> 50) where
   CAllP: \<open>[ (i, \<^bold>\<forall> p) ] \<leadsto>\<^sub>\<gamma>\<^sub>p (\<lambda>_. {q. softqdf q}, \<lambda>q. [ (i, \<langle>q\<rangle>\<^sub>p p) ])\<close>
 
-fun delta_fun :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close> where
-  CBoxN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>\<box>p) k = [(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k)))]\<close>
-| CGloN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>A p) k = [ (\<^bold>\<circle>k, \<^bold>\<not> p) ]\<close>
-| CAllN: \<open>delta_fun (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
-| \<open>delta_fun _ _ = []\<close>
+fun delta :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close> where
+  CBoxN: \<open>delta (i, \<^bold>\<not> \<^bold>\<box>p) k = [(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k)))]\<close>
+| CGloN: \<open>delta (i, \<^bold>\<not> \<^bold>A p) k = [ (\<^bold>\<circle>k, \<^bold>\<not> p) ]\<close>
+| CAllN: \<open>delta (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
+| \<open>delta _ _ = []\<close>
 
 interpretation P: Params map_lbd symbols_lbd
   by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
@@ -707,10 +707,10 @@ interpretation GI: Gamma_UNIV map_tm map_lbd symbols_lbd gamma_class_nom
 interpretation GP: Gamma map_fm map_lbd symbols_lbd gamma_class_fm
   by unfold_locales (fastforce elim: gamma_class_fm.cases intro: gamma_class_fm.intros)+
 
-interpretation D: Delta map_lbd symbols_lbd delta_fun
+interpretation D: Delta map_lbd symbols_lbd delta
 proof
-  show \<open>\<And>f. delta_fun (map_lbd f p) (f x) = map (map_lbd f) (delta_fun p x)\<close> for p :: \<open>'x lbd\<close> and x
-    by (induct p x rule: delta_fun.induct) simp_all
+  show \<open>\<And>f. delta (map_lbd f p) (f x) = map (map_lbd f) (delta p x)\<close> for p :: \<open>'x lbd\<close> and x
+    by (induct p x rule: delta.induct) simp_all
 qed
 
 abbreviation Kinds :: \<open>('x, 'x lbd) kind list\<close> where
@@ -736,7 +736,7 @@ qed
 
 context begin
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p) \<notin> S \<or> (i, \<^bold>\<not> p) \<notin> S\<close>
+lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<cdot>P) \<notin> S \<or> (i, \<^bold>\<not> \<^bold>\<cdot>P) \<notin> S\<close>
   using sat\<^sub>E[of C.kind] by (force intro: CNegP)
 
 lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
@@ -991,11 +991,11 @@ next
     next
       assume \<open>x = \<^bold>\<bullet>k\<close> \<open>(i, \<^bold>\<not> \<^bold>\<bullet>k) \<in> S\<close>
       then have \<open>(i, \<^bold>\<bullet>k) \<notin> S\<close>
-        using confl by (fastforce intro: CNegP)
+        using confl by (fastforce intro: CNegI)
       then have \<open>\<not> equiv_nom S i k\<close>
         unfolding equiv_nom_def by blast
-      moreover have \<open>(k, \<^bold>\<not> \<^bold>\<bullet>i) \<in> S\<close>
-        using \<open>(i, \<^bold>\<not> \<^bold>\<bullet>k) \<in> S\<close> alpha by (fastforce intro: CAnti)
+      moreover have \<open>(i, \<^bold>\<bullet>k) \<notin> S\<close>
+        using \<open>(i, \<^bold>\<not> \<^bold>\<bullet>k) \<in> S\<close> using confl by (fastforce intro: CNegI)
       ultimately have \<open>[i]\<^sub>S \<noteq> [k]\<^sub>S\<close>
         using Nom_sym Nom_trans equiv_nom_assign unfolding equiv_nom_def by metis
       then show \<open>\<not> \<lbrakk>S, i\<rbrakk> \<Turnstile> \<^bold>\<bullet>k\<close>
@@ -1424,6 +1424,10 @@ proof cases
   then show ?thesis
     using assms(2-)
     by (metis Assm NotE empty_set equals0D list.set_intros(1) set_ConsD subset_eq)
+next
+  case (CNegI i k)
+  then show ?thesis
+    using assms(2-) by fastforce
 qed
 
 lemma calculus_alpha:
@@ -1435,11 +1439,6 @@ proof cases
   then show ?thesis
     using assms(2-)
     by (metis Assm_head Diff_partition Nom NotE NotI Ref list.set(1) list.simps(15))
-next
-  case (CAnti i k)
-  then show ?thesis
-    using assms(2-)
-    by (metis Assm_head Clas FlsE Nom NotE Ref list.set(1) list.simps(15) sup.absorb_iff2)
 next
   case (CNom i k p)
   then show ?thesis
@@ -1529,10 +1528,10 @@ proof cases
 qed
 
 lemma calculus_delta:
-  assumes \<open>p \<in> A\<close> \<open>k \<notin> symbols A\<close> \<open>set (delta_fun p k) \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+  assumes \<open>p \<in> A\<close> \<open>k \<notin> symbols A\<close> \<open>set (delta p k) \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   shows \<open>A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using assms
-proof (induct p k rule: delta_fun.induct)
+proof (induct p k rule: delta.induct)
   case (1 i p k)
   then have \<open>{(\<^bold>\<circle>k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>(\<^bold>\<circle>k)))} \<union> A \<tturnstile> (a, \<^bold>\<bottom>)\<close> \<open>(i, \<^bold>\<not> \<^bold>\<box> p) \<in> A\<close>
     by simp_all
@@ -1587,7 +1586,7 @@ interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd GI.classify_UN
 interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_gammaP by unfold_locales blast
 
-interpretation DD: Derivational_Delta map_lbd symbols_lbd delta_fun \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DD: Derivational_Delta map_lbd symbols_lbd delta \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   by unfold_locales (meson calculus_delta)
   
 interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>

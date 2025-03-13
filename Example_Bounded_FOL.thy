@@ -34,7 +34,7 @@ section \<open>Semantics\<close>
 datatype ('a, 'f, 'p) model = Model \<open>'a set\<close> \<open>nat \<Rightarrow> 'a\<close> \<open>'f \<Rightarrow> 'a list \<Rightarrow> 'a\<close> \<open>'p \<Rightarrow> 'a list \<Rightarrow> bool\<close>
 
 primrec wf_model :: \<open>('a, 'f, 'p) model \<Rightarrow> bool\<close> where
-  \<open>wf_model (Model U E F G) = ((\<forall>n. E n \<in> U) \<and> (\<forall>f ts. F f ts \<in> U))\<close>
+  \<open>wf_model (Model U E F G) \<longleftrightarrow> (\<forall>n. E n \<in> U) \<and> (\<forall>f ts. F f ts \<in> U)\<close>
 
 fun semantics_tm :: \<open>(nat \<Rightarrow> 'a) \<times> ('f \<Rightarrow> 'a list \<Rightarrow> 'a) \<Rightarrow> 'f tm \<Rightarrow> 'a\<close> (\<open>\<lblot>_\<rblot>\<close>) where
   \<open>\<lblot>(E, _)\<rblot> (\<^bold>#n) = E n\<close>
@@ -250,7 +250,7 @@ proof
 qed
 
 abbreviation canonical :: \<open>('f, 'p) fm set \<Rightarrow> ('f tm, 'f, 'p) model\<close> where
-  \<open>canonical S \<equiv> Model (terms S) (\<lambda>n. \<^bold>#n \<in>? terms S) (\<lambda>P ts. \<^bold>\<circle>P ts \<in>? terms S) (\<lambda>P ts. \<^bold>\<cdot>P ts \<in> S)\<close>
+  \<open>canonical S \<equiv> Model (terms S) (\<lambda>n. \<^bold>#n \<in>? terms S) (\<lambda>f ts. \<^bold>\<circle>f ts \<in>? terms S) (\<lambda>P ts. \<^bold>\<cdot>P ts \<in> S)\<close>
 
 lemma wf_canonical:
   assumes \<open>terms H \<noteq> {}\<close>
