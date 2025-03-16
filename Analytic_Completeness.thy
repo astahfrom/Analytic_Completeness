@@ -225,9 +225,10 @@ definition enough_new :: \<open>'fm set \<Rightarrow> bool\<close> where
   \<open>enough_new S \<equiv> |UNIV :: 'fm set| \<le>o |- params S|\<close>
 
 lemma enough_new_countable:
-  assumes \<open>\<exists>to_nat :: 'fm \<Rightarrow> nat. inj to_nat\<close> \<open>infinite X\<close>
-  shows \<open>|UNIV :: 'fm set| \<le>o |X :: 'fm set|\<close>
-  using assms by (meson card_of_ordLeq infinite_iff_card_of_nat ordLeq_transitive subset_UNIV)
+  assumes \<open>\<exists>to_nat :: 'fm \<Rightarrow> nat. inj to_nat\<close> \<open>infinite (- params S)\<close>
+  shows \<open>enough_new S\<close>
+  unfolding enough_new_def using assms
+  by (meson UNIV_I card_of_ordLeqI infinite_iff_card_of_nat ordLeq_transitive)
 
 end
 
