@@ -233,7 +233,7 @@ qed
 abbreviation Kinds :: \<open>('f, ('f, 'p) fm) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, D.kind]\<close>
 
-lemma sat\<^sub>Es_Kinds:
+lemma prop\<^sub>E_Kinds:
   assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E G.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
   shows \<open>prop\<^sub>E Kinds C\<close>
   unfolding prop\<^sub>E_def using assms by simp
@@ -243,11 +243,11 @@ interpretation Consistency_Kinds psub params_fm Kinds
     B.Consistency_Kind_axioms G.Consistency_Kind_axioms D.Consistency_Kind_axioms
   by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
-interpretation Maximal_Consistency_UNIV psub params_fm Kinds
+interpretation Maximal_Consistency psub params_fm Kinds
 proof
   show \<open>infinite (UNIV :: ('f, 'p) fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
-qed
+qed simp
 
 abbreviation canonical :: \<open>('f, 'p) fm set \<Rightarrow> ('f tm, 'f, 'p) model\<close> where
   \<open>canonical S \<equiv> Model (terms S) (\<lambda>n. \<^bold>#n \<in>? terms S) (\<lambda>f ts. \<^bold>\<circle>f ts \<in>? terms S) (\<lambda>P ts. \<^bold>\<cdot>P ts \<in> S)\<close>
@@ -362,7 +362,7 @@ theorem model_existence:
   fixes S :: \<open>('f, 'p) fm set\<close>
   assumes \<open>prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params S|\<close>
+    and \<open>P.enough_new S\<close>
     and \<open>terms S \<noteq> {}\<close>
     and \<open>p \<in> S\<close>
   shows \<open>canonical (mk_mcs C S) \<Turnstile> p\<close>
@@ -485,8 +485,8 @@ proof (standard; safe)
   qed simp_all
 qed
 
-sublocale Derivational_Consistency psub params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
-  using sat\<^sub>Es_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
+sublocale Derivational_Consistency psub params_fm Kinds \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+  using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
@@ -496,7 +496,7 @@ lemma with_subterm_elim: \<open>A \<tturnstile> with_subterm p \<Longrightarrow>
 theorem strong_completeness:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params A|\<close>
+    and \<open>P.enough_new A\<close>
   shows \<open>A \<tturnstile> p\<close>
 proof (rule ccontr)
   assume \<open>\<not> A \<tturnstile> p\<close>
@@ -506,7 +506,7 @@ proof (rule ccontr)
     using Boole by (metis insert_is_Un)
 
   let ?S = \<open>set [\<^bold>\<not> with_subterm p] \<union> A\<close>
-  let ?C = \<open>{A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- P.params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+  let ?C = \<open>{A. P.enough_new A \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
   let ?M = \<open>canonical (mk_mcs ?C ?S)\<close>
 
   have ne: \<open>terms ?S \<noteq> {}\<close>
@@ -518,8 +518,8 @@ proof (rule ccontr)
 
   have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params ?S|\<close>
-    using inf params_left by blast
+  moreover have \<open>P.enough_new ?S\<close>
+    using assms(2) params_left by blast
   moreover from this have \<open>?S \<in> ?C\<close>
     using * by simp
   ultimately have *: \<open>\<forall>p \<in> ?S. ?M \<Turnstile> p\<close>
@@ -612,7 +612,7 @@ corollary \<open>\<not> ([] \<turnstile> \<^bold>\<bottom>)\<close>
 corollary strong_completeness_list:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- P.params A|\<close>
+    and \<open>P.enough_new A\<close>
   shows \<open>\<exists>B. set B \<subseteq> A \<and> B \<turnstile> p\<close>
   using assms strong_completeness finite_assumptions by blast
 
@@ -620,7 +620,7 @@ theorem main:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes \<open>|UNIV :: ('f, 'p) fm set| \<le>o |UNIV :: 'f set|\<close>
   shows \<open>[] \<turnstile> p \<longleftrightarrow> (\<forall>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<longrightarrow> Model U E F G \<Turnstile> p)\<close>
-  using assms strong_completeness_list[of \<open>{}\<close> p] soundness_nil[of p]
+  using assms strong_completeness_list[of \<open>{}\<close> p] soundness_nil[of p] unfolding P.enough_new_def
   by simp blast
 
 end
@@ -738,21 +738,21 @@ proof
   qed simp_all
 qed
 
-sublocale Derivational_Consistency psub params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> \<turnstile> A\<close>
-  using sat\<^sub>Es_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
+sublocale Derivational_Consistency psub params_fm Kinds \<open>\<lambda>A. \<not> \<turnstile> A\<close>
+  using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
 
 theorem strong_completeness:
   fixes p :: \<open>('f, 'p) fm\<close>
   assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: ('f, 'p) fm set| \<le>o  |- P.params A|\<close>
+    and \<open>P.enough_new A\<close>
   shows \<open>\<turnstile> {\<^bold>\<not> with_subterm p} \<union> A\<close>
 proof (rule ccontr)
   assume *: \<open>\<not> \<turnstile> {\<^bold>\<not> with_subterm p} \<union> A\<close>
   
   let ?S = \<open>set [\<^bold>\<not> with_subterm p] \<union> A\<close>
-  let ?C = \<open>{A :: ('f, 'p) fm set. |UNIV :: ('f, 'p) fm set| \<le>o |- P.params A| \<and> \<not> \<turnstile> A}\<close>
+  let ?C = \<open>{A. P.enough_new A \<and> \<not> \<turnstile> A}\<close>
   let ?M = \<open>canonical (mk_mcs ?C ?S)\<close>
 
   have ne: \<open>terms ?S \<noteq> {}\<close>
@@ -764,8 +764,8 @@ proof (rule ccontr)
 
   have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>|UNIV :: ('f, 'p) fm set| \<le>o |- P.params ?S|\<close>
-    using inf params_left by blast
+  moreover have \<open>P.enough_new ?S\<close>
+    using assms(2) params_left by blast
   moreover from this have \<open>?S \<in> ?C\<close>
     using * by simp
   ultimately have *: \<open>\<forall>p \<in> ?S. ?M \<Turnstile> p\<close>

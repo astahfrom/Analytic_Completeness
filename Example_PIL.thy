@@ -726,13 +726,13 @@ interpretation Consistency_Kinds map_lbd symbols_lbd Kinds
     GI.Consistency_Kind_axioms GP.Consistency_Kind_axioms D.Consistency_Kind_axioms
   by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
-interpretation Maximal_Consistency_UNIV map_lbd symbols_lbd Kinds
+interpretation Maximal_Consistency map_lbd symbols_lbd Kinds
 proof
  have \<open>infinite (UNIV :: 'x fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
   then show \<open>infinite (UNIV :: 'x lbd set)\<close>
     using finite_prod by blast
-qed
+qed simp
 
 context begin
 
@@ -772,7 +772,7 @@ definition equiv_nom :: \<open>'x lbd set \<Rightarrow> 'x tm \<Rightarrow> 'x t
   \<open>equiv_nom S i k \<equiv> (i, \<^bold>\<bullet>k) \<in> S\<close>
 
 definition assign :: \<open>'x tm \<Rightarrow> 'x lbd set \<Rightarrow> 'x tm\<close> (\<open>[_]\<^sub>_\<close> [0, 100] 100) where
-  \<open>[i]\<^sub>S \<equiv> minim ( |UNIV| ) {k. equiv_nom S i k}\<close>
+  \<open>[i]\<^sub>S \<equiv> wo_rel.minim ( |UNIV| ) {k. equiv_nom S i k}\<close>
 
 definition reach :: \<open>'x lbd set \<Rightarrow> 'x tm \<Rightarrow> 'x tm set\<close> where
   \<open>reach S i \<equiv> {[k]\<^sub>S |k. (i, \<^bold>\<diamond> (\<^bold>\<bullet>k)) \<in> S}\<close>
@@ -1218,7 +1218,7 @@ theorem model_existence:
   fixes S :: \<open>'x lbd set\<close>
   assumes \<open>prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: 'x lbd set| \<le>o |- P.params S|\<close>
+    and \<open>P.enough_new S\<close>
     and \<open>(i, p) \<in> S\<close>
   shows \<open>\<lbrakk>mk_mcs C S, i\<rbrakk> \<Turnstile> p\<close>
 proof -
@@ -1589,7 +1589,7 @@ interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm
 interpretation DD: Derivational_Delta map_lbd symbols_lbd \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   by unfold_locales (meson calculus_\<delta>)
   
-interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
@@ -1599,7 +1599,7 @@ theorem strong_completeness:
   assumes mod: \<open>\<And>(M :: ('x, 'x tm) model) w. wf_model M \<Longrightarrow> w \<in> \<W> M \<Longrightarrow>
       \<forall>(k, q) \<in> A. (M, case_tm (\<NN> M) (\<N> M) k) \<Turnstile> q \<Longrightarrow>
       (M, w) \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: 'x lbd set| \<le>o |- symbols A|\<close>
+    and \<open>P.enough_new A\<close>
   shows \<open>A \<tturnstile> (i, p)\<close>
 proof (rule ccontr)
   assume \<open>\<not> A \<tturnstile> (i, p)\<close>
@@ -1607,19 +1607,17 @@ proof (rule ccontr)
     using Boole by blast
 
   let ?S = \<open>{(i, \<^bold>\<not> p)} \<union> A\<close>
-  let ?C = \<open>{A :: 'x lbd set. |UNIV :: 'x lbd set| \<le>o |- symbols A| \<and> \<not> A \<tturnstile> (undefined, \<^bold>\<bottom>)}\<close>
+  let ?C = \<open>{A. P.enough_new A \<and> \<not> A \<tturnstile> (undefined, \<^bold>\<bottom>)}\<close>
   let ?H = \<open>mk_mcs ?C ?S\<close>
   let ?M = \<open>canonical ?H\<close>
 
-  have \<open>infinite (UNIV :: 'x set)\<close>
-    using inf by (meson card_of_ordLeq_infinite inf_UNIV rev_finite_subset subset_UNIV)
-  then have \<open>prop\<^sub>E Kinds ?C\<close>
+  have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by fast
   moreover have \<open>?S \<in> ?C\<close>
-    using * FlsE params_left
-    by (metis (no_types, lifting) List.set_insert empty_set inf mem_Collect_eq )
-  moreover from this have \<open>|UNIV :: 'x lbd set| \<le>o |- P.params ?S|\<close>
-    using inf by blast
+    using * FlsE params_left assms(2)
+    by (metis (no_types, lifting) List.set_insert empty_set mem_Collect_eq )
+  moreover from this have \<open>P.enough_new ?S\<close>
+    by blast
   ultimately have **: \<open>\<forall>(k, q) \<in> ?S. \<lbrakk>?H, k\<rbrakk> \<Turnstile> q\<close>
     using model_existence[of ?C ?S] by blast
   then have \<open>\<forall>(k, q) \<in> ?S. (?M, case_tm (\<NN> ?M) (\<N> ?M) k) \<Turnstile> q\<close>
@@ -1765,9 +1763,9 @@ corollary \<open>\<not> ([] \<turnstile> (i, \<^bold>\<bottom>))\<close>
 
 corollary strong_completeness_list:
   fixes p :: \<open>'x fm\<close>
-  assumes mod: \<open>\<And>(M :: ('x, 'x tm) model) w. wf_model M \<Longrightarrow> w \<in> \<W> M \<Longrightarrow>
+  assumes \<open>\<And>(M :: ('x, 'x tm) model) w. wf_model M \<Longrightarrow> w \<in> \<W> M \<Longrightarrow>
       \<forall>(k, q) \<in> A. (M, case_tm (\<NN> M) (\<N> M) k) \<Turnstile> q \<Longrightarrow> (M, w) \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: 'x lbd set| \<le>o  |- symbols A|\<close>
+    and \<open>P.enough_new A\<close>
   shows \<open>\<exists>B. set B \<subseteq> A \<and> B \<turnstile> (i, p)\<close>
   using assms strong_completeness finite_assumptions by blast
 
@@ -1775,6 +1773,6 @@ theorem main:
   fixes p :: \<open>'x fm\<close>
   assumes \<open>i \<notin> symbols_fm p\<close> \<open>|UNIV :: 'x lbd set| \<le>o  |UNIV :: 'x set|\<close>
   shows \<open>[] \<turnstile> (\<^bold>\<circle>i, p) \<longleftrightarrow> (\<forall>(M :: ('x, 'x tm) model). \<forall>w \<in> \<W> M. wf_model M \<longrightarrow> (M, w) \<Turnstile> p)\<close>
-  using assms strong_completeness_list[where A=\<open>{}\<close>] soundness_nil by fastforce
+  using assms strong_completeness_list[where A=\<open>{}\<close>] soundness_nil unfolding P.enough_new_def by fastforce
 
 end

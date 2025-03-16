@@ -324,11 +324,11 @@ interpretation Consistency_Kinds map_fm params_fm Kinds
     D.Consistency_Kind_axioms
   by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
-interpretation Maximal_Consistency_UNIV map_fm params_fm Kinds
+interpretation Maximal_Consistency map_fm params_fm Kinds
 proof
   show \<open>infinite (UNIV :: 'x fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
-qed
+qed simp
 
 abbreviation henv\<^sub>P where "henv\<^sub>P H == \<lambda>n ts. \<^bold>\<cdot>(\<^bold>#\<^sub>2 n) ts \<in> H"
 
@@ -516,7 +516,7 @@ theorem model_existence:
   fixes S :: \<open>'x fm set\<close>
   assumes \<open>prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
-    and \<open>|UNIV :: 'x fm set| \<le>o |- P.params S|\<close>
+    and \<open>P.enough_new S\<close>
     and \<open>p \<in> S\<close>
   shows \<open>\<lbrakk>mk_mcs C S\<rbrakk> \<Turnstile> p\<close>
 proof -
@@ -882,7 +882,7 @@ proof (standard; safe)
   qed simp_all
 qed
 
-interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
   then show \<open>prop\<^sub>E Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
@@ -893,7 +893,7 @@ qed
 theorem weak_completeness:
   fixes p :: \<open>'x fm\<close>
   assumes mod: \<open>\<forall>(E :: _ \<Rightarrow> 'x tm) E\<^sub>F E\<^sub>P C F G PS FS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longrightarrow> (\<forall>q \<in> set ps. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q) \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: 'x fm set| \<le>o  |- P.params (set ps)|\<close>
+    and \<open>P.enough_new (set ps)\<close>
   shows \<open>ps \<turnstile> p\<close>
 proof (rule ccontr)
   assume \<open>\<not> ps \<turnstile> p\<close>
@@ -905,13 +905,15 @@ proof (rule ccontr)
   let ?M = \<open>\<lbrakk>mk_mcs ?C ?S\<rbrakk>\<close>
 
   have \<open>infinite (UNIV :: 'x set)\<close>
-    using inf card_of_ordLeq_infinite finite_subset inf_UNIV subset_UNIV by blast
+    using assms(2) card_of_ordLeq_infinite finite_subset inf_univ subset_UNIV
+    unfolding P.enough_new_def by blast
   then have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>?S \<in> ?C\<close>
     using * by blast
-  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- P.params ?S|\<close>
-    using inf by (metis UN_insert finite_params_fm inf_univ infinite_left list.simps(15))
+  moreover have \<open>P.enough_new ?S\<close>
+    using assms(2) unfolding P.enough_new_def
+    by (metis UN_insert finite_params_fm inf_univ infinite_left list.simps(15))
   ultimately have *: \<open>\<forall>p \<in> ?S. ?M \<Turnstile> p\<close>
     using model_existence by blast 
   then have \<open>?M \<Turnstile> p\<close>
@@ -925,7 +927,7 @@ theorem completeness:
   assumes \<open>\<forall>(E :: nat \<Rightarrow> 'x tm) E\<^sub>P E\<^sub>F C F G PS FS.  wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
     and \<open>|UNIV :: 'x fm set| \<le>o  |UNIV :: 'x set|\<close>
   shows \<open>\<turnstile> p\<close>
-  using assms weak_completeness[where ps=\<open>[]\<close>, of p] by simp
+  using assms weak_completeness[where ps=\<open>[]\<close>, of p] unfolding P.enough_new_def by simp
 
 section \<open>Natural Deduction\<close>
 
@@ -1101,7 +1103,7 @@ proof (standard; safe)
   qed simp_all
 qed
 
-sublocale Derivational_Consistency map_fm params_fm Kinds \<open>|UNIV|\<close> \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale Derivational_Consistency map_fm params_fm Kinds \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
   using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
@@ -1110,7 +1112,7 @@ theorem strong_completeness:
   fixes p :: \<open>'x fm\<close>
   assumes mod: \<open>\<And>(E :: nat \<Rightarrow> 'x tm) E\<^sub>F E\<^sub>P C F G PS FS. wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Longrightarrow>
       (\<forall>q \<in> A. (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q) \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
-    and inf: \<open>|UNIV :: 'x fm set| \<le>o |- P.params A|\<close>
+    and \<open>P.enough_new A\<close>
   shows \<open>A \<tturnstile> p\<close>
 proof (rule ccontr)
   assume \<open>\<not> A \<tturnstile> p\<close>
@@ -1118,7 +1120,7 @@ proof (rule ccontr)
     using Boole by (metis insert_is_Un)
 
   let ?S = \<open>set [\<^bold>\<not> p] \<union> A\<close>
-  let ?C = \<open>{A :: 'x fm set. |UNIV :: 'x fm set| \<le>o |- P.params A| \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
+  let ?C = \<open>{A. P.enough_new A \<and> \<not> A \<tturnstile> \<^bold>\<bottom>}\<close>
   let ?M = \<open>\<lbrakk>mk_mcs ?C ?S\<rbrakk>\<close>
 
   have wf: \<open>wf_model ?M\<close>
@@ -1126,8 +1128,8 @@ proof (rule ccontr)
 
   have \<open>prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>|UNIV :: 'x fm set| \<le>o |- P.params ?S|\<close>
-    using inf params_left by blast
+  moreover have \<open>P.enough_new ?S\<close>
+    using assms(2) params_left by blast
   moreover from this have \<open>?S \<in> ?C\<close>
     using * by simp
   ultimately have *: \<open>\<forall>p \<in> ?S. ?M \<Turnstile> p\<close>

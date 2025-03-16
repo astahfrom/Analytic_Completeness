@@ -6,9 +6,6 @@
   - "First-Order Logic and Automated Theorem Proving", 1996, Melvin Fitting.
 *)
 
-(* TODO: Might want to use a, b instead of n, m *)
-(* TODO: In Isabelle2025 we can actually extend and instantiate wo_rel *)
-
 theory Analytic_Completeness imports
   "HOL-Cardinals.Cardinal_Order_Relation"
 begin
@@ -57,46 +54,14 @@ lemma card_of_infinite_smaller_Union:
   using assms by (metis (full_types) Field_card_of card_of_UNION_ordLeq_infinite
       card_of_well_order_on ordLeq_iff_ordLess_or_ordIso ordLess_or_ordLeq)
 
-lemma card_of_params_marker_lists:
-  assumes \<open>infinite (UNIV :: 'i set)\<close> \<open>|UNIV :: 'm set| \<le>o |UNIV :: nat set|\<close>
-  shows \<open>|UNIV :: ('i + 'm \<times> nat) list set| \<le>o |UNIV :: 'i set|\<close>
-proof -
-  have \<open>(UNIV :: 'm set) \<noteq> {}\<close>
-    by simp
-  then have \<open>|UNIV :: 'm set| *c |UNIV :: nat set| \<le>o |UNIV :: nat set|\<close>
-    using assms(2) by (simp add: cinfinite_def cprod_cinfinite_bound ordLess_imp_ordLeq)
-  then have \<open>|UNIV :: ('m \<times> nat) set| \<le>o |UNIV :: nat set|\<close>
-    unfolding cprod_def by simp
-  moreover have \<open>|UNIV :: nat set| \<le>o |UNIV :: 'i set|\<close>
-    using assms infinite_iff_card_of_nat by blast
-  ultimately have \<open>|UNIV :: ('m \<times> nat) set| \<le>o |UNIV :: 'i set|\<close>
-    using ordLeq_transitive by blast
-  moreover have \<open>Cinfinite |UNIV :: 'i set|\<close>
-    using assms by (simp add: cinfinite_def)
-  ultimately have \<open>|UNIV :: 'i set| +c |UNIV :: ('m \<times> nat) set| =o |UNIV :: 'i set|\<close>
-    using csum_absorb1 by blast
-  then have \<open>|UNIV :: ('i + 'm \<times> nat) set| =o |UNIV :: 'i set|\<close>
-    unfolding csum_def by simp
-  then have \<open>|UNIV :: ('i + 'm \<times> nat) set| \<le>o |UNIV :: 'i set|\<close>
-    using ordIso_iff_ordLeq by blast
-  moreover have \<open>infinite (UNIV :: ('i + 'm \<times> nat) set)\<close>
-    using assms by simp
-  then have \<open>|UNIV :: ('i + 'm \<times> nat) list set| =o |UNIV :: ('i + 'm \<times> nat) set|\<close>
-    by (metis card_of_lists_infinite lists_UNIV)
-  ultimately have \<open>|UNIV :: ('i + 'm \<times> nat) list set| \<le>o |UNIV :: 'i set|\<close>
-    using ordIso_ordLeq_trans by blast
-  then show ?thesis
-    using ordLeq_transitive by blast
-qed
-
 context wo_rel
 begin
 
-lemma underS_bound: \<open>a \<in> underS n \<Longrightarrow> b \<in> underS n \<Longrightarrow> a \<in> under b \<or> b \<in> under a\<close>
+lemma underS_bound: \<open>a \<in> underS c \<Longrightarrow> b \<in> underS c \<Longrightarrow> a \<in> under b \<or> b \<in> under a\<close>
   by (meson BNF_Least_Fixpoint.underS_Field REFL Refl_under_in in_mono under_ofilter ofilter_linord)
 
 lemma finite_underS_bound:
-  assumes \<open>finite X\<close> \<open>X \<subseteq> underS n\<close> \<open>X \<noteq> {}\<close>
+  assumes \<open>finite X\<close> \<open>X \<subseteq> underS a\<close> \<open>X \<noteq> {}\<close>
   shows \<open>\<exists>a \<in> X. \<forall>b \<in> X. b \<in> under a\<close>
   using assms
 proof (induct X rule: finite_induct)
@@ -114,18 +79,18 @@ proof (induct X rule: finite_induct)
 qed simp
 
 lemma finite_bound_under:
-  assumes \<open>finite p\<close> \<open>p \<subseteq> (\<Union>n \<in> Field r. f n)\<close>
-  shows \<open>\<exists>m. p \<subseteq> (\<Union>n \<in> under m. f n)\<close>
+  assumes \<open>finite p\<close> \<open>p \<subseteq> (\<Union>a \<in> Field r. f a)\<close>
+  shows \<open>\<exists>b. p \<subseteq> (\<Union>a \<in> under b. f a)\<close>
   using assms
 proof (induct rule: finite_induct)
   case (insert x p)
-  then obtain m where \<open>p \<subseteq> (\<Union>n \<in> under m. f n)\<close>
+  then obtain b where \<open>p \<subseteq> (\<Union>a \<in> under b. f a)\<close>
     by fast
-  moreover obtain m' where \<open>x \<in> f m'\<close> \<open>m' \<in> Field r\<close>
+  moreover obtain b' where \<open>x \<in> f b'\<close> \<open>b' \<in> Field r\<close>
     using insert(4) by blast
-  then have \<open>x \<in> (\<Union>n \<in> under m'. f n)\<close>
+  then have \<open>x \<in> (\<Union>a \<in> under b'. f a)\<close>
     using REFL Refl_under_in by fast
-  ultimately have \<open>{x} \<union> p \<subseteq> (\<Union>n \<in> under m. f n) \<union> (\<Union>n \<in> under m'. f n)\<close>
+  ultimately have \<open>{x} \<union> p \<subseteq> (\<Union>a \<in> under b. f a) \<union> (\<Union>a \<in> under b'. f a)\<close>
     by fast
   then show ?case
     by (metis SUP_union Un_commute insert_is_Un sup.absorb_iff2 ofilter_linord under_ofilter)
@@ -135,14 +100,14 @@ lemma underS_trans: \<open>a \<in> underS b \<Longrightarrow> b \<in> underS c \
   by (meson ANTISYM TRANS underS_underS_trans)
 
 definition is_chain :: \<open>('a \<Rightarrow> 'a set) \<Rightarrow> bool\<close> where
-  \<open>is_chain f \<equiv> \<forall>n \<in> Field r. \<forall>m \<in> Field r. m \<in> under n \<longrightarrow> f m \<subseteq> f n\<close>
+  \<open>is_chain f \<equiv> \<forall>a \<in> Field r. \<forall>b \<in> Field r. b \<in> under a \<longrightarrow> f b \<subseteq> f a\<close>
 
-lemma is_chainD: \<open>is_chain f \<Longrightarrow>  m \<in> under n \<Longrightarrow> x \<in> f m \<Longrightarrow> x \<in> f n\<close>
+lemma is_chainD: \<open>is_chain f \<Longrightarrow> b \<in> under a \<Longrightarrow> x \<in> f b \<Longrightarrow> x \<in> f a\<close>
   unfolding is_chain_def by (metis equals0D subsetD under_Field under_empty)
 
 lemma chain_index:
   assumes ch: \<open>is_chain f\<close> and fin: \<open>finite F\<close> and ne: \<open>Field r \<noteq> {}\<close>
-  shows \<open>F \<subseteq> (\<Union>n \<in> Field r. f n) \<Longrightarrow> \<exists>n \<in> Field r. F \<subseteq> f n\<close>
+  shows \<open>F \<subseteq> (\<Union>a \<in> Field r. f a) \<Longrightarrow> \<exists>a \<in> Field r. F \<subseteq> f a\<close>
   using fin
 proof (induct rule: finite_induct)
   case empty
@@ -150,16 +115,16 @@ proof (induct rule: finite_induct)
     using ne by blast
 next
   case (insert x F)
-  then have \<open>\<exists>n \<in> Field r. F \<subseteq> f n\<close> \<open>\<exists>m \<in> Field r. x \<in> f m\<close> \<open>F \<subseteq> (\<Union>x \<in> Field r. f x)\<close>
+  then have \<open>\<exists>a \<in> Field r. F \<subseteq> f a\<close> \<open>\<exists>b \<in> Field r. x \<in> f b\<close> \<open>F \<subseteq> (\<Union>x \<in> Field r. f x)\<close>
     using ch by simp_all
-  then obtain n and m where f: \<open>F \<subseteq> f n\<close> \<open>x \<in> f m\<close> and nm: \<open>n \<in> Field r\<close> \<open>m \<in> Field r\<close>
+  then obtain a and b where f: \<open>F \<subseteq> f a\<close> \<open>x \<in> f b\<close> and nm: \<open>a \<in> Field r\<close> \<open>b \<in> Field r\<close>
     by blast
-  have \<open>m \<in> under (max2 n m)\<close> \<open>n \<in> under (max2 n m)\<close>
+  have \<open>b \<in> under (max2 a b)\<close> \<open>a \<in> under (max2 a b)\<close>
     using nm  by (meson REFL Refl_under_in TRANS max2_greater_among subset_iff under_incl_iff)+
-  have \<open>x \<in> f (max2 n m)\<close>
-    using is_chainD ch \<open>m \<in> under (max2 n m)\<close> f(2) by blast
-  moreover have \<open>F \<subseteq> f (max2 n m)\<close>
-    using is_chainD ch \<open>n \<in> local.under (max2 n m)\<close> f(1) by blast
+  have \<open>x \<in> f (max2 a b)\<close>
+    using is_chainD ch \<open>b \<in> under (max2 a b)\<close> f(2) by blast
+  moreover have \<open>F \<subseteq> f (max2 a b)\<close>
+    using is_chainD ch \<open>a \<in> local.under (max2 a b)\<close> f(1) by blast
   ultimately show ?case
     using nm unfolding max2_def by auto
 qed
@@ -199,8 +164,8 @@ lemma finite_char_subset: \<open>subset_closed C \<Longrightarrow> C \<subseteq>
   unfolding mk_finite_char_def subset_closed_def by blast
 
 lemma (in wo_rel) chain_union_closed:
-  assumes \<open>finite_char C\<close> \<open>is_chain f\<close> \<open>\<forall>n \<in> Field r. f n \<in> C\<close> \<open>Field r \<noteq> {}\<close>
-  shows \<open>(\<Union>n \<in> Field r. f n) \<in> C\<close>
+  assumes \<open>finite_char C\<close> \<open>is_chain f\<close> \<open>\<forall>a \<in> Field r. f a \<in> C\<close> \<open>Field r \<noteq> {}\<close>
+  shows \<open>(\<Union>a \<in> Field r. f a) \<in> C\<close>
   using assms chain_index unfolding finite_char_def by metis
 
 definition maximal :: \<open>'a set set \<Rightarrow> 'a set \<Rightarrow> bool\<close> where
@@ -255,6 +220,14 @@ lemma infinite_params: \<open>infinite (- params B) \<Longrightarrow> infinite (
 
 lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |- params S| \<Longrightarrow> |A| \<le>o |- params (set ps \<union> S)|\<close>
   using infinite_left by (metis List.finite_set UN_Un finite_UN_I finite_params_fm)
+
+definition enough_new :: \<open>'fm set \<Rightarrow> bool\<close> where
+  \<open>enough_new S \<equiv> |UNIV :: 'fm set| \<le>o |- params S|\<close>
+
+lemma enough_new_countable:
+  assumes \<open>\<exists>to_nat :: 'fm \<Rightarrow> nat. inj to_nat\<close> \<open>infinite X\<close>
+  shows \<open>|UNIV :: 'fm set| \<le>o |X :: 'fm set|\<close>
+  using assms by (meson card_of_ordLeq infinite_iff_card_of_nat ordLeq_transitive subset_UNIV)
 
 end
 
@@ -358,54 +331,43 @@ fun (in Params) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<
 lemma (in Params) witness_kinds: \<open>Wits W \<in> set Ks \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> witness_kinds Ks p S\<close>
   by (induct Ks p S rule: witness_kinds.induct) (auto simp add: Let_def)
 
-locale Maximal_Consistency = Consistency_Kinds map_fm params_fm Ks
+locale Maximal_Consistency = wo_rel \<open>|UNIV| :: 'fm rel\<close> + Consistency_Kinds map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> +
-  fixes r :: \<open>'fm rel\<close>
-  assumes Cinfinite_r: \<open>Cinfinite r\<close>
+  assumes inf_univ: \<open>infinite (UNIV :: 'fm set)\<close>
 begin
 
-lemma inf_univ: \<open>infinite (UNIV :: 'fm set)\<close>
-  using Cinfinite_r card_of_UNIV card_of_ordLeq_infinite unfolding cinfinite_def by blast
+lemma Cinfinite_r: \<open>Cinfinite |UNIV :: 'fm set|\<close>
+  by (simp add: cinfinite_def inf_univ)
 
-lemma wo_rel_r: \<open>wo_rel r\<close>
-  by (simp add: Card_order_wo_rel Cinfinite_r)
-
-lemma isLimOrd_r: \<open>isLimOrd r\<close>
+lemma isLimOrd: isLimOrd
   using Cinfinite_r card_order_infinite_isLimOrd cinfinite_def by blast
 
-lemma WELL: \<open>Well_order r\<close>
-  by (simp add: Cinfinite_r)
+lemma aboveS_ne: \<open>aboveS a \<noteq> {}\<close>
+  by (simp add: isLimOrd isLimOrd_aboveS)
 
-lemma nonempty_Field_r: \<open>Field r \<noteq> {}\<close>
-  using Cinfinite_r unfolding cinfinite_def by auto 
-
-lemma aboveS_ne: \<open>n \<in> Field r \<Longrightarrow> aboveS r n \<noteq> {}\<close>
-  by (simp add: isLimOrd_r wo_rel.isLimOrd_aboveS wo_rel_r)
-
-lemma params_left: \<open>r \<le>o |- params S| \<Longrightarrow> r \<le>o |- params (set ps \<union> S)|\<close>
-  using infinite_params_left Cinfinite_r by (metis Card_order_iff_ordLeq_card_of
-      Field_card_of card_of_Card_order cinfinite_def cinfinite_mono ordLeq_transitive)
+lemma params_left: \<open>enough_new S \<Longrightarrow> enough_new (set ps \<union> S)\<close>
+  unfolding enough_new_def using infinite_params_left inf_univ by blast
 
 definition witness :: \<open>'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>witness \<equiv> witness_kinds Ks\<close>
 
 definition extendS :: \<open>'fm set set \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
-  \<open>extendS C n prev \<equiv> if {n} \<union> prev \<in> C then witness n prev \<union> {n} \<union> prev else prev\<close>
+  \<open>extendS C a prev \<equiv> if {a} \<union> prev \<in> C then witness a prev \<union> {a} \<union> prev else prev\<close>
 
 definition extendL :: \<open>'fm set set \<Rightarrow> ('fm \<Rightarrow> 'fm set) \<Rightarrow> 'fm \<Rightarrow> 'fm set\<close> where
-  \<open>extendL C rec n \<equiv> \<Union>m \<in> underS r n. rec m\<close>
+  \<open>extendL C rec a \<equiv> \<Union>b \<in> underS a. rec b\<close>
 
 definition extend :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm \<Rightarrow> 'fm set\<close> where
-  \<open>extend C S n \<equiv> worecZSL r S (extendS C) (extendL C) n\<close>
+  \<open>extend C S a \<equiv> worecZSL S (extendS C) (extendL C) a\<close>
 
-lemma adm_woL_extendL: \<open>adm_woL r (extendL C)\<close>
-  unfolding extendL_def wo_rel.adm_woL_def[OF wo_rel_r] by blast
+lemma adm_woL_extendL: \<open>adm_woL (extendL C)\<close>
+  unfolding extendL_def adm_woL_def by blast
 
 definition Extend :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
-  \<open>Extend C S \<equiv> \<Union>n \<in> Field r. extend C S n\<close>
+  \<open>Extend C S \<equiv> \<Union>a. extend C S a\<close>
 
 lemma finite_witness_kinds: \<open>finite (witness_kinds Qs p S)\<close>
   unfolding witness_def by (induct Qs p S rule: witness_kinds.induct) (simp_all add: Let_def)
@@ -419,147 +381,129 @@ lemma finite_witness_kinds_params: \<open>finite (params (witness_kinds Qs p S))
 lemma finite_witness_params: \<open>finite (params (witness p S))\<close>
   using finite_witness by simp
 
-lemma extend_zero [simp]: \<open>extend C S (zero r) = S\<close>
-  unfolding extend_def wo_rel.worecZSL_zero[OF wo_rel_r adm_woL_extendL] ..
+lemma extend_zero [simp]: \<open>extend C S zero = S\<close>
+  unfolding extend_def worecZSL_zero[OF adm_woL_extendL] ..
 
-lemma extend_succ [simp]:
-  assumes \<open>n \<in> Field r\<close>
-  shows \<open>extend C S (succ r n) =
-  (if {n} \<union> extend C S n \<in> C then witness n (extend C S n) \<union> {n} \<union> extend C S n else extend C S n)\<close>
-  unfolding extend_def extendS_def wo_rel.worecZSL_succ[OF wo_rel_r adm_woL_extendL aboveS_ne[OF assms]] ..
+lemma extend_succ [simp]: \<open>extend C S (succ a) =
+    (if {a} \<union> extend C S a \<in> C then witness a (extend C S a) \<union> {a} \<union> extend C S a else extend C S a)\<close>
+  unfolding extend_def extendS_def worecZSL_succ[OF adm_woL_extendL aboveS_ne] ..
 
 lemma extend_isLim [simp]:
-  assumes \<open>isLim r n\<close> \<open>n \<noteq> zero r\<close>
-  shows \<open>extend C S n = (\<Union>m \<in> underS r n. extend C S m)\<close>
-  unfolding extend_def extendL_def wo_rel.worecZSL_isLim[OF wo_rel_r adm_woL_extendL assms] ..
+  assumes \<open>isLim a\<close> \<open>a \<noteq> zero\<close>
+  shows \<open>extend C S a = (\<Union>b \<in> underS a. extend C S b)\<close>
+  unfolding extend_def extendL_def worecZSL_isLim[OF adm_woL_extendL assms] ..
 
-lemma extend_subset: \<open>n \<in> Field r \<Longrightarrow> S \<subseteq> extend C S n\<close>
-proof (induct n rule: wo_rel.well_order_inductZSL[OF wo_rel_r])
-  case 1
+lemma extend_subset: \<open>S \<subseteq> extend C S a\<close>
+proof (induct a rule: well_order_inductZSL)
+  case (Lim i)
   then show ?case
-    by simp
-next
-  case (2 i)
-  moreover from this have \<open>i \<in> Field r\<close>
-    using wo_rel.succ_in[OF wo_rel_r] by (auto intro: FieldI1)
-  ultimately show ?case
-    by auto
-next
-  case (3 i)
-  then show ?case
-    using wo_rel.zero_smallest[OF wo_rel_r] by (metis UN_upper extend_isLim extend_zero underS_I)
-qed
+    using zero_smallest by (metis Field_card_of SUP_upper2 UNIV_I extend_isLim underS_I)
+qed auto
 
 lemma Extend_subset: \<open>S \<subseteq> Extend C S\<close>
-  unfolding Extend_def using extend_subset nonempty_Field_r by fast
+  unfolding Extend_def using extend_subset by fast
 
-lemma extend_underS: \<open>m \<in> underS r n \<Longrightarrow> extend C S m \<subseteq> extend C S n\<close>
-proof (induct n rule: wo_rel.well_order_inductZSL[OF wo_rel_r])
-  case 1
+lemma extend_underS: \<open>b \<in> underS a \<Longrightarrow> extend C S b \<subseteq> extend C S a\<close>
+proof (induct a rule: well_order_inductZSL)
+  case Zero
   then show ?case
-    using wo_rel.underS_zero[OF wo_rel_r] by blast
+    using underS_zero by blast
 next
-  case (2 i)
-  moreover from 2 have \<open>i \<in> Field r\<close>
-    using wo_rel.succ_in[OF wo_rel_r] by (auto intro: FieldI1)
-  moreover from 2 have \<open>m = i \<or> m \<in> underS r i\<close>
-    using wo_rel.less_succ[OF wo_rel_r] by (metis underS_E underS_I)
+  case (Suc i)
+  moreover from this have \<open>b = i \<or> b \<in> underS i\<close>
+    using less_succ by (metis underS_E underS_I)
   ultimately show ?case
     by auto
 next
-  case (3 i)
+  case (Lim i)
   then show ?case
     by auto
 qed
 
-lemma extend_under: \<open>m \<in> under r n \<Longrightarrow> extend C S m \<subseteq> extend C S n\<close>
-  using extend_underS wo_rel.supr_greater[OF wo_rel_r] wo_rel.supr_under[OF wo_rel_r]
+lemma extend_under: \<open>b \<in> under a \<Longrightarrow> extend C S b \<subseteq> extend C S a\<close>
+  using extend_underS supr_greater supr_under
   by (metis emptyE in_Above_under set_eq_subset underS_I under_empty)
 
 lemma params_origin:
-  assumes \<open>a \<in> params (extend C S n)\<close>
-  shows \<open>a \<in> params S \<or> (\<exists>m \<in> underS r n. a \<in> params (witness m (extend C S m) \<union> {m}))\<close>
+  assumes \<open>x \<in> params (extend C S a)\<close>
+  shows \<open>x \<in> params S \<or> (\<exists>b \<in> underS a. x \<in> params (witness b (extend C S b) \<union> {b}))\<close>
   using assms
-proof (induct n rule: wo_rel.well_order_inductZSL[OF wo_rel_r])
-  case 1
+proof (induct a rule: well_order_inductZSL)
+  case Zero
   then show ?case
     by simp
 next
-  case (2 i)
-  then have i: \<open>i \<in> Field r\<close>
-    by (meson FieldI1 wo_rel.succ_in_diff wo_rel_r)
+  case (Suc i)
   then consider
-    (here) \<open>a \<in> params ({i} \<union> witness i (extend C S i))\<close> |
-    (there) \<open>a \<in> params (extend C S i)\<close>
-    using 2(3)
-    by (fastforce split: if_splits)
+    (here) \<open>x \<in> params ({i} \<union> witness i (extend C S i))\<close> |
+    (there) \<open>x \<in> params (extend C S i)\<close>
+    using Suc(3) by (fastforce split: if_splits)
   then show ?case
   proof cases
     case here
     then show ?thesis
-      using 2(1) i wo_rel.succ_diff[OF wo_rel_r] wo_rel.succ_in[OF wo_rel_r]
-      by (metis sup_commute underS_I )
+      using Suc(1) succ_diff succ_in by (metis sup_commute underS_I )
   next
     case there
     then show ?thesis
-      using 2 by (metis in_mono underS_subset_under wo_rel.underS_succ[OF wo_rel_r])
+      using Suc by (metis in_mono underS_subset_under underS_succ)
   next
   qed
 next
-  case (3 i)
-  then obtain j where \<open>j \<in> underS r i\<close> \<open>a \<in> params (extend C S j)\<close>
-    unfolding extend_def extendL_def wo_rel.worecZSL_isLim[OF wo_rel_r adm_woL_extendL 3(1-2)]
+  case (Lim i)
+  then obtain j where \<open>j \<in> underS i\<close> \<open>x \<in> params (extend C S j)\<close>
+    unfolding extend_def extendL_def worecZSL_isLim[OF adm_woL_extendL Lim(1-2)]
     by blast
   then show ?case
-    using 3 wo_rel.underS_trans[OF wo_rel_r, of _ j i] by meson
+    using Lim underS_trans[of _ j i] by meson
 qed
 
-lemma is_chain_extend: \<open>wo_rel.is_chain r (extend C S)\<close>
-  by (simp add: extend_under wo_rel.is_chain_def wo_rel_r)
+lemma is_chain_extend: \<open>is_chain (extend C S)\<close>
+  by (simp add: extend_under is_chain_def)
 
 lemma extend_in_C_step:
-  assumes \<open>prop\<^sub>A Ks C\<close> \<open>{n} \<union> extend C S n \<in> C\<close>
-    and inf: \<open>infinite (UNIV - params ({n} \<union> extend C S n))\<close> and n: \<open>n \<in> Field r\<close> 
-  shows \<open>extend C S (succ r n) \<in> C\<close>
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>{a} \<union> extend C S a \<in> C\<close>
+    and inf: \<open>infinite (UNIV - params ({a} \<union> extend C S a))\<close>
+  shows \<open>extend C S (succ a) \<in> C\<close>
 proof -
-  have \<open>set Qs \<subseteq> set Ks \<Longrightarrow> witness_kinds Qs n (extend C S n) \<union> {n} \<union> extend C S n \<in> C\<close> for Qs
+  have \<open>set Qs \<subseteq> set Ks \<Longrightarrow> witness_kinds Qs a (extend C S a) \<union> {a} \<union> extend C S a \<in> C\<close> for Qs
   proof (induct Qs)
     case Nil
     then show ?case
       using assms(2) by simp
   next
     case (Cons Q Qs)
-    let ?S = \<open>extend C S n\<close>
-    let ?rest = \<open>witness_kinds Qs n ?S\<close>
+    let ?S = \<open>extend C S a\<close>
+    let ?rest = \<open>witness_kinds Qs a ?S\<close>
 
     have Q: \<open>Q \<in> set Ks\<close>
       using Cons.prems by simp
 
-    have *: \<open>?rest \<union> {n} \<union> ?S \<in> C\<close>
+    have *: \<open>?rest \<union> {a} \<union> ?S \<in> C\<close>
       using Cons by simp
 
     show ?case
     proof (cases Q)
       case (Wits W)
 
-      have \<open>infinite (UNIV - params (?rest \<union> {n} \<union> ?S))\<close>
+      have \<open>infinite (UNIV - params (?rest \<union> {a} \<union> ?S))\<close>
         using finite_witness_kinds_params inf by (metis UN_Un Un_assoc infinite_Diff_fin_Un)
-      then have \<open>\<exists>x. x \<notin> params (?rest \<union> {n} \<union> ?S)\<close>
+      then have \<open>\<exists>x. x \<notin> params (?rest \<union> {a} \<union> ?S)\<close>
         by (metis diff_shunt finite.simps subset_eq)
-      then obtain a where a:
-        \<open>(SOME x. x \<notin> params (?rest \<union> {n} \<union> ?S)) = a\<close>
-        \<open>a \<notin> params (?rest \<union> {n} \<union> ?S)\<close>
+      then obtain x where x:
+        \<open>(SOME x. x \<notin> params (?rest \<union> {a} \<union> ?S)) = x\<close>
+        \<open>x \<notin> params (?rest \<union> {a} \<union> ?S)\<close>
         by (meson someI_ex)
 
-      have \<open>n \<in> ?rest \<union> {n} \<union> ?S\<close>
+      have \<open>a \<in> ?rest \<union> {a} \<union> ?S\<close>
         by simp
-      then have \<open>\<forall>x. x \<notin> params (?rest \<union> {n} \<union> ?S) \<longrightarrow> set (W n x) \<union> ?rest \<union> {n} \<union> ?S \<in> C\<close>
+      then have \<open>\<forall>x. x \<notin> params (?rest \<union> {a} \<union> ?S) \<longrightarrow> set (W a x) \<union> ?rest \<union> {a} \<union> ?S \<in> C\<close>
         using assms(1) * Q Wits unfolding prop\<^sub>A_def Un_assoc by fast
-      then have \<open>set (W n a) \<union> ?rest \<union>  {n} \<union> ?S \<in> C\<close>
-        using a by fast
+      then have \<open>set (W a x) \<union> ?rest \<union> {a} \<union> ?S \<in> C\<close>
+        using x by fast
 
-      moreover have \<open>witness_kinds (Q # Qs) n ?S = set (W n a) \<union> ?rest\<close>
-        using Cons Wits a by (simp add: Let_def)
+      moreover have \<open>witness_kinds (Q # Qs) a ?S = set (W a x) \<union> ?rest\<close>
+        using Cons Wits x by (simp add: Let_def)
       ultimately show ?thesis
         by simp
     next
@@ -568,58 +512,56 @@ proof -
         using * by simp
     qed
   qed
-  then have \<open>witness n (extend C S n) \<union> {n} \<union> extend C S n \<in> C\<close>
+  then have \<open>witness a (extend C S a) \<union> {a} \<union> extend C S a \<in> C\<close>
     unfolding witness_def by blast
   then show ?thesis
-    unfolding extend_succ[OF n] using assms(2) by simp
+    unfolding extend_succ using assms(2) by simp
 qed
 
 lemma extend_in_C_stop:
-  assumes \<open>extend C S n \<in> C\<close>
-    and \<open>{n} \<union> extend C S n \<notin> C\<close>
-    and \<open>n \<in> Field r\<close>
-  shows \<open>extend C S (succ r n) \<in> C\<close>
+  assumes \<open>extend C S a \<in> C\<close>
+    and \<open>{a} \<union> extend C S a \<notin> C\<close>
+  shows \<open>extend C S (succ a) \<in> C\<close>
   using assms extend_succ by auto
 
 lemma extend_in_C:
-  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close> \<open>n \<in> Field r\<close>
-  shows \<open>extend C S n \<in> C\<close>
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
+  shows \<open>extend C S a \<in> C\<close>
   using assms
-proof (induct n rule: wo_rel.well_order_inductZSL[OF wo_rel_r])
-  case 1
+proof (induct a rule: well_order_inductZSL)
+  case Zero
   then show ?case
-    by (simp add: adm_woL_extendL extend_def wo_rel.worecZSL_zero wo_rel_r)
+    by (simp add: adm_woL_extendL extend_def worecZSL_zero)
 next
-  case (2 i)
-  then have \<open>i \<in> Field r\<close>
-    by (meson WELL well_order_on_domain wo_rel.succ_in_diff[OF wo_rel_r])
-  then have *: \<open>|underS r i| <o r\<close>
+  case (Suc i)
+  then have *: \<open>|underS i| <o |UNIV :: 'fm set|\<close>
     using card_of_underS by (simp add: Cinfinite_r)
 
   let ?params = \<open>\<lambda>k. params ({k} \<union> witness k (extend C S k))\<close>
-  let ?X = \<open>\<Union>k \<in> underS r i. ?params k\<close>
-  have \<open>|?X| <o r\<close>
-  proof (cases \<open>finite (underS r i)\<close>)
+  let ?X = \<open>\<Union>k \<in> underS i. ?params k\<close>
+  have \<open>|?X| <o |UNIV :: 'fm set|\<close>
+  proof (cases \<open>finite (underS i)\<close>)
     case True
     then have \<open>finite ?X\<close>
       using finite_witness_params by simp
     then show ?thesis
-      using Cinfinite_r assms(2) unfolding cinfinite_def by (simp add: finite_ordLess_infinite)
+      using Cinfinite_r unfolding cinfinite_def by (simp add: finite_ordLess_infinite)
   next
     case False
     moreover have \<open>\<forall>k. finite (?params k)\<close>
       using finite_witness_params by simp
-    then have \<open>\<forall>k. |?params k| <o |underS r i|\<close>
+    then have \<open>\<forall>k. |?params k| <o |underS i|\<close>
       using False by simp
-    ultimately have \<open>|?X| \<le>o |underS r i|\<close>
+    ultimately have \<open>|?X| \<le>o |underS i|\<close>
       using card_of_infinite_smaller_Union by fast
     then show ?thesis
       using * ordLeq_ordLess_trans by blast
   qed
   then have \<open>|?X| <o |- params S|\<close>
-    using assms(4) ordLess_ordLeq_trans by blast
+    using Suc(6) ordLess_ordLeq_trans unfolding enough_new_def by blast
   moreover have \<open>infinite (- params S)\<close>
-    using assms(4) Cinfinite_r unfolding cinfinite_def by (metis Field_card_of ordLeq_finite_Field)
+    using Suc(6) Cinfinite_r unfolding cinfinite_def enough_new_def
+    by (metis Field_card_of ordLeq_finite_Field)
   ultimately have \<open>|- params S - ?X| =o |- params S|\<close>
     using card_of_Un_diff_infinite by blast
   moreover from this have \<open>infinite (- params S - ?X)\<close>
@@ -633,155 +575,107 @@ next
   then have \<open>infinite (- params ({i} \<union> extend C S i))\<close>
     using finite_params_fm by (simp add: Compl_eq_Diff_UNIV infinite_Diff_fin_Un)
   then show ?case
-    using assms 2(2) extend_in_C_step extend_in_C_stop wo_rel.succ_in[OF wo_rel_r, of i]
-      \<open>i \<in> Field r\<close>  by (metis Compl_eq_Diff_UNIV)
+    using Suc extend_in_C_step extend_in_C_stop succ_in[of i] by (metis Compl_eq_Diff_UNIV)
 next
-  case (3 i)
+  case (Lim i)
   show ?case
   proof (rule ccontr)
     assume \<open>extend C S i \<notin> C\<close>
-    then obtain S' where S': \<open>S' \<subseteq> (\<Union>n \<in> underS r i. extend C S n)\<close> \<open>S' \<notin> C\<close> \<open>finite S'\<close>
-      using 3(5) unfolding finite_char_def extend_def extendL_def
-        wo_rel.worecZSL_isLim[OF wo_rel_r adm_woL_extendL 3(1-2)]
+    then obtain S' where S': \<open>S' \<subseteq> (\<Union>a \<in> underS i. extend C S a)\<close> \<open>S' \<notin> C\<close> \<open>finite S'\<close>
+      using Lim(5) unfolding finite_char_def extend_def extendL_def worecZSL_isLim[OF adm_woL_extendL Lim(1-2)]
       by blast
-    then obtain ns where ns: \<open>S' \<subseteq> (\<Union>n \<in> ns. extend C S n)\<close> \<open>ns \<subseteq> underS r i\<close> \<open>finite ns\<close>
+    then obtain as where as: \<open>S' \<subseteq> (\<Union>a \<in> as. extend C S a)\<close> \<open>as \<subseteq> underS i\<close> \<open>finite as\<close>
       by (metis finite_subset_Union finite_subset_image)
-    moreover from this(1) have \<open>ns \<noteq> {}\<close>
-      using S' 3 unfolding finite_char_def
+    moreover from this(1) have \<open>as \<noteq> {}\<close>
+      using S' Lim unfolding finite_char_def
       by (metis Union_empty bot.extremum_uniqueI empty_subsetI image_empty)
-    ultimately obtain j where \<open>\<forall>n \<in> ns. n \<in> under r j\<close> \<open>j \<in> underS r i\<close>
-      using wo_rel.finite_underS_bound wo_rel_r by (metis in_mono)
-    then have \<open>\<forall>n \<in> ns. extend C S n \<subseteq> extend C S j\<close>
+    ultimately obtain j where \<open>\<forall>a \<in> as. a \<in> under j\<close> \<open>j \<in> underS i\<close>
+      using finite_underS_bound by (metis in_mono)
+    then have \<open>\<forall>a \<in> as. extend C S a \<subseteq> extend C S j\<close>
       using extend_under by fast
     then have \<open>S' \<subseteq> extend C S j\<close>
-      using S' ns(1) by blast
+      using S' as(1) by blast
     then show False
-      using 3(3-) S'(2) ns(2-3) \<open>\<forall>n\<in>ns. n \<in> under r j\<close> \<open>ns \<noteq> {}\<close> \<open>j \<in> underS r i\<close> wo_rel_r
+      using Lim(3-) S'(2) as(2-3) \<open>\<forall>a\<in>as. a \<in> under j\<close> \<open>as \<noteq> {}\<close> \<open>j \<in> underS i\<close>
       by (meson Order_Relation.underS_Field finite_char_closed subsetD subset_closed_def)
   qed
 qed
 
 lemma Extend_in_C:
-  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
   shows \<open>Extend C S \<in> C\<close>
-  unfolding Extend_def
-  using assms wo_rel.chain_union_closed[OF wo_rel_r] is_chain_extend extend_in_C nonempty_Field_r
-  by blast
+  unfolding Extend_def using assms chain_union_closed is_chain_extend extend_in_C by simp
 
-definition rmaximal :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
-  \<open>rmaximal C S \<equiv> \<forall>S' \<in> C. S' \<subseteq> Field r \<longrightarrow> S \<subseteq> S' \<longrightarrow> S = S'\<close>
-
-theorem Extend_rmaximal:
+theorem Extend_maximal:
   assumes \<open>subset_closed C\<close>
-  shows \<open>rmaximal C (Extend C S)\<close>
-  unfolding rmaximal_def Extend_def
+  shows \<open>maximal C (Extend C S)\<close>
+  unfolding maximal_def Extend_def
 proof (intro ballI impI)
   fix S'
-  assume *: \<open>S' \<subseteq> Field r\<close> \<open>S' \<in> C\<close> \<open>(\<Union>x \<in> Field r. extend C S x) \<subseteq> S'\<close>
-  moreover have \<open>S' \<subseteq> (\<Union>x \<in> Field r. extend C S x)\<close>
+  assume *: \<open>S' \<in> C\<close> \<open>(\<Union>x. extend C S x) \<subseteq> S'\<close>
+  moreover have \<open>S' \<subseteq> (\<Union>x. extend C S x)\<close>
   proof (rule ccontr)
-    assume \<open>\<not> S' \<subseteq> (\<Union>x \<in> Field r. extend C S x)\<close>
-    then have \<open>\<exists>z. z \<in> S' \<and> z \<notin> (\<Union>x \<in> Field r. extend C S x)\<close>
+    assume \<open>\<not> S' \<subseteq> (\<Union>x. extend C S x)\<close>
+    then have \<open>\<exists>z. z \<in> S' \<and> z \<notin> (\<Union>x. extend C S x)\<close>
       by blast
-    then obtain n where n: \<open>n \<in> S'\<close> \<open>n \<notin> (\<Union>x \<in> Field r. extend C S x)\<close> \<open>n \<in> Field r\<close>
+    then obtain a where a: \<open>a \<in> S'\<close> \<open>a \<notin> (\<Union>x. extend C S x)\<close>
       using *(1) by blast
-    then have \<open>{n} \<union> extend C S n \<subseteq> S'\<close>
+    then have \<open>{a} \<union> extend C S a \<subseteq> S'\<close>
       using * by blast
     moreover have \<open>\<forall>S \<subseteq> S'. S \<in> C\<close>
       using assms \<open>S' \<in> C\<close> unfolding subset_closed_def by blast
-    ultimately have \<open>{n} \<union> extend C S n \<in> C\<close>
+    ultimately have \<open>{a} \<union> extend C S a \<in> C\<close>
       by blast
-    then have \<open>n \<in> extend C S (succ r n)\<close>
-      using n by simp
+    then have \<open>a \<in> extend C S (succ a)\<close>
+      using a by simp
     then show False
-      using * n(2-3) by (meson UN_I aboveS_ne wo_rel.succ_in_Field wo_rel_r)
+      using * a by blast
   qed
-  ultimately show \<open>(\<Union>x \<in> Field r. extend C S x) = S'\<close>
+  ultimately show \<open>(\<Union>x. extend C S x) = S'\<close>
     by simp
 qed
 
-definition rwitnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
-  \<open>rwitnessed S \<equiv> \<forall>p \<in> S. p \<in> Field r \<longrightarrow> (\<exists>S'. witness p S' \<subseteq> S)\<close>
+definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
+  \<open>witnessed S \<equiv> \<forall>p \<in> S. \<exists>S'. witness p S' \<subseteq> S\<close>
 
-theorem Extend_rwitnessed:
-  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
-  shows \<open>rwitnessed (Extend C S)\<close>
-  unfolding rwitnessed_def
+theorem Extend_witnessed:
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
+  shows \<open>witnessed (Extend C S)\<close>
+  unfolding witnessed_def
 proof safe
   fix p
-  assume \<open>p \<in> Field r\<close> \<open>p \<in> Extend C S\<close>
+  assume \<open>p \<in> Extend C S\<close>
   then have \<open>{p} \<union> extend C S p \<subseteq> Extend C S\<close>
     unfolding Extend_def by blast
   moreover have \<open>Extend C S \<in> C\<close>
     using Extend_in_C assms by blast
   ultimately have \<open>{p} \<union> extend C S p \<in> C\<close>
     using \<open>finite_char C\<close> finite_char_closed unfolding subset_closed_def by blast
-  moreover have \<open>succ r p \<in> Field r\<close>
-    using \<open>p \<in> Field r\<close> by (simp add: aboveS_ne wo_rel.succ_in_Field wo_rel_r)
-  then have \<open>extend C S (succ r p) \<in> C\<close>
+  moreover have \<open>extend C S (succ p) \<in> C\<close>
     using assms extend_in_C by blast
   ultimately have \<open>witness p (extend C S p) \<union> {p} \<union> extend C S p \<in> C\<close>
-    unfolding extend_succ[OF \<open>p \<in> Field r\<close>] by simp
+    unfolding extend_succ by simp
+  then have \<open>witness p (extend C S p) \<union> {p} \<union> extend C S p \<subseteq> Extend C S\<close>
+    unfolding Extend_def using extend_succ \<open>{p} \<union> extend C S p \<in> C\<close> by fastforce
   then show \<open>\<exists>S'. witness p S' \<subseteq> Extend C S\<close>
-    unfolding Extend_def using \<open>p \<in> Field r\<close> \<open>succ r p \<in> Field r\<close> \<open>{p} \<union> extend C S p \<in> C\<close>
-    by fastforce
+    by blast
 qed
 
 abbreviation mk_mcs :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>mk_mcs C S \<equiv> Extend (mk_alt_fin C) S\<close>
 
-theorem mk_mcs_rmaximal: \<open>rmaximal C (mk_mcs C S)\<close>
-  using Extend_rmaximal rmaximal_def mk_alt_fin_in mk_alt_fin_subset_closed by meson
+theorem mk_mcs_rmaximal: \<open>maximal C (mk_mcs C S)\<close>
+  using Extend_maximal maximal_def mk_alt_fin_in mk_alt_fin_subset_closed by meson
 
-theorem mk_mcs_rwitnessed:
-  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>r \<le>o |- params S|\<close>
-  shows \<open>rwitnessed (mk_mcs C S)\<close>
-  using assms Extend_rwitnessed prop\<^sub>E mk_alt_fin_finite_char mk_alt_fin_in by blast
-
-end
-
-locale Maximal_Consistency_UNIV = Consistency_Kinds map_fm params_fm Ks
-  for
-    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    Ks :: \<open>('x, 'fm) kind list\<close> +
-  assumes inf_UNIV: \<open>infinite (UNIV :: 'fm set)\<close>
-
-sublocale Maximal_Consistency_UNIV \<subseteq> Maximal_Consistency map_fm params_fm Ks \<open>|UNIV :: 'fm set|\<close>
-proof
-  show \<open>Cinfinite |UNIV :: 'fm set|\<close>
-    using inf_UNIV unfolding cinfinite_def by simp
-qed
-
-context Maximal_Consistency_UNIV
-begin
-
-lemma maximal: \<open>rmaximal C S \<longleftrightarrow> maximal C S\<close>
-  unfolding maximal_def rmaximal_def by simp
-
-definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
-  \<open>witnessed S \<equiv> \<forall>p \<in> S. \<exists>S'. witness p S' \<subseteq> S\<close>
-
-lemma witnessed: \<open>rwitnessed S \<longleftrightarrow> witnessed S\<close>
-  unfolding rwitnessed_def witnessed_def by simp
-
-corollary mk_mcs_maximal: \<open>maximal C (mk_mcs C S)\<close>
-  using maximal mk_mcs_rmaximal by blast
-
-corollary mk_mcs_witnessed:
-  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+theorem mk_mcs_witnessed:
+  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
   shows \<open>witnessed (mk_mcs C S)\<close>
-  using assms mk_mcs_rwitnessed witnessed by blast
-
-end
+  using assms Extend_witnessed prop\<^sub>E mk_alt_fin_finite_char mk_alt_fin_in by blast
 
 section \<open>Hintikka Sets\<close>
 
-context Maximal_Consistency_UNIV
-begin
-
 lemma mk_mcs_hintikka:
-  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
   shows \<open>prop\<^sub>H Ks (mk_mcs C S)\<close>
   unfolding prop\<^sub>H_def
 proof
@@ -791,7 +685,7 @@ proof
   proof (cases K)
     case (Cond P H)
     moreover have \<open>maximal (mk_alt_fin C) (mk_mcs C S)\<close>
-      using Extend_rmaximal mk_alt_fin_subset_closed unfolding maximal by blast
+      using Extend_maximal mk_alt_fin_subset_closed by blast
     moreover have \<open>prop\<^sub>A Ks (mk_alt_fin C)\<close>
       using assms(1) prop\<^sub>E by blast
     then have \<open>mk_mcs C S \<in> mk_alt_fin C\<close>
@@ -813,7 +707,7 @@ qed
 
 end
 
-locale Hintikka = Maximal_Consistency_UNIV map_fm params_fm Ks
+locale Hintikka = Maximal_Consistency map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
@@ -827,11 +721,11 @@ lemma sat\<^sub>H: \<open>K \<in> set Ks \<Longrightarrow> sat\<^sub>H K H\<clos
 
 end
 
-context Maximal_Consistency_UNIV
+context Maximal_Consistency
 begin
 
 theorem mk_mcs_Hintikka:
-  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+  assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
   shows \<open>Hintikka map_fm params_fm Ks (mk_mcs C S)\<close>
   using assms mk_mcs_hintikka by unfold_locales
 
@@ -845,19 +739,18 @@ locale Derivational_Kind = Consistency_Kind map_fm params_fm K
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> sat\<^sub>E K {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+  assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> sat\<^sub>E K {A. enough_new A \<and> \<turnstile> A}\<close>
 
-locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
+locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    Ks :: \<open>('x, 'fm) kind list\<close> and
-    r :: \<open>'fm rel\<close> +
+    Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes all_consistent: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+  assumes all_consistent: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> prop\<^sub>E Ks {A. enough_new A \<and> \<turnstile> A}\<close>
 begin
 
-theorem Consistency: \<open>prop\<^sub>E Ks {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+theorem Consistency: \<open>prop\<^sub>E Ks {A. enough_new A \<and> \<turnstile> A}\<close>
   using all_consistent inf_univ unfolding prop\<^sub>E_def by fast
 
 end
@@ -872,12 +765,11 @@ locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm K
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> sat\<^sub>E K {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
 
-locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks r
+locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
-    Ks :: \<open>('x, 'fm) kind list\<close> and
-    r :: \<open>'fm rel\<close> +
+    Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> prop\<^sub>E Ks {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
 
@@ -1152,7 +1044,7 @@ locale Derivational_Alpha = Alpha map_fm params_fm classify
   assumes consistent: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set qs \<union> S\<close>
 
 sublocale Derivational_Alpha \<subseteq> Derivational_Kind map_fm params_fm kind consistent
-  using infinite_params_left consistent by unfold_locales blast+
+  using infinite_params_left consistent enough_new_def by unfold_locales blast+
 
 
 locale Weak_Derivational_Alpha = Alpha map_fm params_fm classify
@@ -1312,15 +1204,15 @@ locale Derivational_Beta = Beta map_fm params_fm classify
 sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+  then show \<open>sat\<^sub>E kind {A. enough_new A \<and> \<turnstile> A}\<close>
   proof safe
     fix S ps qs
     assume *: \<open>set ps \<subseteq> S\<close> \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> \<open>\<turnstile> S\<close>
     then have \<open>\<exists>q \<in> set qs. \<turnstile> {q} \<union> S\<close>
       using consistent by blast
-    moreover assume \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> 
-    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
-      using infinite_params_left[OF inf]
+    moreover assume \<open>enough_new S\<close> 
+    ultimately show \<open>\<exists>q\<in>set qs. insert q S \<in> {A. enough_new A \<and> \<turnstile> A}\<close>
+      using infinite_params_left[OF inf] unfolding enough_new_def
       by (metis (no_types, lifting) empty_set insert_code(1) insert_is_Un mem_Collect_eq)
   qed
 qed
@@ -1509,7 +1401,7 @@ locale Derivational_Gamma = Gamma map_tm map_fm params_fm classify
   assumes consistent: \<open>\<And>S ps F qs t. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (qs t) \<union> S\<close>
 
 sublocale Derivational_Gamma \<subseteq> Derivational_Kind map_fm params_fm kind consistent
-  using infinite_params_left consistent by unfold_locales blast+
+  using infinite_params_left consistent enough_new_def by unfold_locales blast+
 
 locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm classify
   for
@@ -1688,18 +1580,18 @@ locale Derivational_Delta = Delta map_fm params_fm \<delta>
 sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+  show \<open>sat\<^sub>E kind {A. enough_new A \<and> \<turnstile> A}\<close>
   proof safe
     fix S p
-    assume *: \<open>p \<in> S\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close> \<open>\<turnstile> S\<close>
+    assume *: \<open>p \<in> S\<close> \<open>enough_new S\<close> \<open>\<turnstile> S\<close>
     then have \<open>infinite (- (params ({p} \<union> S)))\<close>
-      using card_of_ordLeq_finite inf by auto
+      unfolding enough_new_def using card_of_ordLeq_finite inf by auto
     then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
       using infinite_imp_nonempty by blast
     then have \<open>\<exists>x. \<turnstile> set (\<delta> p x) \<union> S\<close>
       using *(1,3) consistent \<open>\<turnstile> S\<close> by fast
-    then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
-      using * inf infinite_params_left by blast
+    then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> {A. enough_new A \<and> \<turnstile> A}\<close>
+      using * inf infinite_params_left unfolding enough_new_def by blast
   qed
 qed
 
@@ -1883,14 +1775,15 @@ locale Derivational_Modal = ModalH map_fm params_fm classify
 sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
-  then show \<open>sat\<^sub>E kind {A. |UNIV :: 'fm set| \<le>o |- params A| \<and> \<turnstile> A}\<close>
+  then show \<open>sat\<^sub>E kind {A. enough_new A \<and> \<turnstile> A}\<close>
   proof safe
     fix S ps F qs
-    assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>|UNIV :: 'fm set| \<le>o |- params S|\<close>
+    assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>enough_new S\<close>
     then have \<open>|UNIV :: 'fm set| \<le>o |- params (F S)|\<close>
-      using * params_subset by (meson Compl_subset_Compl_iff card_of_mono1 ordLeq_transitive)
-    then show \<open>|UNIV :: 'fm set| \<le>o |- params (set qs \<union> F S)|\<close>
-      using infinite_params_left[OF inf] by blast
+      using * params_subset unfolding enough_new_def
+      by (meson Compl_subset_Compl_iff card_of_mono1 ordLeq_transitive)
+    then show \<open>enough_new (set qs \<union> F S)\<close>
+      using infinite_params_left[OF inf] unfolding enough_new_def by blast
   qed (use consistent in blast)
 qed
 
