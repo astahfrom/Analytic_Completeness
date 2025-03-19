@@ -365,8 +365,25 @@ lemma semantics_tm_id_map [simp]: \<open>map \<lblot>\<^bold>#, \<lambda>f. \<^b
 lemma semantics_fn_h [simp]: \<open>\<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2 P ts \<longleftrightarrow> \<^bold>\<cdot>P ts \<in> S\<close>
   by (cases P) simp_all
 
-lemma hdom\<^sub>P_range: \<open>hdom\<^sub>P S \<subseteq> range \<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2\<close>
-  by fastforce
+lemma canonical_henv\<^sub>P:
+  \<open>\<forall>t. (\<^bold>#, henv\<^sub>F, (henv\<^sub>P S)\<langle>0:\<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2 t\<rangle>, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p \<Longrightarrow>
+       (\<^bold>#, henv\<^sub>F, (henv\<^sub>P S)\<langle>0:henv\<^sub>P S n\<rangle>, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p\<close>
+  by (metis semantics_fn.simps(1))
+
+lemma canonical_hpred:
+  \<open>\<forall>t. (\<^bold>#, henv\<^sub>F, (henv\<^sub>P S)\<langle>0:\<lblot>henv\<^sub>P S, hpred S\<rblot>\<^sub>2 t\<rangle>, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p \<Longrightarrow>
+       (\<^bold>#, henv\<^sub>F, (henv\<^sub>P S)\<langle>0:hpred S P\<rangle>, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p\<close>
+  by (metis semantics_fn.simps(2))
+
+lemma canonical_henv\<^sub>F:
+  \<open>\<forall>t. (\<^bold>#, henv\<^sub>F\<langle>0:\<lblot>henv\<^sub>F, hfun\<rblot>\<^sub>2 t\<rangle>, henv\<^sub>P S, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p \<Longrightarrow>
+       (\<^bold>#, henv\<^sub>F\<langle>0:henv\<^sub>F f\<rangle>, henv\<^sub>P S, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p\<close>
+  by (metis semantics_fn.simps(1))
+
+lemma canonical_hfun:
+  \<open>\<forall>t. (\<^bold>#, henv\<^sub>F\<langle>0:\<lblot>henv\<^sub>F, hfun\<rblot>\<^sub>2 t\<rangle>, henv\<^sub>P S, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p \<Longrightarrow>
+       (\<^bold>#, henv\<^sub>F\<langle>0:hfun f\<rangle>, henv\<^sub>P S, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p\<close>
+  by (metis semantics_fn.simps(2))
 
 locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\<close>
 begin
@@ -453,18 +470,12 @@ next
       assume \<open>x = \<^bold>\<forall>\<^sub>P p\<close> \<open>\<^bold>\<forall>\<^sub>P p \<in> S\<close>
       then have \<open>\<forall>t. \<langle>t/0\<rangle>\<^sub>P p \<in> S\<close>
         using gamma2P by (fastforce intro: CAllPP)
-      moreover have \<open>\<forall>t. (\<langle>t/0\<rangle>\<^sub>P p, \<^bold>\<forall>\<^sub>P p) \<in> measure size_fm\<close>
+      moreover have *: \<open>\<forall>t. (\<langle>t/0\<rangle>\<^sub>P p, \<^bold>\<forall>\<^sub>P p) \<in> measure size_fm\<close>
         by simp
       ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>\<^sub>P p)\<close>
         using 2 \<open>x = \<^bold>\<forall>\<^sub>P p\<close> by blast
       then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> \<^bold>\<forall>\<^sub>P p\<close>
-        (* TODO: I don't know what the required lemma is here *)
-        apply auto
-        subgoal for n
-          by (metis semantics_fn.simps(1))
-        subgoal for e
-          by (metis semantics_fn.simps(2))
-      done
+        using canonical_henv\<^sub>P canonical_hpred by auto
     next
       assume \<open>x = \<^bold>\<forall>\<^sub>P p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>P p \<in> S\<close>
       then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>P p \<in> S\<close>
@@ -488,14 +499,7 @@ next
       ultimately have \<open>\<forall>t. \<lbrakk>S\<rbrakk> \<Turnstile> (\<langle>t/0\<rangle>\<^sub>F p)\<close>
         using 2 \<open>x = \<^bold>\<forall>\<^sub>F p\<close> by blast
       then show \<open>\<lbrakk>S\<rbrakk> \<Turnstile> (\<^bold>\<forall>\<^sub>F p)\<close>
-        unfolding hdom\<^sub>F_def
-          (* TODO: I don't know what the required lemma is here *)
-        apply auto
-        subgoal for f
-          by (metis semantics_fn.simps(1))
-        subgoal for e
-          by (metis semantics_fn.simps(2))
-        done
+        using canonical_henv\<^sub>F canonical_hfun unfolding hdom\<^sub>F_def by auto
     next
       assume \<open>x = \<^bold>\<forall>\<^sub>F p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>\<^sub>F p \<in> S\<close>
       then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 a/0\<rangle>\<^sub>F p \<in> S\<close>
