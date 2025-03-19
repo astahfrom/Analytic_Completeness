@@ -783,8 +783,6 @@ section \<open>Compactness\<close>
 abbreviation semantics_set :: \<open>('a, 'f, 'p) model \<Rightarrow> ('f, 'p) fm set \<Rightarrow> bool\<close> (infix \<open>\<TTurnstile>\<close> 50) where
   \<open>M \<TTurnstile> S \<equiv> \<forall>p \<in> S. M \<Turnstile> p\<close>
 
-
-(* TODO: abbreviate the family of sets? *)
 lemma compact_C: \<open>sat\<^sub>E C.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
     (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
 proof safe
