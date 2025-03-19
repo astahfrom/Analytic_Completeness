@@ -250,7 +250,7 @@ proof
 qed simp
 
 abbreviation canonical :: \<open>('f, 'p) fm set \<Rightarrow> ('f tm, 'f, 'p) model\<close> where
-  \<open>canonical S \<equiv> Model (terms S) (\<lambda>n. \<^bold>#n \<in>? terms S) (\<lambda>f ts. \<^bold>\<circle>f ts \<in>? terms S) (\<lambda>P ts. \<^bold>\<cdot>P ts \<in> S)\<close>
+  \<open>canonical H \<equiv> Model (terms H) (\<lambda>n. \<^bold>#n \<in>? terms H) (\<lambda>f ts. \<^bold>\<circle>f ts \<in>? terms H) (\<lambda>P ts. \<^bold>\<cdot>P ts \<in> H)\<close>
 
 lemma wf_canonical:
   assumes \<open>terms H \<noteq> {}\<close>
@@ -258,22 +258,22 @@ lemma wf_canonical:
   using assms guard_in by (metis (no_types, lifting) wf_model.simps)
 
 lemma canonical_tm_id [simp]:
-  \<open>t \<in> terms S \<Longrightarrow> \<lblot>(\<lambda>n. \<^bold>#n \<in>? terms S, \<lambda>P ts. \<^bold>\<circle>P ts \<in>? terms S)\<rblot> t = t\<close>
+  \<open>t \<in> terms H \<Longrightarrow> \<lblot>(\<lambda>n. \<^bold>#n \<in>? terms H, \<lambda>P ts. \<^bold>\<circle>P ts \<in>? terms H)\<rblot> t = t\<close>
 proof (induct t)
   case (Fun f ts)
-  moreover from this have \<open>t \<in> set ts \<Longrightarrow> t \<in> terms S\<close> for t
+  moreover from this have \<open>t \<in> set ts \<Longrightarrow> t \<in> terms H\<close> for t
     by (meson in_mono terms_Fun)
   ultimately show ?case
     by (simp add: list.map_ident_strong)
 qed simp
 
 lemma canonical_tm_id_map [simp]:
-  \<open>set ts \<subseteq> terms S \<Longrightarrow> map \<lblot>(\<lambda>n. \<^bold>#n \<in>? terms S, \<lambda>P ts. \<^bold>\<circle>P ts \<in>? terms S)\<rblot> ts = ts\<close>
+  \<open>set ts \<subseteq> terms H \<Longrightarrow> map \<lblot>(\<lambda>n. \<^bold>#n \<in>? terms H, \<lambda>P ts. \<^bold>\<circle>P ts \<in>? terms H)\<rblot> ts = ts\<close>
   by (induct ts) simp_all
 
-locale MyHintikka = Hintikka psub params_fm Kinds S
-  for S :: \<open>('f, 'p) fm set\<close> +
-  assumes terms_ne: \<open>terms S \<noteq> {}\<close>
+locale MyHintikka = Hintikka psub params_fm Kinds H
+  for H :: \<open>('f, 'p) fm set\<close> +
+  assumes terms_ne: \<open>terms H \<noteq> {}\<close>
 begin
 
 lemmas
@@ -283,7 +283,7 @@ lemmas
   gamma = sat\<^sub>H[of G.kind] and
   delta = sat\<^sub>H[of D.kind]
 
-theorem model: \<open>(p \<in> S \<longrightarrow> canonical S \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> S \<longrightarrow> \<not> canonical S \<Turnstile> p)\<close>
+theorem model: \<open>(p \<in> H \<longrightarrow> canonical H \<Turnstile> p) \<and> (\<^bold>\<not> p \<in> H \<longrightarrow> \<not> canonical H \<Turnstile> p)\<close>
 proof (induct p rule: wf_induct[where r=\<open>measure size_fm\<close>])
   case 1
   then show ?case
@@ -299,58 +299,58 @@ next
     case (Pre P ts)
     then show ?thesis
     proof (safe del: notI)
-      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<cdot>P ts \<in> S\<close>
-      moreover from this have \<open>set ts \<subseteq> terms S\<close>
+      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<cdot>P ts \<in> H\<close>
+      moreover from this have \<open>set ts \<subseteq> terms H\<close>
         using terms_tm_refl terms_def by fastforce
-      ultimately show \<open>canonical S \<Turnstile> \<^bold>\<cdot>P ts\<close>
+      ultimately show \<open>canonical H \<Turnstile> \<^bold>\<cdot>P ts\<close>
         by simp
     next
-      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> S\<close>
-      then have \<open>\<^bold>\<cdot>P ts \<notin> S\<close>
+      assume \<open>x = \<^bold>\<cdot>P ts\<close> \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> H\<close>
+      then have \<open>\<^bold>\<cdot>P ts \<notin> H\<close>
         using confl by force
-      moreover have \<open>set ts \<subseteq> terms S\<close>
-        using \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> S\<close> terms_def terms_tm_refl by fastforce
-      ultimately show \<open>\<not> canonical S \<Turnstile> \<^bold>\<cdot>P ts\<close>
+      moreover have \<open>set ts \<subseteq> terms H\<close>
+        using \<open>\<^bold>\<not> \<^bold>\<cdot>P ts \<in> H\<close> terms_def terms_tm_refl by fastforce
+      ultimately show \<open>\<not> canonical H \<Turnstile> \<^bold>\<cdot>P ts\<close>
         by simp
     qed
   next
     case (Imp p q)
     then show ?thesis
     proof (safe del: notI)
-      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>p \<^bold>\<longrightarrow> q \<in> S\<close>
-      then have \<open>\<^bold>\<not> p \<in> S \<or> q \<in> S\<close>
+      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>p \<^bold>\<longrightarrow> q \<in> H\<close>
+      then have \<open>\<^bold>\<not> p \<in> H \<or> q \<in> H\<close>
         using beta by force
-      then show \<open>canonical S \<Turnstile> p \<^bold>\<longrightarrow> q\<close>
+      then show \<open>canonical H \<Turnstile> p \<^bold>\<longrightarrow> q\<close>
         using 2 Imp by auto
     next
-      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>\<^bold>\<not> (p \<^bold>\<longrightarrow> q) \<in> S\<close>
-      then have \<open>p \<in> S \<and> \<^bold>\<not> q \<in> S\<close>
+      assume \<open>x = p \<^bold>\<longrightarrow> q\<close> \<open>\<^bold>\<not> (p \<^bold>\<longrightarrow> q) \<in> H\<close>
+      then have \<open>p \<in> H \<and> \<^bold>\<not> q \<in> H\<close>
         using alpha by force
-      then show \<open>\<not> canonical S \<Turnstile> p \<^bold>\<longrightarrow> q\<close>
+      then show \<open>\<not> canonical H \<Turnstile> p \<^bold>\<longrightarrow> q\<close>
         using 2 Imp by auto
     qed
   next
     case (Uni p)
     then show ?thesis
     proof (safe del: notI)
-      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<forall>p \<in> S\<close>
-      then have \<open>\<forall>t \<in> terms S. \<langle>t\<rangle>p \<in> S\<close>
+      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<forall>p \<in> H\<close>
+      then have \<open>\<forall>t \<in> terms H. \<langle>t\<rangle>p \<in> H\<close>
         using gamma by fastforce
       moreover have \<open>\<forall>t. (\<langle>t\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
         by simp
-      ultimately have \<open>\<forall>t \<in> terms S. canonical S \<Turnstile> \<langle>t\<rangle>p\<close>
+      ultimately have \<open>\<forall>t \<in> terms H. canonical H \<Turnstile> \<langle>t\<rangle>p\<close>
         using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
-      then show \<open>canonical S \<Turnstile> \<^bold>\<forall>p\<close>
+      then show \<open>canonical H \<Turnstile> \<^bold>\<forall>p\<close>
         by simp
     next
-      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>p \<in> S\<close>
-      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<star>a\<rangle>p \<in> S\<close>
+      assume \<open>x = \<^bold>\<forall>p\<close> \<open>\<^bold>\<not> \<^bold>\<forall>p \<in> H\<close>
+      then obtain a where \<open>\<^bold>\<not> \<langle>\<^bold>\<star>a\<rangle>p \<in> H\<close>
         using delta by fastforce
       moreover have \<open>(\<langle>\<^bold>\<star>a\<rangle>p, \<^bold>\<forall>p) \<in> measure size_fm\<close>
         by simp
-      ultimately have \<open>\<not> canonical S \<Turnstile> \<langle>\<^bold>\<star>a\<rangle>p\<close>
+      ultimately have \<open>\<not> canonical H \<Turnstile> \<langle>\<^bold>\<star>a\<rangle>p\<close>
         using 2 \<open>x = \<^bold>\<forall>p\<close> by blast
-      then show \<open>\<not> canonical S \<Turnstile> \<^bold>\<forall>p\<close>
+      then show \<open>\<not> canonical H \<Turnstile> \<^bold>\<forall>p\<close>
         using wf_canonical[OF terms_ne] by auto
     qed
   qed
