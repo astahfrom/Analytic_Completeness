@@ -44,7 +44,7 @@ primrec add_env :: \<open>'a \<Rightarrow> (nat \<Rightarrow> 'a) \<Rightarrow> 
   \<open>(t \<then> s) 0 = t\<close>
 | \<open>(t \<then> s) (Suc n) = s n\<close>
 
-fun semantics_fm :: \<open>('a, 'f, 'p) model \<Rightarrow> ('f, 'p) fm \<Rightarrow> bool\<close> (infix  \<open>\<Turnstile>\<close> 50) where
+fun semantics_fm :: \<open>('a, 'f, 'p) model \<Rightarrow> ('f, 'p) fm \<Rightarrow> bool\<close> (infix \<open>\<Turnstile>\<close> 50) where
   \<open>_ \<Turnstile> \<^bold>\<bottom> \<longleftrightarrow> False\<close>
 | \<open>Model _ E F G \<Turnstile> \<^bold>\<cdot>P ts \<longleftrightarrow> G P (map \<lblot>(E, F)\<rblot> ts)\<close>
 | \<open>Model U E F G \<Turnstile> p \<^bold>\<longrightarrow> q \<longleftrightarrow> Model U E F G \<Turnstile> p \<longrightarrow> Model U E F G \<Turnstile> q\<close>
@@ -233,7 +233,7 @@ qed
 abbreviation Kinds :: \<open>('f, ('f, 'p) fm) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, D.kind]\<close>
 
-lemma prop\<^sub>E_Kinds:
+lemma prop\<^sub>E_Kinds [intro]:
   assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E G.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
   shows \<open>prop\<^sub>E Kinds C\<close>
   unfolding prop\<^sub>E_def using assms by simp
@@ -777,5 +777,224 @@ proof (rule ccontr)
 qed
 
 end
+
+section \<open>Compactness\<close>
+
+abbreviation semantics_set :: \<open>('a, 'f, 'p) model \<Rightarrow> ('f, 'p) fm set \<Rightarrow> bool\<close> (infix \<open>\<TTurnstile>\<close> 50) where
+  \<open>M \<TTurnstile> S \<equiv> \<forall>p \<in> S. M \<Turnstile> p\<close>
+
+
+(* TODO: abbreviate the family of sets? *)
+lemma compact_C: \<open>sat\<^sub>E C.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+proof safe
+  fix S ps qs and q :: \<open>('f, 'p) fm\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> and *: \<open>set ps \<subseteq> S\<close>
+    \<open>\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+    \<open>q \<in> set qs\<close> \<open>q \<in> S\<close>
+  then show \<open>q \<in> {}\<close>
+  proof cases
+    case CFls
+    then show ?thesis
+      using *(1-2) by (meson List.finite_set list.set_intros(1) semantics_fm.simps(1))
+  next
+    case (CNeg P ts)
+    then have \<open>{\<^bold>\<cdot>P ts, \<^bold>\<not> \<^bold>\<cdot>P ts} \<subseteq> S\<close> \<open>finite {\<^bold>\<cdot>P ts, \<^bold>\<not> \<^bold>\<cdot>P ts}\<close>
+      using * by simp_all
+    then have \<open>\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<Turnstile> \<^bold>\<cdot>P ts \<and> Model U E F G \<Turnstile> \<^bold>\<not> \<^bold>\<cdot>P ts\<close>
+      using * by (meson insertCI)
+    then show ?thesis
+      by simp
+  qed
+qed
+
+lemma compact_A: \<open>sat\<^sub>E A.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+proof safe
+  fix qs and S :: \<open>('f, 'p) fm set\<close>
+  assume \<open>P.enough_new S\<close>
+  then show \<open>P.enough_new (set qs \<union> S)\<close>
+    by (meson params_left)
+next
+  fix ps qs and S S' :: \<open>('f, 'p) fm set\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> S\<close>
+    \<open>\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+    \<open>S' \<subseteq> set qs \<union> S\<close> \<open>finite S'\<close>
+  then show \<open>\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'\<close>
+  proof cases
+    case (CImpN p q)
+    let ?S = \<open>{\<^bold>\<not> (p \<^bold>\<longrightarrow> q)} \<union> (S' - {p, \<^bold>\<not> q})\<close>
+    have \<open>?S \<subseteq> S\<close> \<open>finite ?S\<close>
+      using CImpN * by fastforce+
+    then obtain U :: \<open>'a set\<close> and E F G where
+      M: \<open>wf_model (Model U E F G)\<close> \<open>Model U E F G \<TTurnstile> ?S\<close>
+      using * by meson
+    then have \<open>Model U E F G \<TTurnstile> {p, \<^bold>\<not> q} \<union> ?S\<close>
+      by auto
+    then show ?thesis
+      using M(1) by blast
+  qed
+qed
+
+lemma compact_B: \<open>sat\<^sub>E B.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+proof safe
+  fix ps qs and S S' :: \<open>('f, 'p) fm set\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> S\<close> \<open>P.enough_new S\<close>
+    \<open>\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+  then show \<open>\<exists>q\<in>set qs. insert q S \<in> {S. P.enough_new S \<and> (\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+  proof cases
+    case (CImpP p q)
+    then have P: \<open>\<forall>q\<in>set qs. {q} \<union> S \<in> {S. P.enough_new S}\<close>
+      using * params_left by (metis List.set_insert insert_is_Un list.set(1) mem_Collect_eq)
+
+    show ?thesis
+    proof (rule ccontr)
+      assume \<open>\<not> (\<exists>q\<in>set qs. insert q S \<in> {S. P.enough_new S \<and> (\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))})\<close>
+      then have \<open>\<forall>q\<in>set qs. \<exists>S' \<subseteq> {q} \<union> S. finite S' \<and> \<not>(\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+        using P by simp
+      then have \<open>\<forall>q\<in>set qs. \<exists>S' \<subseteq> {q} \<union> S. finite S' \<and> (\<forall>(U :: 'a set) E F G. wf_model (Model U E F G) \<longrightarrow> \<not> Model U E F G \<TTurnstile> S')\<close>
+        by meson
+      then obtain Sp Sq where
+        Sp: \<open>Sp \<subseteq> {\<^bold>\<not> p} \<union> S\<close> \<open>finite Sp\<close> \<open>\<forall>(U :: 'a set) E F G. wf_model (Model U E F G) \<longrightarrow> \<not> Model U E F G \<TTurnstile> Sp\<close> and
+        Sq: \<open>Sq \<subseteq> {q} \<union> S\<close> \<open>finite Sq\<close> \<open>\<forall>(U :: 'a set) E F G. wf_model (Model U E F G) \<longrightarrow> \<not> Model U E F G \<TTurnstile> Sq\<close>
+        using CImpP by auto
+
+      let ?S = \<open>{p \<^bold>\<longrightarrow> q} \<union> (Sp - {\<^bold>\<not> p}) \<union> (Sq - {q})\<close>
+      have \<open>finite ?S\<close>
+        using Sp(2) Sq(2) by blast
+      moreover have \<open>?S \<subseteq> S\<close>
+        using *(1) CImpP(1) Sp(1) Sq(1) by auto
+      ultimately obtain U :: \<open>'a set\<close> and E F G where
+        M: \<open>wf_model (Model U E F G)\<close> \<open>Model U E F G \<TTurnstile> ?S\<close>
+        using * by meson
+      then have \<open>Model U E F G \<TTurnstile> Sp \<or> Model U E F G \<TTurnstile> Sq\<close>
+        by auto
+      then show False
+        using M(1) Sp(3) Sq(3) by blast
+    qed
+  qed
+qed
+
+lemma compact_G: \<open>sat\<^sub>E G.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+proof safe
+  fix qs :: \<open>'f tm \<Rightarrow> ('f, 'p) fm list\<close> and t and S :: \<open>('f, 'p) fm set\<close>
+  assume \<open>P.enough_new S\<close>
+  then show \<open>P.enough_new (set (qs t) \<union> S)\<close>
+    using params_left by fast
+next
+  fix ps qs F t and S S' :: \<open>('f, 'p) fm set\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> and *: \<open>set ps \<subseteq> S\<close> \<open>P.enough_new S\<close>
+    \<open>\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+    \<open>t \<in> F S\<close> \<open>S' \<subseteq> set (qs t) \<union> S\<close> \<open>finite S'\<close>
+  then show \<open>\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'\<close>
+  proof cases
+  case (CAllP p)
+    let ?S = \<open>{\<^bold>\<forall>p} \<union> (S' - set (qs t))\<close>
+    have \<open>?S \<subseteq> S\<close> \<open>finite ?S\<close>
+      using CAllP * by fastforce+
+    then obtain U :: \<open>'a set\<close> and E F G where
+      M: \<open>wf_model (Model U E F G)\<close> \<open>Model U E F G \<TTurnstile> ?S\<close>
+      using * by meson
+    then have \<open>Model U E F G \<TTurnstile> set (qs t) \<union> ?S\<close>
+      using CAllP by auto
+    then show ?thesis
+      using M(1) by blast
+  qed
+qed
+
+lemma compact_D: \<open>sat\<^sub>E D.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+proof safe
+  fix p and S :: \<open>('f, 'p) fm set\<close>
+  assume *: \<open>p \<in> S\<close> \<open>P.enough_new S\<close>
+    \<open>\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+  then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> {S. P.enough_new S \<and>
+    (\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+  proof (induct p _ rule: \<delta>.induct)
+    case (1 p _)
+    then have P: \<open>\<forall>x. set (\<delta> (\<^bold>\<not> \<^bold>\<forall> p) x) \<union> S \<in> {S. P.enough_new S}\<close>
+      using * params_left by fast
+
+    show ?case
+    proof (rule ccontr)
+      assume \<open>\<nexists>x. set (\<delta> (\<^bold>\<not> \<^bold>\<forall> p) x) \<union> S \<in> {S. P.enough_new S \<and> (\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+      then have \<open>\<forall>x. \<exists>S' \<subseteq> {\<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p} \<union> S. finite S' \<and> \<not>(\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+        using P by simp
+     moreover obtain x where x: \<open>x \<notin> P.params S\<close>
+       using \<open>P.enough_new S\<close> unfolding P.enough_new_def 
+       by (metis Compl_eq card_of_ordLeq_finite inf_univ not_finite_existsD)
+     ultimately obtain S' where
+        S': \<open>S' \<subseteq> {\<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p} \<union> S\<close> \<open>finite S'\<close> \<open>\<forall>(U :: 'a set) E F G. wf_model (Model U E F G) \<longrightarrow> \<not> Model U E F G \<TTurnstile> S'\<close>
+        using 1 by meson
+
+      let ?S = \<open>{\<^bold>\<not> \<^bold>\<forall>p} \<union> (S' - {\<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p})\<close>
+      have \<open>finite ?S\<close>
+        using S'(2) by blast
+      moreover have **: \<open>?S \<subseteq> S\<close>
+        using *(1) 1(1) S'(1) by auto
+      ultimately obtain U :: \<open>'a set\<close> and E F G where
+        M: \<open>wf_model (Model U E F G)\<close> \<open>Model U E F G \<TTurnstile> ?S\<close>
+        using * by meson
+      then obtain z where z: \<open>z \<in> U\<close> \<open>\<not> Model U (z \<then> E) F G \<Turnstile> p\<close>
+        by auto
+ 
+      let ?F = \<open>F(x := \<lambda>_. z)\<close>
+      have \<open>\<not> Model U (?F x [] \<then> E) ?F G \<Turnstile> p\<close>
+        using M x z ** by auto
+      moreover have \<open>Model U E ?F G \<TTurnstile> ?S\<close>
+        using M x ** by (metis (no_types, lifting) UN_iff in_mono upd_params_fm)
+      ultimately have \<open>\<exists>F. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'\<close>
+        using M(1) z by (auto intro!: exI[of _ ?F])
+      then show False
+        using S'(3) by blast
+    qed
+  qed simp_all
+qed
+
+lemma compact_prop: \<open>prop\<^sub>E Kinds {S :: ('f, 'p) fm set. P.enough_new S \<and>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+  using compact_C compact_A compact_B compact_G compact_D ..
+
+theorem compactness:
+  fixes S :: \<open>('f, 'p) fm set\<close>
+  assumes \<open>P.enough_new S\<close>
+  shows \<open>(\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S) \<longleftrightarrow>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))\<close>
+proof safe
+  fix U :: \<open>'f tm set\<close> and E F G and S' :: \<open>('f, 'p) fm set\<close>
+  assume \<open>wf_model (Model U E F G)\<close> \<open>Model U E F G \<TTurnstile> S\<close> \<open>S' \<subseteq> S\<close>
+  then show \<open>\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'\<close>
+    by blast
+next
+  let ?S = \<open>{has_subterm} \<union> S\<close>
+  assume *: \<open>\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+  have \<open>\<forall>S' \<subseteq> ?S. finite S' \<longrightarrow> (\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
+  proof safe
+    fix S'
+    assume \<open>S' \<subseteq> {has_subterm} \<union> S\<close> \<open>finite S'\<close>
+    then obtain U :: \<open>'f tm set\<close> and E F G where M: \<open>wf_model (Model U E F G)\<close> \<open>Model U E F G \<TTurnstile> S' - {has_subterm}\<close>
+      using * by (meson Diff_subset_conv finite_Diff)
+    then have \<open>Model U E F G \<TTurnstile> S'\<close>
+      by auto
+    then show \<open>\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'\<close>
+      using M(1) by blast
+  qed
+  moreover have P: \<open>P.enough_new ?S\<close>
+    using assms by (metis List.set_insert empty_set params_left)
+  ultimately have *: \<open>?S \<in> {S :: ('f, 'p) fm set. P.enough_new S \<and>
+    (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+    by fast
+
+  have **: \<open>terms ?S \<noteq> {}\<close>
+    unfolding terms_def by simp
+  have \<open>\<exists>C. canonical (mk_mcs C ?S) \<TTurnstile> ?S\<close>
+    using model_existence[OF compact_prop * P **] by blast
+  moreover have \<open>terms (mk_mcs C ?S) \<noteq> {}\<close> for C
+    using ** by (metis Extend_subset empty_subsetI subset_antisym terms_mono)
+  ultimately show \<open>\<exists>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S\<close>
+    using wf_canonical by fast
+qed
 
 end
