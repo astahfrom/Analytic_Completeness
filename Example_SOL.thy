@@ -57,12 +57,12 @@ primrec semantics_tm (\<open>\<lblot>_,_, _, _\<rblot>\<close>) where
 | \<open>\<lblot>E, E\<^sub>F, C, F\<rblot> (\<^bold>\<star> c) = C c\<close>
 
 fun semantics_fm (infix \<open>\<Turnstile>\<close> 50) where
-  \<open>(_, _, _, _, _, _, _, _) \<Turnstile> \<^bold>\<bottom> = False\<close>
-| \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<^bold>\<cdot>P ts) \<longleftrightarrow> \<lblot>E\<^sub>P, G\<rblot>\<^sub>2 P (map \<lblot>E, E\<^sub>F, C, F\<rblot> ts)\<close>
-| \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (p \<^bold>\<longrightarrow> q) \<longleftrightarrow> ((E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q)\<close>
-| \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<^bold>\<forall>p) \<longleftrightarrow> (\<forall>x. (E\<langle>0:x\<rangle>, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p)\<close>
-| \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<^bold>\<forall>\<^sub>Pp) \<longleftrightarrow> (\<forall>x \<in> PS. (E, E\<^sub>F, E\<^sub>P\<langle>0:x\<rangle>, C, F, G, PS, FS) \<Turnstile> p)\<close>
-| \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<^bold>\<forall>\<^sub>Fp) \<longleftrightarrow> (\<forall>x \<in> FS. (E, E\<^sub>F\<langle>0:x\<rangle>, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p)\<close>
+  \<open>((_, _, _, _, _, _, _, _) \<Turnstile> \<^bold>\<bottom>) = False\<close>
+| \<open>((E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> \<^bold>\<cdot>P ts) = \<lblot>E\<^sub>P, G\<rblot>\<^sub>2 P (map \<lblot>E, E\<^sub>F, C, F\<rblot> ts)\<close>
+| \<open>((E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p \<^bold>\<longrightarrow> q) = ((E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p \<longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> q)\<close>
+| \<open>((E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> \<^bold>\<forall>p) = (\<forall>x. (E\<langle>0:x\<rangle>, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p)\<close>
+| \<open>((E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> \<^bold>\<forall>\<^sub>Pp) = (\<forall>x \<in> PS. (E, E\<^sub>F, E\<^sub>P\<langle>0:x\<rangle>, C, F, G, PS, FS) \<Turnstile> p)\<close>
+| \<open>((E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> \<^bold>\<forall>\<^sub>Fp) = (\<forall>x \<in> FS. (E, E\<^sub>F\<langle>0:x\<rangle>, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p)\<close>
 
 proposition \<open>(E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> (\<^bold>\<forall>(\<^bold>\<cdot>P [\<^bold># 0]) \<^bold>\<longrightarrow> \<^bold>\<cdot>P [\<^bold>\<star>a])\<close>
   by (simp add: shift_def)

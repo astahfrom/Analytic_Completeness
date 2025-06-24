@@ -134,7 +134,7 @@ end
 section \<open>Finite Character\<close>
 
 definition close :: \<open>'a set set \<Rightarrow> 'a set set\<close> where
-  \<open>close C \<equiv> {S. \<exists>S' \<in> C. S \<subseteq> S'}\<close>
+  \<open>close C \<equiv> {S. (\<exists>S' \<in> C. S \<subseteq> S')}\<close>
 
 definition subset_closed :: \<open>'a set set \<Rightarrow> bool\<close> where
   \<open>subset_closed C \<equiv> \<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
@@ -152,7 +152,7 @@ definition finite_char :: \<open>'a set set \<Rightarrow> bool\<close> where
   \<open>finite_char C \<equiv> \<forall>S. S \<in> C \<longleftrightarrow> (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C)\<close>
 
 definition mk_finite_char :: \<open>'a set set \<Rightarrow> 'a set set\<close> where
-  \<open>mk_finite_char C \<equiv> {S. \<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C}\<close>
+  \<open>mk_finite_char C \<equiv> {S. (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> S' \<in> C)}\<close>
 
 lemma finite_char: \<open>finite_char (mk_finite_char C)\<close>
   unfolding finite_char_def mk_finite_char_def by blast
@@ -178,11 +178,11 @@ locale Params =
     and params_fm :: \<open>'fm \<Rightarrow> 'x set\<close>
   assumes map_fm_id: \<open>map_fm id = id\<close>
     and finite_params_fm [simp]: \<open>\<And>p. finite (params_fm p)\<close>
-    and map_params_fm: \<open>\<And>f g p. \<forall>x \<in> params_fm p. f x = g x \<Longrightarrow> map_fm f p = map_fm g p\<close>
+    and map_params_fm: \<open>\<And>f g p. (\<forall>x \<in> params_fm p. f x = g x) \<Longrightarrow> map_fm f p = map_fm g p\<close>
 begin
 
 definition mk_alt_consistency :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
-  \<open>mk_alt_consistency C = {S. \<exists>f. map_fm f ` S \<in> C}\<close>
+  \<open>mk_alt_consistency C \<equiv> {S. (\<exists>f. map_fm f ` S \<in> C)}\<close>
 
 lemma mk_alt_consistency_subset: \<open>C \<subseteq> mk_alt_consistency C\<close>
   unfolding mk_alt_consistency_def
@@ -238,7 +238,7 @@ datatype ('x, 'fm) kind
 
 inductive sat\<^sub>E :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   sat\<^sub>E_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> sat\<^sub>E (Cond P H) C\<close>
-| sat\<^sub>E_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<union> S \<in> C) \<Longrightarrow> sat\<^sub>E (Wits W) C\<close>
+| sat\<^sub>E_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> (\<exists>x. set (W p x) \<union> S \<in> C)) \<Longrightarrow> sat\<^sub>E (Wits W) C\<close>
 
 inductive_cases sat\<^sub>E_CondE[elim!]: \<open>sat\<^sub>E (Cond P H) C\<close>
 inductive_cases sat\<^sub>E_WitsE[elim!]: \<open>sat\<^sub>E (Wits W) C\<close>
@@ -258,7 +258,7 @@ definition (in Params) prop\<^sub>A :: \<open>('x, 'fm) kind list \<Rightarrow> 
 
 inductive sat\<^sub>H :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
   sat\<^sub>H_Cond [intro!]: \<open>H S \<Longrightarrow> sat\<^sub>H (Cond P H) S\<close>
-| sat\<^sub>H_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> S) \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
+| sat\<^sub>H_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> (\<exists>x. set (W p x) \<subseteq> S)) \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
 
 inductive_cases sat\<^sub>H_CondE[elim!]: \<open>sat\<^sub>H (Cond P H) C\<close>
 inductive_cases sat\<^sub>H_WitsE[elim!]: \<open>sat\<^sub>H (Wits W) C\<close>
@@ -355,8 +355,11 @@ lemma params_left: \<open>enough_new S \<Longrightarrow> enough_new (set ps \<un
 definition witness :: \<open>'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>witness \<equiv> witness_kinds Ks\<close>
 
+lemma witness_Wits: \<open>Wits W \<in> set Ks \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> witness p S\<close>
+  using witness_kinds unfolding witness_def by simp
+
 definition extendS :: \<open>'fm set set \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
-  \<open>extendS C a prev \<equiv> if {a} \<union> prev \<in> C then witness a prev \<union> {a} \<union> prev else prev\<close>
+  \<open>extendS C a prev \<equiv> if ({a} \<union> prev \<in> C) then (witness a prev \<union> {a} \<union> prev) else prev\<close>
 
 definition extendL :: \<open>'fm set set \<Rightarrow> ('fm \<Rightarrow> 'fm set) \<Rightarrow> 'fm \<Rightarrow> 'fm set\<close> where
   \<open>extendL C rec a \<equiv> \<Union>b \<in> underS a. rec b\<close>
@@ -782,7 +785,7 @@ locale Confl = Params map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50)
-  assumes confl_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<crossmark> qs \<longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<crossmark> map (map_fm f) qs\<close>
+  assumes confl_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<crossmark> map (map_fm f) qs\<close>
 begin
 
 inductive cond where
@@ -1247,9 +1250,9 @@ locale Gamma = Params map_fm params_fm
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50)
-  assumes gamma_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> \<exists>G rs. map (map_fm f) ps \<leadsto>\<^sub>\<gamma> (G, rs) \<and>
+  assumes gamma_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> (\<exists>G rs. map (map_fm f) ps \<leadsto>\<^sub>\<gamma> (G, rs) \<and>
       (\<forall>S. map_tm f ` F S \<subseteq> G (map_fm f ` S)) \<and>
-      (\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t))\<close>
+      (\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t)))\<close>
     and gamma_mono: \<open>\<And>ps F qs S S'. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> S \<subseteq> S' \<Longrightarrow> F S \<subseteq> F S'\<close>
     and gamma_fin: \<open>\<And>ps F qs t A. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F A \<Longrightarrow> \<exists>B \<subseteq> A. finite B \<and> t \<in> F B\<close>
 begin
@@ -1260,7 +1263,7 @@ inductive cond where
 inductive_cases condE[elim!]: \<open>cond ps Q\<close>
 
 inductive hint where
-  hint [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> \<forall>t \<in> F H. set (qs t) \<subseteq> H) \<Longrightarrow> hint H\<close>
+  hint [intro!]: \<open>(\<And>ps F qs. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> set ps \<subseteq> H \<Longrightarrow> (\<forall>t \<in> F H. set (qs t) \<subseteq> H)) \<Longrightarrow> hint H\<close>
 
 declare hint.simps[simp]
 

@@ -127,15 +127,15 @@ primrec add_env :: \<open>'a \<Rightarrow> (nat \<Rightarrow> 'a) \<Rightarrow> 
 | \<open>(_ \<then> e) (Suc n) = e n\<close>
 
 fun semantics :: \<open>('x, 'w) ctx \<Rightarrow> 'x fm \<Rightarrow> bool\<close> (infix \<open>\<Turnstile>\<close> 50) where
-  \<open>(M, w) \<Turnstile> \<^bold>\<bullet>t \<longleftrightarrow> case_tm (\<NN> M) (\<N> M) t = w\<close>
-| \<open>(M, w) \<Turnstile> \<^bold>\<cdot>P \<longleftrightarrow> w \<in> case_tm (\<VV> M) (\<V> M) P\<close>
-| \<open>(M, w) \<Turnstile> (\<^bold>\<not> p) \<longleftrightarrow> \<not> (M, w) \<Turnstile> p\<close>
-| \<open>(M, w) \<Turnstile> (p \<^bold>\<and> q) \<longleftrightarrow> (M, w) \<Turnstile> p \<and> (M, w) \<Turnstile> q\<close>
-| \<open>(M, w) \<Turnstile> \<^bold>\<box> p \<longleftrightarrow> (\<forall>v \<in> \<R> M w. (M, v) \<Turnstile> p)\<close>
-| \<open>(M, _) \<Turnstile> \<^bold>@i p \<longleftrightarrow> (M, case_tm (\<NN> M) (\<N> M) i) \<Turnstile> p\<close>
-| \<open>(M, _) \<Turnstile> \<^bold>A p \<longleftrightarrow> (\<forall>v \<in> \<W> M. (M, v) \<Turnstile> p)\<close>
-| \<open>(M, w) \<Turnstile> \<^bold>\<down> p \<longleftrightarrow> (M\<lparr>\<NN> := (w \<then> \<NN> M)\<rparr>, w) \<Turnstile> p\<close>
-| \<open>(M, w) \<Turnstile> \<^bold>\<forall> p \<longleftrightarrow> (\<forall>P \<in> \<Pi> M. (M\<lparr>\<VV> := (P \<then> \<VV> M)\<rparr>, w) \<Turnstile> p)\<close>
+  \<open>((M, w) \<Turnstile> \<^bold>\<bullet>t) = (case_tm (\<NN> M) (\<N> M) t = w)\<close>
+| \<open>((M, w) \<Turnstile> \<^bold>\<cdot>P) = (w \<in> case_tm (\<VV> M) (\<V> M) P)\<close>
+| \<open>((M, w) \<Turnstile> (\<^bold>\<not> p)) = (\<not> (M, w) \<Turnstile> p)\<close>
+| \<open>((M, w) \<Turnstile> (p \<^bold>\<and> q)) = ((M, w) \<Turnstile> p \<and> (M, w) \<Turnstile> q)\<close>
+| \<open>((M, w) \<Turnstile> \<^bold>\<box> p) = (\<forall>v \<in> \<R> M w. (M, v) \<Turnstile> p)\<close>
+| \<open>((M, _) \<Turnstile> \<^bold>@i p) = ((M, case_tm (\<NN> M) (\<N> M) i) \<Turnstile> p)\<close>
+| \<open>((M, _) \<Turnstile> \<^bold>A p) = (\<forall>v \<in> \<W> M. (M, v) \<Turnstile> p)\<close>
+| \<open>((M, w) \<Turnstile> \<^bold>\<down> p) = ((M\<lparr>\<NN> := (w \<then> \<NN> M)\<rparr>, w) \<Turnstile> p)\<close>
+| \<open>((M, w) \<Turnstile> \<^bold>\<forall> p) = (\<forall>P \<in> \<Pi> M. (M\<lparr>\<VV> := (P \<then> \<VV> M)\<rparr>, w) \<Turnstile> p)\<close>
 
 lemma \<open>(M, w) \<Turnstile> p \<^bold>\<longrightarrow> q \<longleftrightarrow> (M, w) \<Turnstile> p \<longrightarrow> (M, w) \<Turnstile> q\<close>
   by simp

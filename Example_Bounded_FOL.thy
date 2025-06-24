@@ -45,10 +45,10 @@ primrec add_env :: \<open>'a \<Rightarrow> (nat \<Rightarrow> 'a) \<Rightarrow> 
 | \<open>(t \<then> s) (Suc n) = s n\<close>
 
 fun semantics_fm :: \<open>('a, 'f, 'p) model \<Rightarrow> ('f, 'p) fm \<Rightarrow> bool\<close> (infix \<open>\<Turnstile>\<close> 50) where
-  \<open>_ \<Turnstile> \<^bold>\<bottom> \<longleftrightarrow> False\<close>
-| \<open>Model _ E F G \<Turnstile> \<^bold>\<cdot>P ts \<longleftrightarrow> G P (map \<lblot>(E, F)\<rblot> ts)\<close>
-| \<open>Model U E F G \<Turnstile> p \<^bold>\<longrightarrow> q \<longleftrightarrow> Model U E F G \<Turnstile> p \<longrightarrow> Model U E F G \<Turnstile> q\<close>
-| \<open>Model U E F G \<Turnstile> \<^bold>\<forall>p \<longleftrightarrow> (\<forall>x \<in> U. Model U (x \<then> E) F G \<Turnstile> p)\<close>
+  \<open>(_ \<Turnstile> \<^bold>\<bottom>) = False\<close>
+| \<open>(Model _ E F G \<Turnstile> \<^bold>\<cdot>P ts) = G P (map \<lblot>(E, F)\<rblot> ts)\<close>
+| \<open>(Model U E F G \<Turnstile> p \<^bold>\<longrightarrow> q) = (Model U E F G \<Turnstile> p \<longrightarrow> Model U E F G \<Turnstile> q)\<close>
+| \<open>(Model U E F G \<Turnstile> \<^bold>\<forall>p) = (\<forall>x \<in> U. Model U (x \<then> E) F G \<Turnstile> p)\<close>
 
 section \<open>Operations\<close>
 
@@ -250,7 +250,8 @@ proof
 qed simp
 
 abbreviation canonical :: \<open>('f, 'p) fm set \<Rightarrow> ('f tm, 'f, 'p) model\<close> where
-  \<open>canonical H \<equiv> Model (terms H) (\<lambda>n. \<^bold>#n \<in>? terms H) (\<lambda>f ts. \<^bold>\<circle>f ts \<in>? terms H) (\<lambda>P ts. \<^bold>\<cdot>P ts \<in> H)\<close>
+  \<open>canonical H \<equiv>
+  Model (terms H) (\<lambda>n. \<^bold>#n \<in>? terms H) (\<lambda>f ts. \<^bold>\<circle>f ts \<in>? terms H) (\<lambda>P ts. \<^bold>\<cdot>P ts \<in> H)\<close>
 
 lemma wf_canonical:
   assumes \<open>terms H \<noteq> {}\<close>
@@ -605,8 +606,8 @@ begin
 inductive ND_Set :: \<open>('f, 'p) fm set \<Rightarrow> ('f, 'p) fm \<Rightarrow> bool\<close> (infix \<open>\<tturnstile>\<close> 50) where
   Assm [dest]: \<open>p \<in> A \<Longrightarrow> A \<tturnstile> p\<close>
 | FlsE [elim]: \<open>A \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> A \<tturnstile> p\<close>
-| ImpI [intro]: \<open>{p} \<union> A \<tturnstile> q \<Longrightarrow> A \<tturnstile> p \<^bold>\<longrightarrow> q\<close>
-| ImpE [dest]: \<open>A \<tturnstile> p \<^bold>\<longrightarrow> q \<Longrightarrow> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> q\<close>
+| ImpI [intro]: \<open>{p} \<union> A \<tturnstile> q \<Longrightarrow> A \<tturnstile> (p \<^bold>\<longrightarrow> q)\<close>
+| ImpE [dest]: \<open>A \<tturnstile> (p \<^bold>\<longrightarrow> q) \<Longrightarrow> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> q\<close>
 | UniI [intro]: \<open>A \<tturnstile> \<langle>\<^bold>\<star>a\<rangle>p \<Longrightarrow> a \<notin> P.params ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<^bold>\<forall>p\<close>
 | UniE [dest]: \<open>A \<tturnstile> \<^bold>\<forall>p \<Longrightarrow> t \<in> terms ({p} \<union> A) \<Longrightarrow> A \<tturnstile> \<langle>t\<rangle>p\<close>
 | Clas: \<open>{p \<^bold>\<longrightarrow> q} \<union> A \<tturnstile> p \<Longrightarrow> A \<tturnstile> p\<close>
@@ -711,7 +712,8 @@ lemma with_subterm_elim: \<open>A \<tturnstile> with_subterm p \<Longrightarrow>
 
 theorem strong_completeness:
   fixes p :: \<open>('f, 'p) fm\<close>
-  assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow> (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
+  assumes mod: \<open>\<And>(U :: 'f tm set) E F G. wf_model (Model U E F G) \<Longrightarrow>
+    (\<forall>q \<in> A. Model U E F G \<Turnstile> q) \<Longrightarrow> Model U E F G \<Turnstile> p\<close>
     and \<open>P.enough_new A\<close>
   shows \<open>A \<tturnstile> p\<close>
 proof (rule ccontr)
