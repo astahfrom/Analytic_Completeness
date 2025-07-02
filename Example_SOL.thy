@@ -591,7 +591,8 @@ abbreviation Axiomatic_assms (\<open>_ \<turnstile> _\<close> [50, 50] 50) where
 section \<open>Soundness\<close>
 
 fun wf_model where
-  \<open>wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longleftrightarrow> range G \<subseteq> PS \<and> range E\<^sub>P \<subseteq> PS \<and> range F \<subseteq> FS \<and> range E\<^sub>F \<subseteq> FS\<close>
+  \<open>wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<longleftrightarrow>
+  range G \<subseteq> PS \<and> range E\<^sub>P \<subseteq> PS \<and> range F \<subseteq> FS \<and> range E\<^sub>F \<subseteq> FS\<close>
 
 theorem soundness:
   shows \<open>\<turnstile> p \<Longrightarrow> wf_model (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Longrightarrow> (E, E\<^sub>F, E\<^sub>P, C, F, G, PS, FS) \<Turnstile> p\<close>
