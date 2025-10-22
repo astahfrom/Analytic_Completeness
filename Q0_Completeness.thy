@@ -118,4 +118,122 @@ primrec my_frame :: \<open>'c trm set \<Rightarrow> 'c trm set set frame\<close>
 
 end
 
+
+(* <Noodles from Anders>  *)
+thm mk_mcs_Hintikka
+
+abbreviation "is_Hintikka S == Hintikka map_trm trm_csts Kinds S"
+
+
+context set_theory begin
+
+
+(*
+   * My idea is that make_D, make_I and make_\<phi> correspond to
+     something like D\<^sub>\<gamma> and \<V> from "5501 Henkin's Theorem"
+*)
+
+definition provable :: "'a trm set \<Rightarrow> ('a trm) \<Rightarrow> bool" (infix "\<turnstile>" 20) where
+  "(S \<turnstile> A) = undefined S A"
+
+definition of_set :: "'s set \<Rightarrow> 's" where
+  "of_set S = undefined S"
+
+definition of_term :: "'a trm \<Rightarrow> 's" where (* Do we need this? :-D *)
+  "of_term S = undefined"
+
+definition cwff :: "type_sym \<Rightarrow> 'a trm \<Rightarrow> bool" where
+  "cwff A = undefined"
+
+fun 
+  make_D :: "'a trm set \<Rightarrow> (type_sym \<Rightarrow> 's)" and
+  make_I :: "'a trm set \<Rightarrow> ('a cst \<Rightarrow> type_sym \<Rightarrow> 's)" where
+  "make_D S Tv = boolset"
+| "make_D S Ind = of_set {val undefined (make_I S) undefined A | A. cwff Ind A}"
+    (* The two "undefined" here are a bit suspicious.
+       I think maybe that with Javier's formalization -- which follows 
+       Andrews a bit more closely -- we would not have to think about that.
+     *)
+| "make_I S c Tv = (if (S \<turnstile> (Cst c Tv)) then true else false)"
+| "make_I S c Ind = of_set {of_term B |B. cwff Ind B \<and> (S \<turnstile> \<^bold>[(Cst c Ind) \<^bold>=Ind\<^bold>= B\<^bold>])}"
+
+
+
+(* lemmas on make_I:
+     Something about equivalence classes?
+*)
+
+definition make_\<phi> :: "'a trm set \<Rightarrow> (char list \<times> type_sym \<Rightarrow> 's)" where
+  "make_\<phi> S = undefined"
+
+(* lemmas on make_\<phi>:
+     Something about equivalence classes?
+*)
+
+lemma general_model_if_is_made:
+  assumes "undefined"
+  shows "general_model (make_D S) (make_I S)"
+  sorry
+
+lemma asg_into_interp_if_is_made:
+  assumes "undefined"
+  shows "asg_into_interp \<phi> D I"
+  sorry
+
+lemma 
+  assumes "is_Hintikka S"
+  obtains D and I and \<phi> where
+   "general_model D I"
+   "asg_into_interp \<phi> D I"
+   "\<forall>F\<in>S. satisfies D I \<phi> F"
+proof -
+  (* Define the model and asg *)
+     (* Idea: Maybe outside of this lemma we define
+              the herbrand models actually. *)
+  define D :: "type_sym \<Rightarrow> 's" where "D = undefined"
+  define I :: "'a cst \<Rightarrow> type_sym \<Rightarrow> 's" where "I = undefined"
+  define \<phi> :: "char list \<times> type_sym \<Rightarrow> 's" where "\<phi> = undefined"
+
+  (* Show that they are "wellformed" *)
+  have "general_model D I"
+    sorry
+  have "asg_into_interp \<phi> D I"
+    sorry
+
+  (* Show that it models the formulas :-D *)
+  have "\<forall>F\<in>S. satisfies D I \<phi> F"
+  proof (induction F)
+    case (Var x \<tau>)
+    then show ?case sorry
+  next
+    case (Cst c \<tau>)
+    then show ?case sorry
+  next
+    case (App F\<^sub>1 F\<^sub>2)
+    then show ?case sorry
+  next
+    case (Abs x1 x2 x)
+    then show ?case sorry
+  qed
+
+  show ?thesis
+    using \<open>\<forall>F\<in>S. satisfies D I \<phi> F\<close> \<open>asg_into_frame \<phi> D\<close> \<open>general_model D I\<close> that
+    by blast
+qed
+
+end
+
+(*
+  
+  We need that Hintikka sets have models.
+  In order to ensure that we will have to add more conditions on what it means to be Hintikka.
+  And thus also more requirements of consistency properties.
+  And then we need to show that Q0 can actually satisfy those properties.
+  (Or alternatively adapt Q0 in some way.)
+
+*)
+
+(* </Noodles from Anders>  *)
+
+
 end
