@@ -420,11 +420,11 @@ lemma wf_model_add_pro:
 
 lemma softqdf_lift_fm_nom_add_env [simp]:
   \<open>softqdf p \<Longrightarrow> (Model W R Pi N (v \<then> e) V f, w) \<Turnstile> lift_fm_nom 0 p \<longleftrightarrow> (Model W R Pi N e V f, w) \<Turnstile> p\<close>
-  by (induct p arbitrary: e f w) (simp_all split: tm.splits)
+  by (induct p arbitrary: e w) (simp_all split: tm.splits)
 
 lemma softqdf_lift_fm_pro_add_env [simp]:
   \<open>softqdf p \<Longrightarrow> (Model W R Pi N e V (P \<then> f), w) \<Turnstile> lift_fm_pro 0 p \<longleftrightarrow> (Model W R Pi N e V f, w) \<Turnstile> p\<close>
-  by (induct p arbitrary: e f w) (simp_all split: tm.splits)
+  by (induct p arbitrary: e w) (simp_all split: tm.splits)
 
 subsection \<open>Sizes\<close>
 
