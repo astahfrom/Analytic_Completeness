@@ -123,20 +123,22 @@ qed
 
 subsection \<open>Constants\<close>
 
-type_synonym con = "nat \<times> type"
+type_synonym 'c con = "'c \<times> type"
 
 subsection \<open>Formulas\<close>
 
-datatype form =
+datatype 'c form =
   FVar var
-| FCon con
-| FApp form form (infixl \<open>\<sqdot>\<close> 200)
-| FAbs var form
+| FCon \<open>'c con\<close>
+| FQ type
+| FIota
+| FApp \<open>'c form\<close> \<open>'c form\<close> (infixl \<open>\<sqdot>\<close> 200)
+| FAbs var \<open>'c form\<close>
 
 syntax
-  "_FVar" :: "nat \<Rightarrow> type \<Rightarrow> form" (\<open>_\<^bsub>_\<^esub>\<close> [899, 0] 900)
-  "_FCon" :: "nat \<Rightarrow> type \<Rightarrow> form" (\<open>\<lbrace>_\<rbrace>\<^bsub>_\<^esub>\<close> [899, 0] 900)
-  "_FAbs" :: "nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form" (\<open>(4\<lambda>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 104] 104)
+  "_FVar" :: "nat \<Rightarrow> type \<Rightarrow> 'c form" (\<open>_\<^bsub>_\<^esub>\<close> [899, 0] 900)
+  "_FCon" :: "nat \<Rightarrow> type \<Rightarrow> 'c form" (\<open>\<lbrace>_\<rbrace>\<^bsub>_\<^esub>\<close> [899, 0] 900)
+  "_FAbs" :: "nat \<Rightarrow> type \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>(4\<lambda>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 104] 104)
 syntax_consts
   "_FVar" \<rightleftharpoons> FVar and
   "_FCon" \<rightleftharpoons> FCon and
@@ -150,40 +152,48 @@ subsection \<open>Generalized operators\<close>
 
 text \<open>Generalized application. We define \<open>\<sqdot>\<^sup>\<Q>\<^sub>\<star> A [B\<^sub>1, B\<^sub>2, \<dots>, B\<^sub>n]\<close> as \<open>A \<sqdot> B\<^sub>1 \<sqdot> B\<^sub>2 \<sqdot> \<cdots> \<sqdot> B\<^sub>n\<close>:\<close>
 
-definition generalized_app :: "form \<Rightarrow> form list \<Rightarrow> form" (\<open>\<sqdot>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [241, 241] 241) where
+definition generalized_app :: "'c form \<Rightarrow> 'c form list \<Rightarrow> 'c form" (\<open>\<sqdot>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [241, 241] 241) where
   [simp]: "\<sqdot>\<^sup>\<Q>\<^sub>\<star> A Bs = foldl (\<sqdot>) A Bs"
 
 text \<open>Generalized abstraction. We define \<open>\<lambda>\<^sup>\<Q>\<^sub>\<star> [x\<^sub>1, \<dots>, x\<^sub>n] A\<close> as \<open>\<lambda>x\<^sub>1. \<cdots> \<lambda>x\<^sub>n. A\<close>:\<close>
 
-definition generalized_abs :: "var list \<Rightarrow> form \<Rightarrow> form" (\<open>\<lambda>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [141, 141] 141) where
+definition generalized_abs :: "var list \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>\<lambda>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [141, 141] 141) where
   [simp]: "\<lambda>\<^sup>\<Q>\<^sub>\<star> vs A = foldr (\<lambda>(x, \<alpha>) B. \<lambda>x\<^bsub>\<alpha>\<^esub>. B) vs A"
 
-fun form_size :: "form \<Rightarrow> nat" where
+fun form_size :: "'c form \<Rightarrow> nat" where
   "form_size (x\<^bsub>\<alpha>\<^esub>) = 1"
 | "form_size (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = 1"
+| "form_size (FQ _) = 1"
+| "form_size FIota = 1"
 | "form_size (A \<sqdot> B) = Suc (form_size A + form_size B)"
 | "form_size (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = Suc (form_size A)"
 
-fun form_depth :: "form \<Rightarrow> nat" where
+fun form_depth :: "'c form \<Rightarrow> nat" where
   "form_depth (x\<^bsub>\<alpha>\<^esub>) = 0"
 | "form_depth (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = 0"
+| "form_depth (FQ _) = 0"
+| "form_depth FIota = 0"
 | "form_depth (A \<sqdot> B) = Suc (max (form_depth A) (form_depth B))"
 | "form_depth (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = Suc (form_depth A)"
 
 subsection \<open>Subformulas\<close>
 
-fun subforms :: "form \<Rightarrow> form set" where
+fun subforms :: "'c form \<Rightarrow> 'c form set" where
   "subforms (x\<^bsub>\<alpha>\<^esub>) = {}"
 | "subforms (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
+| "subforms (FQ _) = {}"
+| "subforms FIota = {}"
 | "subforms (A \<sqdot> B) = {A, B}"
 | "subforms (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = {A}"
 
 datatype direction = Left (\<open>\<guillemotleft>\<close>) | Right (\<open>\<guillemotright>\<close>)
 type_synonym position = "direction list"
 
-fun positions :: "form \<Rightarrow> position set" where
+fun positions :: "'c form \<Rightarrow> position set" where
   "positions (x\<^bsub>\<alpha>\<^esub>) = {[]}"
 | "positions (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {[]}"
+| "positions (FQ _) = {[]}"
+| "positions FIota = {[]}"
 | "positions (A \<sqdot> B) = {[]} \<union> {\<guillemotleft> # p | p. p \<in> positions A} \<union> {\<guillemotright> # p | p. p \<in> positions B}"
 | "positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = {[]} \<union> {\<guillemotleft> # p | p. p \<in> positions A}"
 
@@ -191,14 +201,14 @@ lemma empty_is_position [simp]:
   shows "[] \<in> positions A"
   by (cases A rule: positions.cases) simp_all
 
-fun subform_at :: "form \<Rightarrow> position \<rightharpoonup> form" where
+fun subform_at :: "'c form \<Rightarrow> position \<rightharpoonup> 'c form" where
   "subform_at A [] = Some A"
 | "subform_at (A \<sqdot> B) (\<guillemotleft> # p) = subform_at A p"
 | "subform_at (A \<sqdot> B) (\<guillemotright> # p) = subform_at B p"
 | "subform_at (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) (\<guillemotleft> # p) = subform_at A p"
 | "subform_at _ _ = None"
 
-fun is_subform_at :: "form \<Rightarrow> position \<Rightarrow> form \<Rightarrow> bool" (\<open>(_ \<preceq>\<^bsub>_\<^esub>/ _)\<close> [51,0,51] 50) where
+fun is_subform_at :: "'c form \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> bool" (\<open>(_ \<preceq>\<^bsub>_\<^esub>/ _)\<close> [51,0,51] 50) where
   "is_subform_at A [] A' = (A = A')"
 | "is_subform_at C (\<guillemotleft> # p) (A \<sqdot> B) = is_subform_at C p A"
 | "is_subform_at C (\<guillemotright> # p) (A \<sqdot> B) = is_subform_at C p B"
@@ -220,9 +230,10 @@ lemma subform_at_subforms_con:
   using assms by (induction "\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>" p C rule: is_subform_at.induct) auto
 
 lemma subform_at_subforms_var:
+  fixes C :: \<open>'c form\<close>
   assumes "x\<^bsub>\<alpha>\<^esub> \<preceq>\<^bsub>p\<^esub> C"
   shows "\<nexists>A. A \<preceq>\<^bsub>p @ [d]\<^esub> C"
-  using assms by (induction "x\<^bsub>\<alpha>\<^esub>" p C rule: is_subform_at.induct) auto
+  using assms by (induction "x\<^bsub>\<alpha>\<^esub> :: 'c form" p C rule: is_subform_at.induct) auto
 
 lemma subform_at_subforms_app:
   assumes "A \<sqdot> B \<preceq>\<^bsub>p\<^esub> C"
@@ -368,13 +379,13 @@ proof -
   moreover have "drop (length p') p \<noteq> []"
     using prefix_length_less[OF assms(1)] by force
   ultimately show ?thesis
-    using subform_size_decrease by simp
+    using subform_size_decrease by blast
 qed
 
-definition is_subform :: "form \<Rightarrow> form \<Rightarrow> bool" (infix \<open>\<preceq>\<close> 50) where
+definition is_subform :: "'c form \<Rightarrow> 'c form \<Rightarrow> bool" (infix \<open>\<preceq>\<close> 50) where
   [simp]: "A \<preceq> B = (\<exists>p. A \<preceq>\<^bsub>p\<^esub> B)"
 
-instantiation form :: ord
+instantiation form :: (type) ord
 begin
 
 definition
@@ -387,18 +398,18 @@ instance ..
 
 end
 
-instance form :: preorder
+instance form :: (type) preorder
 proof (standard, unfold less_eq_form_def less_form_def)
-  fix A
+  fix A :: \<open>'c form\<close>
   show "A \<preceq> A"
     unfolding is_subform_def using is_subform_at.simps(1) by blast
 next
-  fix A and B and C
+  fix A and B and C :: \<open>'c form\<close>
   assume "A \<preceq> B" and "B \<preceq> C"
   then show "A \<preceq> C"
     unfolding is_subform_def using is_subform_at_transitivity by blast
 next
-  fix A and B
+  fix A and B :: \<open>'c form\<close>
   show "A \<preceq> B \<and> A \<noteq> B \<longleftrightarrow> A \<preceq> B \<and> \<not> B \<preceq> A"
     unfolding is_subform_def
     by (metis is_subform_at.simps(1) not_less_iff_gr_or_eq subform_size_decrease)
@@ -428,17 +439,19 @@ subsection \<open>Free and bound variables\<close>
 consts vars :: "'a \<Rightarrow> var set"
 
 overloading
-  "vars_form" \<equiv> "vars :: form \<Rightarrow> var set"
-  "vars_form_set" \<equiv> "vars :: form set \<Rightarrow> var set" (* abuse of notation *)
+  "vars_form" \<equiv> "vars :: 'c form \<Rightarrow> var set"
+  "vars_form_set" \<equiv> "vars :: 'c form set \<Rightarrow> var set" (* abuse of notation *)
 begin
 
-fun vars_form :: "form \<Rightarrow> var set" where
+fun vars_form :: "'c form \<Rightarrow> var set" where
   "vars_form (x\<^bsub>\<alpha>\<^esub>) = {(x, \<alpha>)}"
 | "vars_form (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
+| "vars_form (FQ _) = {}"
+| "vars_form FIota = {}"
 | "vars_form (A \<sqdot> B) = vars_form A \<union> vars_form B"
 | "vars_form (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = vars_form A \<union> {(x, \<alpha>)}"
 
-fun vars_form_set :: "form set \<Rightarrow> var set" where
+fun vars_form_set :: "'c form set \<Rightarrow> var set" where
   "vars_form_set S = (\<Union>A \<in> S. vars A)"
 
 end
@@ -447,23 +460,23 @@ abbreviation var_names :: "'a \<Rightarrow> nat set" where
   "var_names \<X> \<equiv> var_name ` (vars \<X>)"
 
 lemma vars_form_finiteness:
-  fixes A :: form
+  fixes A :: \<open>'c form\<close>
   shows "finite (vars A)"
   by (induction rule: vars_form.induct) simp_all
 
 lemma vars_form_set_finiteness:
-  fixes S :: "form set"
+  fixes S :: "'c form set"
   assumes "finite S"
   shows "finite (vars S)"
   using assms unfolding vars_form_set.simps using vars_form_finiteness by blast
 
 lemma form_var_names_finiteness:
-  fixes A :: form
+  fixes A :: \<open>'c form\<close>
   shows "finite (var_names A)"
   using vars_form_finiteness by blast
 
 lemma form_set_var_names_finiteness:
-  fixes S :: "form set"
+  fixes S :: "'c form set"
   assumes "finite S"
   shows "finite (var_names S)"
   using assms and vars_form_set_finiteness by blast
@@ -471,17 +484,19 @@ lemma form_set_var_names_finiteness:
 consts free_vars :: "'a \<Rightarrow> var set"
 
 overloading
-  "free_vars_form" \<equiv> "free_vars :: form \<Rightarrow> var set"
-  "free_vars_form_set" \<equiv> "free_vars :: form set \<Rightarrow> var set" (* abuse of notation *)
+  "free_vars_form" \<equiv> "free_vars :: 'c form \<Rightarrow> var set"
+  "free_vars_form_set" \<equiv> "free_vars :: 'c form set \<Rightarrow> var set" (* abuse of notation *)
 begin
 
-fun free_vars_form :: "form \<Rightarrow> var set" where
+fun free_vars_form :: "'c form \<Rightarrow> var set" where
   "free_vars_form (x\<^bsub>\<alpha>\<^esub>) = {(x, \<alpha>)}"
 | "free_vars_form (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
+| "free_vars_form (FQ _) = {}"
+| "free_vars_form FIota = {}"
 | "free_vars_form (A \<sqdot> B) = free_vars_form A \<union> free_vars_form B"
 | "free_vars_form (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = free_vars_form A - {(x, \<alpha>)}"
 
-fun free_vars_form_set :: "form set \<Rightarrow> var set" where
+fun free_vars_form_set :: "'c form set \<Rightarrow> var set" where
   "free_vars_form_set S = (\<Union>A \<in> S. free_vars A)"
 
 end
@@ -490,7 +505,7 @@ abbreviation free_var_names :: "'a \<Rightarrow> nat set" where
   "free_var_names \<X> \<equiv> var_name ` (free_vars \<X>)"
 
 lemma free_vars_form_finiteness:
-  fixes A :: form
+  fixes A :: \<open>'c form\<close>
   shows "finite (free_vars A)"
   by (induction rule: free_vars_form.induct) simp_all
 
@@ -503,7 +518,7 @@ lemma free_vars_of_generalized_abs:
   by (induction vs arbitrary: A) auto
 
 lemma free_vars_in_all_vars:
-  fixes A :: form
+  fixes A :: \<open>'c form\<close>
   shows "free_vars A \<subseteq> vars A"
 proof (induction A)
   case (FVar v)
@@ -514,13 +529,21 @@ next
   then show ?case
     using surj_pair[of k] by force
 next
+  case (FQ \<alpha>)
+  then show ?case
+    by simp
+next
+  case FIota
+  then show ?case
+    by simp
+next
   case (FApp A B)
   have "free_vars (A \<sqdot> B) = free_vars A \<union> free_vars B"
-    using free_vars_form.simps(3) .
+    using free_vars_form.simps(5) .
   also from FApp.IH have "\<dots> \<subseteq> vars A \<union> vars B"
     by blast
   also have "\<dots> = vars (A \<sqdot> B)"
-    using vars_form.simps(3)[symmetric] .
+    using vars_form.simps(5)[symmetric] .
   finally show ?case
     by (simp only:)
 next
@@ -530,7 +553,7 @@ next
 qed
 
 lemma free_vars_in_all_vars_set:
-  fixes S :: "form set"
+  fixes S :: "'c form set"
   shows "free_vars S \<subseteq> vars S"
   using free_vars_in_all_vars by fastforce
 
@@ -541,6 +564,8 @@ lemma singleton_form_set_vars:
 fun bound_vars where
   "bound_vars (x\<^bsub>\<alpha>\<^esub>) = {}"
 | "bound_vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
+| "bound_vars (FQ _) = {}"
+| "bound_vars FIota = {}"
 | "bound_vars (B \<sqdot> C) = bound_vars B \<union> bound_vars C"
 | "bound_vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = {(x, \<alpha>)} \<union> bound_vars B"
 
@@ -548,7 +573,7 @@ lemma vars_is_free_and_bound_vars:
   shows "vars A = free_vars A \<union> bound_vars A"
   by (induction A) auto
 
-fun binders_at :: "form \<Rightarrow> position \<Rightarrow> var set" where
+fun binders_at :: "'c form \<Rightarrow> position \<Rightarrow> var set" where
   "binders_at (A \<sqdot> B) (\<guillemotleft> # p) = binders_at A p"
 | "binders_at (A \<sqdot> B) (\<guillemotright> # p) = binders_at B p"
 | "binders_at (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) (\<guillemotleft> # p) = {(x, \<alpha>)} \<union> binders_at A p"
@@ -562,7 +587,7 @@ lemma binders_at_concat:
 
 subsection \<open>Free and bound occurrences\<close>
 
-definition occurs_at :: "var \<Rightarrow> position \<Rightarrow> form \<Rightarrow> bool" where
+definition occurs_at :: "var \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "occurs_at v p B \<longleftrightarrow> (FVar v \<preceq>\<^bsub>p\<^esub> B)"
 
 lemma occurs_at_alt_def:
@@ -577,7 +602,7 @@ lemma occurs_at_alt_def:
   and "occurs_at v [] (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) \<longleftrightarrow> False"
   by (fastforce elim: is_subform_at.elims)+
 
-definition occurs :: "var \<Rightarrow> form \<Rightarrow> bool" where
+definition occurs :: "var \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "occurs v B \<longleftrightarrow> (\<exists>p \<in> positions B. occurs_at v p B)"
 
 lemma occurs_in_vars:
@@ -588,7 +613,7 @@ lemma occurs_in_vars:
 abbreviation strict_prefixes where
   "strict_prefixes xs \<equiv> [ys \<leftarrow> prefixes xs. ys \<noteq> xs]"
 
-definition in_scope_of_abs :: "var \<Rightarrow> position \<Rightarrow> form \<Rightarrow> bool" where
+definition in_scope_of_abs :: "var \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "in_scope_of_abs v p B \<longleftrightarrow> (
     p \<noteq> [] \<and>
     (
@@ -632,11 +657,11 @@ proof -
   proof (cases d)
     case Left
     with assms and \<open>p = d # p'\<close> show ?thesis
-      using that and in_scope_of_abs_in_left_app by simp
+      using that and in_scope_of_abs_in_left_app by metis
   next
     case Right
     with assms and \<open>p = d # p'\<close> show ?thesis
-      using that and in_scope_of_abs_in_right_app by simp
+      using that and in_scope_of_abs_in_right_app by metis
   qed
 qed
 
@@ -678,7 +703,7 @@ proof
     moreover from \<open>strict_prefix p' (\<guillemotleft> # p)\<close> and Cons have "strict_prefix p'' p"
       by auto
     ultimately have "in_scope_of_abs v p B"
-      using in_scope_of_abs_alt_def by auto
+      using in_scope_of_abs_alt_def by (metis strict_prefix_simps(1))
     then show ?thesis
       by simp
   qed
@@ -700,11 +725,22 @@ lemma in_scope_of_abs_in_vars:
 using assms proof (induction A arbitrary: p)
   case (FVar v')
   then show ?case
-    using not_in_scope_of_abs_in_var by blast
+    using not_in_scope_of_abs_in_var by fast
 next
   case (FCon k)
   then show ?case
-    using in_scope_of_abs_alt_def by (blast elim: is_subform_at.elims(2))
+    using in_scope_of_abs_alt_def
+    by (metis form.distinct(17) subforms_from_con(1) surj_pair)
+next
+  case (FQ \<alpha>)
+  then show ?case
+    using in_scope_of_abs_alt_def
+    by (metis at_top_is_self_subform form.distinct(23) positions.simps(3) singletonD)
+  next
+  case FIota
+  then show ?case
+    using in_scope_of_abs_alt_def
+    by (metis at_top_is_self_subform form.distinct(27) positions.simps(4) singletonD)
 next
   case (FApp B C)
   from FApp.prems obtain d and p' where "p = d # p'"
@@ -713,7 +749,7 @@ next
   proof (cases d)
     case Left
     with FApp.prems and \<open>p = d # p'\<close> have "in_scope_of_abs v p' B"
-      using in_scope_of_abs_in_left_app by blast
+      using in_scope_of_abs_in_left_app by meson
     then have "v \<in> vars B"
       by (fact FApp.IH(1))
     then show ?thesis
@@ -721,7 +757,7 @@ next
   next
     case Right
     with FApp.prems and \<open>p = d # p'\<close> have "in_scope_of_abs v p' C"
-      using in_scope_of_abs_in_right_app by blast
+      using in_scope_of_abs_in_right_app by meson
     then have "v \<in> vars C"
       by (fact FApp.IH(2))
     then show ?thesis
@@ -742,7 +778,7 @@ next
     proof (cases d)
       case Left
       with FAbs.prems and False and \<open>p = d # p'\<close> have "in_scope_of_abs v p' B"
-        using in_scope_of_abs_in_abs by blast
+        using in_scope_of_abs_in_abs by meson
       then have "v \<in> vars B"
         by (fact FAbs.IH)
       then show ?thesis
@@ -760,7 +796,7 @@ lemma binders_at_alt_def:
   shows "binders_at A p = {v | v. in_scope_of_abs v p A}"
   using assms and in_set_prefixes by (induction rule: binders_at.induct) auto
 
-definition is_bound_at :: "var \<Rightarrow> position \<Rightarrow> form \<Rightarrow> bool" where
+definition is_bound_at :: "var \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_bound_at v p B \<longleftrightarrow> occurs_at v p B \<and> in_scope_of_abs v p B"
 
 lemma not_is_bound_at_in_var:
@@ -789,11 +825,11 @@ proof -
   proof (cases d)
     case Left
     with assms and that and \<open>p = d # p'\<close> show ?thesis
-      using is_bound_at_in_left_app by simp
+      using is_bound_at_in_left_app by metis
   next
     case Right
     with assms and that and \<open>p = d # p'\<close> show ?thesis
-      using is_bound_at_in_right_app by simp
+      using is_bound_at_in_right_app by metis
   qed
 qed
 
@@ -811,7 +847,7 @@ proof -
   with assms obtain p' where "p = \<guillemotleft> # p'"
     using subforms_from_abs by blast
   with assms and that show ?thesis
-    using is_bound_at_from_abs by simp
+    using is_bound_at_from_abs by metis
 qed
 
 lemma is_bound_at_to_abs:
@@ -821,7 +857,7 @@ unfolding is_bound_at_def proof
   from assms(1) show "occurs_at v (\<guillemotleft> # p) (FAbs v' B)"
     using surj_pair[of v'] by force
   from assms show "in_scope_of_abs v (\<guillemotleft> # p) (FAbs v' B)"
-    using in_scope_of_abs_in_abs by auto
+    using in_scope_of_abs_in_abs by (metis is_bound_at_def)
 qed
 
 lemma is_bound_at_in_bound_vars:
@@ -846,7 +882,7 @@ using assms proof (induction A arbitrary: p)
     proof cases
       case a\<^sub>1
       from a\<^sub>1(1) and \<open>is_bound_at v p (B \<sqdot> C)\<close> have "is_bound_at v p' B"
-        using is_bound_at_in_left_app by blast
+        using is_bound_at_in_left_app by metis
       with a\<^sub>1(2) have "v \<in> bound_vars B"
         using FApp.IH(1) by blast
       then show ?thesis
@@ -854,7 +890,7 @@ using assms proof (induction A arbitrary: p)
     next
       case a\<^sub>2
       from a\<^sub>2(1) and \<open>is_bound_at v p (B \<sqdot> C)\<close> have "is_bound_at v p' C"
-        using is_bound_at_in_right_app by blast
+        using is_bound_at_in_right_app by metis
       with a\<^sub>2(2) have "v \<in> bound_vars C"
         using FApp.IH(2) by blast
       then show ?thesis
@@ -900,7 +936,7 @@ next
     with \<open>p \<in> positions (FAbs v' B)\<close> obtain p' where "p = \<guillemotleft> # p'" and "p' \<in> positions B"
       by (cases "FAbs v' B" rule: positions.cases) fastforce+
     from \<open>p = \<guillemotleft> # p'\<close> and \<open>is_bound_at v p (FAbs v' B)\<close> have "v = v' \<or> is_bound_at v p' B"
-      using is_bound_at_from_abs by blast
+      using is_bound_at_from_abs by metis
     then consider (a\<^sub>1) "v = v'" | (a\<^sub>2) "is_bound_at v p' B"
       by blast
     then show ?thesis
@@ -942,13 +978,13 @@ lemma bound_vars_in_is_bound_at:
   assumes "v \<in> bound_vars A"
   obtains p where "p \<in> positions A" and "is_bound_at v p A \<or> v \<in> binders_at A p"
 using assms proof (induction A arbitrary: thesis rule: bound_vars.induct)
-  case (3 B C)
+  case (5 B C)
   from \<open>v \<in> bound_vars (B \<sqdot> C)\<close> consider (a) "v \<in> bound_vars B" | (b) "v \<in> bound_vars C"
     by fastforce
   then show ?case
   proof cases
     case a
-    with "3.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
+    with "5.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
       by blast
     from \<open>p \<in> positions B\<close> have "\<guillemotleft> # p \<in> positions (B \<sqdot> C)"
       by simp
@@ -959,19 +995,19 @@ using assms proof (induction A arbitrary: thesis rule: bound_vars.induct)
     proof cases
       case a\<^sub>1
       then have "is_bound_at v (\<guillemotleft> # p) (B \<sqdot> C)"
-        using is_bound_at_in_left_app by blast
+        using is_bound_at_in_left_app by metis
       then show ?thesis
-        using "3.prems"(1) and is_subform_implies_in_positions by blast
+        using "5.prems"(1) and is_subform_implies_in_positions by blast
     next
       case a\<^sub>2
       then have "v \<in> binders_at (B \<sqdot> C) (\<guillemotleft> # p)"
         by simp
       then show ?thesis
-        using "3.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (B \<sqdot> C)\<close> by blast
+        using "5.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (B \<sqdot> C)\<close> by blast
     qed
   next
     case b
-    with "3.IH"(2) obtain p where "p \<in> positions C" and "is_bound_at v p C \<or> v \<in> binders_at C p"
+    with "5.IH"(2) obtain p where "p \<in> positions C" and "is_bound_at v p C \<or> v \<in> binders_at C p"
       by blast
     from \<open>p \<in> positions C\<close> have "\<guillemotright> # p \<in> positions (B \<sqdot> C)"
       by simp
@@ -982,19 +1018,19 @@ using assms proof (induction A arbitrary: thesis rule: bound_vars.induct)
     proof cases
       case b\<^sub>1
       then have "is_bound_at v (\<guillemotright> # p) (B \<sqdot> C)"
-        using is_bound_at_in_right_app by blast
+        using is_bound_at_in_right_app by metis
       then show ?thesis
-        using "3.prems"(1) and is_subform_implies_in_positions by blast
+        using "5.prems"(1) and is_subform_implies_in_positions by blast
     next
       case b\<^sub>2
       then have "v \<in> binders_at (B \<sqdot> C) (\<guillemotright> # p)"
         by simp
       then show ?thesis
-        using "3.prems"(1) and \<open>\<guillemotright> # p \<in> positions (B \<sqdot> C)\<close> by blast
+        using "5.prems"(1) and \<open>\<guillemotright> # p \<in> positions (B \<sqdot> C)\<close> by blast
     qed
   qed
 next
-  case (4 x \<alpha> B)
+  case (6 x \<alpha> B)
   from \<open>v \<in> bound_vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> consider (a) "v = (x, \<alpha>)" | (b) "v \<in> bound_vars B"
     by force
   then show ?case
@@ -1003,10 +1039,10 @@ next
     then have "v \<in> binders_at (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) [\<guillemotleft>]"
       by simp
     then show ?thesis
-      using "4.prems"(1) and is_subform_implies_in_positions by fastforce
+      using "6.prems"(1) and is_subform_implies_in_positions by fastforce
   next
     case b
-    with "4.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
+    with "6.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
       by blast
     from \<open>p \<in> positions B\<close> have "\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)"
       by simp
@@ -1019,23 +1055,23 @@ next
       then have "is_bound_at v (\<guillemotleft> # p) (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)"
         using is_bound_at_to_abs by blast
       then show ?thesis
-        using "4.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
+        using "6.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
     next
       case b\<^sub>2
       then have "v \<in> binders_at (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) (\<guillemotleft> # p)"
         by simp
       then show ?thesis
-        using "4.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
+        using "6.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
     qed
   qed
 qed simp_all
 
 lemma bound_vars_alt_def:
   shows "bound_vars A = {v | v p. p \<in> positions A \<and> (is_bound_at v p A \<or> v \<in> binders_at A p)}"
-  using bound_vars_in_is_bound_at and is_bound_at_in_bound_vars
-  by (intro subset_antisym subsetI CollectI, metis) blast
+  by (intro subset_antisym subsetI CollectI)
+    (use bound_vars_in_is_bound_at in metis, use is_bound_at_in_bound_vars in blast)
 
-definition is_free_at :: "var \<Rightarrow> position \<Rightarrow> form \<Rightarrow> bool" where
+definition is_free_at :: "var \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_free_at v p B \<longleftrightarrow> occurs_at v p B \<and> \<not> in_scope_of_abs v p B"
 
 lemma is_free_at_in_var:
@@ -1064,11 +1100,11 @@ proof -
   proof (cases d)
     case Left
     with assms and that and \<open>p = d # p'\<close> show ?thesis
-      using is_free_at_in_left_app by blast
+      using is_free_at_in_left_app by metis
   next
     case Right
     with assms and that and \<open>p = d # p'\<close> show ?thesis
-      using is_free_at_in_right_app by blast
+      using is_free_at_in_right_app by metis
   qed
 qed
 
@@ -1086,7 +1122,7 @@ proof -
   with assms obtain p' where "p = \<guillemotleft> # p'"
     using subforms_from_abs by blast
   with assms and that show ?thesis
-    using is_free_at_from_abs by blast
+    using is_free_at_from_abs by metis
 qed
 
 lemma is_free_at_to_abs:
@@ -1096,7 +1132,7 @@ unfolding is_free_at_def proof
   from assms(1) show "occurs_at v (\<guillemotleft> # p) (FAbs v' B)"
     using surj_pair[of v'] by fastforce
   from assms show "\<not> in_scope_of_abs v (\<guillemotleft> # p) (FAbs v' B)"
-    unfolding is_free_at_def using in_scope_of_abs_in_abs by presburger
+    unfolding is_free_at_def using in_scope_of_abs_in_abs by metis
 qed
 
 lemma is_free_at_in_free_vars:
@@ -1105,7 +1141,7 @@ lemma is_free_at_in_free_vars:
 using assms proof (induction A arbitrary: p)
   case (FApp B C)
   from \<open>is_free_at v p (B \<sqdot> C)\<close> have "p \<noteq> []"
-    using occurs_at_alt_def(8) by blast
+    using occurs_at_alt_def(8) by fast
   then obtain d and p' where "p = d # p'"
     by (meson list.exhaust)
   with \<open>p \<in> positions (B \<sqdot> C)\<close>
@@ -1115,7 +1151,7 @@ using assms proof (induction A arbitrary: p)
   proof cases
     case a
     from a(1) and \<open>is_free_at v p (B \<sqdot> C)\<close> have "is_free_at v p' B"
-      using is_free_at_in_left_app by blast
+      using is_free_at_in_left_app by metis
     with a(2) have "v \<in> free_vars B"
       using FApp.IH(1) by blast
     then show ?thesis
@@ -1123,7 +1159,7 @@ using assms proof (induction A arbitrary: p)
   next
     case b
     from b(1) and \<open>is_free_at v p (B \<sqdot> C)\<close> have "is_free_at v p' C"
-      using is_free_at_in_right_app by blast
+      using is_free_at_in_right_app by metis
     with b(2) have "v \<in> free_vars C"
       using FApp.IH(2) by blast
     then show ?thesis
@@ -1136,11 +1172,11 @@ next
   with \<open>p \<in> positions (FAbs v' B)\<close> obtain p' where "p = \<guillemotleft> # p'" and "p' \<in> positions B"
     by (cases "FAbs v' B" rule: positions.cases) fastforce+
   moreover from \<open>p = \<guillemotleft> # p'\<close> and \<open>is_free_at v p (FAbs v' B)\<close> have "is_free_at v p' B"
-    using is_free_at_from_abs by blast
+    using is_free_at_from_abs by metis
   ultimately have "v \<in> free_vars B"
     using FAbs.IH by simp
   moreover from \<open>p = \<guillemotleft> # p'\<close> and \<open>is_free_at v p (FAbs v' B)\<close> have "v \<noteq> v'"
-    using in_scope_of_abs_in_abs by blast
+    using in_scope_of_abs_in_abs by simp
   ultimately show ?case
     using surj_pair[of v'] by force
 qed fastforce+
@@ -1149,58 +1185,58 @@ lemma free_vars_in_is_free_at:
   assumes "v \<in> free_vars A"
   obtains p where "p \<in> positions A" and "is_free_at v p A"
 using assms proof (induction A arbitrary: thesis rule: free_vars_form.induct)
-  case (3 A B)
+  case (5 A B)
   from \<open>v \<in> free_vars (A \<sqdot> B)\<close> consider (a) "v \<in> free_vars A" | (b) "v \<in> free_vars B"
     by fastforce
   then show ?case
   proof cases
     case a
-    with "3.IH"(1) obtain p where "p \<in> positions A" and "is_free_at v p A"
+    with "5.IH"(1) obtain p where "p \<in> positions A" and "is_free_at v p A"
       by blast
     from \<open>p \<in> positions A\<close> have "\<guillemotleft> # p \<in> positions (A \<sqdot> B)"
       by simp
     moreover from \<open>is_free_at v p A\<close> have "is_free_at v (\<guillemotleft> # p) (A \<sqdot> B)"
-      using is_free_at_in_left_app by blast
+      using is_free_at_in_left_app by metis
     ultimately show ?thesis
-      using "3.prems"(1) by presburger
+      using "5.prems"(1) by presburger
   next
     case b
-    with "3.IH"(2) obtain p where "p \<in> positions B" and "is_free_at v p B"
+    with "5.IH"(2) obtain p where "p \<in> positions B" and "is_free_at v p B"
       by blast
     from \<open>p \<in> positions B\<close> have "\<guillemotright> # p \<in> positions (A \<sqdot> B)"
       by simp
     moreover from \<open>is_free_at v p B\<close> have "is_free_at v (\<guillemotright> # p) (A \<sqdot> B)"
-      using is_free_at_in_right_app by blast
+      using is_free_at_in_right_app by metis
     ultimately show ?thesis
-      using "3.prems"(1) by presburger
+      using "5.prems"(1) by presburger
   qed
 next
-  case (4 x \<alpha> A)
+  case (6 x \<alpha> A)
   from \<open>v \<in> free_vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)\<close> have "v \<in> free_vars A - {(x, \<alpha>)}" and "v \<noteq> (x, \<alpha>)"
     by simp_all
   then have "v \<in> free_vars A"
     by blast
-  with "4.IH" obtain p where "p \<in> positions A" and "is_free_at v p A"
+  with "6.IH" obtain p where "p \<in> positions A" and "is_free_at v p A"
     by blast
   from \<open>p \<in> positions A\<close> have "\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
     by simp
   moreover from \<open>is_free_at v p A\<close> and \<open>v \<noteq> (x, \<alpha>)\<close> have "is_free_at v (\<guillemotleft> # p) (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
-    using is_free_at_to_abs by blast
+    using is_free_at_to_abs by metis
   ultimately show ?case
-    using "4.prems"(1) by presburger
+    using "6.prems"(1) by presburger
 qed simp_all
 
 lemma free_vars_alt_def:
   shows "free_vars A = {v | v p. p \<in> positions A \<and> is_free_at v p A}"
-  using free_vars_in_is_free_at and is_free_at_in_free_vars
-  by (intro subset_antisym subsetI CollectI, metis) blast
+  by (intro subset_antisym subsetI CollectI)
+    (use free_vars_in_is_free_at in metis, use is_free_at_in_free_vars in blast)
 
 text \<open>
   In the following definition, note that the variable immeditately preceded by \<open>\<lambda>\<close> counts as a bound
   variable:
 \<close>
 
-definition is_bound :: "var \<Rightarrow> form \<Rightarrow> bool" where
+definition is_bound :: "var \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_bound v B \<longleftrightarrow> (\<exists>p \<in> positions B. is_bound_at v p B \<or> v \<in> binders_at B p)"
 
 lemma is_bound_in_app_homomorphism:
@@ -1347,18 +1383,19 @@ qed
 lemma absent_var_is_not_bound:
   assumes "v \<notin> vars A"
   shows "\<not> is_bound v A"
-  using assms and binders_at_alt_def and in_scope_of_abs_in_vars by blast
+  using assms and binders_at_alt_def and in_scope_of_abs_in_vars
+  by (metis is_bound_at_def is_bound_def mem_Collect_eq)
 
 lemma bound_vars_alt_def2:
   shows "bound_vars A = {v \<in> vars A. is_bound v A}"
   unfolding bound_vars_alt_def using absent_var_is_not_bound by fastforce
 
-definition is_free :: "var \<Rightarrow> form \<Rightarrow> bool" where
+definition is_free :: "var \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_free v B \<longleftrightarrow> (\<exists>p \<in> positions B. is_free_at v p B)"
 
 subsection \<open>Free variables for a formula in another formula\<close>
 
-definition is_free_for :: "form \<Rightarrow> var \<Rightarrow> form \<Rightarrow> bool" where
+definition is_free_for :: "'c form \<Rightarrow> var \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_free_for A v B \<longleftrightarrow>
     (
       \<forall>v' \<in> free_vars A.
@@ -1369,7 +1406,7 @@ definition is_free_for :: "form \<Rightarrow> var \<Rightarrow> form \<Rightarro
 lemma is_free_for_absent_var [intro]:
   assumes "v \<notin> vars B"
   shows "is_free_for A v B"
-  using assms and occurs_def and is_free_at_def and occurs_in_vars by blast
+  using assms and occurs_def and is_free_at_def and occurs_in_vars by fast
 
 lemma is_free_for_in_var [intro]:
   shows "is_free_for A v (x\<^bsub>\<alpha>\<^esub>)"
@@ -1393,7 +1430,7 @@ proof -
       from \<open>p \<in> positions B\<close> have "\<guillemotleft> # p \<in> positions (B \<sqdot> C)"
         by simp
       moreover from \<open>is_free_at v p B\<close> have "is_free_at v (\<guillemotleft> # p) (B \<sqdot> C)"
-        using is_free_at_in_left_app by blast
+        using is_free_at_in_left_app by metis
       ultimately have "\<not> in_scope_of_abs v' (\<guillemotleft> # p) (B \<sqdot> C)"
         using assms and \<open>v' \<in> free_vars A\<close> by blast
       then show "\<not> in_scope_of_abs v' p B"
@@ -1413,7 +1450,7 @@ next
       from \<open>p \<in> positions C\<close> have "\<guillemotright> # p \<in> positions (B \<sqdot> C)"
         by simp
       moreover from \<open>is_free_at v p C\<close> have "is_free_at v (\<guillemotright> # p) (B \<sqdot> C)"
-        using is_free_at_in_right_app by blast
+        using is_free_at_in_right_app by metis
       ultimately have "\<not> in_scope_of_abs v' (\<guillemotright> # p) (B \<sqdot> C)"
         using assms and \<open>v' \<in> free_vars A\<close> by blast
       then show "\<not> in_scope_of_abs v' p C"
@@ -1441,19 +1478,19 @@ unfolding is_free_for_def proof (intro ballI impI)
   proof cases
     case b
     from b(1) and \<open>is_free_at v p (B \<sqdot> C)\<close> have "is_free_at v p' B"
-      using is_free_at_in_left_app by blast
+      using is_free_at_in_left_app by metis
     with assms(1) and \<open>v' \<in> free_vars A\<close> and \<open>p' \<in> positions B\<close> have "\<not> in_scope_of_abs v' p' B"
       by simp
     with b(1) show ?thesis
-      using in_scope_of_abs_in_left_app by simp
+      using in_scope_of_abs_in_left_app by metis
   next
     case c
     from c(1) and \<open>is_free_at v p (B \<sqdot> C)\<close> have "is_free_at v p' C"
-      using is_free_at_in_right_app by blast
+      using is_free_at_in_right_app by metis
     with assms(2) and \<open>v' \<in> free_vars A\<close> and \<open>p' \<in> positions C\<close> have "\<not> in_scope_of_abs v' p' C"
       by simp
     with c(1) show ?thesis
-      using in_scope_of_abs_in_right_app by simp
+      using in_scope_of_abs_in_right_app by metis
   qed
 qed
 
@@ -1474,7 +1511,7 @@ unfolding is_free_for_def proof (intro ballI impI)
   then show "\<not> in_scope_of_abs v' p (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)"
   proof -
     from \<open>p = \<guillemotleft> # p'\<close> and \<open>is_free_at v p (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> have "is_free_at v p' B"
-      using is_free_at_from_abs by blast
+      using is_free_at_from_abs by metis
     with assms(1) and \<open>v' \<in> free_vars A\<close> and \<open>p' \<in> positions B\<close> have "\<not> in_scope_of_abs v' p' B"
       by force
     moreover from \<open>v' \<in> free_vars A\<close> and assms(2) have "v' \<noteq> (x, \<alpha>)"
@@ -1499,7 +1536,7 @@ unfolding is_free_for_def proof (intro ballI impI)
     ultimately have "\<not> in_scope_of_abs v' (\<guillemotleft> # p) (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)"
       using assms and \<open>v' \<in> free_vars A\<close> by blast
     then show ?thesis
-      using in_scope_of_abs_in_abs by blast
+      using in_scope_of_abs_in_abs by metis
   qed
 qed
 
@@ -1526,7 +1563,7 @@ lemma is_free_for_alt_def:
     )"
   unfolding is_free_for_def
   using in_scope_of_abs_alt_def and is_subform_implies_in_positions
-  by meson
+  by (metis (no_types, lifting))
 
 lemma binding_var_not_free_for_in_abs:
   assumes "is_free x B" and "x \<noteq> w"
@@ -1536,7 +1573,7 @@ proof (rule ccontr)
   then have "
     \<forall>v' \<in> free_vars (FVar w). \<forall>p \<in> positions (FAbs w B). is_free_at x p (FAbs w B)
       \<longrightarrow> \<not> in_scope_of_abs v' p (FAbs w B)"
-    by force
+    unfolding is_free_for_def by (metis free_vars_form.simps(1) surj_pair)
   moreover have "free_vars (FVar w) = {w}"
     using surj_pair[of w] by force
   ultimately have "
@@ -1551,7 +1588,7 @@ proof (rule ccontr)
   ultimately have "\<not> in_scope_of_abs w (\<guillemotleft> # p) (FAbs w B)"
     by blast
   moreover have "in_scope_of_abs w (\<guillemotleft> # p) (FAbs w B)"
-    using in_scope_of_abs_in_abs by blast
+    using in_scope_of_abs_in_abs by metis
   ultimately show False
     by contradiction
 qed
@@ -1575,7 +1612,7 @@ proof -
   then have "\<guillemotleft> # p \<in> positions (FAbs v' B)" and "is_free_at v (\<guillemotleft> # p) (FAbs v' B)"
     using surj_pair[of v'] and is_free_at_to_abs[OF \<open>is_free_at v p B\<close> assms(1)] by force+
   moreover have "in_scope_of_abs v' (\<guillemotleft> # p) (FAbs v' B)"
-    using in_scope_of_abs_in_abs by blast
+    using in_scope_of_abs_in_abs by metis
   ultimately show ?thesis
     using assms(2) by blast
 qed
@@ -1583,7 +1620,7 @@ qed
 subsection \<open>Replacement of subformulas\<close>
 
 inductive
-  is_replacement_at :: "form \<Rightarrow> position \<Rightarrow> form \<Rightarrow> form \<Rightarrow> bool"
+  is_replacement_at :: "'c form \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> bool"
   (\<open>(4_\<lblot>_ \<leftarrow> _\<rblot> \<rhd> _)\<close> [1000, 0, 0, 0] 900)
 where
   pos_found: "A\<lblot>p \<leftarrow> C\<rblot> \<rhd> C'" if "p = []" and "C = C'"
@@ -1775,7 +1812,13 @@ qed
 lemma leftmost_subform_in_generalized_app_replacement:
   shows "(\<sqdot>\<^sup>\<Q>\<^sub>\<star> C As)\<lblot>replicate (length As) \<guillemotleft> \<leftarrow> D\<rblot> \<rhd> (\<sqdot>\<^sup>\<Q>\<^sub>\<star> D As)"
   using is_replacement_at_implies_in_positions and replace_left_app
-  by (induction As arbitrary: D rule: rev_induct) auto
+  apply (induction As arbitrary: D rule: rev_induct)      
+   apply force
+(* TODO: what on Earth is going on here? *)
+  by (smt (verit, del_insts) add.right_neutral add_Suc_right foldl.simps(1,2) foldl_append
+      generalized_app_def is_replacement_at.intros(2) is_replacement_at.simps
+      is_replacement_at_implies_in_positions is_replacement_at_implies_in_positions
+      length_append list.size(3,4) replicate.simps(2))
 
 subsection \<open>Logical constants\<close>
 
@@ -1795,10 +1838,10 @@ definition Q_constant_of_type :: "type \<Rightarrow> con" where
 definition iota_constant :: con where
   [simp]: "iota_constant \<equiv> (\<cc>\<^sub>\<iota>, (i\<rightarrow>o)\<rightarrow>i)"
 
-definition Q :: "type \<Rightarrow> form" (\<open>Q\<^bsub>_\<^esub>\<close>) where
+definition Q :: "type \<Rightarrow> 'c form" (\<open>Q\<^bsub>_\<^esub>\<close>) where
   [simp]: "Q\<^bsub>\<alpha>\<^esub> = FCon (Q_constant_of_type \<alpha>)"
 
-definition iota :: form (\<open>\<iota>\<close>) where
+definition iota :: 'c form (\<open>\<iota>\<close>) where
   [simp]: "\<iota> = FCon iota_constant"
 
 definition is_Q_constant_of_type :: "con \<Rightarrow> type \<Rightarrow> bool" where
@@ -1822,27 +1865,27 @@ lemma constant_cases[case_names non_logical Q_constant \<iota>_constant, cases t
 
 subsection \<open>Definitions and abbreviations\<close>
 
-definition equality_of_type :: "form \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form" (\<open>(_ =\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
+definition equality_of_type :: "'c form \<Rightarrow> type \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>(_ =\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
   [simp]: "A =\<^bsub>\<alpha>\<^esub> B = Q\<^bsub>\<alpha>\<^esub> \<sqdot> A \<sqdot> B"
 
-definition equivalence :: "form \<Rightarrow> form \<Rightarrow> form" (infixl \<open>\<equiv>\<^sup>\<Q>\<close> 102) where
+definition equivalence :: "'c form \<Rightarrow> 'c form \<Rightarrow> 'c form" (infixl \<open>\<equiv>\<^sup>\<Q>\<close> 102) where
   [simp]: "A \<equiv>\<^sup>\<Q> B = A =\<^bsub>o\<^esub> B" \<comment> \<open>more modular than the definition in \<^cite>\<open>"andrews:2002"\<close>\<close>
 
-definition true :: form (\<open>T\<^bsub>o\<^esub>\<close>) where
+definition true :: 'c form (\<open>T\<^bsub>o\<^esub>\<close>) where
   [simp]: "T\<^bsub>o\<^esub> = Q\<^bsub>o\<^esub> =\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> Q\<^bsub>o\<^esub>"
 
-definition false :: form (\<open>F\<^bsub>o\<^esub>\<close>) where
+definition false :: 'c form (\<open>F\<^bsub>o\<^esub>\<close>) where
   [simp]: "F\<^bsub>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. T\<^bsub>o\<^esub> =\<^bsub>o\<rightarrow>o\<^esub> \<lambda>\<xx>\<^bsub>o\<^esub>. \<xx>\<^bsub>o\<^esub>"
 
-definition PI :: "type \<Rightarrow> form" (\<open>\<Prod>\<^bsub>_\<^esub>\<close>) where
+definition PI :: "type \<Rightarrow> 'c form" (\<open>\<Prod>\<^bsub>_\<^esub>\<close>) where
   [simp]: "\<Prod>\<^bsub>\<alpha>\<^esub> = Q\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. T\<^bsub>o\<^esub>)"
 
-definition forall :: "nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form" (\<open>(4\<forall>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
+definition forall :: "nat \<Rightarrow> type \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>(4\<forall>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
   [simp]: "\<forall>x\<^bsub>\<alpha>\<^esub>. A = \<Prod>\<^bsub>\<alpha>\<^esub> \<sqdot> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
 
 text \<open>Generalized universal quantification. We define \<open>\<forall>\<^sup>\<Q>\<^sub>\<star> [x\<^sub>1, \<dots>, x\<^sub>n] A\<close> as \<open>\<forall>x\<^sub>1. \<cdots> \<forall>x\<^sub>n. A\<close>:\<close>
 
-definition generalized_forall :: "var list \<Rightarrow> form \<Rightarrow> form" (\<open>\<forall>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [141, 141] 141) where
+definition generalized_forall :: "var list \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>\<forall>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [141, 141] 141) where
   [simp]: "\<forall>\<^sup>\<Q>\<^sub>\<star> vs A = foldr (\<lambda>(x, \<alpha>) B. \<forall>x\<^bsub>\<alpha>\<^esub>. B) vs A"
 
 lemma innermost_subform_in_generalized_forall:
@@ -1891,30 +1934,30 @@ lemma false_is_forall:
   shows "F\<^bsub>o\<^esub> = \<forall>\<xx>\<^bsub>o\<^esub>. \<xx>\<^bsub>o\<^esub>"
   unfolding false_def and forall_def and PI_def and equality_of_type_def ..
 
-definition conj_fun :: form (\<open>\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
+definition conj_fun :: 'c form (\<open>\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
   [simp]: "\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> =
     \<lambda>\<xx>\<^bsub>o\<^esub>. \<lambda>\<yy>\<^bsub>o\<^esub>.
     (
       (\<lambda>\<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<sqdot> T\<^bsub>o\<^esub>) =\<^bsub>(o\<rightarrow>o\<rightarrow>o)\<rightarrow>o\<^esub> (\<lambda>\<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub> \<sqdot> \<yy>\<^bsub>o\<^esub>)
     )"
 
-definition conj_op :: "form \<Rightarrow> form \<Rightarrow> form" (infixl \<open>\<and>\<^sup>\<Q>\<close> 131) where
+definition conj_op :: "'c form \<Rightarrow> 'c form \<Rightarrow> 'c form" (infixl \<open>\<and>\<^sup>\<Q>\<close> 131) where
   [simp]: "A \<and>\<^sup>\<Q> B = \<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B"
 
 text \<open>Generalized conjunction. We define \<open>\<and>\<^sup>\<Q>\<^sub>\<star> [A\<^sub>1, \<dots>, A\<^sub>n]\<close> as \<open>A\<^sub>1 \<and>\<^sup>\<Q> (\<cdots> \<and>\<^sup>\<Q> (A\<^sub>n\<^sub>-\<^sub>1 \<and>\<^sup>\<Q> A\<^sub>n) \<cdots>)\<close>:\<close>
 
-definition generalized_conj_op :: "form list \<Rightarrow> form" (\<open>\<and>\<^sup>\<Q>\<^sub>\<star> _\<close> [0] 131) where
+definition generalized_conj_op :: "'c form list \<Rightarrow> 'c form" (\<open>\<and>\<^sup>\<Q>\<^sub>\<star> _\<close> [0] 131) where
   [simp]: "\<and>\<^sup>\<Q>\<^sub>\<star> As = foldr1 (\<and>\<^sup>\<Q>) As"
 
-definition imp_fun :: form (\<open>\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where \<comment> \<open>\<open>\<equiv>\<close> used instead of \<open>=\<close>, see \<^cite>\<open>"andrews:2002"\<close>\<close>
+definition imp_fun :: 'c form (\<open>\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where \<comment> \<open>\<open>\<equiv>\<close> used instead of \<open>=\<close>, see \<^cite>\<open>"andrews:2002"\<close>\<close>
   [simp]: "\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. \<lambda>\<yy>\<^bsub>o\<^esub>. (\<xx>\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<yy>\<^bsub>o\<^esub>)"
 
-definition imp_op :: "form \<Rightarrow> form \<Rightarrow> form" (infixl \<open>\<supset>\<^sup>\<Q>\<close> 111) where
+definition imp_op :: "'c form \<Rightarrow> 'c form \<Rightarrow> 'c form" (infixl \<open>\<supset>\<^sup>\<Q>\<close> 111) where
   [simp]: "A \<supset>\<^sup>\<Q> B = \<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B"
 
 text \<open>Generalized implication. We define \<open>[A\<^sub>1, \<dots>, A\<^sub>n] \<supset>\<^sup>\<Q>\<^sub>\<star> B\<close> as \<open>A\<^sub>1 \<supset>\<^sup>\<Q> (\<cdots> \<supset>\<^sup>\<Q> (A\<^sub>n \<supset>\<^sup>\<Q> B) \<cdots>)\<close>:\<close>
 
-definition generalized_imp_op :: "form list \<Rightarrow> form \<Rightarrow> form" (infixl \<open>\<supset>\<^sup>\<Q>\<^sub>\<star>\<close> 111) where
+definition generalized_imp_op :: "'c form list \<Rightarrow> 'c form \<Rightarrow> 'c form" (infixl \<open>\<supset>\<^sup>\<Q>\<^sub>\<star>\<close> 111) where
   [simp]: "As \<supset>\<^sup>\<Q>\<^sub>\<star> B = foldr (\<supset>\<^sup>\<Q>) As B"
 
 text \<open>
@@ -1922,37 +1965,37 @@ text \<open>
   same formula, namely \<open>Q\<^bsub>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A\<close>:
 \<close>
 
-definition neg :: "form \<Rightarrow> form" (\<open>\<sim>\<^sup>\<Q> _\<close> [141] 141) where
+definition neg :: "'c form \<Rightarrow> 'c form" (\<open>\<sim>\<^sup>\<Q> _\<close> [141] 141) where
   [simp]: "\<sim>\<^sup>\<Q> A = Q\<^bsub>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A"
 
-definition disj_fun :: form (\<open>\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
+definition disj_fun :: 'c form (\<open>\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
   [simp]: "\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. \<lambda>\<yy>\<^bsub>o\<^esub>. \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> \<yy>\<^bsub>o\<^esub>)"
 
-definition disj_op :: "form \<Rightarrow> form \<Rightarrow> form" (infixl \<open>\<or>\<^sup>\<Q>\<close> 126) where
+definition disj_op :: "'c form \<Rightarrow> 'c form \<Rightarrow> 'c form" (infixl \<open>\<or>\<^sup>\<Q>\<close> 126) where
   [simp]: "A \<or>\<^sup>\<Q> B = \<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B"
 
-definition exists :: "nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form" (\<open>(4\<exists>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
+definition exists :: "nat \<Rightarrow> type \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>(4\<exists>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
   [simp]: "\<exists>x\<^bsub>\<alpha>\<^esub>. A = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. \<sim>\<^sup>\<Q> A)"
 
 lemma exists_fv:
   shows "free_vars (\<exists>x\<^bsub>\<alpha>\<^esub>. A) = free_vars A - {(x, \<alpha>)}"
   by simp
 
-definition inequality_of_type :: "form \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form" (\<open>(_ \<noteq>\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
+definition inequality_of_type :: "'c form \<Rightarrow> type \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>(_ \<noteq>\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
   [simp]: "A \<noteq>\<^bsub>\<alpha>\<^esub> B = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> B)"
 
 subsection \<open>Well-formed formulas\<close>
 
-inductive is_wff_of_type :: "type \<Rightarrow> form \<Rightarrow> bool" where
+inductive is_wff_of_type :: "type \<Rightarrow> 'c form \<Rightarrow> bool" where
   var_is_wff: "is_wff_of_type \<alpha> (x\<^bsub>\<alpha>\<^esub>)"
 | con_is_wff: "is_wff_of_type \<alpha> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
 | app_is_wff: "is_wff_of_type \<beta> (A \<sqdot> B)" if "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) A" and "is_wff_of_type \<alpha> B"
 | abs_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)" if "is_wff_of_type \<beta> A"
 
-definition wffs_of_type :: "type \<Rightarrow> form set" (\<open>wffs\<^bsub>_\<^esub>\<close> [0]) where
-  "wffs\<^bsub>\<alpha>\<^esub> = {f :: form. is_wff_of_type \<alpha> f}"
+definition wffs_of_type :: "type \<Rightarrow> 'c form set" (\<open>wffs\<^bsub>_\<^esub>\<close> [0]) where
+  "wffs\<^bsub>\<alpha>\<^esub> = {f :: 'c form. is_wff_of_type \<alpha> f}"
 
-abbreviation wffs :: "form set" where
+abbreviation wffs :: "'c form set" where
   "wffs \<equiv> \<Union>\<alpha>. wffs\<^bsub>\<alpha>\<^esub>"
 
 lemma is_wff_of_type_wffs_of_type_eq [pred_set_conv]:
@@ -2211,7 +2254,7 @@ lemma wffs_from_inequality:
 lemma wff_has_unique_type:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "A \<in> wffs\<^bsub>\<beta>\<^esub>"
   shows "\<alpha> = \<beta>"
-using assms proof (induction arbitrary: \<alpha> \<beta> rule: form.induct)
+using assms proof (induction arbitrary: \<alpha> \<beta> rule: 'c form.induct)
   case (FVar v)
   obtain x and \<gamma> where "v = (x, \<gamma>)"
     by fastforce
@@ -2394,20 +2437,20 @@ corollary replacement_preserves_typing':
 
 text \<open>Closed formulas and sentences:\<close>
 
-definition is_closed_wff_of_type :: "form \<Rightarrow> type \<Rightarrow> bool" where
+definition is_closed_wff_of_type :: "'c form \<Rightarrow> type \<Rightarrow> bool" where
   [iff]: "is_closed_wff_of_type A \<alpha> \<longleftrightarrow> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> free_vars A = {}"
 
-definition is_sentence :: "form \<Rightarrow> bool" where
+definition is_sentence :: "'c form \<Rightarrow> bool" where
   [iff]: "is_sentence A \<longleftrightarrow> is_closed_wff_of_type A o"
 
 subsection \<open>Substitutions\<close>
 
-type_synonym substitution = "(var, form) fmap"
+type_synonym substitution = "(var, 'c form) fmap"
 
 definition is_substitution :: "substitution \<Rightarrow> bool" where
   [iff]: "is_substitution \<theta> \<longleftrightarrow> (\<forall>(x, \<alpha>) \<in> fmdom' \<theta>. \<theta> $$! (x, \<alpha>) \<in> wffs\<^bsub>\<alpha>\<^esub>)"
 
-fun substitute :: "substitution \<Rightarrow> form \<Rightarrow> form" (\<open>\<^bold>S _ _\<close> [51, 51]) where
+fun substitute :: "substitution \<Rightarrow> 'c form \<Rightarrow> 'c form" (\<open>\<^bold>S _ _\<close> [51, 51]) where
   "\<^bold>S \<theta> (x\<^bsub>\<alpha>\<^esub>) = (case \<theta> $$ (x, \<alpha>) of None \<Rightarrow> x\<^bsub>\<alpha>\<^esub> | Some A \<Rightarrow> A)"
 | "\<^bold>S \<theta> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
 | "\<^bold>S \<theta> (A \<sqdot> B) = (\<^bold>S \<theta> A) \<sqdot> (\<^bold>S \<theta> B)"
@@ -3220,7 +3263,7 @@ text \<open>
 \<close>
 
 lemma fresh_vars_substitution_unfolding:
-  fixes ps :: "(var \<times> form) list"
+  fixes ps :: "(var \<times> 'c form) list"
   assumes "\<theta> = fmap_of_list ps" and "is_renaming_substitution \<theta>"
   and "distinct (map fst ps)" and "distinct (map snd ps)"
   and "vars (fmran' \<theta>) \<inter> (fmdom' \<theta> \<union> vars B) = {}"
@@ -3602,7 +3645,7 @@ qed
 
 subsection \<open>Renaming of bound variables\<close>
 
-fun rename_bound_var :: "var \<Rightarrow> nat \<Rightarrow> form \<Rightarrow> form" where
+fun rename_bound_var :: "var \<Rightarrow> nat \<Rightarrow> 'c form \<Rightarrow> 'c form" where
   "rename_bound_var v y (x\<^bsub>\<alpha>\<^esub>) = x\<^bsub>\<alpha>\<^esub>"
 | "rename_bound_var v y (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
 | "rename_bound_var v y (B \<sqdot> C) = rename_bound_var v y B \<sqdot> rename_bound_var v y C"
