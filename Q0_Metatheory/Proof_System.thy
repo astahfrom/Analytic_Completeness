@@ -8,7 +8,7 @@ begin
 subsection \<open>Axioms\<close>
 
 inductive_set
-  axioms :: "form set"
+  axioms :: "'c::dom_consts form set"
 where
   axiom_1:
     "\<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub> \<in> axioms"
@@ -39,7 +39,7 @@ lemma axioms_are_wffs_of_type_o:
 
 subsection \<open>Inference rule R\<close>
 
-definition is_rule_R_app :: "position \<Rightarrow> form \<Rightarrow> form \<Rightarrow> form \<Rightarrow> bool" where
+definition is_rule_R_app :: "position \<Rightarrow> 'c::dom_consts form \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_rule_R_app p D C E \<longleftrightarrow>
     (
       \<exists>\<alpha> A B.
@@ -56,7 +56,7 @@ lemma rule_R_original_form_is_wffo:
 
 subsection \<open>Proof and derivability\<close>
 
-inductive is_derivable :: "form \<Rightarrow> bool" where
+inductive is_derivable :: "'c::dom_consts form \<Rightarrow> bool" where
   dv_axiom: "is_derivable A" if "A \<in> axioms"
 | dv_rule_R: "is_derivable D" if "is_derivable C" and "is_derivable E" and "is_rule_R_app p D C E"
 
@@ -65,12 +65,12 @@ lemma derivable_form_is_wffso:
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms and axioms_are_wffs_of_type_o by (fastforce elim: is_derivable.cases)
 
-definition is_proof_step :: "form list \<Rightarrow> nat \<Rightarrow> bool" where
+definition is_proof_step :: "'c::dom_consts form list \<Rightarrow> nat \<Rightarrow> bool" where
   [iff]: "is_proof_step \<S> i' \<longleftrightarrow>
     \<S> ! i' \<in> axioms \<or>
     (\<exists>p j k. {j, k} \<subseteq> {0..<i'} \<and> is_rule_R_app p (\<S> ! i') (\<S> ! j) (\<S> ! k))"
 
-definition is_proof :: "form list \<Rightarrow> bool" where
+definition is_proof :: "'c::dom_consts form list \<Rightarrow> bool" where
   [iff]: "is_proof \<S> \<longleftrightarrow> (\<forall>i' < length \<S>. is_proof_step \<S> i')"
 
 lemma common_prefix_is_subproof:
@@ -120,7 +120,8 @@ lemma append_proof_step_is_proof:
   assumes "is_proof \<S>"
   and "is_proof_step (\<S> @ [A]) (length (\<S> @ [A]) - 1)"
   shows "is_proof (\<S> @ [A])"
-  using assms and added_suffix_proof_preservation by (simp add: All_less_Suc)
+  using assms and added_suffix_proof_preservation 
+  by (auto simp add: All_less_Suc)
 
 lemma added_prefix_proof_preservation:
   assumes "is_proof \<S>'"
@@ -173,11 +174,19 @@ lemma proof_but_last_is_proof:
   shows "is_proof \<S>"
   using assms and common_prefix_is_subproof[where \<S>\<^sub>1 = "[A]" and \<S>\<^sub>2 = "[]"] by simp
 
+
 lemma proof_prefix_is_proof:
   assumes "is_proof (\<S>\<^sub>1 @ \<S>\<^sub>2)"
   shows "is_proof \<S>\<^sub>1"
-  using assms and proof_but_last_is_proof
-  by (induction \<S>\<^sub>2 arbitrary: \<S>\<^sub>1 rule: rev_induct) (simp, metis append.assoc)
+  using assms
+proof (induction \<S>\<^sub>2 arbitrary: \<S>\<^sub>1 rule: rev_induct)
+  fix S\<^sub>1 S\<^sub>2 :: "'a form list" and A
+  assume "is_proof (S\<^sub>1 @ S\<^sub>2 @ [A])"
+    and IH: "\<And>\<S>\<^sub>1. is_proof (\<S>\<^sub>1 @ S\<^sub>2) \<Longrightarrow> is_proof \<S>\<^sub>1"
+  then show "is_proof S\<^sub>1"
+    using proof_but_last_is_proof[of "S\<^sub>1 @ S\<^sub>2" A]
+    by (metis append.assoc)
+qed simp
 
 lemma single_axiom_is_proof:
   assumes "A \<in> axioms"
@@ -191,7 +200,8 @@ proof -
   from assms(1) have "\<forall>i' < length \<S>\<^sub>1. is_proof_step (\<S>\<^sub>1 @ \<S>\<^sub>2) i'"
     using added_suffix_proof_preservation by auto
   moreover from assms(2) have "\<forall>i' \<in> {length \<S>\<^sub>1..<length (\<S>\<^sub>1 @ \<S>\<^sub>2)}. is_proof_step (\<S>\<^sub>1 @ \<S>\<^sub>2) i'"
-    using added_prefix_proof_preservation by auto
+    using added_prefix_proof_preservation 
+    by metis
   ultimately show ?thesis
     unfolding is_proof_def by (meson atLeastLessThan_iff linorder_not_le)
 qed
@@ -201,7 +211,8 @@ lemma elem_of_proof_is_wffo:
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms and axioms_are_wffs_of_type_o
   unfolding is_rule_R_app_def and is_proof_step_def and is_proof_def
-  by (induction \<S>) (simp, metis (full_types) in_mono in_set_conv_nth)
+  by (induction \<S>) 
+    (simp, smt (verit) axioms_are_wffs_of_type_o in_set_conv_nth subset_eq)
 
 lemma axiom_prepended_to_proof_is_proof:
   assumes "is_proof \<S>"
@@ -238,7 +249,7 @@ proof -
     using less_Suc_eq by auto
 qed
 
-definition is_proof_of :: "form list \<Rightarrow> form \<Rightarrow> bool" where
+definition is_proof_of :: "'c::dom_consts form list \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_proof_of \<S> A \<longleftrightarrow> \<S> \<noteq> [] \<and> is_proof \<S> \<and> last \<S> = A"
 
 lemma proof_prefix_is_proof_of_last:
@@ -251,14 +262,15 @@ proof -
     by fastforce
 qed
 
-definition is_theorem :: "form \<Rightarrow> bool" where
+definition is_theorem :: "'c::dom_consts form \<Rightarrow> bool" where
   [iff]: "is_theorem A \<longleftrightarrow> (\<exists>\<S>. is_proof_of \<S> A)"
 
 lemma proof_form_is_wffo:
   assumes "is_proof_of \<S> A"
   and "B \<in> lset \<S>"
   shows "B \<in> wffs\<^bsub>o\<^esub>"
-  using assms and elem_of_proof_is_wffo by blast
+  using assms and elem_of_proof_is_wffo
+  by (metis is_proof_of_def)
 
 lemma proof_form_is_theorem:
   assumes "is_proof \<S>" and "\<S> \<noteq> []"
@@ -309,7 +321,8 @@ next
   moreover from \<open>is_proof \<S>\<^sub>C\<close> and \<open>is_proof \<S>\<^sub>E\<close> have "is_proof (\<S>\<^sub>C @ \<S>\<^sub>E)"
     by (fact proofs_concatenation_is_proof)
   ultimately have "is_proof ((\<S>\<^sub>C @ \<S>\<^sub>E) @ [D])"
-    using rule_R_app_appended_to_proof_is_proof by presburger
+    using rule_R_app_appended_to_proof_is_proof 
+    by metis
   with \<open>\<S>\<^sub>C \<noteq> []\<close> show ?case
     unfolding is_proof_of_def and is_theorem_def by (metis snoc_eq_iff_butlast)
 qed
@@ -374,7 +387,8 @@ qed
 
 theorem theoremhood_derivability_equivalence:
   shows "is_theorem A \<longleftrightarrow> is_derivable A"
-  using derivable_form_is_theorem and theorem_is_derivable_form by blast
+  using derivable_form_is_theorem and theorem_is_derivable_form 
+  by metis
 
 lemma theorem_is_wffo:
   assumes "is_theorem A"
@@ -385,7 +399,8 @@ proof -
   then have "A \<in> lset \<S>"
     by auto
   with \<open>is_proof_of \<S> A\<close> show ?thesis
-    using proof_form_is_wffo by blast
+    using proof_form_is_wffo 
+    by metis
 qed
 
 lemma equality_reflexivity:
@@ -475,9 +490,13 @@ subsection \<open>Hypothetical proof and derivability\<close>
 
 text \<open>The set of free variables in \<open>\<X>\<close> that are exposed to capture at position \<open>p\<close> in \<open>A\<close>:\<close>
 
-definition capture_exposed_vars_at :: "position \<Rightarrow> form \<Rightarrow> 'a \<Rightarrow> var set" where
+definition capture_exposed_vars_at :: "position \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> 'c var set" where
   [simp]: "capture_exposed_vars_at p A \<X> =
     {(x, \<beta>) | x \<beta> p' E. strict_prefix p' p \<and> \<lambda>x\<^bsub>\<beta>\<^esub>. E \<preceq>\<^bsub>p'\<^esub> A \<and> (x, \<beta>) \<in> free_vars \<X>}"
+
+definition capture_exposed_vars_at_set :: "position \<Rightarrow> 'c form \<Rightarrow> 'c form set \<Rightarrow> 'c var set" where
+  [simp]: "capture_exposed_vars_at_set p A \<X> =
+    {(x, \<beta>) | x \<beta> p' E. strict_prefix p' p \<and> \<lambda>x\<^bsub>\<beta>\<^esub>. E \<preceq>\<^bsub>p'\<^esub> A \<and> (x, \<beta>) \<in> free_vars_form_set \<X>}"
 
 lemma capture_exposed_vars_at_alt_def:
   assumes "p \<in> positions A"
@@ -485,14 +504,20 @@ lemma capture_exposed_vars_at_alt_def:
   unfolding binders_at_alt_def[OF assms] and in_scope_of_abs_alt_def
   using is_subform_implies_in_positions by auto
 
+lemma capture_exposed_vars_at_alt_set_def:
+  assumes "p \<in> positions A"
+  shows "capture_exposed_vars_at_set p A \<X> = binders_at A p \<inter> free_vars_form_set \<X>"
+  unfolding binders_at_alt_def[OF assms] and in_scope_of_abs_alt_def
+  using is_subform_implies_in_positions by auto
+
 text \<open>Inference rule R$'$:\<close>
 
-definition rule_R'_side_condition :: "form set \<Rightarrow> position \<Rightarrow> form \<Rightarrow> form \<Rightarrow> form \<Rightarrow> bool" where
+definition rule_R'_side_condition :: "'c form set \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "rule_R'_side_condition \<H> p D C E \<longleftrightarrow>
-    capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at p C \<H> = {}"
+    capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at_set p C \<H> = {}"
 
 lemma rule_R'_side_condition_alt_def:
-  fixes \<H> :: "form set"
+  fixes \<H> :: "'c::dom_consts form set"
   assumes "C \<in> wffs\<^bsub>\<alpha>\<^esub>"
   shows "
     rule_R'_side_condition \<H> p D C (A =\<^bsub>\<alpha>\<^esub> B)
@@ -511,15 +536,15 @@ proof -
     {(x, \<beta>) | x \<beta> p' E. strict_prefix p' p \<and> \<lambda>x\<^bsub>\<beta>\<^esub>. E \<preceq>\<^bsub>p'\<^esub> C \<and> (x, \<beta>) \<in> free_vars (A =\<^bsub>\<alpha>\<^esub> B)}"
     using assms and capture_exposed_vars_at_alt_def unfolding capture_exposed_vars_at_def by fast
   moreover have "
-    capture_exposed_vars_at p C \<H>
+    capture_exposed_vars_at_set p C \<H>
     =
-    {(x, \<beta>) | x \<beta> p' E. strict_prefix p' p \<and> \<lambda>x\<^bsub>\<beta>\<^esub>. E \<preceq>\<^bsub>p'\<^esub> C \<and> (x, \<beta>) \<in> free_vars \<H>}"
-    using assms and capture_exposed_vars_at_alt_def unfolding capture_exposed_vars_at_def by fast
+    {(x, \<beta>) | x \<beta> p' E. strict_prefix p' p \<and> \<lambda>x\<^bsub>\<beta>\<^esub>. E \<preceq>\<^bsub>p'\<^esub> C \<and> (x, \<beta>) \<in> free_vars_form_set \<H>}"
+    using assms and capture_exposed_vars_at_alt_def unfolding capture_exposed_vars_at_set_def by fast
   ultimately have "
-    capture_exposed_vars_at p C (A =\<^bsub>\<alpha>\<^esub> B) \<inter> capture_exposed_vars_at p C \<H>
+    capture_exposed_vars_at p C (A =\<^bsub>\<alpha>\<^esub> B) \<inter> capture_exposed_vars_at_set p C \<H>
     =
     {(x, \<beta>) | x \<beta> p' E. strict_prefix p' p \<and> \<lambda>x\<^bsub>\<beta>\<^esub>. E \<preceq>\<^bsub>p'\<^esub> C \<and> (x, \<beta>) \<in> free_vars (A =\<^bsub>\<alpha>\<^esub> B) \<and>
-      (x, \<beta>) \<in> free_vars \<H>}"
+      (x, \<beta>) \<in> free_vars_form_set \<H>}"
     by auto
   also have "
     \<dots>
@@ -531,7 +556,7 @@ proof -
     by fast
 qed
 
-definition is_rule_R'_app :: "form set \<Rightarrow> position \<Rightarrow> form \<Rightarrow> form \<Rightarrow> form \<Rightarrow> bool" where
+definition is_rule_R'_app :: "'c::dom_consts form set \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_rule_R'_app \<H> p D C E \<longleftrightarrow> is_rule_R_app p D C E \<and> rule_R'_side_condition \<H> p D C E"
 
 lemma is_rule_R'_app_alt_def:
@@ -559,10 +584,10 @@ lemma rule_R'_preserves_typing:
   using assms and replacement_preserves_typing unfolding is_rule_R_app_def and is_rule_R'_app_def
   by meson
 
-abbreviation is_hyps :: "form set \<Rightarrow> bool" where
+abbreviation is_hyps :: "'c form set \<Rightarrow> bool" where
   "is_hyps \<H> \<equiv> \<H> \<subseteq> wffs\<^bsub>o\<^esub> \<and> finite \<H>"
 
-inductive is_derivable_from_hyps :: "form set \<Rightarrow> form \<Rightarrow> bool" (\<open>_ \<turnstile> _\<close> [50, 50] 50) for \<H> where
+inductive is_derivable_from_hyps :: "'c::dom_consts form set \<Rightarrow> 'c form \<Rightarrow> bool" (\<open>_ \<turnstile> _\<close> [50, 50] 50) for \<H> where
   dv_hyp: "\<H> \<turnstile> A" if "A \<in> \<H>" and "is_hyps \<H>"
 | dv_thm: "\<H> \<turnstile> A" if "is_theorem A" and "is_hyps \<H>"
 | dv_rule_R': "\<H> \<turnstile> D" if "\<H> \<turnstile> C" and "\<H> \<turnstile> E" and "is_rule_R'_app \<H> p D C E" and "is_hyps \<H>"
@@ -572,15 +597,15 @@ lemma hyp_derivable_form_is_wffso:
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms and theorem_is_wffo by (cases rule: is_derivable_from_hyps.cases) auto
 
-definition is_hyp_proof_step :: "form set \<Rightarrow> form list \<Rightarrow> form list \<Rightarrow> nat \<Rightarrow> bool" where
+definition is_hyp_proof_step :: "'c::dom_consts form set \<Rightarrow> 'c form list \<Rightarrow> 'c form list \<Rightarrow> nat \<Rightarrow> bool" where
   [iff]: "is_hyp_proof_step \<H> \<S>\<^sub>1 \<S>\<^sub>2 i' \<longleftrightarrow>
     \<S>\<^sub>2 ! i' \<in> \<H> \<or>
     \<S>\<^sub>2 ! i' \<in> lset \<S>\<^sub>1 \<or>
     (\<exists>p j k. {j, k} \<subseteq> {0..<i'} \<and> is_rule_R'_app \<H> p (\<S>\<^sub>2 ! i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k))"
 
-type_synonym hyp_proof = "form list \<times> form list"
+type_synonym 'c hyp_proof = "'c form list \<times> 'c form list"
 
-definition is_hyp_proof :: "form set \<Rightarrow> form list \<Rightarrow> form list \<Rightarrow> bool" where
+definition is_hyp_proof :: "'c::dom_consts form set \<Rightarrow> 'c form list \<Rightarrow> 'c form list \<Rightarrow> bool" where
   [iff]: "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<longleftrightarrow> (\<forall>i' < length \<S>\<^sub>2. is_hyp_proof_step \<H> \<S>\<^sub>1 \<S>\<^sub>2 i')"
 
 lemma common_prefix_is_hyp_subproof_from:
@@ -641,7 +666,8 @@ lemma added_suffix_hyp_proof_preservation:
   assumes "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2"
   and "i' < length (\<S>\<^sub>2 @ \<S>\<^sub>2') - length \<S>\<^sub>2'"
   shows "is_hyp_proof_step \<H> \<S>\<^sub>1 (\<S>\<^sub>2 @ \<S>\<^sub>2') i'"
-  using assms and common_prefix_is_hyp_subproof_from[where \<S>\<^sub>2' = "[]"] by auto
+  using assms and common_prefix_is_hyp_subproof_from[where \<S>\<^sub>2' = "[]"] 
+  by (metis add_diff_cancel_right' append.right_neutral length_append)
 
 lemma appended_hyp_proof_step_is_hyp_proof:
   assumes "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2"
@@ -728,8 +754,10 @@ lemma hyp_proof_but_last_is_hyp_proof:
 lemma hyp_proof_prefix_is_hyp_proof:
   assumes "is_hyp_proof \<H> \<S>\<^sub>1 (\<S>\<^sub>2 @ \<S>\<^sub>2')"
   shows "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2"
-  using assms and hyp_proof_but_last_is_hyp_proof
-  by (induction \<S>\<^sub>2' arbitrary: \<S>\<^sub>2 rule: rev_induct) (simp, metis append.assoc)
+  using assms
+  apply (induction \<S>\<^sub>2' arbitrary: \<S>\<^sub>2 rule: rev_induct)
+  using hyp_proof_but_last_is_hyp_proof
+  by (simp, metis append.assoc)
 
 lemma single_hyp_is_hyp_proof:
   assumes "A \<in> \<H>"
@@ -861,7 +889,7 @@ proof (standard, intro allI impI)
   proof cases
     case a
     with assms(1) show ?thesis
-      using added_suffix_hyp_proof_preservation by auto
+      by (metis append.right_neutral common_prefix_is_hyp_subproof_from)
   next
     case b
     let ?i\<^sub>D = "length \<S>"
@@ -881,7 +909,7 @@ proof (standard, intro allI impI)
   qed
 qed
 
-definition is_hyp_proof_of :: "form set \<Rightarrow> form list \<Rightarrow> form list \<Rightarrow> form \<Rightarrow> bool" where
+definition is_hyp_proof_of :: "'c::dom_consts form set \<Rightarrow> 'c form list \<Rightarrow> 'c form list \<Rightarrow> 'c form \<Rightarrow> bool" where
   [iff]: "is_hyp_proof_of \<H> \<S>\<^sub>1 \<S>\<^sub>2 A \<longleftrightarrow>
     is_hyps \<H> \<and>
     is_proof \<S>\<^sub>1 \<and>
@@ -943,7 +971,7 @@ next
     by (fact hyp_proofs_from_concatenation_is_hyp_proof)
   ultimately have "is_hyp_proof \<H> (\<S>\<^sub>C' @ \<S>\<^sub>E') ((\<S>\<^sub>C @ \<S>\<^sub>E) @ [D])"
     using rule_R'_app_appended_to_hyp_proof_is_hyp_proof
-    by presburger
+    by metis
   moreover from \<open>is_proof \<S>\<^sub>C'\<close> and \<open>is_proof \<S>\<^sub>E'\<close> have "is_proof (\<S>\<^sub>C' @ \<S>\<^sub>E')"
     by (fact proofs_concatenation_is_proof)
   ultimately have "is_hyp_proof_of \<H> (\<S>\<^sub>C' @ \<S>\<^sub>E') ((\<S>\<^sub>C @ \<S>\<^sub>E) @ [D]) D"
@@ -1044,11 +1072,13 @@ proof
     from \<open>is_rule_R'_app {} p D C E\<close> have "is_rule_R_app p D C E"
       by simp
     moreover from \<open>is_theorem C\<close> and \<open>is_theorem E\<close> have "is_derivable C" and "is_derivable E"
-      using theoremhood_derivability_equivalence by (simp_all only:)
+      using theoremhood_derivability_equivalence 
+      by auto
     ultimately have "is_derivable D"
       by (fastforce intro: dv_rule_R)
     then show ?case
-      using theoremhood_derivability_equivalence by (simp only:)
+      using theoremhood_derivability_equivalence 
+      by metis
   qed simp
 next
   assume "is_theorem A"
@@ -1062,13 +1092,15 @@ abbreviation is_derivable_from_no_hyps (\<open>\<turnstile> _\<close> [50] 50) w
 corollary derivability_implies_hyp_derivability:
   assumes "\<turnstile> A" and "is_hyps \<H>"
   shows "\<H> \<turnstile> A"
-  using assms and derivability_from_no_hyps_theoremhood_equivalence and dv_thm by simp
+  using assms and derivability_from_no_hyps_theoremhood_equivalence and dv_thm 
+  by metis
 
 lemma axiom_is_derivable_from_no_hyps:
   assumes "A \<in> axioms"
   shows "\<turnstile> A"
   using derivability_from_no_hyps_theoremhood_equivalence
-  and derivable_form_is_theorem[OF dv_axiom[OF assms]] by (simp only:)
+  and derivable_form_is_theorem[OF dv_axiom[OF assms]]
+  by metis
 
 lemma axiom_is_derivable_from_hyps:
   assumes "A \<in> axioms" and "is_hyps \<H>"
@@ -1082,7 +1114,8 @@ lemma rule_R [consumes 2, case_names occ_subform replacement]:
 proof -
   from assms(1,2) have "is_derivable C" and "is_derivable (A =\<^bsub>\<alpha>\<^esub> B)"
     using derivability_from_no_hyps_theoremhood_equivalence
-    and theoremhood_derivability_equivalence by blast+
+    and theoremhood_derivability_equivalence
+    by metis+
   moreover have "is_rule_R_app p D C (A =\<^bsub>\<alpha>\<^esub> B)"
   proof -
     from assms(1-4) have "D \<in> wffs\<^bsub>o\<^esub>" and "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<alpha>\<^esub>"
@@ -1093,7 +1126,8 @@ proof -
   ultimately have "is_derivable D"
     by (rule dv_rule_R)
   then show ?thesis
-    using derivability_from_no_hyps_theoremhood_equivalence and derivable_form_is_theorem by simp
+    using derivability_from_no_hyps_theoremhood_equivalence and derivable_form_is_theorem 
+    by metis
 qed
 
 lemma rule_R' [consumes 2, case_names occ_subform replacement no_capture]:
