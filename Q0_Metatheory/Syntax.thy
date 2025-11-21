@@ -127,7 +127,7 @@ datatype 'd form =
   FVar \<open>'d var\<close>
 | FCon \<open>'d con\<close>
 | FQ type
-| FIota
+| FIota ("\<iota>")
 | FApp \<open>'d form\<close> \<open>'d form\<close> (infixl \<open>\<sqdot>\<close> 200)
 | FAbs \<open>'d var\<close> \<open>'d form\<close>
 
@@ -1908,7 +1908,7 @@ abbreviation (input) \<cc>\<^sub>\<iota> where "\<cc>\<^sub>\<iota> \<equiv> Suc
 context dom_consts
 begin
 
-definition Q_constant_of_type :: "type \<Rightarrow> 'a con" where
+(* definition Q_constant_of_type :: "type \<Rightarrow> 'a con" where
   [simp]: "Q_constant_of_type \<alpha> = (\<cc>\<^sub>Q, \<alpha>\<rightarrow>\<alpha>\<rightarrow>o)"
 
 definition iota_constant :: "'a con" where
@@ -1937,26 +1937,26 @@ lemma constant_cases[case_names non_logical Q_constant \<iota>_constant, cases t
   and "\<And>\<beta>. is_Q_constant_of_type p \<beta> \<Longrightarrow> P"
   and "is_iota_constant p \<Longrightarrow> P"
   shows "P"
-  using assms by blast
+  using assms by blast *)
 
 end
 
 subsection \<open>Definitions and abbreviations\<close>
 
 definition equality_of_type :: "'a::dom_consts form \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(_ =\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
-  [simp]: "A =\<^bsub>\<alpha>\<^esub> B = Q\<^bsub>\<alpha>\<^esub> \<sqdot> A \<sqdot> B"
+  [simp]: "A =\<^bsub>\<alpha>\<^esub> B = FQ \<alpha> \<sqdot> A \<sqdot> B"
 
 definition equivalence :: "'a::dom_consts form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<equiv>\<^sup>\<Q>\<close> 102) where
   [simp]: "A \<equiv>\<^sup>\<Q> B = A =\<^bsub>o\<^esub> B" \<comment> \<open>more modular than the definition in \<^cite>\<open>"andrews:2002"\<close>\<close>
 
 definition true :: "'a::dom_consts form" (\<open>T\<^bsub>o\<^esub>\<close>) where
-  [simp]: "T\<^bsub>o\<^esub> = Q\<^bsub>o\<^esub> =\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> Q\<^bsub>o\<^esub>"
+  [simp]: "T\<^bsub>o\<^esub> = FQ o =\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> FQ o"
 
 definition false :: "'a::dom_consts form" (\<open>F\<^bsub>o\<^esub>\<close>) where
   [simp]: "F\<^bsub>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. T\<^bsub>o\<^esub> =\<^bsub>o\<rightarrow>o\<^esub> \<lambda>\<xx>\<^bsub>o\<^esub>. \<xx>\<^bsub>o\<^esub>"
 
 definition PI :: "type \<Rightarrow> 'a::dom_consts form" (\<open>\<Prod>\<^bsub>_\<^esub>\<close>) where
-  [simp]: "\<Prod>\<^bsub>\<alpha>\<^esub> = Q\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. T\<^bsub>o\<^esub>)"
+  [simp]: "\<Prod>\<^bsub>\<alpha>\<^esub> = FQ (\<alpha>\<rightarrow>o) \<sqdot> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. T\<^bsub>o\<^esub>)"
 
 definition forall :: "'a::dom_consts \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(4\<forall>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
   [simp]: "\<forall>x\<^bsub>\<alpha>\<^esub>. A = \<Prod>\<^bsub>\<alpha>\<^esub> \<sqdot> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
@@ -2044,7 +2044,7 @@ text \<open>
 \<close>
 
 definition neg :: "'a::dom_consts form \<Rightarrow> 'a form" (\<open>\<sim>\<^sup>\<Q> _\<close> [141] 141) where
-  [simp]: "\<sim>\<^sup>\<Q> A = Q\<^bsub>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A"
+  [simp]: "\<sim>\<^sup>\<Q> A = FQ o \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A"
 
 definition disj_fun :: "'a::dom_consts form" (\<open>\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
   [simp]: "\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. \<lambda>\<yy>\<^bsub>o\<^esub>. \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> \<yy>\<^bsub>o\<^esub>)"
@@ -2067,6 +2067,8 @@ subsection \<open>Well-formed formulas\<close>
 inductive is_wff_of_type :: "type \<Rightarrow> 'a form \<Rightarrow> bool" where
   var_is_wff: "is_wff_of_type \<alpha> (x\<^bsub>\<alpha>\<^esub>)"
 | con_is_wff: "is_wff_of_type \<alpha> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+| FQ_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) (FQ \<alpha>)"
+| FIota_is_wff: "is_wff_of_type ((i\<rightarrow>o)\<rightarrow>i) \<iota>"
 | app_is_wff: "is_wff_of_type \<beta> (A \<sqdot> B)" if "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) A" and "is_wff_of_type \<alpha> B"
 | abs_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)" if "is_wff_of_type \<beta> A"
 
@@ -2139,11 +2141,11 @@ next
   ultimately show ?case by (simp only:)
 qed
 
-lemma Q_wff [intro]:
-  shows "Q\<^bsub>\<alpha>\<^esub> \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<alpha>\<rightarrow>o\<^esub>"
+lemma Q_wff:
+  shows "FQ \<alpha> \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<alpha>\<rightarrow>o\<^esub>"
   by auto
 
-lemma iota_wff [intro]:
+lemma iota_wff:
   shows "\<iota> \<in> wffs\<^bsub>(i\<rightarrow>o)\<rightarrow>i\<^esub>"
   by auto
 
@@ -2350,12 +2352,11 @@ next
 next
   case (FQ x)
   then show ?case
-    by (metis form.distinct(11,21,23,3) wffs_of_type_simps)
+    by (metis form.distinct(11,19,21,23,3) form.inject(3) wffs_of_type_cases)
 next
   case FIota
   then show ?case 
-(* Derived "False" from these facts alone: FIota.prems(1) form.distinct(13) form.distinct(25) form.distinct(27) form.distinct(5) wffs_of_type_cases wffs_of_type_def *)
-    using wffs_of_type_cases by force
+    by (metis form.distinct(14,19,25,27,6) wffs_of_type_simps)    
 next
   case (FApp A B)
   from FApp.prems obtain \<alpha>' and \<beta>' where "A \<in> wffs\<^bsub>\<alpha>'\<rightarrow>\<alpha>\<^esub>" and "A \<in> wffs\<^bsub>\<beta>'\<rightarrow>\<beta>\<^esub>"
@@ -2407,13 +2408,15 @@ qed
 lemma is_free_for_in_equality [intro]:
   assumes "is_free_for A v B" and "is_free_for A v C"
   shows "is_free_for A v (B =\<^bsub>\<alpha>\<^esub> C)"
-  using assms unfolding equality_of_type_def and Q_def and Q_constant_of_type_def
+  using assms unfolding equality_of_type_def
   by (intro is_free_for_to_app is_free_for_in_con)
+    (meson free_vars.simps(3) is_free_for_closed_form)+
 
 lemma is_free_for_in_equivalence [intro]:
   assumes "is_free_for A v B" and "is_free_for A v C"
   shows "is_free_for A v (B \<equiv>\<^sup>\<Q> C)"
-  using assms unfolding equivalence_def by (rule is_free_for_in_equality)
+  using assms unfolding equivalence_def 
+  by (rule is_free_for_in_equality)
 
 lemma is_free_for_in_true [intro]:
   shows "is_free_for A v (T\<^bsub>o\<^esub>)"
@@ -2487,8 +2490,9 @@ qed
 lemma is_free_for_in_neg [intro]:
   assumes "is_free_for A v B"
   shows "is_free_for A v (\<sim>\<^sup>\<Q> B)"
-  using assms unfolding neg_def and Q_def and Q_constant_of_type_def
+  using assms unfolding neg_def 
   by (intro is_free_for_to_app is_free_for_in_false is_free_for_in_con)
+    (meson free_vars.simps(3) is_free_for_closed_form)+
 
 lemma is_free_for_in_disj [intro]:
   assumes "is_free_for A v B" and "is_free_for A v C"
@@ -3843,6 +3847,16 @@ next
     using occurs_at_alt_def(2) 
     by force
 next
+  case (FQ_is_wff \<alpha>)
+  then show ?case
+    using is_subform_implies_in_positions 
+    by fastforce
+next
+  case FIota_is_wff
+  then show ?case 
+    using is_subform_implies_in_positions 
+    by fastforce
+next
   case (app_is_wff \<alpha> \<beta> A B)
   then show ?case
   proof (cases p)
@@ -3910,6 +3924,16 @@ next
   then show ?case
     using occurs_at_alt_def(2) 
     by (metis rename_bound_var.simps(2))
+next
+  case (FQ_is_wff \<alpha>)
+  then show ?case
+    using is_subform_implies_in_positions 
+    by fastforce
+next
+  case FIota_is_wff
+  then show ?case 
+    using is_subform_implies_in_positions 
+    by fastforce
 next
   case (app_is_wff \<alpha> \<beta> B C)
   from app_is_wff.prems(1) have "(z, \<gamma>) \<notin> vars B" and "(z, \<gamma>) \<notin> vars C"
