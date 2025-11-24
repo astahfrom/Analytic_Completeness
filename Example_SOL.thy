@@ -255,16 +255,16 @@ fun \<delta> :: \<open>'f fm \<Rightarrow> 'f \<Rightarrow> 'f fm list\<close> w
 | CAll2FN: \<open>\<delta> ( \<^bold>\<not> \<^bold>\<forall>\<^sub>F p ) x = [ \<^bold>\<not> \<langle>\<^bold>\<circle>\<^sub>2 x/0\<rangle>\<^sub>F p ]\<close>
 | NOMATCH: \<open>\<delta> _ _ = []\<close>
 
-interpretation P: Params map_fm params_fm
+interpretation P: Params map_fm params_fm \<open>\<lambda>_. True\<close>
   by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
 
-interpretation C: Confl map_fm params_fm confl_class
+interpretation C: Confl map_fm params_fm \<open>\<lambda>_. True\<close> confl_class
   by unfold_locales (auto elim!: confl_class.cases intro: confl_class.intros)
 
-interpretation A: Alpha map_fm params_fm alpha_class
+interpretation A: Alpha map_fm params_fm \<open>\<lambda>_. True\<close> alpha_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros)
 
-interpretation B: Beta map_fm params_fm beta_class
+interpretation B: Beta map_fm params_fm \<open>\<lambda>_. True\<close> beta_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros)
 
 lemma map_tm_inst_tm [simp]:
@@ -295,16 +295,16 @@ lemma map_tm_inst_fn [simp]: \<open>map_tm f (\<llangle>t/m\<rrangle>\<^sub>F s)
 lemma psub_inst_single'' [simp]: \<open>map_fm f (\<langle>t/m\<rangle>\<^sub>F p) = \<langle>map_sym f t/m\<rangle>\<^sub>F(map_fm f p)\<close>
   by (induct p arbitrary: t m) simp_all
 
-interpretation G: Gamma_UNIV map_tm map_fm params_fm gamma_class
+interpretation G: Gamma_UNIV map_tm map_fm params_fm \<open>\<lambda>_. True\<close> gamma_class
   by unfold_locales (fastforce elim: gamma_class.cases intro: gamma_class.intros)+
 
-interpretation G\<^sub>P: Gamma_UNIV map_sym map_fm params_fm gamma_class_P
+interpretation G\<^sub>P: Gamma_UNIV map_sym map_fm params_fm \<open>\<lambda>_. True\<close> gamma_class_P
   by unfold_locales (fastforce elim: gamma_class_P.cases intro: gamma_class_P.intros)+
 
-interpretation G\<^sub>F: Gamma_UNIV map_sym map_fm params_fm gamma_class_F
+interpretation G\<^sub>F: Gamma_UNIV map_sym map_fm params_fm \<open>\<lambda>_. True\<close> gamma_class_F
   by unfold_locales (fastforce elim: gamma_class_F.cases intro: gamma_class_F.intros)+
 
-interpretation D: Delta map_fm params_fm \<delta>
+interpretation D: Delta map_fm params_fm \<open>\<lambda>_. True\<close> \<delta>
 proof
   show \<open>\<And>f. \<delta> (map_fm f p) (f x) = map (map_fm f) (\<delta> p x)\<close> for p :: \<open>'x fm\<close> and x
     by (induct p x rule: \<delta>.induct) simp_all
@@ -318,13 +318,13 @@ lemma prop\<^sub>E_Kinds:
   shows \<open>prop\<^sub>E Kinds C\<close>
   unfolding prop\<^sub>E_def using assms by simp
 
-interpretation Consistency_Kinds map_fm params_fm Kinds
+interpretation Consistency_Kinds map_fm params_fm \<open>\<lambda>_. True\<close> Kinds
   using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     G.Consistency_Kind_axioms G\<^sub>P.Consistency_Kind_axioms G\<^sub>F.Consistency_Kind_axioms
     D.Consistency_Kind_axioms
   by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
-interpretation Maximal_Consistency map_fm params_fm Kinds
+interpretation Maximal_Consistency map_fm params_fm \<open>\<lambda>_. True\<close> Kinds
 proof
   show \<open>infinite (UNIV :: 'x fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
@@ -385,7 +385,7 @@ lemma canonical_hfun:
        (\<^bold>#, henv\<^sub>F\<langle>0:hfun f\<rangle>, henv\<^sub>P S, \<^bold>\<star>, hfun, hpred S, hdom\<^sub>P S, hdom\<^sub>F) \<Turnstile> p\<close>
   by (metis semantics_fn.simps(2))
 
-locale MyHintikka = Hintikka map_fm params_fm Kinds S for S :: \<open>'x fm set\<close>
+locale MyHintikka = Hintikka map_fm params_fm \<open>\<lambda>_. True\<close> Kinds S for S :: \<open>'x fm set\<close>
 begin
 
 lemmas
@@ -768,7 +768,7 @@ lemma imply_weaken: \<open>ps \<turnstile> q \<Longrightarrow> set ps \<subseteq
 
 section \<open>Derivational Consistency\<close>
 
-interpretation DC: Weak_Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DC: Weak_Derivational_Confl map_fm params_fm \<open>\<lambda>_. True\<close> confl_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   fix A ps qs and q :: \<open>'x fm\<close>
   assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> set A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> set A\<close>
@@ -776,7 +776,7 @@ proof
     by cases (simp, metis MP' empty_set equals0D imply_head imply_mem imply_weaken set_ConsD)
 qed
 
-interpretation DA: Weak_Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DA: Weak_Derivational_Alpha map_fm params_fm \<open>\<lambda>_. True\<close> alpha_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (standard; safe)
   fix A and ps qs :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs @ A \<turnstile> \<^bold>\<bottom>\<close>
@@ -793,7 +793,7 @@ proof (standard; safe)
   qed
 qed
 
-interpretation DB: Weak_Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DB: Weak_Derivational_Beta map_fm params_fm \<open>\<lambda>_. True\<close> beta_class \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   fix A and ps qs :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close>
@@ -806,7 +806,7 @@ proof
   qed
 qed
 
-interpretation DG: Weak_Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG: Weak_Derivational_Gamma map_tm map_fm params_fm \<open>\<lambda>_. True\<close> G.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
@@ -819,7 +819,7 @@ proof (unfold_locales; safe)
   qed
 qed
 
-interpretation DG\<^sub>P: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG\<^sub>P: Weak_Derivational_Gamma map_sym map_fm params_fm \<open>\<lambda>_. True\<close> G\<^sub>P.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
@@ -832,7 +832,7 @@ proof (unfold_locales; safe)
   qed
 qed
 
-interpretation DG\<^sub>F: Weak_Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DG\<^sub>F: Weak_Derivational_Gamma map_sym map_fm params_fm \<open>\<lambda>_. True\<close> G\<^sub>F.classify_UNIV \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> set A\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>qs t @ A \<turnstile> \<^bold>\<bottom>\<close>
@@ -848,7 +848,7 @@ qed
 lemma imply_params_fm: \<open>params_fm (ps \<^bold>\<leadsto> q) = params_fm q \<union> (\<Union>p \<in> set ps. params_fm p)\<close>
   by (induct ps) auto
 
-interpretation DD: Weak_Derivational_Delta map_fm params_fm \<delta> \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation DD: Weak_Derivational_Delta map_fm params_fm \<open>\<lambda>_. True\<close> \<delta> \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof (standard; safe)
   fix A a and p :: \<open>'x fm\<close>
   assume \<open>p \<in> set A\<close> \<open>a \<notin> P.params (set A)\<close> \<open>\<not> A \<turnstile> \<^bold>\<bottom>\<close> \<open>\<delta> p a @ A \<turnstile> \<^bold>\<bottom>\<close>
@@ -886,7 +886,7 @@ proof (standard; safe)
   qed simp_all
 qed
 
-interpretation Weak_Derivational_Consistency map_fm params_fm Kinds \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
+interpretation Weak_Derivational_Consistency map_fm params_fm \<open>\<lambda>_. True\<close> Kinds \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
   then show \<open>prop\<^sub>E Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
@@ -916,8 +916,8 @@ proof (rule ccontr)
   moreover have \<open>?S \<in> ?C\<close>
     using * by blast
   moreover have \<open>P.enough_new ?S\<close>
-    using assms(2) unfolding P.enough_new_def
-    by (metis UN_insert finite_params_fm inf_univ infinite_left list.simps(15))
+    using assms(2) P.infinite_params_left unfolding P.enough_new_def
+    by (metis Set_Diff_Un UN_Un card_of_diff inf_univ ordLeq_transitive)
   ultimately have *: \<open>\<forall>p \<in> ?S. ?M \<Turnstile> p\<close>
     using model_existence by blast 
   then have \<open>?M \<Turnstile> p\<close>
@@ -1002,7 +1002,7 @@ subsection \<open>Derivational Consistency\<close>
 lemma Boole: \<open>{\<^bold>\<not> p} \<union> A \<tturnstile> \<^bold>\<bottom> \<Longrightarrow> A \<tturnstile> p\<close>
   using Clas FlsE by blast
 
-sublocale DC: Derivational_Confl map_fm params_fm confl_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DC: Derivational_Confl map_fm params_fm \<open>\<lambda>_. True\<close> confl_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof
   fix A ps qs and q :: \<open>'x fm\<close>
   assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> \<open>set ps \<subseteq> A\<close> \<open>q \<in> set qs\<close> \<open>q \<in> A\<close>
@@ -1010,7 +1010,7 @@ proof
     by cases auto
 qed
 
-sublocale DA: Derivational_Alpha map_fm params_fm alpha_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DA: Derivational_Alpha map_fm params_fm \<open>\<lambda>_. True\<close> alpha_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (standard; safe)
   fix A and ps qs :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set qs \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
@@ -1026,7 +1026,7 @@ proof (standard; safe)
   qed
 qed
 
-sublocale DB: Derivational_Beta map_fm params_fm beta_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DB: Derivational_Beta map_fm params_fm \<open>\<lambda>_. True\<close> beta_class \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof
   fix A and ps qs :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close>
@@ -1039,7 +1039,7 @@ proof
   qed
 qed
 
-sublocale DG: Derivational_Gamma map_tm map_fm params_fm G.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DG: Derivational_Gamma map_tm map_fm params_fm \<open>\<lambda>_. True\<close> G.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<gamma> qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
@@ -1051,7 +1051,7 @@ proof (unfold_locales; safe)
   qed
 qed
 
-sublocale DGP: Derivational_Gamma map_sym map_fm params_fm G\<^sub>P.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DGP: Derivational_Gamma map_sym map_fm params_fm \<open>\<lambda>_. True\<close> G\<^sub>P.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>P qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
@@ -1063,7 +1063,7 @@ proof (unfold_locales; safe)
   qed
 qed
 
-sublocale DGF: Derivational_Gamma map_sym map_fm params_fm G\<^sub>F.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DGF: Derivational_Gamma map_sym map_fm params_fm \<open>\<lambda>_. True\<close> G\<^sub>F.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (unfold_locales; safe)
   fix A qs t and ps :: \<open>'x fm list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<gamma>\<^sub>F qs\<close> and *: \<open>set ps \<subseteq> A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close> \<open>set (qs t) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
@@ -1075,7 +1075,7 @@ proof (unfold_locales; safe)
   qed
 qed
 
-sublocale DD: Derivational_Delta map_fm params_fm \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale DD: Derivational_Delta map_fm params_fm \<open>\<lambda>_. True\<close> \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
 proof (standard; safe)
   fix A a and p :: \<open>'x fm\<close>
   assume \<open>p \<in> A\<close> \<open>a \<notin> P.params A\<close> \<open>\<not> A \<tturnstile> \<^bold>\<bottom>\<close>  \<open>set (\<delta> p a) \<union> A \<tturnstile> \<^bold>\<bottom>\<close>
@@ -1107,7 +1107,7 @@ proof (standard; safe)
   qed simp_all
 qed
 
-sublocale Derivational_Consistency map_fm params_fm Kinds \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
+sublocale Derivational_Consistency map_fm params_fm \<open>\<lambda>_. True\<close> Kinds \<open>\<lambda>A. \<not> A \<tturnstile> \<^bold>\<bottom>\<close>
   using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DGP.kind DGF.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
