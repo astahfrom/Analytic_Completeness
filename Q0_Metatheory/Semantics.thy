@@ -98,7 +98,7 @@ definition is_unique_member_selector :: "V \<Rightarrow> bool" where
 
 text \<open>Assignment:\<close>
 
-definition is_assignment :: "(var \<Rightarrow> V) \<Rightarrow> bool" where
+definition is_assignment :: "('a var \<Rightarrow> V) \<Rightarrow> bool" where
   [iff]: "is_assignment \<phi> \<longleftrightarrow> (\<forall>x \<alpha>. \<phi> (x, \<alpha>) \<in> elts (\<D> \<alpha>))"
 
 end
@@ -114,7 +114,7 @@ text \<open>
   \<open>v\<close>:
 \<close>
 
-definition is_variant_of :: "(var \<Rightarrow> V) \<Rightarrow> var \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> bool" (\<open>_ \<sim>\<^bsub>_\<^esub> _\<close> [51, 0, 51] 50) where
+definition is_variant_of :: "('a var \<Rightarrow> V) \<Rightarrow> 'a var \<Rightarrow> ('a var \<Rightarrow> V) \<Rightarrow> bool" (\<open>_ \<sim>\<^bsub>_\<^esub> _\<close> [51, 0, 51] 50) where
   [iff]: "\<psi> \<sim>\<^bsub>v\<^esub> \<phi> \<longleftrightarrow> (\<forall>v'. v' \<noteq> v \<longrightarrow> \<psi> v' = \<phi> v')"
 
 subsection \<open>Pre-models (interpretations)\<close>
@@ -122,7 +122,7 @@ subsection \<open>Pre-models (interpretations)\<close>
 text \<open>We use the term ``pre-model'' instead of ``interpretation'' since the latter is already a keyword:\<close>
 
 locale premodel = frame +
-  fixes \<J> :: "con \<Rightarrow> V"
+  fixes \<J> :: "'a con \<Rightarrow> V"
   assumes Q_denotation: "\<forall>\<alpha>. \<J> (Q_constant_of_type \<alpha>) = q\<^bsub>\<alpha>\<^esub>"
   and \<iota>_denotation: "is_unique_member_selector (\<J> iota_constant)"
   and non_logical_constant_denotation: "\<forall>c \<alpha>. \<not> is_logical_constant (c, \<alpha>) \<longrightarrow> \<J> (c, \<alpha>) \<in> elts (\<D> \<alpha>)"
@@ -130,13 +130,15 @@ begin
 
 text \<open>Wff denotation function:\<close>
 
-definition is_wff_denotation_function :: "((var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V) \<Rightarrow> bool" where
+definition is_wff_denotation_function :: "(('a var \<Rightarrow> V) \<Rightarrow> 'a form \<Rightarrow> V) \<Rightarrow> bool" where
   [iff]: "is_wff_denotation_function \<V> \<longleftrightarrow>
     (
       \<forall>\<phi>. is_assignment \<phi> \<longrightarrow>
         (\<forall>A \<alpha>. A \<in> wffs\<^bsub>\<alpha>\<^esub> \<longrightarrow> \<V> \<phi> A \<in> elts (\<D> \<alpha>)) \<and> \<comment> \<open>closure condition, see note in page 186\<close>
         (\<forall>x \<alpha>. \<V> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)) \<and>
         (\<forall>c \<alpha>. \<V> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<J> (c, \<alpha>)) \<and>
+        (\<forall>\<alpha>. \<V> \<phi> (FQ \<alpha>) = q\<^bsub>\<alpha>\<^esub>) \<and>
+        is_unique_member_selector (\<V> \<phi> FIota) \<and>
         (\<forall>A B \<alpha> \<beta>. A \<in> wffs\<^bsub>\<beta>\<rightarrow>\<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<beta>\<^esub> \<longrightarrow> \<V> \<phi> (A \<sqdot> B) = (\<V> \<phi> A) \<bullet> (\<V> \<phi> B)) \<and>
         (\<forall>x B \<alpha> \<beta>. B \<in> wffs\<^bsub>\<beta>\<^esub> \<longrightarrow> \<V> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z \<^bold>: \<D> \<alpha>\<^bold>. \<V> (\<phi>((x, \<alpha>) := z)) B))
     )"
@@ -157,8 +159,9 @@ lemma wff_var_denotation:
 lemma wff_Q_denotation:
   assumes "is_wff_denotation_function \<V>"
   and "is_assignment \<phi>"
-  shows "\<V> \<phi> (Q\<^bsub>\<alpha>\<^esub>) = q\<^bsub>\<alpha>\<^esub>"
-  using assms and Q_denotation by force
+  shows "\<V> \<phi> (FQ \<alpha>) = q\<^bsub>\<alpha>\<^esub>"
+  using assms and Q_denotation
+  by force
 
 lemma wff_iota_denotation:
   assumes "is_wff_denotation_function \<V>"
@@ -169,7 +172,6 @@ lemma wff_iota_denotation:
 lemma wff_non_logical_constant_denotation:
   assumes "is_wff_denotation_function \<V>"
   and "is_assignment \<phi>"
-  and "\<not> is_logical_constant (c, \<alpha>)"
   shows "\<V> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<J> (c, \<alpha>)"
   using assms by auto
 
@@ -223,6 +225,14 @@ proof -
     also have "\<dots> = \<V>' \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
       by (fact wff_abs_denotation[OF assms(2) abs_is_wff.prems abs_is_wff.hyps, symmetric])
     finally show ?case .
+  next
+    case (FQ_is_wff \<alpha> \<beta>)
+    thus ?case
+      by (metis assms(1,2) wff_Q_denotation)
+  next
+    case (FIota_is_wff)
+    thus ?case
+      sorry
   qed
 qed
 

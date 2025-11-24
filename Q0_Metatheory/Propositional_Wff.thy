@@ -8,7 +8,7 @@ begin
 
 subsection \<open>Syntax\<close>
 
-inductive_set pwffs :: "form set" where
+inductive_set pwffs :: "('a::dom_consts) form set" where
   T_pwff: "T\<^bsub>o\<^esub> \<in> pwffs"
 | F_pwff: "F\<^bsub>o\<^esub> \<in> pwffs"
 | var_pwff: "p\<^bsub>o\<^esub> \<in> pwffs"
@@ -240,7 +240,7 @@ subsection \<open>Semantics\<close>
 
 text \<open>Assignment of truth values to propositional variables:\<close>
 
-definition is_tv_assignment :: "(nat \<Rightarrow> V) \<Rightarrow> bool" where
+definition is_tv_assignment :: "('a \<Rightarrow> V) \<Rightarrow> bool" where
   [iff]: "is_tv_assignment \<phi> \<longleftrightarrow> (\<forall>p. \<phi> p \<in> elts \<bool>)"
 
 text \<open>Denotation of a pwff:\<close>
@@ -535,8 +535,8 @@ lemma \<V>\<^sub>B_graph_is_functional:
   shows "\<exists>!b. \<V>\<^sub>B_graph \<phi> A b"
   using assms and \<V>\<^sub>B_graph_denotation_existence and \<V>\<^sub>B_graph_denotation_uniqueness by blast
 
-definition \<V>\<^sub>B :: "(nat \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V" where
-  [simp]: "\<V>\<^sub>B \<phi> A = (THE b. \<V>\<^sub>B_graph \<phi> A b)"
+definition \<V>\<^sub>B :: "('a::dom_consts \<Rightarrow> V) \<Rightarrow> 'a form \<Rightarrow> V" where
+  "\<V>\<^sub>B \<phi> A = (THE b. \<V>\<^sub>B_graph \<phi> A b)"
 
 lemma \<V>\<^sub>B_equality:
   assumes "A \<in> pwffs"
@@ -643,11 +643,13 @@ declare pwffs.intros [\<V>\<^sub>B_simps]
 
 lemma pwff_denotation_function_existence:
   shows "is_pwff_denotation_function \<V>\<^sub>B"
-  using \<V>\<^sub>B_simps by simp
+  unfolding is_pwff_denotation_function_def
+  by (intro allI impI conjI \<V>\<^sub>B_simps; simp)
+
 
 text \<open>Tautologies:\<close>
 
-definition is_tautology :: "form \<Rightarrow> bool" where
+definition is_tautology :: "'a::dom_consts form \<Rightarrow> bool" where
   [iff]: "is_tautology A \<longleftrightarrow> A \<in> pwffs \<and> (\<forall>\<phi>. is_tv_assignment \<phi> \<longrightarrow> \<V>\<^sub>B \<phi> A = \<^bold>T)"
 
 lemma tautology_is_wffo:
@@ -657,11 +659,15 @@ lemma tautology_is_wffo:
 
 lemma propositional_implication_reflexivity_is_tautology:
   shows "is_tautology (p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)"
-  using \<V>\<^sub>B_simps by simp
+  unfolding is_tautology_def
+  by (intro allI impI conjI \<V>\<^sub>B_simps)
+    (subst \<V>\<^sub>B_imp, auto)
 
 lemma propositional_principle_of_simplification_is_tautology:
   shows "is_tautology (p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> (r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>))"
-  using \<V>\<^sub>B_simps by simp
+  unfolding is_tautology_def
+  apply (intro allI impI conjI \<V>\<^sub>B_simps)
+  by (subst \<V>\<^sub>B_imp[rotated]; blast?)+ simp
 
 lemma closed_pwff_denotation_uniqueness:
   assumes "A \<in> pwffs" and "free_vars A = {}"
@@ -690,31 +696,38 @@ using assms(2) proof induction
 next
   case F_pwff
   then show ?case
-    using pwffs.F_pwff by simp
+    using pwffs.F_pwff
+    by force
 next
   case (var_pwff p)
   from assms(1) show ?case
-    using pwffs.var_pwff by simp
+    using pwffs.var_pwff
+    by fastforce
 next
   case (neg_pwff A)
   then show ?case
-    using pwff_substitution_simps(4) and pwffs.neg_pwff by simp
+    using pwff_substitution_simps(4) and pwffs.neg_pwff
+    by fastforce
 next
   case (conj_pwff A B)
   then show ?case
-    using pwff_substitution_simps(5) and pwffs.conj_pwff by simp
+    using pwff_substitution_simps(5) and pwffs.conj_pwff
+    by force
 next
   case (disj_pwff A B)
   then show ?case
-    using pwff_substitution_simps(6) and pwffs.disj_pwff by simp
+    using pwff_substitution_simps(6) and pwffs.disj_pwff
+    by force
 next
   case (imp_pwff A B)
   then show ?case
-    using pwff_substitution_simps(7) and pwffs.imp_pwff by simp
+    using pwff_substitution_simps(7) and pwffs.imp_pwff
+    by force
 next
   case (eqv_pwff A B)
   then show ?case
-    using pwff_substitution_simps(8) and pwffs.eqv_pwff by simp
+    using pwff_substitution_simps(8) and pwffs.eqv_pwff
+    by force
 qed
 
 lemma pwff_substitution_denotation:
@@ -725,7 +738,47 @@ proof -
   from assms(1,3) have "is_tv_assignment (\<phi>(p := \<V>\<^sub>B \<phi> A))"
     using \<V>\<^sub>B_graph_denotation_is_truth_value[OF \<V>\<^sub>B_graph_\<V>\<^sub>B] by simp
   with assms(2,1,3) show ?thesis
-    using \<V>\<^sub>B_simps and pwff_substitution_in_pwffs by induction auto
+  proof induction
+    case T_pwff
+    then show ?case 
+      by (simp only: derived_substitution_simps)
+        (smt (verit, ccfv_threshold) T_fv pwffs.T_pwff
+          closed_pwff_denotation_uniqueness)
+  next
+    case F_pwff
+    then show ?case 
+      by (simp only: derived_substitution_simps)
+        (smt (verit, best) \<V>\<^sub>B_F)
+  next
+    case (var_pwff p)
+    then show ?case 
+      by (simp add: \<V>\<^sub>B_var)
+  next
+    case (neg_pwff A)
+    then show ?case 
+      by (simp only: derived_substitution_simps)
+        (smt (z3) \<V>\<^sub>B_neg pwff_substitution_in_pwffs)
+  next
+    case (conj_pwff A B)
+    then show ?case 
+      by (simp only: derived_substitution_simps)
+        (smt (z3) \<V>\<^sub>B_conj pwff_substitution_in_pwffs)
+  next
+    case (disj_pwff A B)
+    then show ?case 
+      by (simp only: derived_substitution_simps)
+        (smt (z3) \<V>\<^sub>B_disj pwff_substitution_in_pwffs)
+  next
+    case (imp_pwff A B)
+    then show ?case 
+      by (simp only: derived_substitution_simps)
+        (smt (z3) \<V>\<^sub>B_imp pwff_substitution_in_pwffs)
+  next
+    case (eqv_pwff A B)
+    then show ?case 
+      by (simp only: derived_substitution_simps)
+        (smt (z3) \<V>\<^sub>B_eqv pwff_substitution_in_pwffs)
+  qed
 qed
 
 lemma pwff_substitution_tautology_preservation:
@@ -736,7 +789,7 @@ proof (safe, fold is_tv_assignment_def)
   from assms(1,2) show "\<^bold>S {(p, o) \<Zinj> A} B \<in> pwffs"
     using pwff_substitution_in_pwffs by blast
 next
-  fix \<phi>
+  fix \<phi> :: "'a \<Rightarrow> V"
   assume "is_tv_assignment \<phi>"
   with assms(1,2) have "\<V>\<^sub>B \<phi> (\<^bold>S {(p, o) \<Zinj> A} B) = \<V>\<^sub>B (\<phi>(p := \<V>\<^sub>B \<phi> A)) B"
     using pwff_substitution_denotation by blast
@@ -756,7 +809,7 @@ lemma closed_pwff_substitution_free_vars:
 using assms(2,4) proof induction
   case (conj_pwff C D)
   have "free_vars (\<^bold>S ?\<theta> (C \<and>\<^sup>\<Q> D)) = free_vars ((\<^bold>S ?\<theta> C) \<and>\<^sup>\<Q> (\<^bold>S ?\<theta> D))"
-    by simp
+    by (metis pwff_substitution_simps(5))
   also have "\<dots> = free_vars (\<^bold>S ?\<theta> C) \<union> free_vars (\<^bold>S ?\<theta> D)"
     by (fact conj_fv)
   finally have *: "free_vars (\<^bold>S ?\<theta> (C \<and>\<^sup>\<Q> D)) = free_vars (\<^bold>S ?\<theta> C) \<union> free_vars (\<^bold>S ?\<theta> D)" .
@@ -766,11 +819,12 @@ using assms(2,4) proof induction
   | (c) "(p, o) \<notin> free_vars C" and "(p, o) \<in> free_vars D"
     by auto
   from this and * and conj_pwff.IH show ?case
-    using free_var_singleton_substitution_neutrality by cases auto
+    using free_var_singleton_substitution_neutrality
+    by (cases; force?)
 next
   case (disj_pwff C D)
   have "free_vars (\<^bold>S ?\<theta> (C \<or>\<^sup>\<Q> D)) = free_vars ((\<^bold>S ?\<theta> C) \<or>\<^sup>\<Q> (\<^bold>S ?\<theta> D))"
-    by simp
+    by auto
   also have "\<dots> = free_vars (\<^bold>S ?\<theta> C) \<union> free_vars (\<^bold>S ?\<theta> D)"
     by (fact disj_fv)
   finally have *: "free_vars (\<^bold>S ?\<theta> (C \<or>\<^sup>\<Q> D)) = free_vars (\<^bold>S ?\<theta> C) \<union> free_vars (\<^bold>S ?\<theta> D)" .
@@ -780,11 +834,12 @@ next
   | (c) "(p, o) \<notin> free_vars C" and "(p, o) \<in> free_vars D"
     by auto
   from this and * and disj_pwff.IH show ?case
-    using free_var_singleton_substitution_neutrality by cases auto
+    using free_var_singleton_substitution_neutrality 
+    by (cases; force?)
 next
   case (imp_pwff C D)
   have "free_vars (\<^bold>S ?\<theta> (C \<supset>\<^sup>\<Q> D)) = free_vars ((\<^bold>S ?\<theta> C) \<supset>\<^sup>\<Q> (\<^bold>S ?\<theta> D))"
-    by simp
+    by auto
   also have "\<dots> = free_vars (\<^bold>S ?\<theta> C) \<union> free_vars (\<^bold>S ?\<theta> D)"
     by (fact imp_fv)
   finally have *: "free_vars (\<^bold>S ?\<theta> (C \<supset>\<^sup>\<Q> D)) = free_vars (\<^bold>S ?\<theta> C) \<union> free_vars (\<^bold>S ?\<theta> D)" .
@@ -794,7 +849,8 @@ next
   | (c) "(p, o) \<notin> free_vars C" and "(p, o) \<in> free_vars D"
     by auto
   from this and * and imp_pwff.IH show ?case
-    using free_var_singleton_substitution_neutrality by cases auto
+    using free_var_singleton_substitution_neutrality 
+    by (cases; force?)
 next
   case (eqv_pwff C D)
   have "free_vars (\<^bold>S ?\<theta> (C \<equiv>\<^sup>\<Q> D)) = free_vars ((\<^bold>S ?\<theta> C) \<equiv>\<^sup>\<Q> (\<^bold>S ?\<theta> D))"
@@ -808,7 +864,8 @@ next
   | (c) "(p, o) \<notin> free_vars C" and "(p, o) \<in> free_vars D"
     by auto
   from this and * and eqv_pwff.IH show ?case
-    using free_var_singleton_substitution_neutrality by cases auto
+    using free_var_singleton_substitution_neutrality 
+    by (cases; force?)
 qed (use assms(3) in \<open>force+\<close>)
 
 text \<open>Substitution in a pwff:\<close>
@@ -818,13 +875,14 @@ definition is_pwff_substitution where
 
 text \<open>Tautologous pwff:\<close>
 
-definition is_tautologous :: "form \<Rightarrow> bool" where
+definition is_tautologous :: "'a::dom_consts form \<Rightarrow> bool" where
   [iff]: "is_tautologous B \<longleftrightarrow> (\<exists>\<theta> A. is_tautology A \<and> is_pwff_substitution \<theta> \<and> B = \<^bold>S \<theta> A)"
 
 lemma tautologous_is_wffo:
   assumes "is_tautologous A"
   shows "A \<in> wffs\<^bsub>o\<^esub>"
-  using assms and substitution_preserves_typing and tautology_is_wffo by blast
+  using assms and substitution_preserves_typing and tautology_is_wffo
+  by auto
 
 lemma implication_reflexivity_is_tautologous:
   assumes "A \<in> wffs\<^bsub>o\<^esub>"
@@ -838,7 +896,7 @@ proof -
   moreover have "A \<supset>\<^sup>\<Q> A = \<^bold>S ?\<theta> (\<xx>\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub>)"
     by simp
   ultimately show ?thesis
-    by blast
+    by (metis is_tautologous_def)
 qed
 
 lemma principle_of_simplification_is_tautologous:
@@ -852,8 +910,9 @@ proof -
     using assms by auto
   moreover have "A \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> A) = \<^bold>S ?\<theta> (\<xx>\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> (\<yy>\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub>))"
     by simp
+      (metis different_consts(1))
   ultimately show ?thesis
-    by blast
+    by (metis is_tautologous_def)
 qed
 
 lemma pseudo_modus_tollens_is_tautologous:
@@ -862,13 +921,17 @@ lemma pseudo_modus_tollens_is_tautologous:
 proof -
   let ?\<theta> = "{(\<xx>, o) \<Zinj> A, (\<yy>, o) \<Zinj> B}"
   have "is_tautology ((\<xx>\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> \<yy>\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> (\<yy>\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub>))"
-    using \<V>\<^sub>B_simps by (safe, fold is_tv_assignment_def, simp only:) simp
+    apply safe
+    apply (fold is_tv_assignment_def)
+    apply ((subst \<V>\<^sub>B_simps)+; blast?)+
+    by (simp add: boolean_algebra_simps(17) implication_def)
   moreover have "is_pwff_substitution ?\<theta>"
     using assms by auto
   moreover have "(A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A) = \<^bold>S ?\<theta> ((\<xx>\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> \<yy>\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> (\<yy>\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub>))"
     by simp
+      (metis different_consts(1))
   ultimately show ?thesis
-    by blast
+    by (metis is_tautologous_def)
 qed
 
 end

@@ -31,7 +31,7 @@ where
 | axiom_4_5:
     "(\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>"
 | axiom_5:
-    "\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub> \<in> axioms"
+    "\<iota> \<sqdot> (FQ i \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub> \<in> axioms"
 
 lemma axioms_are_wffs_of_type_o:
   shows "axioms \<subseteq> wffs\<^bsub>o\<^esub>"
