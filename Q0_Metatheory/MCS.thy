@@ -28,6 +28,8 @@ inductive gamma_class :: \<open>form list \<Rightarrow> (form set \<Rightarrow> 
 inductive delta_match :: \<open>form \<Rightarrow> type \<times> form \<Rightarrow> bool\<close> where
   \<open>delta_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)) (\<alpha>, A)\<close>
 
+inductive_cases delta_matchE: \<open>delta_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)) (\<alpha>', A')\<close>
+
 lemma delta_match_uniq: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match A (\<alpha>', B') \<Longrightarrow> \<alpha> = \<alpha>' \<and> B = B'\<close>
   by (auto elim!: delta_match.cases)
 
@@ -46,6 +48,8 @@ section \<open>Operations\<close>
 
 abbreviation \<open>is_logical_name c \<equiv> c = \<cc>\<^sub>Q \<or> c = \<cc>\<^sub>\<iota>\<close>
 
+abbreviation \<open>is_param c \<equiv> \<not> is_logical_name c\<close>
+
 fun map_con :: "(nat \<Rightarrow> nat) \<Rightarrow> form \<Rightarrow> form" where
   "map_con _ (x\<^bsub>\<alpha>\<^esub>) = (x\<^bsub>\<alpha>\<^esub>)"
 | "map_con f (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = (if is_logical_name c then \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> else \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
@@ -57,7 +61,6 @@ fun cons_form :: "form \<Rightarrow> nat set" where
 | "cons_form (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = (if is_logical_name c then {} else {c})"
 | "cons_form (A \<sqdot> B) = cons_form A \<union> cons_form B"
 | "cons_form (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = cons_form A"
-
 
 section \<open>Lemmas\<close>
 
@@ -108,34 +111,25 @@ lemma delta_match [dest]: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> \
 
 section \<open>Interpretations\<close>
 
-interpretation P: Params map_con cons_form
+interpretation P: Params map_con cons_form is_param
   by unfold_locales simp_all
 
-interpretation C: Confl map_con cons_form confl_class
+interpretation C: Confl map_con cons_form is_param confl_class
   by unfold_locales (fastforce elim!: confl_class.cases simp: confl_class.simps)
 
-interpretation A: Alpha map_con cons_form alpha_class
+interpretation A: Alpha map_con cons_form is_param alpha_class
   by unfold_locales (auto elim!: alpha_class.cases simp: alpha_class.simps)
 
-interpretation B: Beta map_con cons_form beta_class
+interpretation B: Beta map_con cons_form is_param beta_class
   by unfold_locales (auto elim!: beta_class.cases simp: beta_class.simps)
 
-interpretation G: Gamma map_con map_con cons_form gamma_class
+interpretation G: Gamma map_con map_con cons_form is_param gamma_class
   by unfold_locales (auto elim!: gamma_class.cases simp: gamma_class.simps)
 
-interpretation D: Delta map_con cons_form \<delta>
+interpretation D: Delta map_con cons_form is_param \<delta>
 proof
   fix p x
-  have \<open>\<exists>q. x \<in> cons_form q\<close>
-    sorry (* Can we promise this from the point of view of Delta? *)
-  then obtain q where \<open>x \<in> cons_form q\<close>
-    by blast
-  then have \<open>\<not> is_logical_name x\<close>
-    apply (induct q)
-       apply fastforce
-      apply (metis cons_form.elims empty_iff form.distinct(7,9) singletonD)
-     apply auto
-    done
+  assume x: \<open>is_param x\<close>
   then show \<open>\<And>f. \<delta> (map_con f p) (f x) = map (map_con f) (\<delta> p x)\<close>
   proof (induct p x rule: \<delta>.induct)
     case (1 A c)
@@ -146,10 +140,8 @@ proof
         by (auto elim: delta_match.cases)
       then have *: \<open>\<delta> A c = [ \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         by (metis (no_types, lifting) MCS.CDelta case_prod_conv delta_match.intros delta_match_THE delta_match_uniq surj_pair)
-      moreover have CRUCIAL: \<open>\<not> is_logical_name c\<close>
-        using 1 by blast
-      ultimately have \<open>map (map_con f) (\<delta> A c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        by simp
+      then have \<open>map (map_con f) (\<delta> A c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        using 1 by simp
       moreover have \<open>\<delta> (map_con f A) (f c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         using * A MCS.CDelta
         by (smt (verit, ccfv_SIG) case_prod_conv delta_match.cases delta_match.intros delta_match_THE delta_match_uniq map_con_delta_match)
@@ -174,12 +166,12 @@ lemma prop\<^sub>E_Kinds:
   shows \<open>prop\<^sub>E Kinds C\<close>
   unfolding prop\<^sub>E_def using assms by simp
 
-interpretation Consistency_Kinds map_con cons_form Kinds
+interpretation Consistency_Kinds map_con cons_form is_param Kinds
   using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     G.Consistency_Kind_axioms D.Consistency_Kind_axioms
   by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
-interpretation Maximal_Consistency map_con cons_form Kinds
+interpretation Maximal_Consistency map_con cons_form is_param Kinds
 proof
  have \<open>infinite (UNIV :: form set)\<close>
    using infinite_UNIV_size[of \<open>\<lambda>A. A \<sqdot> A\<close>] by simp

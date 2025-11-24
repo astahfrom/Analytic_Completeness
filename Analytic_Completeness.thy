@@ -176,6 +176,7 @@ section \<open>Locale\<close>
 locale Params =
   fixes map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close>
     and params_fm :: \<open>'fm \<Rightarrow> 'x set\<close>
+    and is_param :: \<open>'x \<Rightarrow> bool\<close>
   assumes map_fm_id: \<open>map_fm id = id\<close>
     and finite_params_fm [simp]: \<open>\<And>p. finite (params_fm p)\<close>
     and map_params_fm: \<open>\<And>f g p. (\<forall>x \<in> params_fm p. f x = g x) \<Longrightarrow> map_fm f p = map_fm g p\<close>
@@ -215,20 +216,28 @@ qed
 abbreviation params :: \<open>'fm set \<Rightarrow> 'x set\<close> where
   \<open>params S \<equiv> \<Union>p \<in> S. params_fm p\<close>
 
-lemma infinite_params: \<open>infinite (- params B) \<Longrightarrow> infinite (- params (set ps \<union> B))\<close>
-  using infinite_diff_finite finite_params_fm by (metis List.finite_set UN_Un finite_UN_I)
+lemma infinite_params: \<open>infinite (U - params B) \<Longrightarrow> infinite (U - params (set ps \<union> B))\<close>
+  using finite_params_fm by (metis List.finite_set UN_Un finite_UN_I infinite_Diff_fin_Un)
 
-lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |- params S| \<Longrightarrow> |A| \<le>o |- params (set ps \<union> S)|\<close>
-  using infinite_left by (metis List.finite_set UN_Un finite_UN_I finite_params_fm)
+lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |U - params S| \<Longrightarrow> |A| \<le>o |U - params (set ps \<union> S)|\<close>
+  (* TODO: smt *)
+  by (smt (verit, best) List.finite_set SUP_union Set_Diff_Un card_of_infinite_diff_finite
+      card_of_ordLeq_infinite finite_UN finite_params_fm ordIso_iff_ordLeq ordLeq_transitive
+      sup_commute)
 
 definition enough_new :: \<open>'fm set \<Rightarrow> bool\<close> where
-  \<open>enough_new S \<equiv> |UNIV :: 'fm set| \<le>o |- params S|\<close>
+  \<open>enough_new S \<equiv> |UNIV :: 'fm set| \<le>o |Collect is_param - params S|\<close>
 
 lemma enough_new_countable:
-  assumes \<open>\<exists>to_nat :: 'fm \<Rightarrow> nat. inj to_nat\<close> \<open>infinite (- params S)\<close>
+  assumes \<open>\<exists>to_nat :: 'fm \<Rightarrow> nat. inj to_nat\<close> \<open>infinite (Collect is_param - params S)\<close>
   shows \<open>enough_new S\<close>
   unfolding enough_new_def using assms
   by (meson UNIV_I card_of_ordLeqI infinite_iff_card_of_nat ordLeq_transitive)
+
+lemma enough_new_all_param:
+  assumes \<open>|UNIV :: 'fm set| \<le>o |UNIV - params S|\<close> \<open>\<And>x. is_param x\<close>
+  shows \<open>enough_new S\<close>
+  unfolding enough_new_def using assms by (simp add: Collect_cong)
 
 end
 
@@ -245,7 +254,7 @@ inductive_cases sat\<^sub>E_WitsE[elim!]: \<open>sat\<^sub>E (Wits W) C\<close>
 
 inductive (in Params) sat\<^sub>A :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   sat\<^sub>A_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> sat\<^sub>A (Cond P H) C\<close>
-| sat\<^sub>A_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> sat\<^sub>A (Wits W) C\<close>
+| sat\<^sub>A_Wits [intro!]: \<open>(\<And>S p x. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> is_param x \<Longrightarrow> set (W p x) \<union> S \<in> C) \<Longrightarrow> sat\<^sub>A (Wits W) C\<close>
 
 inductive_cases (in Params) sat\<^sub>A_CondE[elim!]: \<open>sat\<^sub>A (Cond P H) C\<close>
 inductive_cases (in Params) sat\<^sub>A_WitsE[elim!]: \<open>sat\<^sub>A (Wits W) C\<close>
@@ -269,10 +278,11 @@ definition prop\<^sub>H :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Ri
 theorem sat\<^sub>H_Wits: \<open>sat\<^sub>E (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
   unfolding maximal_def by fast
 
-locale Consistency_Kind = Params map_fm params_fm
+locale Consistency_Kind = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes K :: \<open>('x, 'fm) kind\<close>
   assumes respects_close: \<open>\<And>C. sat\<^sub>E K C \<Longrightarrow> sat\<^sub>E K (close C)\<close>
     and respects_alt: \<open>\<And>C. sat\<^sub>E K C \<Longrightarrow> subset_closed C \<Longrightarrow> sat\<^sub>A K (mk_alt_consistency C)\<close>
@@ -281,12 +291,13 @@ locale Consistency_Kind = Params map_fm params_fm
 
 subsection \<open>Consistency Property\<close>
 
-locale Consistency_Kinds = Params map_fm params_fm
+locale Consistency_Kinds = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes Ks :: \<open>('x, 'fm) kind list\<close>
-  assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Kind map_fm params_fm K\<close>
+  assumes all_kinds: \<open>\<And>K. K \<in> set Ks \<Longrightarrow> Consistency_Kind map_fm params_fm is_param K\<close>
 begin
 
 lemma sat\<^sub>E: \<open>K \<in> set Ks \<Longrightarrow> prop\<^sub>E Ks C \<Longrightarrow> sat\<^sub>E K C\<close>
@@ -326,16 +337,17 @@ fun (in Params) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<
 | \<open>witness_kinds (Wits W # Ks) p S =
   (let
     rest = witness_kinds Ks p S;
-    a = SOME x. x \<notin> params (rest \<union> {p} \<union> S)
+    a = SOME x. x \<notin> params (rest \<union> {p} \<union> S) \<and> is_param x
    in set (W p a) \<union> rest)\<close>
 
 lemma (in Params) witness_kinds: \<open>Wits W \<in> set Ks \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> witness_kinds Ks p S\<close>
   by (induct Ks p S rule: witness_kinds.induct) (auto simp add: Let_def)
 
-locale Maximal_Consistency = wo_rel \<open>|UNIV| :: 'fm rel\<close> + Consistency_Kinds map_fm params_fm Ks
+locale Maximal_Consistency = wo_rel \<open>|UNIV| :: 'fm rel\<close> + Consistency_Kinds map_fm params_fm is_param Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> +
   assumes inf_univ: \<open>infinite (UNIV :: 'fm set)\<close>
 begin
@@ -467,7 +479,7 @@ lemma is_chain_extend: \<open>is_chain (extend C S)\<close>
 
 lemma extend_in_C_step:
   assumes \<open>prop\<^sub>A Ks C\<close> \<open>{a} \<union> extend C S a \<in> C\<close>
-    and inf: \<open>infinite (UNIV - params ({a} \<union> extend C S a))\<close>
+    and inf: \<open>infinite (Collect is_param - params ({a} \<union> extend C S a))\<close>
   shows \<open>extend C S (succ a) \<in> C\<close>
 proof -
   have \<open>set Qs \<subseteq> set Ks \<Longrightarrow> witness_kinds Qs a (extend C S a) \<union> {a} \<union> extend C S a \<in> C\<close> for Qs
@@ -490,18 +502,19 @@ proof -
     proof (cases Q)
       case (Wits W)
 
-      have \<open>infinite (UNIV - params (?rest \<union> {a} \<union> ?S))\<close>
+      have \<open>infinite (Collect is_param - params (?rest \<union> {a} \<union> ?S))\<close>
         using finite_witness_kinds_params inf by (metis UN_Un Un_assoc infinite_Diff_fin_Un)
-      then have \<open>\<exists>x. x \<notin> params (?rest \<union> {a} \<union> ?S)\<close>
-        by (metis diff_shunt finite.simps subset_eq)
+      then have \<open>\<exists>x. x \<notin> params (?rest \<union> {a} \<union> ?S) \<and> is_param x\<close>
+        by (metis diff_shunt finite.emptyI mem_Collect_eq subsetI)
       then obtain x where x:
-        \<open>(SOME x. x \<notin> params (?rest \<union> {a} \<union> ?S)) = x\<close>
+        \<open>(SOME x. x \<notin> params (?rest \<union> {a} \<union> ?S) \<and> is_param x) = x\<close>
         \<open>x \<notin> params (?rest \<union> {a} \<union> ?S)\<close>
-        by (meson someI_ex)
+        \<open>is_param x\<close>
+        by (metis (no_types, lifting) someI_ex)
 
       have \<open>a \<in> ?rest \<union> {a} \<union> ?S\<close>
         by simp
-      then have \<open>\<forall>x. x \<notin> params (?rest \<union> {a} \<union> ?S) \<longrightarrow> set (W a x) \<union> ?rest \<union> {a} \<union> ?S \<in> C\<close>
+      then have \<open>\<forall>x. x \<notin> params (?rest \<union> {a} \<union> ?S) \<longrightarrow> is_param x \<longrightarrow> set (W a x) \<union> ?rest \<union> {a} \<union> ?S \<in> C\<close>
         using assms(1) * Q Wits unfolding prop\<^sub>A_def Un_assoc by fast
       then have \<open>set (W a x) \<union> ?rest \<union> {a} \<union> ?S \<in> C\<close>
         using x by fast
@@ -561,25 +574,25 @@ next
     then show ?thesis
       using * ordLeq_ordLess_trans by blast
   qed
-  then have \<open>|?X| <o |- params S|\<close>
+  then have \<open>|?X| <o |Collect is_param - params S|\<close>
     using Suc(6) ordLess_ordLeq_trans unfolding enough_new_def by blast
-  moreover have \<open>infinite (- params S)\<close>
+  moreover have \<open>infinite (Collect is_param - params S)\<close>
     using Suc(6) Cinfinite_r unfolding cinfinite_def enough_new_def
     by (metis Field_card_of ordLeq_finite_Field)
-  ultimately have \<open>|- params S - ?X| =o |- params S|\<close>
+  ultimately have \<open>|Collect is_param - params S - ?X| =o |Collect is_param - params S|\<close>
     using card_of_Un_diff_infinite by blast
-  moreover from this have \<open>infinite (- params S - ?X)\<close>
-    using \<open>infinite (- params S)\<close> card_of_ordIso_finite by blast
+  moreover from this have \<open>infinite (Collect is_param - params S - ?X)\<close>
+    using \<open>infinite (Collect is_param - params S)\<close> card_of_ordIso_finite by blast
   moreover have \<open>\<And>a. a \<in> params (extend C S i) \<Longrightarrow> a \<in> params S \<or> a \<in> ?X\<close>
     using params_origin by simp
   then have \<open>params (extend C S i) \<subseteq> params S \<union> ?X\<close>
     by fast
-  ultimately have \<open>infinite (- params (extend C S i))\<close>
-    using infinite_Diff_subset by (metis (no_types, lifting) Compl_eq_Diff_UNIV Set_Diff_Un)
-  then have \<open>infinite (- params ({i} \<union> extend C S i))\<close>
+  ultimately have \<open>infinite (Collect is_param - params (extend C S i))\<close>
+    using infinite_Diff_subset by (metis (no_types, lifting) Set_Diff_Un)
+  then have \<open>infinite (Collect is_param - params ({i} \<union> extend C S i))\<close>
     using finite_params_fm by (simp add: Compl_eq_Diff_UNIV infinite_Diff_fin_Un)
   then show ?case
-    using Suc extend_in_C_step extend_in_C_stop succ_in[of i] by (metis Compl_eq_Diff_UNIV)
+    using Suc extend_in_C_step extend_in_C_stop succ_in[of i] by blast
 next
   case (Lim i)
   show ?case
@@ -711,10 +724,11 @@ qed
 
 end
 
-locale Hintikka = Maximal_Consistency map_fm params_fm Ks
+locale Hintikka = Maximal_Consistency map_fm params_fm is_param Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes H :: \<open>'fm set\<close>
   assumes hintikka: \<open>prop\<^sub>H Ks H\<close>
@@ -730,25 +744,27 @@ begin
 
 theorem mk_mcs_Hintikka:
   assumes \<open>prop\<^sub>E Ks C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
-  shows \<open>Hintikka map_fm params_fm Ks (mk_mcs C S)\<close>
+  shows \<open>Hintikka map_fm params_fm is_param Ks (mk_mcs C S)\<close>
   using assms mk_mcs_hintikka by unfold_locales
 
 end
 
 section \<open>Derivational Consistency\<close>
 
-locale Derivational_Kind = Consistency_Kind map_fm params_fm K
+locale Derivational_Kind = Consistency_Kind map_fm params_fm is_param K
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes kind: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> sat\<^sub>E K {A. enough_new A \<and> \<turnstile> A}\<close>
 
-locale Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks
+locale Derivational_Consistency = Maximal_Consistency map_fm params_fm is_param Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes all_consistent: \<open>infinite (UNIV :: 'fm set) \<Longrightarrow> prop\<^sub>E Ks {A. enough_new A \<and> \<turnstile> A}\<close>
@@ -761,18 +777,20 @@ end
 
 section \<open>Weak Derivational Consistency\<close>
 
-locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm K
+locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm is_param K
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> sat\<^sub>E K {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
 
-locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks
+locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm is_param Ks
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     Ks :: \<open>('x, 'fm) kind list\<close> +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes Consistency: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> prop\<^sub>E Ks {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
@@ -780,10 +798,11 @@ locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm Ks
 
 section \<open>Conflicts\<close>
 
-locale Confl = Params map_fm params_fm
+locale Confl = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50)
   assumes confl_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<crossmark> map (map_fm f) qs\<close>
 begin
@@ -803,7 +822,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Confl \<subseteq> Consistency_Kind map_fm params_fm kind
+sublocale Confl \<subseteq> Consistency_Kind map_fm params_fm is_param kind
 proof
   fix C
   assume conflC: \<open>sat\<^sub>E kind C\<close>
@@ -893,35 +912,38 @@ next
   qed
 qed
 
-locale Derivational_Confl = Confl map_fm params_fm classify
+locale Derivational_Confl = Confl map_fm params_fm is_param classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>S ps qs x. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> S \<Longrightarrow> \<not> \<turnstile> S\<close>
 
-sublocale Derivational_Confl \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+sublocale Derivational_Confl \<subseteq> Derivational_Kind map_fm params_fm is_param kind consistent
   using infinite_params_left consistent by unfold_locales blast+
 
 
-locale Weak_Derivational_Confl = Confl map_fm params_fm classify
+locale Weak_Derivational_Confl = Confl map_fm params_fm is_param classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>A ps qs x. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<crossmark> qs \<Longrightarrow> x \<in> set qs \<Longrightarrow> x \<in> set A \<Longrightarrow> \<not> \<turnstile> A\<close>
 
-sublocale Weak_Derivational_Confl \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
+sublocale Weak_Derivational_Confl \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
   using infinite_params_left consistent by unfold_locales blast+
 
 section \<open>Alpha\<close>
 
-locale Alpha = Params map_fm params_fm
+locale Alpha = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50)
   assumes alpha_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<alpha> qs \<longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<alpha> map (map_fm f) qs\<close>
 begin
@@ -941,7 +963,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Alpha \<subseteq> Consistency_Kind map_fm params_fm kind
+sublocale Alpha \<subseteq> Consistency_Kind map_fm params_fm is_param kind
 proof
   fix C
   assume alphaC: \<open>sat\<^sub>E kind C\<close>
@@ -1039,27 +1061,29 @@ next
   qed
 qed
 
-locale Derivational_Alpha = Alpha map_fm params_fm classify
+locale Derivational_Alpha = Alpha map_fm params_fm is_param classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set qs \<union> S\<close>
 
-sublocale Derivational_Alpha \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+sublocale Derivational_Alpha \<subseteq> Derivational_Kind map_fm params_fm is_param kind consistent
   using infinite_params_left consistent enough_new_def by unfold_locales blast+
 
 
-locale Weak_Derivational_Alpha = Alpha map_fm params_fm classify
+locale Weak_Derivational_Alpha = Alpha map_fm params_fm is_param classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<alpha> qs \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> qs @ A\<close>
 
-sublocale Weak_Derivational_Alpha \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
+sublocale Weak_Derivational_Alpha \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
 proof
   show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
@@ -1072,10 +1096,11 @@ qed
 
 section \<open>Beta\<close>
 
-locale Beta = Params map_fm params_fm
+locale Beta = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50)
   assumes beta_map: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<beta> qs \<longrightarrow> map (map_fm f) ps \<leadsto>\<^sub>\<beta> map (map_fm f) qs\<close>
 begin
@@ -1095,7 +1120,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Beta \<subseteq> Consistency_Kind map_fm params_fm kind
+sublocale Beta \<subseteq> Consistency_Kind map_fm params_fm is_param kind
 proof
   fix C
   assume betaC: \<open>sat\<^sub>E kind C\<close>
@@ -1197,15 +1222,16 @@ next
   qed
 qed
 
-locale Derivational_Beta = Beta map_fm params_fm classify
+locale Derivational_Beta = Beta map_fm params_fm is_param classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>S ps qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<exists>q \<in> set qs. \<turnstile> {q} \<union> S\<close>
 
-sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+sublocale Derivational_Beta \<subseteq> Derivational_Kind map_fm params_fm is_param kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
   then show \<open>sat\<^sub>E kind {A. enough_new A \<and> \<turnstile> A}\<close>
@@ -1221,15 +1247,16 @@ proof
   qed
 qed
 
-locale Weak_Derivational_Beta = Beta map_fm params_fm classify
+locale Weak_Derivational_Beta = Beta map_fm params_fm is_param classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>A ps qs. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<beta> qs \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<exists>q \<in> set qs. \<turnstile> q # A\<close>
 
-sublocale Weak_Derivational_Beta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
+sublocale Weak_Derivational_Beta \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
 proof
   show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
@@ -1244,11 +1271,12 @@ qed
 
 section \<open>Gamma\<close>
 
-locale Gamma = Params map_fm params_fm
+locale Gamma = Params map_fm params_fm is_param
   for
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50)
   assumes gamma_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> (\<exists>G rs. map (map_fm f) ps \<leadsto>\<^sub>\<gamma> (G, rs) \<and>
       (\<forall>S. map_tm f ` F S \<subseteq> G (map_fm f ` S)) \<and>
@@ -1272,7 +1300,7 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-sublocale Gamma \<subseteq> Consistency_Kind map_fm params_fm kind
+sublocale Gamma \<subseteq> Consistency_Kind map_fm params_fm is_param kind
 proof
   fix C
   assume gammaC: \<open>sat\<^sub>E kind C\<close>
@@ -1395,28 +1423,30 @@ next
   qed
 qed
 
-locale Derivational_Gamma = Gamma map_tm map_fm params_fm classify
+locale Derivational_Gamma = Gamma map_tm map_fm params_fm is_param classify
   for
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>S ps F qs t. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (qs t) \<union> S\<close>
 
-sublocale Derivational_Gamma \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+sublocale Derivational_Gamma \<subseteq> Derivational_Kind map_fm params_fm is_param kind consistent
   using infinite_params_left consistent enough_new_def by unfold_locales blast+
 
-locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm classify
+locale Weak_Derivational_Gamma = Gamma map_tm map_fm params_fm is_param classify
   for
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'tm set) \<times> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>A ps F qs t. set ps \<subseteq> set A \<Longrightarrow> ps \<leadsto>\<^sub>\<gamma> (F, qs) \<Longrightarrow> t \<in> F (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> qs t @ A\<close>
 
-sublocale Weak_Derivational_Gamma \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
+sublocale Weak_Derivational_Gamma \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
 proof
   show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
@@ -1427,11 +1457,12 @@ proof
   qed
 qed
 
-locale Gamma_UNIV = Params map_fm params_fm
+locale Gamma_UNIV = Params map_fm params_fm is_param
   for
     map_tm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'tm \<Rightarrow> 'tm\<close> and
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> ('tm \<Rightarrow> 'fm list) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>''\<close> 50)
   assumes gamma_map_UNIV: \<open>\<And>ps qs f. ps \<leadsto>\<^sub>\<gamma>' qs \<Longrightarrow> \<exists>rs. map (map_fm f) ps \<leadsto>\<^sub>\<gamma>' rs \<and>
       (\<forall>t. map (map_fm f) (qs t) = rs (map_tm f t))\<close>
@@ -1442,7 +1473,7 @@ abbreviation (input) classify_UNIV where
 
 end
 
-sublocale Gamma_UNIV \<subseteq> Gamma map_tm map_fm params_fm classify_UNIV
+sublocale Gamma_UNIV \<subseteq> Gamma map_tm map_fm params_fm is_param classify_UNIV
 proof
   show \<open>\<And>ps F qs f.
        (case (F, qs) of (F, qs) \<Rightarrow> F = (\<lambda>_. UNIV) \<and> ps \<leadsto>\<^sub>\<gamma>' qs) \<Longrightarrow>
@@ -1458,18 +1489,19 @@ qed
 
 section \<open>Delta\<close>
 
-locale Delta = Params map_fm params_fm
+locale Delta = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
-  assumes delta_map: \<open>\<And>p f x. \<delta> (map_fm f p) (f x) = map (map_fm f) (\<delta> p x)\<close>
+  assumes delta_map: \<open>\<And>p f x. is_param x \<Longrightarrow> \<delta> (map_fm f p) (f x) = map (map_fm f) (\<delta> p x)\<close>
 begin
 
 abbreviation \<open>kind \<equiv> Wits \<delta>\<close>
 end
 
-sublocale Delta \<subseteq> Consistency_Kind map_fm params_fm kind
+sublocale Delta \<subseteq> Consistency_Kind map_fm params_fm is_param kind
 proof
   fix C
   assume deltaC: \<open>sat\<^sub>E kind C\<close>
@@ -1508,7 +1540,7 @@ next
     then have *: \<open>map_fm f p \<in> ?S\<close>
       by auto
 
-    assume x: \<open>x \<notin> params S\<close>
+    assume x: \<open>x \<notin> params S\<close> \<open>is_param x\<close>
     obtain y where y: \<open>set (\<delta> (map_fm f p) y) \<union> ?S \<in> C\<close>
       using deltaC f * by blast
 
@@ -1524,7 +1556,7 @@ next
     moreover have \<open>set (\<delta> (map_fm f p) (?g x)) \<union> ?S \<in> C\<close>
       using y by simp
     ultimately have \<open>set (map (map_fm ?g) (\<delta> p x)) \<union> ?S \<in> C\<close>
-      using delta_map by metis
+      using delta_map x by metis
     then have \<open>\<exists>f. set (map (map_fm f) (\<delta> p x)) \<union> map_fm f ` S \<in> C\<close>
       using S by (metis image_cong)
     then show \<open>set (\<delta> p x) \<union> S \<in> ?C\<close>
@@ -1546,7 +1578,7 @@ next
     then have sc': \<open>\<And>S' x. x \<union> S' \<in> C \<Longrightarrow> \<forall>S \<subseteq> x \<union> S'. S \<in> C\<close>
       by blast
 
-    assume *: \<open>p \<in> S\<close> and x: \<open>x \<notin> params S\<close>
+    assume *: \<open>p \<in> S\<close> and x: \<open>x \<notin> params S\<close> \<open>is_param x\<close>
     show \<open>set (\<delta> p x) \<union> S \<in> mk_finite_char C\<close>
       unfolding mk_finite_char_def
     proof safe
@@ -1563,7 +1595,7 @@ next
       moreover have \<open>\<forall>a \<in> ?S'. x \<notin> params_fm a\<close>
         using x \<open>?S' \<subseteq> S\<close> by blast
       ultimately have \<open>set (\<delta> p x) \<union> ?S' \<in> C\<close>
-        using deltaAC by blast
+        using x deltaAC by blast
       then show \<open>S' \<in> C\<close>
         using sc by fast
     qed
@@ -1573,22 +1605,23 @@ next
     using sat\<^sub>H_Wits .
 qed
 
-locale Derivational_Delta = Delta map_fm params_fm \<delta>
+locale Derivational_Delta = Delta map_fm params_fm is_param \<delta>
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (\<delta> p x) \<union> S\<close>
 
-sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm is_param kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
   show \<open>sat\<^sub>E kind {A. enough_new A \<and> \<turnstile> A}\<close>
   proof safe
     fix S p
     assume *: \<open>p \<in> S\<close> \<open>enough_new S\<close> \<open>\<turnstile> S\<close>
-    then have \<open>infinite (- (params ({p} \<union> S)))\<close>
+    then have \<open>infinite (Collect is_param - (params ({p} \<union> S)))\<close>
       unfolding enough_new_def using card_of_ordLeq_finite inf by auto
     then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
       using infinite_imp_nonempty by blast
@@ -1599,15 +1632,16 @@ proof
   qed
 qed
 
-locale Weak_Derivational_Delta = Delta map_fm params_fm \<delta>
+locale Weak_Derivational_Delta = Delta map_fm params_fm is_param \<delta>
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> \<delta> p x @ A\<close>
 
-sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm kind consistent
+sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'x set)\<close>
   show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
@@ -1632,10 +1666,11 @@ text \<open>
   See Term-Modal Logics by Fitting, Thalmann and Voronkov, p. 156 bottom.
 \<close>
 
-locale Modal = Params map_fm params_fm
+locale Modal = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
-    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> +
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50)
     and hint :: \<open>'fm set \<Rightarrow> bool\<close>
   assumes modal_map: \<open>\<And>ps F qs f. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<exists>G. map (map_fm f) ps \<leadsto>\<^sub>\<box> (G, map (map_fm f) qs) \<and>
@@ -1654,15 +1689,16 @@ abbreviation kind :: \<open>('x, 'fm) kind\<close> where
 
 end
 
-locale ModalH = Modal map_fm params_fm classify hint
+locale ModalH = Modal map_fm params_fm is_param classify hint
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) and
     hint :: \<open>'fm set \<Rightarrow> bool\<close> +
   assumes modal_hintikka: \<open>\<And>C S. sat\<^sub>E kind C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H kind S\<close>
 
-sublocale ModalH \<subseteq> Consistency_Kind map_fm params_fm kind
+sublocale ModalH \<subseteq> Consistency_Kind map_fm params_fm is_param kind
 proof
   fix C
   assume modalC: \<open>sat\<^sub>E kind C\<close>
@@ -1767,25 +1803,27 @@ next
     using modal_hintikka by simp
 qed
 
-locale Derivational_Modal = ModalH map_fm params_fm classify
+locale Derivational_Modal = ModalH map_fm params_fm is_param classify
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
     classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
   assumes consistent: \<open>\<And>S ps F qs. set ps \<subseteq> S \<Longrightarrow> ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set qs \<union> F S\<close>
     and params_subset: \<open>\<And>ps F qs S. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> params (F S) \<subseteq> params S\<close>
 
-sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm kind consistent
+sublocale Derivational_Modal \<subseteq> Derivational_Kind map_fm params_fm is_param kind consistent
 proof
   assume inf: \<open>infinite (UNIV :: 'fm set)\<close>
   then show \<open>sat\<^sub>E kind {A. enough_new A \<and> \<turnstile> A}\<close>
   proof safe
     fix S ps F qs
     assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>enough_new S\<close>
-    then have \<open>|UNIV :: 'fm set| \<le>o |- params (F S)|\<close>
-      using * params_subset unfolding enough_new_def
-      by (meson Compl_subset_Compl_iff card_of_mono1 ordLeq_transitive)
+    then have \<open>|UNIV :: 'fm set| \<le>o |Collect is_param - params (F S)|\<close>
+      using * unfolding enough_new_def using params_subset[of ps F qs S] ordLeq_transitive
+        card_of_mono1[of "Collect is_param - params S" "Collect is_param - params (F S)"]
+      by blast
     then show \<open>enough_new (set qs \<union> F S)\<close>
       using infinite_params_left[OF inf] unfolding enough_new_def by blast
   qed (use consistent in blast)

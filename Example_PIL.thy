@@ -689,25 +689,25 @@ fun \<delta> :: \<open>'x lbd \<Rightarrow> 'x \<Rightarrow> 'x lbd list\<close>
 | CAllN: \<open>\<delta> (i, \<^bold>\<not> \<^bold>\<forall> p) P = [ (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) ]\<close>
 | \<open>\<delta> _ _ = []\<close>
 
-interpretation P: Params map_lbd symbols_lbd
+interpretation P: Params map_lbd symbols_lbd \<open>\<lambda>_. True\<close>
   by unfold_locales (auto simp: tm.map_id0 fm.map_id0 cong: tm.map_cong0 fm.map_cong0)
 
-interpretation C: Confl map_lbd symbols_lbd confl_class
+interpretation C: Confl map_lbd symbols_lbd \<open>\<lambda>_. True\<close> confl_class
   by unfold_locales (auto elim!: confl_class.cases intro: confl_class.intros)
 
-interpretation A: Alpha map_lbd symbols_lbd alpha_class
+interpretation A: Alpha map_lbd symbols_lbd \<open>\<lambda>_. True\<close> alpha_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: alpha_class.cases intro: alpha_class.intros)
 
-interpretation B: Beta map_lbd symbols_lbd beta_class
+interpretation B: Beta map_lbd symbols_lbd \<open>\<lambda>_. True\<close> beta_class
   by unfold_locales (auto simp: fm.map_id0 cong: fm.map_cong0 elim!: beta_class.cases intro: beta_class.intros)
 
-interpretation GI: Gamma_UNIV map_tm map_lbd symbols_lbd gamma_class_nom
+interpretation GI: Gamma_UNIV map_tm map_lbd symbols_lbd \<open>\<lambda>_. True\<close> gamma_class_nom
   by unfold_locales (fastforce elim: gamma_class_nom.cases intro: gamma_class_nom.intros)+
 
-interpretation GP: Gamma map_fm map_lbd symbols_lbd gamma_class_fm
+interpretation GP: Gamma map_fm map_lbd symbols_lbd \<open>\<lambda>_. True\<close> gamma_class_fm
   by unfold_locales (fastforce elim: gamma_class_fm.cases intro: gamma_class_fm.intros)+
 
-interpretation D: Delta map_lbd symbols_lbd \<delta>
+interpretation D: Delta map_lbd symbols_lbd \<open>\<lambda>_. True\<close> \<delta>
 proof
   show \<open>\<And>f. \<delta> (map_lbd f p) (f x) = map (map_lbd f) (\<delta> p x)\<close> for p :: \<open>'x lbd\<close> and x
     by (induct p x rule: \<delta>.induct) simp_all
@@ -721,12 +721,12 @@ lemma prop\<^sub>E_Kinds:
   shows \<open>prop\<^sub>E Kinds C\<close>
   unfolding prop\<^sub>E_def using assms by simp
 
-interpretation Consistency_Kinds map_lbd symbols_lbd Kinds
+interpretation Consistency_Kinds map_lbd symbols_lbd \<open>\<lambda>_. True\<close> Kinds
   using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
     GI.Consistency_Kind_axioms GP.Consistency_Kind_axioms D.Consistency_Kind_axioms
   by (auto intro: Consistency_Kinds.intro simp: Consistency_Kinds_axioms_def)
 
-interpretation Maximal_Consistency map_lbd symbols_lbd Kinds
+interpretation Maximal_Consistency map_lbd symbols_lbd \<open>\<lambda>_. True\<close> Kinds
 proof
  have \<open>infinite (UNIV :: 'x fm set)\<close>
     using infinite_UNIV_size[of \<open>\<lambda>p. p \<^bold>\<longrightarrow> p\<close>] by simp
@@ -917,7 +917,7 @@ lemma canonical_tm_eta [simp]: \<open>case_tm (\<lambda>i. [\<^bold># i]\<^sub>S
 corollary canonical_tm_eta' [simp]: \<open>case_tm (\<NN> (canonical S)) (\<N> (canonical S)) k = [k]\<^sub>S\<close>
   unfolding canonical_def unfolds by simp
 
-locale MyHintikka = Hintikka map_lbd symbols_lbd Kinds S
+locale MyHintikka = Hintikka map_lbd symbols_lbd \<open>\<lambda>_. True\<close> Kinds S
   for S :: \<open>'x lbd set\<close>
 begin
 
@@ -1571,25 +1571,25 @@ next
     using \<open>(i, \<^bold>\<not> \<^bold>\<forall> p) \<in> A\<close> Assm NotE by meson
 qed simp_all
 
-interpretation DC: Derivational_Confl map_lbd symbols_lbd confl_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DC: Derivational_Confl map_lbd symbols_lbd \<open>\<lambda>_. True\<close> confl_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_confl by unfold_locales blast
 
-interpretation DA: Derivational_Alpha map_lbd symbols_lbd alpha_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DA: Derivational_Alpha map_lbd symbols_lbd \<open>\<lambda>_. True\<close> alpha_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_alpha by unfold_locales blast
 
-interpretation DB: Derivational_Beta map_lbd symbols_lbd beta_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DB: Derivational_Beta map_lbd symbols_lbd \<open>\<lambda>_. True\<close> beta_class \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_beta by unfold_locales blast
 
-interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd GI.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DGI: Derivational_Gamma map_tm map_lbd symbols_lbd \<open>\<lambda>_. True\<close> GI.classify_UNIV \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_gammaI by unfold_locales blast
 
-interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd gamma_class_fm \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DGP: Derivational_Gamma map_fm map_lbd symbols_lbd \<open>\<lambda>_. True\<close> gamma_class_fm \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using calculus_gammaP by unfold_locales blast
 
-interpretation DD: Derivational_Delta map_lbd symbols_lbd \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation DD: Derivational_Delta map_lbd symbols_lbd \<open>\<lambda>_. True\<close> \<delta> \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   by unfold_locales (meson calculus_\<delta>)
   
-interpretation Derivational_Consistency map_lbd symbols_lbd Kinds \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
+interpretation Derivational_Consistency map_lbd symbols_lbd \<open>\<lambda>_. True\<close> Kinds \<open>\<lambda>A. \<not> A \<tturnstile> (a, \<^bold>\<bottom>)\<close>
   using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DGI.kind DGP.kind DD.kind] by unfold_locales
 
 subsection \<open>Strong Completeness\<close>
@@ -1615,7 +1615,7 @@ proof (rule ccontr)
     using Consistency by fast
   moreover have \<open>?S \<in> ?C\<close>
     using * FlsE params_left assms(2)
-    by (metis (no_types, lifting) List.set_insert empty_set mem_Collect_eq )
+    by (metis (no_types, lifting) ext List.set_insert empty_set mem_Collect_eq )
   moreover from this have \<open>P.enough_new ?S\<close>
     by blast
   ultimately have **: \<open>\<forall>(k, q) \<in> ?S. \<lbrakk>?H, k\<rbrakk> \<Turnstile> q\<close>
