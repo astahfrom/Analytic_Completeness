@@ -2068,7 +2068,6 @@ inductive is_wff_of_type :: "type \<Rightarrow> 'a form \<Rightarrow> bool" wher
   var_is_wff: "is_wff_of_type \<alpha> (x\<^bsub>\<alpha>\<^esub>)"
 | con_is_wff: "is_wff_of_type \<alpha> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
 | FQ_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) (FQ \<alpha>)"
-| FIota_is_wff: "is_wff_of_type ((i\<rightarrow>o)\<rightarrow>i) \<iota>"
 | app_is_wff: "is_wff_of_type \<beta> (A \<sqdot> B)" if "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) A" and "is_wff_of_type \<alpha> B"
 | abs_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)" if "is_wff_of_type \<beta> A"
 
@@ -2145,9 +2144,9 @@ lemma Q_wff:
   shows "FQ \<alpha> \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<alpha>\<rightarrow>o\<^esub>"
   by auto
 
-lemma iota_wff:
+(* lemma iota_wff:
   shows "\<iota> \<in> wffs\<^bsub>(i\<rightarrow>o)\<rightarrow>i\<^esub>"
-  by auto
+  by auto *)
 
 lemma equality_wff [intro]:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<alpha>\<^esub>"
@@ -3852,11 +3851,6 @@ next
     using is_subform_implies_in_positions 
     by fastforce
 next
-  case FIota_is_wff
-  then show ?case 
-    using is_subform_implies_in_positions 
-    by fastforce
-next
   case (app_is_wff \<alpha> \<beta> A B)
   then show ?case
   proof (cases p)
@@ -3927,11 +3921,6 @@ next
 next
   case (FQ_is_wff \<alpha>)
   then show ?case
-    using is_subform_implies_in_positions 
-    by fastforce
-next
-  case FIota_is_wff
-  then show ?case 
     using is_subform_implies_in_positions 
     by fastforce
 next

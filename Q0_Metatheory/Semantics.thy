@@ -121,14 +121,19 @@ subsection \<open>Pre-models (interpretations)\<close>
 
 text \<open>We use the term ``pre-model'' instead of ``interpretation'' since the latter is already a keyword:\<close>
 
-locale premodel = frame +
+(* locale premodel = frame +
   fixes \<J> :: "'a con \<Rightarrow> V"
   assumes Q_denotation: "\<forall>\<alpha>. \<J> (Q_constant_of_type \<alpha>) = q\<^bsub>\<alpha>\<^esub>"
   and \<iota>_denotation: "is_unique_member_selector (\<J> iota_constant)"
   and non_logical_constant_denotation: "\<forall>c \<alpha>. \<not> is_logical_constant (c, \<alpha>) \<longrightarrow> \<J> (c, \<alpha>) \<in> elts (\<D> \<alpha>)"
-begin
+begin *)
 
 text \<open>Wff denotation function:\<close>
+
+locale premodel = frame +
+  fixes \<J> :: "'a con \<Rightarrow> V"
+
+begin
 
 definition is_wff_denotation_function :: "(('a var \<Rightarrow> V) \<Rightarrow> 'a form \<Rightarrow> V) \<Rightarrow> bool" where
   [iff]: "is_wff_denotation_function \<V> \<longleftrightarrow>
@@ -160,14 +165,15 @@ lemma wff_Q_denotation:
   assumes "is_wff_denotation_function \<V>"
   and "is_assignment \<phi>"
   shows "\<V> \<phi> (FQ \<alpha>) = q\<^bsub>\<alpha>\<^esub>"
-  using assms and Q_denotation
+  using assms
   by force
 
 lemma wff_iota_denotation:
   assumes "is_wff_denotation_function \<V>"
   and "is_assignment \<phi>"
   shows "is_unique_member_selector (\<V> \<phi> \<iota>)"
-  using assms and \<iota>_denotation by fastforce
+  using assms[unfolded is_wff_denotation_function_def]
+  by fastforce
 
 lemma wff_non_logical_constant_denotation:
   assumes "is_wff_denotation_function \<V>"
@@ -229,10 +235,6 @@ proof -
     case (FQ_is_wff \<alpha> \<beta>)
     thus ?case
       by (metis assms(1,2) wff_Q_denotation)
-  next
-    case (FIota_is_wff)
-    thus ?case
-      sorry
   qed
 qed
 
@@ -240,7 +242,7 @@ end
 
 subsection \<open>General models\<close>
 
-type_synonym model_structure = "(type \<Rightarrow> V) \<times> (con \<Rightarrow> V) \<times> ((var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V)"
+type_synonym model_structure = "(type \<Rightarrow> V) \<times> (V con \<Rightarrow> V) \<times> ((V var \<Rightarrow> V) \<Rightarrow> V form \<Rightarrow> V)"
 
 text \<open>
   The assumption in the following locale implies that there must exist a function that is a wff
@@ -249,7 +251,7 @@ text \<open>
 \<close>
 
 locale general_model = premodel +
-  fixes \<V> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V"
+  fixes \<V> :: "('a var \<Rightarrow> V) \<Rightarrow> 'a form \<Rightarrow> V"
   assumes \<V>_is_wff_denotation_function: "is_wff_denotation_function \<V>"
 begin
 
