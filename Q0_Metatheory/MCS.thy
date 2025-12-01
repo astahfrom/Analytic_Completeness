@@ -113,6 +113,49 @@ lemma delta_matchI [intro]: \<open>\<exists>x. A = \<sim>\<^sup>\<Q> (\<forall>x
   using delta_match.intros by blast
 
 
+subsection \<open>Parameter Substitution Inversion\<close>
+
+lemma map_con_FVar [dest]: \<open>map_con f A = x\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A = x\<^bsub>\<alpha>\<^esub>\<close>
+  by (induct A) (auto split: if_splits)
+
+lemma map_con_FCon_not_param [dest]: \<open>map_con f A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<not> is_param c \<Longrightarrow> A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
+  by (induct A) (auto split: if_splits)
+
+lemma map_con_FCon_param [dest]: \<open>map_con f A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> is_param c \<Longrightarrow> \<exists>c'. (\<not> is_param (f c') \<or> f c' = c) \<and> A = \<lbrace>c'\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
+  by (induct A) (auto split: if_splits)
+
+lemma map_con_FApp [dest!]: \<open>map_con f A = B \<sqdot> C \<Longrightarrow> \<exists>B' C'. map_con f B' = B \<and> map_con f C' = C \<and> A = B' \<sqdot> C'\<close>
+  by (induct A) (auto split: if_splits)
+
+lemma map_con_FAbs [dest!]: \<open>map_con f A = \<lambda>x\<^bsub>\<alpha>\<^esub>. B \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> A = \<lambda>x\<^bsub>\<alpha>\<^esub>. B'\<close>
+  by (induct A) (auto split: if_splits)
+
+term \<open>\<sim>\<^sup>\<Q> A\<close>
+
+lemma map_con_cQ [dest]: \<open>map_con f A = \<lbrace>\<cc>\<^sub>Q\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A = \<lbrace>\<cc>\<^sub>Q\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
+  by blast
+
+lemma map_con_Q [dest]: \<open>map_con f A = Q\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A = Q\<^bsub>\<alpha>\<^esub>\<close>
+  by auto
+
+lemma map_con_equality_of_type [dest]: \<open>map_con f A = B =\<^bsub>\<alpha>\<^esub> C \<Longrightarrow> \<exists>B' C'. map_con f B' = B \<and> map_con f C' = C \<and> A = B' =\<^bsub>\<alpha>\<^esub> C'\<close>
+  by fastforce
+
+lemma map_con_true [dest]: \<open>map_con f A = T\<^bsub>o\<^esub> \<Longrightarrow> A = T\<^bsub>o\<^esub>\<close>
+  by auto
+
+lemma map_con_false [dest]: \<open>map_con f A = F\<^bsub>o\<^esub> \<Longrightarrow> A = F\<^bsub>o\<^esub>\<close>
+  by (induct A) auto
+
+lemma map_con_neg [dest]: \<open>map_con f A = \<sim>\<^sup>\<Q> B \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> A = \<sim>\<^sup>\<Q> B'\<close>
+  by (induct A) auto
+
+lemma map_con_forall [dest]: \<open>map_con f A = \<forall>x\<^bsub>\<alpha>\<^esub>. B \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> A = \<forall>x\<^bsub>\<alpha>\<^esub>. B'\<close>
+  by auto
+
+lemma delta_match_map_con [dest]: \<open>delta_match (map_con f A) (\<alpha>, B) \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> delta_match A (\<alpha>, B')\<close>
+  by fast
+
 section \<open>Interpretations\<close>
 
 interpretation P: Params map_con cons_form is_param
@@ -129,103 +172,6 @@ interpretation B: Beta map_con cons_form is_param beta_class
 
 interpretation G: Gamma map_con map_con cons_form is_param gamma_class
   by unfold_locales (auto elim!: gamma_class.cases simp: gamma_class.simps)
-
-proposition \<open>map_con f (\<forall>x\<^bsub>\<alpha>\<^esub>. A) = \<forall>x\<^bsub>\<alpha>\<^esub>. map_con f A\<close>
-  by simp
-
-term \<open>Q\<^bsub>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A\<close>
-
-lemma 0:
-  assumes \<open>is_logical_name c \<or> is_logical_name (f c)\<close>
-  shows \<open>map_con f (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<sqdot> F \<sqdot> D) = (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<sqdot> map_con f F \<sqdot> map_con f D)\<close>
-  using assms by simp
-
-lemma map_con_var [iff]: \<open>map_con f A = x\<^bsub>\<alpha>\<^esub> \<longleftrightarrow> A = x\<^bsub>\<alpha>\<^esub>\<close>
-  by (induct A) (auto split: if_splits)
-
-lemma 1: \<open>map_con f A = \<sim>\<^sup>\<Q> B \<Longrightarrow> \<exists>A'. A = (\<sim>\<^sup>\<Q> A')\<close>
-  apply (induct A)
-     apply auto[1]
-    apply (auto split: if_splits)[1]
-   defer
-   apply auto[1]
-  subgoal for C D
-    apply (induct C)
-       apply fastforce
-      apply (auto split: if_splits)[1]
-     defer
-     apply fastforce
-    subgoal for E F
-      apply (induct E)
-         apply force
-      subgoal for x
-        apply (induct x)
-        subgoal for c \<alpha>
-          apply (cases \<open>\<alpha> = o\<close>)
-           apply (auto split: if_splits)[1]
-          apply (cases \<open>is_logical_name c \<or> is_logical_name (f c)\<close>)
-          subgoal
-            apply (induct F)
-               apply auto[1]
-            subgoal for y
-              apply (induct y)
-              apply (smt (z3) "0" equality_of_type_def false_def form.distinct(7) form.inject(3)
-                  map_con.simps(2) neg_def true_def)
-              done
-            subgoal for G H
-              apply (induct H)
-                 apply force
-              subgoal for z
-              proof -
-                assume a1: "map_con f (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<sqdot> (G \<sqdot> FCon z) \<sqdot> D) = \<sim>\<^sup>\<Q> B"
-                obtain nn :: "nat \<times> Syntax.type \<Rightarrow> nat" and tt :: "nat \<times> Syntax.type \<Rightarrow> Syntax.type" where
-                  "\<forall>p. p = (nn p, tt p)"
-                  by (meson surj_pair)
-                then have False
-                  using a1 by (smt (z3) Q_def equality_of_type_def false_def form.distinct(9) form.inject(3) map_con.simps(2,3) neg_def)
-                then show ?thesis
-                  by (smt (z3))
-              qed
-              subgoal
-                apply simp
-                done
-              subgoal for v H'
-                apply (induct v)
-                apply simp
-                apply (induct G)
-                   apply force
-                subgoal for w
-                  by (smt (verit, ccfv_SIG) form.distinct(7) form.simps(16) map_con.elims)
-                subgoal
-                  sorry
-                apply auto
-                done
-              done
-            apply auto
-            done
-          subgoal
-            by simp
-          done
-        done
-       apply (metis Q_def form.distinct(7) form.inject(3) map_con.simps(3) neg_def)
-      apply force
-      done
-    done
-  done
-
-lemma 2: \<open>map_con f A = \<forall>x\<^bsub>\<alpha>\<^esub>. B \<Longrightarrow> \<exists>A'. A = (\<forall>x\<^bsub>\<alpha>\<^esub>. A')\<close>
-  sorry
-  
-lemma HMM: \<open>delta_match (map_con f A) (\<alpha>, B) \<Longrightarrow> \<exists>B'. delta_match A (\<alpha>, B')\<close>
-proof -
-  assume \<open>delta_match (map_con f A) (\<alpha>, B)\<close>
-  then obtain x where x: \<open>map_con f A = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)\<close>
-    by blast
-  then have \<open>\<exists>B'. A = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B')\<close>
-    using 1 2 by fastforce
-  then show ?thesis
-    by blast
-qed
 
 interpretation D: Delta map_con cons_form is_param \<delta>
 proof
@@ -254,7 +200,7 @@ proof
     next
       case False
       then have \<open>\<nexists>\<alpha> B. delta_match (map_con f A) (\<alpha>, B)\<close>
-        using HMM by blast
+        by fast
       then show ?thesis
         using False by simp
     qed
