@@ -1779,15 +1779,15 @@ lemma leftmost_subform_in_generalized_app_replacement:
 
 subsection \<open>Logical constants\<close>
 
-abbreviation (input) \<xx> where "\<xx> \<equiv> 0"
-abbreviation (input) \<yy> where "\<yy> \<equiv> Suc \<xx>"
-abbreviation (input) \<zz> where "\<zz> \<equiv> Suc \<yy>"
-abbreviation (input) \<ff> where "\<ff> \<equiv> Suc \<zz>"
-abbreviation (input) \<gg> where "\<gg> \<equiv> Suc \<ff>"
-abbreviation (input) \<hh> where "\<hh> \<equiv> Suc \<gg>"
-abbreviation (input) \<cc> where "\<cc> \<equiv> Suc \<hh>"
-abbreviation (input) \<cc>\<^sub>Q where "\<cc>\<^sub>Q \<equiv> Suc \<cc>"
-abbreviation (input) \<cc>\<^sub>\<iota> where "\<cc>\<^sub>\<iota> \<equiv> Suc \<cc>\<^sub>Q"
+abbreviation \<xx> where "\<xx> \<equiv> 0"
+abbreviation \<yy> where "\<yy> \<equiv> Suc \<xx>"
+abbreviation \<zz> where "\<zz> \<equiv> Suc \<yy>"
+abbreviation \<ff> where "\<ff> \<equiv> Suc \<zz>"
+abbreviation \<gg> where "\<gg> \<equiv> Suc \<ff>"
+abbreviation \<hh> where "\<hh> \<equiv> Suc \<gg>"
+abbreviation \<cc> where "\<cc> \<equiv> Suc \<hh>"
+abbreviation \<cc>\<^sub>Q where "\<cc>\<^sub>Q \<equiv> Suc \<cc>"
+abbreviation \<cc>\<^sub>\<iota> where "\<cc>\<^sub>\<iota> \<equiv> Suc \<cc>\<^sub>Q"
 
 definition Q_constant_of_type :: "type \<Rightarrow> con" where
   [simp]: "Q_constant_of_type \<alpha> = (\<cc>\<^sub>Q, \<alpha>\<rightarrow>\<alpha>\<rightarrow>o)"
