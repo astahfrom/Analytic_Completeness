@@ -277,14 +277,14 @@ definition (in Params) prop\<^sub>E :: \<open>('x, 'fm) kind list \<Rightarrow> 
 definition (in Params) prop\<^sub>A :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   \<open>prop\<^sub>A Ks C \<equiv> \<forall>K \<in> set Ks. sat\<^sub>A K C\<close>
 
-inductive sat\<^sub>H :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+inductive (in Params) sat\<^sub>H :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
   sat\<^sub>H_Cond [intro!]: \<open>H S \<Longrightarrow> sat\<^sub>H (Cond P H) S\<close>
-| sat\<^sub>H_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> (\<exists>x. set (W p x) \<subseteq> S)) \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
+| sat\<^sub>H_Wits [intro!]: \<open>(\<And>p. p \<in> S \<Longrightarrow> (\<exists>x. is_param x \<and> set (W p x) \<subseteq> S)) \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
 
-inductive_cases sat\<^sub>H_CondE[elim!]: \<open>sat\<^sub>H (Cond P H) C\<close>
-inductive_cases sat\<^sub>H_WitsE[elim!]: \<open>sat\<^sub>H (Wits W) C\<close>
+inductive_cases (in Params) sat\<^sub>H_CondE[elim!]: \<open>sat\<^sub>H (Cond P H) C\<close>
+inductive_cases (in Params) sat\<^sub>H_WitsE[elim!]: \<open>sat\<^sub>H (Wits W) C\<close>
 
-definition (in Params)  prop\<^sub>H :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+definition (in Params) prop\<^sub>H :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
   \<open>prop\<^sub>H Ks S \<equiv> \<forall>K \<in> set Ks. sat\<^sub>H K S\<close>
 
 theorem (in Params) sat\<^sub>H_Wits: \<open>sat\<^sub>E (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
@@ -349,11 +349,40 @@ fun (in Params) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<
 | \<open>witness_kinds (Wits W # Ks) p S =
   (let
     rest = witness_kinds Ks p S;
-    a = SOME x. x \<notin> params (rest \<union> {p} \<union> S) \<and> is_param x
+    a = SOME x. x \<in> Collect is_param - params (rest \<union> {p} \<union> S)
    in set (W p a) \<union> rest)\<close>
 
-lemma (in Params) witness_kinds: \<open>Wits W \<in> set Ks \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> witness_kinds Ks p S\<close>
-  by (induct Ks p S rule: witness_kinds.induct) (auto simp add: Let_def)+
+lemma (in Params) witness_kinds_new:
+  assumes \<open>infinite (UNIV :: 'fm set)\<close> \<open>infinite (Collect is_param - params S)\<close>
+  shows \<open>infinite (Collect is_param - params (witness_kinds Ks p S \<union> {p} \<union> S))\<close>
+  using assms
+proof (induct Ks p S rule: witness_kinds.induct)
+  case (1 p S)
+  then show ?case
+    by (simp add: infinite_Diff_fin_Un)
+next
+  case (3 W Ks p S)
+  then show ?case
+    by (metis (no_types, lifting) infinite_params sup_assoc witness_kinds.simps(3))
+qed simp_all
+
+lemma (in Params) witness_kinds:
+  assumes inf: \<open>infinite (UNIV :: 'fm set)\<close> and \<open>infinite (Collect is_param - params S)\<close> \<open>Wits W \<in> set Ks\<close>
+  shows \<open>\<exists>x. is_param x \<and> set (W p x) \<subseteq> witness_kinds Ks p S\<close>
+  using assms(2-)
+proof (induct Ks p S rule: witness_kinds.induct)
+  case (3 W' Ks p S)
+  moreover have \<open>infinite (Collect is_param - params (witness_kinds Ks p S \<union> {p} \<union> S))\<close>
+    using inf 3 witness_kinds_new by blast
+  then have \<open>\<exists>x. x \<in> Collect is_param - params (witness_kinds Ks p S \<union> {p} \<union> S)\<close>
+    by (metis equals0I finite.emptyI)
+  then obtain x where x:
+    \<open>(SOME x. x \<in> Collect is_param - params (witness_kinds Ks p S \<union> {p} \<union> S)) = x\<close>
+    \<open>is_param x\<close>
+    by (metis (mono_tags, lifting) DiffE mem_Collect_eq someI_ex)
+  ultimately show ?case
+    by (auto simp: Let_def)
+qed simp_all
 
 locale Maximal_Consistency = wo_rel \<open>|UNIV| :: 'fm rel\<close> + Consistency_Kinds map_fm params_fm is_param Ks
   for
@@ -378,9 +407,6 @@ lemma params_left: \<open>enough_new S \<Longrightarrow> enough_new (set ps \<un
 
 definition witness :: \<open>'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>witness \<equiv> witness_kinds Ks\<close>
-
-lemma witness_Wits: \<open>Wits W \<in> set Ks \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> witness p S\<close>
-  using witness_kinds unfolding witness_def by simp
 
 definition extendS :: \<open>'fm set set \<Rightarrow> 'fm \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
   \<open>extendS C a prev \<equiv> if ({a} \<union> prev \<in> C) then (witness a prev \<union> {a} \<union> prev) else prev\<close>
@@ -516,13 +542,13 @@ proof -
 
       have \<open>infinite (Collect is_param - params (?rest \<union> {a} \<union> ?S))\<close>
         using finite_witness_kinds_params inf by (metis UN_Un Un_assoc infinite_Diff_fin_Un)
-      then have \<open>\<exists>x. x \<notin> params (?rest \<union> {a} \<union> ?S) \<and> is_param x\<close>
-        by (metis diff_shunt finite.emptyI mem_Collect_eq subsetI)
+      then have **: \<open>\<exists>x. x \<in> Collect is_param - params (?rest \<union> {a} \<union> ?S)\<close>
+        by (metis ex_in_conv finite.emptyI)
       then obtain x where x:
-        \<open>(SOME x. x \<notin> params (?rest \<union> {a} \<union> ?S) \<and> is_param x) = x\<close>
+        \<open>(SOME x. x \<in> Collect is_param - params (?rest \<union> {a} \<union> ?S)) = x\<close>
         \<open>x \<notin> params (?rest \<union> {a} \<union> ?S)\<close>
         \<open>is_param x\<close>
-        by (metis (no_types, lifting) someI_ex)
+        by (metis (mono_tags, lifting) DiffE mem_Collect_eq someI_ex)
 
       have \<open>a \<in> ?rest \<union> {a} \<union> ?S\<close>
         by simp
@@ -553,14 +579,15 @@ lemma extend_in_C_stop:
   shows \<open>extend C S (succ a) \<in> C\<close>
   using assms extend_succ by auto
 
-lemma extend_in_C:
-  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
-  shows \<open>extend C S a \<in> C\<close>
+
+lemma infinite_succ_extend:
+  assumes \<open>S \<in> C\<close> \<open>enough_new S\<close> \<open>isSucc p\<close>
+  shows \<open>infinite (Collect is_param - params (extend C S p))\<close>
   using assms
-proof (induct a rule: well_order_inductZSL)
+proof (induct p rule: well_order_inductZSL)
   case Zero
   then show ?case
-    by (simp add: adm_woL_extendL extend_def worecZSL_zero)
+    using not_isSucc_zero by blast
 next
   case (Suc i)
   then have *: \<open>|underS i| <o |UNIV :: 'fm set|\<close>
@@ -587,9 +614,9 @@ next
       using * ordLeq_ordLess_trans by blast
   qed
   then have \<open>|?X| <o |Collect is_param - params S|\<close>
-    using Suc(6) ordLess_ordLeq_trans unfolding enough_new_def by blast
+    using Suc(4) ordLess_ordLeq_trans unfolding enough_new_def by blast
   moreover have \<open>infinite (Collect is_param - params S)\<close>
-    using Suc(6) Cinfinite_r unfolding cinfinite_def enough_new_def
+    using Suc(4) Cinfinite_r unfolding cinfinite_def enough_new_def
     by (metis Field_card_of ordLeq_finite_Field)
   ultimately have \<open>|Collect is_param - params S - ?X| =o |Collect is_param - params S|\<close>
     using card_of_Un_diff_infinite by blast
@@ -601,8 +628,30 @@ next
     by fast
   ultimately have \<open>infinite (Collect is_param - params (extend C S i))\<close>
     using infinite_Diff_subset by (metis (no_types, lifting) Set_Diff_Un)
+  then show ?case
+    using Suc extend_succ inf_univ witness_def witness_kinds_new by presburger
+next
+  case (Lim i)
+  then show ?case
+    using isLim_def by blast
+qed
+
+lemma extend_in_C:
+  assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
+  shows \<open>extend C S a \<in> C\<close>
+  using assms
+proof (induct a rule: well_order_inductZSL)
+  case Zero
+  then show ?case
+    by (simp add: adm_woL_extendL extend_def worecZSL_zero)
+next
+  case (Suc i)
+  have \<open>infinite (Collect is_param - params (extend C S (succ i)))\<close>
+    using infinite_succ_extend aboveS_ne assms(3,4) isSucc_succ by blast
+  then have \<open>infinite (Collect is_param - params (extend C S i))\<close>
+    using extend_succ[of C S i]  by (metis UN_Un Un_upper2 infinite_Diff_subset)
   then have \<open>infinite (Collect is_param - params ({i} \<union> extend C S i))\<close>
-    using finite_params_fm by (simp add: Compl_eq_Diff_UNIV infinite_Diff_fin_Un)
+    using finite_params_fm  by (simp add: Compl_eq_Diff_UNIV infinite_Diff_fin_Un)
   then show ?case
     using Suc extend_in_C_step extend_in_C_stop succ_in[of i] by blast
 next
@@ -665,7 +714,7 @@ proof (intro ballI impI)
 qed
 
 definition witnessed :: \<open>'fm set \<Rightarrow> bool\<close> where
-  \<open>witnessed S \<equiv> \<forall>p \<in> S. \<exists>S'. witness p S' \<subseteq> S\<close>
+  \<open>witnessed S \<equiv> \<forall>p \<in> S. \<exists>S'. infinite (Collect is_param - params S') \<and> witness p S' \<subseteq> S\<close>
 
 theorem Extend_witnessed:
   assumes \<open>prop\<^sub>A Ks C\<close> \<open>finite_char C\<close> \<open>S \<in> C\<close> \<open>enough_new S\<close>
@@ -686,8 +735,12 @@ proof safe
     unfolding extend_succ by simp
   then have \<open>witness p (extend C S p) \<union> {p} \<union> extend C S p \<subseteq> Extend C S\<close>
     unfolding Extend_def using extend_succ \<open>{p} \<union> extend C S p \<in> C\<close> by fastforce
-  then show \<open>\<exists>S'. witness p S' \<subseteq> Extend C S\<close>
-    by blast
+  moreover have \<open>infinite (Collect is_param - params (extend C S (succ p)))\<close>
+    using infinite_succ_extend by (meson aboveS_ne assms(3,4) isSucc_def)
+  then have \<open>infinite (Collect is_param - params (extend C S p))\<close>
+    using extend_succ by (metis SUP_union Un_upper2 infinite_Diff_subset)
+  ultimately show \<open>\<exists>S'. infinite (Collect is_param - params S') \<and> witness p S' \<subseteq> Extend C S\<close>
+    by fast
 qed
 
 abbreviation mk_mcs :: \<open>'fm set set \<Rightarrow> 'fm set \<Rightarrow> 'fm set\<close> where
@@ -727,8 +780,8 @@ proof
     case (Wits W)
     have \<open>witnessed (mk_mcs C S)\<close>
       using mk_mcs_witnessed[OF assms(1-3)] .
-    then have \<open>\<forall>p \<in> mk_mcs C S. \<exists>x. set (W p x) \<subseteq> mk_mcs C S \<close>
-      unfolding witnessed_def witness_def using Wits witness_kinds K by fast 
+    then have \<open>\<forall>p \<in> mk_mcs C S. \<exists>x. is_param x \<and> set (W p x) \<subseteq> mk_mcs C S \<close>
+      unfolding witnessed_def witness_def using inf_univ Wits witness_kinds K by fast
     then show ?thesis
       using Wits by fast
   qed

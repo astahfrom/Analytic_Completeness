@@ -224,8 +224,6 @@ proof
     using finite_prod by blast
 qed simp
 
-text \<open>NOTE: Unresolved question: do we need to know that the witness for the Hintikka delta is a parameter?\<close>
-
 locale MyHintikka = Hintikka map_con cons_form is_param Kinds H
   for H :: \<open>form set\<close>
 begin

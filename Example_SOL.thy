@@ -527,7 +527,7 @@ theorem model_existence:
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
-    show \<open>prop\<^sub>H Kinds (mk_mcs C S)\<close>
+    show \<open>P.prop\<^sub>H Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>p \<in> mk_mcs C S\<close>

@@ -373,7 +373,7 @@ proof -
     show \<open>terms (mk_mcs C S) \<noteq> {}\<close>
       using assms(4) terms_mono Extend_subset by blast
   next
-    show \<open>prop\<^sub>H Kinds (mk_mcs C S)\<close>
+    show \<open>P.prop\<^sub>H Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
   qed
   moreover have \<open>p \<in> mk_mcs C S\<close>
