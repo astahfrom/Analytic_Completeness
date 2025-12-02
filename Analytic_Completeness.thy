@@ -182,8 +182,14 @@ locale Params =
     and map_params_fm: \<open>\<And>f g p. (\<forall>x \<in> params_fm p. f x = g x) \<Longrightarrow> map_fm f p = map_fm g p\<close>
 begin
 
+definition is_subst :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> bool\<close> where
+  \<open>is_subst f \<equiv> \<forall>x. is_param x \<longleftrightarrow> is_param (f x)\<close>
+
+lemma is_subst_id [intro]: \<open>is_subst id\<close>
+  unfolding is_subst_def by simp
+
 definition mk_alt_consistency :: \<open>'fm set set \<Rightarrow> 'fm set set\<close> where
-  \<open>mk_alt_consistency C \<equiv> {S. (\<exists>f. map_fm f ` S \<in> C)}\<close>
+  \<open>mk_alt_consistency C \<equiv> {S. (\<exists>f. is_subst f \<and> map_fm f ` S \<in> C)}\<close>
 
 lemma mk_alt_consistency_subset: \<open>C \<subseteq> mk_alt_consistency C\<close>
   unfolding mk_alt_consistency_def
@@ -192,9 +198,9 @@ proof
   assume \<open>x \<in> C\<close>
   then have \<open>map_fm id ` x \<in> C\<close>
     using map_fm_id by simp
-  then have \<open>\<exists>f. map_fm f ` x \<in> C\<close>
+  then have \<open>\<exists>f. is_subst f \<and> map_fm f ` x \<in> C\<close>
     by blast
-  then show \<open>x \<in> {S. \<exists>f. map_fm f ` S \<in> C}\<close>
+  then show \<open>x \<in> {S. \<exists>f. is_subst f \<and> map_fm f ` S \<in> C}\<close>
     by blast
 qed
 
@@ -204,12 +210,12 @@ lemma mk_alt_consistency_closed:
   unfolding subset_closed_def mk_alt_consistency_def
 proof safe
   fix S S' f
-  assume \<open>map_fm f ` S' \<in> C\<close> \<open>S \<subseteq> S'\<close>
+  assume \<open>is_subst f\<close> \<open>map_fm f ` S' \<in> C\<close> \<open>S \<subseteq> S'\<close>
   moreover have \<open>map_fm f ` S \<subseteq> map_fm f ` S'\<close>
     using \<open>S \<subseteq> S'\<close> by blast
   moreover have \<open>\<forall>S' \<in> C. \<forall>S \<subseteq> S'. S \<in> C\<close>
     using \<open>subset_closed C\<close> unfolding subset_closed_def by blast
-  ultimately show \<open>\<exists>f. map_fm f ` S \<in> C\<close>
+  ultimately show \<open>\<exists>f. is_subst f \<and> map_fm f ` S \<in> C\<close>
     by blast
 qed
 
@@ -219,11 +225,17 @@ abbreviation params :: \<open>'fm set \<Rightarrow> 'x set\<close> where
 lemma infinite_params: \<open>infinite (U - params B) \<Longrightarrow> infinite (U - params (set ps \<union> B))\<close>
   using finite_params_fm by (metis List.finite_set UN_Un finite_UN_I infinite_Diff_fin_Un)
 
-lemma infinite_params_left: \<open>infinite A \<Longrightarrow> |A| \<le>o |U - params S| \<Longrightarrow> |A| \<le>o |U - params (set ps \<union> S)|\<close>
-  (* TODO: smt *)
-  by (smt (verit, best) List.finite_set SUP_union Set_Diff_Un card_of_infinite_diff_finite
-      card_of_ordLeq_infinite finite_UN finite_params_fm ordIso_iff_ordLeq ordLeq_transitive
-      sup_commute)
+lemma infinite_params_left: 
+  assumes \<open>infinite A\<close> \<open>|A| \<le>o |U - params S|\<close>
+  shows \<open>|A| \<le>o |U - params (set ps \<union> S)|\<close>
+proof -
+  have \<open>infinite (U - params S)\<close>
+    using assms card_of_ordLeq_infinite by blast
+  then have \<open>|U - params S| =o |U - params (set ps \<union> S)|\<close>
+    by (simp add: Set_Diff_Un Un_commute card_of_infinite_diff_finite ordIso_symmetric)
+  then show ?thesis
+    using assms(2) ordLeq_ordIso_trans by blast
+qed
 
 definition enough_new :: \<open>'fm set \<Rightarrow> bool\<close> where
   \<open>enough_new S \<equiv> |UNIV :: 'fm set| \<le>o |Collect is_param - params S|\<close>
@@ -245,12 +257,12 @@ datatype ('x, 'fm) kind
   = Cond \<open>'fm list \<Rightarrow> ('fm set set \<Rightarrow> 'fm set \<Rightarrow> bool) \<Rightarrow> bool\<close> \<open>'fm set \<Rightarrow> bool\<close>
   | Wits \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
 
-inductive sat\<^sub>E :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
+inductive (in Params) sat\<^sub>E :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   sat\<^sub>E_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> sat\<^sub>E (Cond P H) C\<close>
-| sat\<^sub>E_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> (\<exists>x. set (W p x) \<union> S \<in> C)) \<Longrightarrow> sat\<^sub>E (Wits W) C\<close>
+| sat\<^sub>E_Wits [intro!]: \<open>(\<And>S p. S \<in> C \<Longrightarrow> p \<in> S \<Longrightarrow> (\<exists>x. is_param x \<and> set (W p x) \<union> S \<in> C)) \<Longrightarrow> sat\<^sub>E (Wits W) C\<close>
 
-inductive_cases sat\<^sub>E_CondE[elim!]: \<open>sat\<^sub>E (Cond P H) C\<close>
-inductive_cases sat\<^sub>E_WitsE[elim!]: \<open>sat\<^sub>E (Wits W) C\<close>
+inductive_cases (in Params) sat\<^sub>E_CondE[elim!]: \<open>sat\<^sub>E (Cond P H) C\<close>
+inductive_cases (in Params) sat\<^sub>E_WitsE[elim!]: \<open>sat\<^sub>E (Wits W) C\<close>
 
 inductive (in Params) sat\<^sub>A :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   sat\<^sub>A_Cond [intro!]: \<open>(\<And>S ps Q. S \<in> C \<Longrightarrow> set ps \<subseteq> S \<Longrightarrow> P ps Q \<Longrightarrow> Q C S) \<Longrightarrow> sat\<^sub>A (Cond P H) C\<close>
@@ -259,7 +271,7 @@ inductive (in Params) sat\<^sub>A :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set
 inductive_cases (in Params) sat\<^sub>A_CondE[elim!]: \<open>sat\<^sub>A (Cond P H) C\<close>
 inductive_cases (in Params) sat\<^sub>A_WitsE[elim!]: \<open>sat\<^sub>A (Wits W) C\<close>
 
-definition prop\<^sub>E :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
+definition (in Params) prop\<^sub>E :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
   \<open>prop\<^sub>E Ks C \<equiv> \<forall>K \<in> set Ks. sat\<^sub>E K C\<close>
 
 definition (in Params) prop\<^sub>A :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set set \<Rightarrow> bool\<close> where
@@ -272,10 +284,10 @@ inductive sat\<^sub>H :: \<open>('x, 'fm) kind \<Rightarrow> 'fm set \<Rightarro
 inductive_cases sat\<^sub>H_CondE[elim!]: \<open>sat\<^sub>H (Cond P H) C\<close>
 inductive_cases sat\<^sub>H_WitsE[elim!]: \<open>sat\<^sub>H (Wits W) C\<close>
 
-definition prop\<^sub>H :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
+definition (in Params)  prop\<^sub>H :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm set \<Rightarrow> bool\<close> where
   \<open>prop\<^sub>H Ks S \<equiv> \<forall>K \<in> set Ks. sat\<^sub>H K S\<close>
 
-theorem sat\<^sub>H_Wits: \<open>sat\<^sub>E (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
+theorem (in Params) sat\<^sub>H_Wits: \<open>sat\<^sub>E (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
   unfolding maximal_def by fast
 
 locale Consistency_Kind = Params map_fm params_fm is_param
@@ -341,7 +353,7 @@ fun (in Params) witness_kinds :: \<open>('x, 'fm) kind list \<Rightarrow> 'fm \<
    in set (W p a) \<union> rest)\<close>
 
 lemma (in Params) witness_kinds: \<open>Wits W \<in> set Ks \<Longrightarrow> \<exists>x. set (W p x) \<subseteq> witness_kinds Ks p S\<close>
-  by (induct Ks p S rule: witness_kinds.induct) (auto simp add: Let_def)
+  by (induct Ks p S rule: witness_kinds.induct) (auto simp add: Let_def)+
 
 locale Maximal_Consistency = wo_rel \<open>|UNIV| :: 'fm rel\<close> + Consistency_Kinds map_fm params_fm is_param Ks
   for
@@ -784,7 +796,7 @@ locale Weak_Derivational_Kind = Consistency_Kind map_fm params_fm is_param K
     is_param :: \<open>'x \<Rightarrow> bool\<close> and
     K :: \<open>('x, 'fm) kind\<close> +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes kind: \<open>infinite (UNIV :: 'x set) \<Longrightarrow> sat\<^sub>E K {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
+  assumes kind: \<open>infinite (Collect is_param) \<Longrightarrow> sat\<^sub>E K {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
 
 locale Weak_Derivational_Consistency = Maximal_Consistency map_fm params_fm is_param Ks
   for
@@ -992,7 +1004,7 @@ next
     fix S ps qs
 
     assume \<open>S \<in> mk_alt_consistency C\<close>
-    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+    then obtain f where f: \<open>is_subst f\<close> \<open>map_fm f ` S \<in> C\<close>
       unfolding mk_alt_consistency_def by blast
 
     let ?C = \<open>mk_alt_consistency C\<close>
@@ -1008,7 +1020,7 @@ next
     then have \<open>set (map (map_fm f) qs) \<union> ?S \<in> C\<close>
       using alphaC * f by blast
     then show \<open>set qs \<union> S \<in> ?C\<close>
-      unfolding mk_alt_consistency_def by (auto simp: image_Un)
+      unfolding mk_alt_consistency_def using f by (auto simp: image_Un)
   qed
 next
   fix C
@@ -1149,7 +1161,7 @@ next
     fix S ps qs
 
     assume \<open>S \<in> mk_alt_consistency C\<close>
-    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+    then obtain f where f: \<open>is_subst f\<close> \<open>map_fm f ` S \<in> C\<close>
       unfolding mk_alt_consistency_def by blast
 
     let ?C = \<open>mk_alt_consistency C\<close>
@@ -1165,7 +1177,7 @@ next
     then have \<open>\<exists>q \<in> set (map (map_fm f) qs). {q} \<union> ?S \<in> C\<close>
       using betaC * f by blast
     then show \<open>\<exists>q \<in> set qs. insert q S \<in> ?C\<close>
-      unfolding mk_alt_consistency_def by (auto simp: image_Un)
+      unfolding mk_alt_consistency_def using f by (auto simp: image_Un)
   qed
 next
   fix C
@@ -1333,7 +1345,7 @@ next
     fix S ps F qs t
 
     assume \<open>S \<in> mk_alt_consistency C\<close>
-    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+    then obtain f where f: \<open>is_subst f\<close> \<open>map_fm f ` S \<in> C\<close>
       unfolding mk_alt_consistency_def by blast
 
     let ?C = \<open>mk_alt_consistency C\<close>
@@ -1354,7 +1366,7 @@ next
     then have \<open>set (map (map_fm f) (qs t)) \<union> ?S \<in> C\<close>
       using rs by simp
     then show \<open>set (qs t) \<union> S \<in> ?C\<close>
-      unfolding mk_alt_consistency_def by (auto simp: image_Un)
+      unfolding mk_alt_consistency_def using f by (auto simp: image_Un)
   qed
 next
   fix C
@@ -1495,7 +1507,7 @@ locale Delta = Params map_fm params_fm is_param
     params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
     is_param :: \<open>'x \<Rightarrow> bool\<close> +
   fixes \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close>
-  assumes delta_map: \<open>\<And>p f x. is_param x \<Longrightarrow> \<delta> (map_fm f p) (f x) = map (map_fm f) (\<delta> p x)\<close>
+  assumes delta_map: \<open>\<And>p f x. is_param x \<Longrightarrow> is_subst f \<Longrightarrow> \<delta> (map_fm f p) (f x) = map (map_fm f) (\<delta> p x)\<close>
 begin
 
 abbreviation \<open>kind \<equiv> Wits \<delta>\<close>
@@ -1516,9 +1528,9 @@ proof
     then have *: \<open>p \<in> S'\<close>
       using \<open>S \<subseteq> S'\<close> by blast
 
-    have \<open>\<exists>x. set (\<delta> p x) \<union> S' \<in> C\<close>
+    have \<open>\<exists>x. is_param x \<and> set (\<delta> p x) \<union> S' \<in> C\<close>
       using deltaC S' * by blast
-    then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> close C\<close>
+    then show \<open>\<exists>x. is_param x \<and> set (\<delta> p x) \<union> S \<in> close C\<close>
       using \<open>S \<subseteq> S'\<close> by (metis subset_in_close)
 
   qed
@@ -1530,7 +1542,7 @@ next
     fix S p qs x
 
     assume \<open>S \<in> mk_alt_consistency C\<close>
-    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+    then obtain f where f: \<open>is_subst f\<close> \<open>map_fm f ` S \<in> C\<close>
       unfolding mk_alt_consistency_def by blast
 
     let ?C = \<open>mk_alt_consistency C\<close>
@@ -1541,10 +1553,13 @@ next
       by auto
 
     assume x: \<open>x \<notin> params S\<close> \<open>is_param x\<close>
-    obtain y where y: \<open>set (\<delta> (map_fm f p) y) \<union> ?S \<in> C\<close>
+    obtain y where y: \<open>is_param y\<close> \<open>set (\<delta> (map_fm f p) y) \<union> ?S \<in> C\<close>
       using deltaC f * by blast
 
     let ?g = \<open>f(x := y)\<close>
+
+    have g: \<open>is_subst ?g\<close>
+      using f x y unfolding is_subst_def by simp
 
     have \<open>\<forall>x \<in> params S. f x = ?g x\<close>
       using x by simp
@@ -1556,9 +1571,9 @@ next
     moreover have \<open>set (\<delta> (map_fm f p) (?g x)) \<union> ?S \<in> C\<close>
       using y by simp
     ultimately have \<open>set (map (map_fm ?g) (\<delta> p x)) \<union> ?S \<in> C\<close>
-      using delta_map x by metis
-    then have \<open>\<exists>f. set (map (map_fm f) (\<delta> p x)) \<union> map_fm f ` S \<in> C\<close>
-      using S by (metis image_cong)
+      using delta_map x g by metis
+    then have \<open>\<exists>f. is_subst f \<and> set (map (map_fm f) (\<delta> p x)) \<union> map_fm f ` S \<in> C\<close>
+      using S g by (metis image_cong)
     then show \<open>set (\<delta> p x) \<union> S \<in> ?C\<close>
       unfolding mk_alt_consistency_def
       by (metis (mono_tags, lifting) image_Un image_set mem_Collect_eq)
@@ -1623,11 +1638,11 @@ proof
     assume *: \<open>p \<in> S\<close> \<open>enough_new S\<close> \<open>\<turnstile> S\<close>
     then have \<open>infinite (Collect is_param - (params ({p} \<union> S)))\<close>
       unfolding enough_new_def using card_of_ordLeq_finite inf by auto
-    then obtain x where \<open>x \<notin> params ({p} \<union> S)\<close>
+    then obtain x where \<open>is_param x\<close> \<open>x \<notin> params ({p} \<union> S)\<close>
       using infinite_imp_nonempty by blast
-    then have \<open>\<exists>x. \<turnstile> set (\<delta> p x) \<union> S\<close>
+    then have \<open>\<exists>x. is_param x \<and> \<turnstile> set (\<delta> p x) \<union> S\<close>
       using *(1,3) consistent \<open>\<turnstile> S\<close> by fast
-    then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> {A. enough_new A \<and> \<turnstile> A}\<close>
+    then show \<open>\<exists>x. is_param x \<and> set (\<delta> p x) \<union> S \<in> {A. enough_new A \<and> \<turnstile> A}\<close>
       using * inf infinite_params_left unfolding enough_new_def by blast
   qed
 qed
@@ -1643,18 +1658,18 @@ locale Weak_Derivational_Delta = Delta map_fm params_fm is_param \<delta>
 
 sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
 proof
-  assume inf: \<open>infinite (UNIV :: 'x set)\<close>
+  assume inf: \<open>infinite (Collect is_param :: 'x set)\<close>
   show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
   proof safe
     fix p A
     assume *: \<open>p \<in> set A\<close> \<open>\<turnstile> A\<close>
-    then have \<open>infinite (- (params (set (p # A))))\<close>
+    then have \<open>infinite (Collect is_param - (params (set (p # A))))\<close>
       using inf finite_compl by fastforce
-    then obtain x where \<open>x \<notin> params (set (p # A))\<close>
+    then obtain x where \<open>is_param x\<close> \<open>x \<notin> params (set (p # A))\<close>
       using infinite_imp_nonempty by blast
-    then have \<open>\<exists>x. \<turnstile> \<delta> p x @ A\<close>
+    then have \<open>\<exists>x. is_param x \<and> \<turnstile> \<delta> p x @ A\<close>
       using * consistent[of p A x] by auto
-    then show \<open>\<exists>x. set (\<delta> p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
+    then show \<open>\<exists>x. is_param x \<and> set (\<delta> p x) \<union> set A \<in> {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
       by (metis (mono_tags, lifting) CollectI set_append)
   qed
 qed
@@ -1727,7 +1742,7 @@ next
     fix S ps F qs
 
     assume \<open>S \<in> mk_alt_consistency C\<close>
-    then obtain f where f: \<open>map_fm f ` S \<in> C\<close>
+    then obtain f where f: \<open>is_subst f\<close> \<open>map_fm f ` S \<in> C\<close>
       unfolding mk_alt_consistency_def by blast
 
     let ?C = \<open>mk_alt_consistency C\<close>
@@ -1747,7 +1762,7 @@ next
     then have \<open>set (map (map_fm f) qs) \<union> map_fm f ` F S \<in> C\<close>
       using G closedC unfolding subset_closed_def by (meson Un_mono order_refl)
     then show \<open>set qs \<union> F S \<in> ?C\<close>
-      unfolding mk_alt_consistency_def
+      unfolding mk_alt_consistency_def using f
       by (auto split: option.splits simp: image_Un)
   qed
 next

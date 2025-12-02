@@ -30,10 +30,10 @@ inductive delta_match :: \<open>form \<Rightarrow> type \<times> form \<Rightarr
 
 inductive_cases delta_matchE [elim]: \<open>delta_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)) (\<alpha>', A')\<close>
 
-lemma delta_match_uniq: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match A (\<alpha>', B') \<Longrightarrow> \<alpha> = \<alpha>' \<and> B = B'\<close>
-  by (auto elim!: delta_match.cases)
+lemma delta_match_uniq [dest]: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match A (\<alpha>', B') \<Longrightarrow> \<alpha> = \<alpha>' \<and> B = B'\<close>
+  by (auto elim: delta_match.cases)
 
-lemma delta_match_THE: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match A (THE (\<alpha>, B). delta_match A (\<alpha>, B))\<close>
+lemma delta_match_THE [intro]: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match A (THE (\<alpha>, B). delta_match A (\<alpha>, B))\<close>
   using delta_match_uniq theI by fastforce
 
 fun \<delta> :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> where
@@ -64,7 +64,7 @@ fun cons_form :: "form \<Rightarrow> nat set" where
 
 section \<open>Lemmas\<close>
 
-(* This property is really what dodging the logical constants is all about. *)
+text \<open>This property is really what dodging the logical constants is all about.\<close>
 proposition \<open>map_con f (\<sim>\<^sup>\<Q> A) = \<sim>\<^sup>\<Q> (map_con f A)\<close>
   by simp
 
@@ -88,8 +88,7 @@ proof (induct A arbitrary: \<alpha>)
 next
   case (FCon x)
   then show ?case
-    apply (induct x rule: prod_cases)
-    using wff_has_unique_type by auto
+    by (induct x) (auto dest: wff_has_unique_type)
 next
   case (FApp A B)
   then show ?case
@@ -121,16 +120,11 @@ lemma map_con_FVar [dest]: \<open>map_con f A = x\<^bsub>\<alpha>\<^esub> \<Long
 lemma map_con_FCon_not_param [dest]: \<open>map_con f A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<not> is_param c \<Longrightarrow> A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
   by (induct A) (auto split: if_splits)
 
-lemma map_con_FCon_param [dest]: \<open>map_con f A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> is_param c \<Longrightarrow> \<exists>c'. (\<not> is_param (f c') \<or> f c' = c) \<and> A = \<lbrace>c'\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
-  by (induct A) (auto split: if_splits)
-
 lemma map_con_FApp [dest!]: \<open>map_con f A = B \<sqdot> C \<Longrightarrow> \<exists>B' C'. map_con f B' = B \<and> map_con f C' = C \<and> A = B' \<sqdot> C'\<close>
   by (induct A) (auto split: if_splits)
 
 lemma map_con_FAbs [dest!]: \<open>map_con f A = \<lambda>x\<^bsub>\<alpha>\<^esub>. B \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> A = \<lambda>x\<^bsub>\<alpha>\<^esub>. B'\<close>
   by (induct A) (auto split: if_splits)
-
-term \<open>\<sim>\<^sup>\<Q> A\<close>
 
 lemma map_con_cQ [dest]: \<open>map_con f A = \<lbrace>\<cc>\<^sub>Q\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A = \<lbrace>\<cc>\<^sub>Q\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
   by blast
@@ -156,6 +150,7 @@ lemma map_con_forall [dest]: \<open>map_con f A = \<forall>x\<^bsub>\<alpha>\<^e
 lemma delta_match_map_con [dest]: \<open>delta_match (map_con f A) (\<alpha>, B) \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> delta_match A (\<alpha>, B')\<close>
   by fast
 
+
 section \<open>Interpretations\<close>
 
 interpretation P: Params map_con cons_form is_param
@@ -175,9 +170,9 @@ interpretation G: Gamma map_con map_con cons_form is_param gamma_class
 
 interpretation D: Delta map_con cons_form is_param \<delta>
 proof
-  fix p x
-  assume x: \<open>is_param x\<close>
-  then show \<open>\<And>f. \<delta> (map_con f p) (f x) = map (map_con f) (\<delta> p x)\<close>
+  fix p x f
+  assume \<open>is_param x\<close> \<open>P.is_subst f\<close>
+  then show \<open>\<delta> (map_con f p) (f x) = map (map_con f) (\<delta> p x)\<close>
   proof (induct p x rule: \<delta>.induct)
     case (1 A c)
     then show ?case
@@ -188,13 +183,14 @@ proof
       then have *: \<open>\<delta> A c = [ \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         by (metis (no_types, lifting) MCS.CDelta case_prod_conv delta_match.intros delta_match_THE delta_match_uniq surj_pair)
       moreover have \<open>\<not> is_logical_name (f c)\<close>
-        (* BAD: I dont' know that this is true... *)
-        sorry
+        using 1 unfolding P.is_subst_def by blast
       ultimately have \<open>map (map_con f) (\<delta> A c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         using 1 by simp
-      moreover have \<open>\<delta> (map_con f A) (f c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        using * A MCS.CDelta
-        by (smt (verit, ccfv_SIG) case_prod_conv delta_match.cases delta_match.intros delta_match_THE delta_match_uniq map_con_delta_match)
+      moreover have \<open>delta_match (map_con f A) (\<alpha>, map_con f B)\<close>
+        using A map_con_delta_match by fast
+      then have \<open>\<delta> (map_con f A) (f c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        unfolding MCS.CDelta using delta_match_THE delta_match_uniq
+        by (metis (no_types, lifting) HOL.ext case_prod_conv surj_pair)
       ultimately show ?thesis
         by simp
     next
@@ -211,9 +207,9 @@ abbreviation Kinds :: \<open>(nat, form) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, D.kind]\<close>
 
 lemma prop\<^sub>E_Kinds:
-  assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E G.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
-  shows \<open>prop\<^sub>E Kinds C\<close>
-  unfolding prop\<^sub>E_def using assms by simp
+  assumes \<open>P.sat\<^sub>E C.kind C\<close> \<open>P.sat\<^sub>E A.kind C\<close> \<open>P.sat\<^sub>E B.kind C\<close> \<open>P.sat\<^sub>E G.kind C\<close> \<open>P.sat\<^sub>E D.kind C\<close>
+  shows \<open>P.prop\<^sub>E Kinds C\<close>
+  unfolding P.prop\<^sub>E_def using assms by simp
 
 interpretation Consistency_Kinds map_con cons_form is_param Kinds
   using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
@@ -227,5 +223,20 @@ proof
   then show \<open>infinite (UNIV :: form set)\<close>
     using finite_prod by blast
 qed simp
+
+text \<open>NOTE: Unresolved question: do we need to know that the witness for the Hintikka delta is a parameter?\<close>
+
+locale MyHintikka = Hintikka map_con cons_form is_param Kinds H
+  for H :: \<open>form set\<close>
+begin
+
+lemmas
+  confl = sat\<^sub>H[of C.kind] and
+  alpha = sat\<^sub>H[of A.kind] and
+  beta = sat\<^sub>H[of B.kind] and
+  gamma = sat\<^sub>H[of G.kind] and
+  delta = sat\<^sub>H[of D.kind]
+
+end
 
 end

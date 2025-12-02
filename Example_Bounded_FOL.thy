@@ -234,9 +234,9 @@ abbreviation Kinds :: \<open>('f, ('f, 'p) fm) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, D.kind]\<close>
 
 lemma prop\<^sub>E_Kinds [intro]:
-  assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E G.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
-  shows \<open>prop\<^sub>E Kinds C\<close>
-  unfolding prop\<^sub>E_def using assms by simp
+  assumes \<open>P.sat\<^sub>E C.kind C\<close> \<open>P.sat\<^sub>E A.kind C\<close> \<open>P.sat\<^sub>E B.kind C\<close> \<open>P.sat\<^sub>E G.kind C\<close> \<open>P.sat\<^sub>E D.kind C\<close>
+  shows \<open>P.prop\<^sub>E Kinds C\<close>
+  unfolding P.prop\<^sub>E_def using assms by simp
 
 interpretation Consistency_Kinds psub params_fm \<open>\<lambda>_. True\<close> Kinds
   using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms
@@ -361,7 +361,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>('f, 'p) fm set\<close>
-  assumes \<open>prop\<^sub>E Kinds C\<close>
+  assumes \<open>P.prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>P.enough_new S\<close>
     and \<open>terms S \<noteq> {}\<close>
@@ -387,7 +387,7 @@ section \<open>Compactness\<close>
 abbreviation semantics_set :: \<open>('a, 'f, 'p) model \<Rightarrow> ('f, 'p) fm set \<Rightarrow> bool\<close> (infix \<open>\<TTurnstile>\<close> 50) where
   \<open>M \<TTurnstile> S \<equiv> \<forall>p \<in> S. M \<Turnstile> p\<close>
 
-lemma compact_C: \<open>sat\<^sub>E C.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+lemma compact_C: \<open>P.sat\<^sub>E C.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
     (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
 proof safe
   fix S ps qs and q :: \<open>('f, 'p) fm\<close>
@@ -410,7 +410,7 @@ proof safe
   qed
 qed
 
-lemma compact_A: \<open>sat\<^sub>E A.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+lemma compact_A: \<open>P.sat\<^sub>E A.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
     (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
 proof safe
   fix qs and S :: \<open>('f, 'p) fm set\<close>
@@ -438,7 +438,7 @@ next
   qed
 qed
 
-lemma compact_B: \<open>sat\<^sub>E B.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+lemma compact_B: \<open>P.sat\<^sub>E B.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
     (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
 proof safe
   fix ps qs and S S' :: \<open>('f, 'p) fm set\<close>
@@ -478,7 +478,7 @@ proof safe
   qed
 qed
 
-lemma compact_G: \<open>sat\<^sub>E G.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+lemma compact_G: \<open>P.sat\<^sub>E G.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
     (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
 proof safe
   fix qs :: \<open>'f tm \<Rightarrow> ('f, 'p) fm list\<close> and t and S :: \<open>('f, 'p) fm set\<close>
@@ -506,13 +506,13 @@ next
   qed
 qed
 
-lemma compact_D: \<open>sat\<^sub>E D.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
+lemma compact_D: \<open>P.sat\<^sub>E D.kind {S :: ('f, 'p) fm set. P.enough_new S \<and>
     (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
 proof safe
   fix p and S :: \<open>('f, 'p) fm set\<close>
   assume *: \<open>p \<in> S\<close> \<open>P.enough_new S\<close>
     \<open>\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
-  then show \<open>\<exists>x. set (\<delta> p x) \<union> S \<in> {S. P.enough_new S \<and>
+  then show \<open>\<exists>x. True \<and> set (\<delta> p x) \<union> S \<in> {S. P.enough_new S \<and>
     (\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
   proof (induct p _ rule: \<delta>.induct)
     case (1 p _)
@@ -521,7 +521,7 @@ proof safe
 
     show ?case
     proof (rule ccontr)
-      assume \<open>\<nexists>x. set (\<delta> (\<^bold>\<not> \<^bold>\<forall> p) x) \<union> S \<in> {S. P.enough_new S \<and> (\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
+      assume \<open>\<nexists>x. True \<and> set (\<delta> (\<^bold>\<not> \<^bold>\<forall> p) x) \<union> S \<in> {S. P.enough_new S \<and> (\<forall>S'\<subseteq>S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
       then have \<open>\<forall>x. \<exists>S' \<subseteq> {\<^bold>\<not> \<langle>\<^bold>\<star>x\<rangle>p} \<union> S. finite S' \<and> \<not>(\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S')\<close>
         using P by simp
      moreover obtain x where x: \<open>x \<notin> P.params S\<close>
@@ -555,7 +555,7 @@ proof safe
   qed simp_all
 qed
 
-lemma compact_prop: \<open>prop\<^sub>E Kinds {S :: ('f, 'p) fm set. P.enough_new S \<and>
+lemma compact_prop: \<open>P.prop\<^sub>E Kinds {S :: ('f, 'p) fm set. P.enough_new S \<and>
     (\<forall>S' \<subseteq> S. finite S' \<longrightarrow> (\<exists>(U :: 'a set) E F G. wf_model (Model U E F G) \<and> Model U E F G \<TTurnstile> S'))}\<close>
   using compact_C compact_A compact_B compact_G compact_D ..
 
@@ -734,7 +734,7 @@ proof (rule ccontr)
   then have wf: \<open>wf_model ?M\<close>
     using wf_canonical by fast
 
-  have \<open>prop\<^sub>E Kinds ?C\<close>
+  have \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>P.enough_new ?S\<close>
     using assms(2) params_left by blast
@@ -980,7 +980,7 @@ proof (rule ccontr)
   then have wf: \<open>wf_model ?M\<close>
     using wf_canonical by fast
 
-  have \<open>prop\<^sub>E Kinds ?C\<close>
+  have \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>P.enough_new ?S\<close>
     using assms(2) params_left by blast
