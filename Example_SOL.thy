@@ -314,9 +314,10 @@ abbreviation Kinds :: \<open>('x, 'x fm) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, G.kind, G\<^sub>P.kind, G\<^sub>F.kind, D.kind]\<close>
 
 lemma prop\<^sub>E_Kinds:
-  assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E G.kind C\<close> \<open>sat\<^sub>E G\<^sub>P.kind C\<close> \<open>sat\<^sub>E G\<^sub>F.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
-  shows \<open>prop\<^sub>E Kinds C\<close>
-  unfolding prop\<^sub>E_def using assms by simp
+  assumes \<open>P.sat\<^sub>E C.kind C\<close> \<open>P.sat\<^sub>E A.kind C\<close> \<open>P.sat\<^sub>E B.kind C\<close> \<open>P.sat\<^sub>E G.kind C\<close> \<open>P.sat\<^sub>E G\<^sub>P.kind C\<close>
+    \<open>P.sat\<^sub>E G\<^sub>F.kind C\<close> \<open>P.sat\<^sub>E D.kind C\<close>
+  shows \<open>P.prop\<^sub>E Kinds C\<close>
+  unfolding P.prop\<^sub>E_def using assms by simp
 
 interpretation Consistency_Kinds map_fm params_fm \<open>\<lambda>_. True\<close> Kinds
   using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
@@ -518,7 +519,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>'x fm set\<close>
-  assumes \<open>prop\<^sub>E Kinds C\<close>
+  assumes \<open>P.prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>P.enough_new S\<close>
     and \<open>p \<in> S\<close>
@@ -886,10 +887,14 @@ proof (standard; safe)
   qed simp_all
 qed
 
+term P.params
+
 interpretation Weak_Derivational_Consistency map_fm params_fm \<open>\<lambda>_. True\<close> Kinds \<open>\<lambda>A. \<not> A \<turnstile> \<^bold>\<bottom>\<close>
 proof
-  assume inf: \<open>infinite (UNIV :: 'x set)\<close>
-  then show \<open>prop\<^sub>E Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
+  assume \<open>infinite (UNIV :: 'x set)\<close>
+  then have inf: \<open>infinite (Collect (\<lambda>_. True) :: 'x set)\<close>
+    by simp
+  then show \<open>P.prop\<^sub>E Kinds {S :: 'x fm set. \<exists>A. set A = S \<and> \<not> A \<turnstile> \<^bold>\<bottom>}\<close>
     using prop\<^sub>E_Kinds[OF DC.kind[OF inf] DA.kind DB.kind DG.kind DG\<^sub>P.kind DG\<^sub>F.kind DD.kind]
     by blast
 qed
@@ -911,7 +916,7 @@ proof (rule ccontr)
   have \<open>infinite (UNIV :: 'x set)\<close>
     using assms(2) card_of_ordLeq_infinite finite_subset inf_univ subset_UNIV
     unfolding P.enough_new_def by blast
-  then have \<open>prop\<^sub>E Kinds ?C\<close>
+  then have \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>?S \<in> ?C\<close>
     using * by blast
@@ -1130,7 +1135,7 @@ proof (rule ccontr)
   have wf: \<open>wf_model ?M\<close>
     unfolding hdom\<^sub>F_def by simp
 
-  have \<open>prop\<^sub>E Kinds ?C\<close>
+  have \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
   moreover have \<open>P.enough_new ?S\<close>
     using assms(2) params_left by blast

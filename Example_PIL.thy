@@ -717,9 +717,9 @@ abbreviation Kinds :: \<open>('x, 'x lbd) kind list\<close> where
   \<open>Kinds \<equiv> [C.kind, A.kind, B.kind, GI.kind, GP.kind, D.kind]\<close>
 
 lemma prop\<^sub>E_Kinds:
-  assumes \<open>sat\<^sub>E C.kind C\<close> \<open>sat\<^sub>E A.kind C\<close> \<open>sat\<^sub>E B.kind C\<close> \<open>sat\<^sub>E GI.kind C\<close> \<open>sat\<^sub>E GP.kind C\<close> \<open>sat\<^sub>E D.kind C\<close>
-  shows \<open>prop\<^sub>E Kinds C\<close>
-  unfolding prop\<^sub>E_def using assms by simp
+  assumes \<open>P.sat\<^sub>E C.kind C\<close> \<open>P.sat\<^sub>E A.kind C\<close> \<open>P.sat\<^sub>E B.kind C\<close> \<open>P.sat\<^sub>E GI.kind C\<close> \<open>P.sat\<^sub>E GP.kind C\<close> \<open>P.sat\<^sub>E D.kind C\<close>
+  shows \<open>P.prop\<^sub>E Kinds C\<close>
+  unfolding P.prop\<^sub>E_def using assms by simp
 
 interpretation Consistency_Kinds map_lbd symbols_lbd \<open>\<lambda>_. True\<close> Kinds
   using P.Params_axioms C.Consistency_Kind_axioms A.Consistency_Kind_axioms B.Consistency_Kind_axioms
@@ -736,34 +736,34 @@ qed simp
 
 context begin
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<cdot>P) \<notin> S \<or> (i, \<^bold>\<not> \<^bold>\<cdot>P) \<notin> S\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<cdot>P) \<notin> S \<or> (i, \<^bold>\<not> \<^bold>\<cdot>P) \<notin> S\<close>
   using sat\<^sub>E[of C.kind] by (force intro: CNegP)
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, p \<^bold>\<and> q) \<in> S \<Longrightarrow> {(i, p), (i, q)} \<union> S \<in> C\<close>
   using sat\<^sub>E[of A.kind] by (force intro: CConP)
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> (p \<^bold>\<and> q)) \<in> S \<Longrightarrow> {(i, \<^bold>\<not> p)} \<union> S \<in> C \<or> {(i, \<^bold>\<not> q)} \<union> S \<in> C\<close>
   using sat\<^sub>E[of B.kind] by (force intro: CConN)
   
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<box> p) \<in> S \<Longrightarrow> (i, \<^bold>\<diamond>(\<^bold>\<bullet>k)) \<in> S \<Longrightarrow> {(k, p)} \<union> S \<in> C\<close>
   using sat\<^sub>E[of A.kind] by (force intro: CBoxP)
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<box>p) \<in> S \<Longrightarrow> \<exists>k. {(k, \<^bold>\<not> p), (i, \<^bold>\<diamond> (\<^bold>\<bullet>k))} \<union> S \<in> C\<close>
   using sat\<^sub>E[of D.kind] by fastforce
   
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> { (i, \<^bold>\<bullet>i) } \<union> S \<in> C\<close>
   using sat\<^sub>E[of GI.kind] by (force intro: CRefl)
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>A p) \<in> S \<Longrightarrow> { (k, p) } \<union> S \<in> C\<close>
   using sat\<^sub>E[of GI.kind] by (force intro: CGloP)
  
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>A p) \<in> S \<Longrightarrow> \<exists>k. { (k, \<^bold>\<not> p) } \<union> S \<in> C\<close>
   using sat\<^sub>E[of D.kind] by fastforce
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<forall> p) \<in> S \<Longrightarrow> softqdf q \<Longrightarrow> { (i, \<langle>q\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
   using sat\<^sub>E[of GP.kind] by (force intro: CAllP)
 
-lemma \<open>prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
+lemma \<open>P.prop\<^sub>E Kinds C \<Longrightarrow> S \<in> C \<Longrightarrow> (i, \<^bold>\<not> \<^bold>\<forall> p) \<in> S \<Longrightarrow> \<exists>P. { (i, \<^bold>\<not> \<langle>\<^bold>\<cdot>(\<^bold>\<circle>P)\<rangle>\<^sub>p p) } \<union> S \<in> C\<close>
   using sat\<^sub>E[of D.kind] by fastforce
 
 end
@@ -1216,7 +1216,7 @@ end
 
 theorem model_existence:
   fixes S :: \<open>'x lbd set\<close>
-  assumes \<open>prop\<^sub>E Kinds C\<close>
+  assumes \<open>P.prop\<^sub>E Kinds C\<close>
     and \<open>S \<in> C\<close>
     and \<open>P.enough_new S\<close>
     and \<open>(i, p) \<in> S\<close>
@@ -1611,7 +1611,7 @@ proof (rule ccontr)
   let ?H = \<open>mk_mcs ?C ?S\<close>
   let ?M = \<open>canonical ?H\<close>
 
-  have \<open>prop\<^sub>E Kinds ?C\<close>
+  have \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by fast
   moreover have \<open>?S \<in> ?C\<close>
     using * FlsE params_left assms(2)
