@@ -20,7 +20,7 @@ where
 | axiom_3:
     "(\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<in> axioms"
 | axiom_4_1_con:
-    "(\<lambda>x\<^bsub>\<alpha>\<^esub>. FCon (CCon (c,\<beta>))) \<sqdot> A =\<^bsub>\<beta>\<^esub> FCon (CCon (c,\<beta>)) \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+    "(\<lambda>x\<^bsub>\<alpha>\<^esub>. FCon c) \<sqdot> A =\<^bsub>\<beta>\<^esub> FCon c \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "FCon c \<in> wffs\<^bsub>\<beta>\<^esub>"
 | axiom_4_1_var:
     "(\<lambda>x\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub> \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "y\<^bsub>\<beta>\<^esub> \<noteq> x\<^bsub>\<alpha>\<^esub>"
 | axiom_4_2:
@@ -38,7 +38,7 @@ where
 
 lemma axioms_are_wffs_of_type_o:
   shows "axioms \<subseteq> wffs\<^bsub>o\<^esub>"
-  apply (intro subsetI, cases rule: axioms.cases) 
+  apply (intro subsetI, cases rule: axioms.cases)
   using wffs_of_type_intros(4) 
   by force+
 

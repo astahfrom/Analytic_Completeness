@@ -11,6 +11,9 @@ notation funcset (infixr \<open>\<Zpfun>\<close> 60)
 
 subsection \<open>Proposition 5200\<close>
 
+context dom_consts
+begin
+
 proposition prop_5200:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   shows "\<turnstile> A =\<^bsub>\<alpha>\<^esub> A"
@@ -167,9 +170,29 @@ using assms(2,1,3) proof induction
   qed
 next
   case (con_is_wff \<beta> c)
-  from assms(1) have "\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>"
-    using axiom_4_1_con by (intro axiom_is_derivable_from_no_hyps)
-  moreover have "\<^bold>S {(x, \<alpha>) \<Zinj> A} (\<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) = \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>"
+  from assms(1) have "\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. (FCon (CCon (c, \<beta>)))) \<sqdot> A =\<^bsub>\<beta>\<^esub> (FCon (CCon (c, \<beta>)))"
+    using axiom_4_1_con 
+    by (intro axiom_is_derivable_from_no_hyps) blast
+  moreover have "\<^bold>S {(x, \<alpha>) \<Zinj> A} (FCon (CCon (c, \<beta>))) = (FCon (CCon (c, \<beta>)))"
+    by auto
+  ultimately show ?case
+    by (simp only:)
+next
+  case (Q_is_wff \<beta>)
+  have "\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. (FCon (CQ \<beta>))) \<sqdot> A =\<^bsub>\<beta> \<rightarrow> \<beta> \<rightarrow> o\<^esub> (FCon (CQ \<beta>))"
+    using axiom_4_1_con[OF assms(1) wffs_of_type_intros(3)]
+    by (intro axiom_is_derivable_from_no_hyps) blast
+  moreover have "\<^bold>S {(x, \<alpha>) \<Zinj> A} (FCon (CQ \<beta>)) = (FCon (CQ \<beta>))"
+    by auto
+  ultimately show ?case
+    by (simp only:)
+next
+  case (iota_is_wff)
+  have "\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<iota>) \<sqdot> A =\<^bsub>(i \<rightarrow> o) \<rightarrow> i\<^esub> \<iota>"
+    unfolding iota_def
+    using axiom_4_1_con[OF assms(1) wffs_of_type_intros(4)[unfolded iota_def]]
+    by (intro axiom_is_derivable_from_no_hyps) blast
+  moreover have "\<^bold>S {(x, \<alpha>) \<Zinj> A} \<iota> = \<iota>"
     by auto
   ultimately show ?case
     by (simp only:)
@@ -184,7 +207,7 @@ next
   moreover have "\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. D \<sqdot> C) \<sqdot> A =\<^bsub>\<beta>\<^esub> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. D) \<sqdot> A) \<sqdot> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. C) \<sqdot> A)"
     using axiom_is_derivable_from_no_hyps[OF axiom_4_3[OF assms(1) \<open>D \<in> wffs\<^bsub>\<gamma>\<rightarrow>\<beta>\<^esub>\<close> \<open>C \<in> wffs\<^bsub>\<gamma>\<^esub>\<close>]] .
   ultimately show ?case
-    using Equality_Rules(3,4) and substitute.simps(3) by presburger
+    using Equality_Rules(3,4) and substitute.simps(3) by force
 next
   case (abs_is_wff \<beta> D \<gamma> y)
   then show ?case
@@ -278,6 +301,7 @@ proof -
         then have "\<not> is_bound (y, \<alpha>) ?B" and "\<not> is_bound (y, \<alpha>) ?C"
           using absent_var_is_not_bound by blast+
         moreover have "\<not> is_bound (\<ff>, \<alpha>\<rightarrow>\<beta>) ?B" and "\<not> is_bound (\<ff>, \<alpha>\<rightarrow>\<beta>) ?C"
+           apply simp
           by code_simp+
         moreover from \<open>v \<in> vars ?A\<close> have "v \<in> {(y, \<alpha>), (\<ff>, \<alpha>\<rightarrow>\<beta>)}"
           by auto
