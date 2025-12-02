@@ -8,7 +8,10 @@ begin
 
 subsection \<open>Syntax\<close>
 
-inductive_set pwffs :: "('a::dom_consts) form set" where
+context dom_consts
+begin
+
+inductive_set pwffs :: "'a form set" where
   T_pwff: "T\<^bsub>o\<^esub> \<in> pwffs"
 | F_pwff: "F\<^bsub>o\<^esub> \<in> pwffs"
 | var_pwff: "p\<^bsub>o\<^esub> \<in> pwffs"
@@ -535,7 +538,7 @@ lemma \<V>\<^sub>B_graph_is_functional:
   shows "\<exists>!b. \<V>\<^sub>B_graph \<phi> A b"
   using assms and \<V>\<^sub>B_graph_denotation_existence and \<V>\<^sub>B_graph_denotation_uniqueness by blast
 
-definition \<V>\<^sub>B :: "('a::dom_consts \<Rightarrow> V) \<Rightarrow> 'a form \<Rightarrow> V" where
+definition \<V>\<^sub>B :: "('a \<Rightarrow> V) \<Rightarrow> 'a form \<Rightarrow> V" where
   "\<V>\<^sub>B \<phi> A = (THE b. \<V>\<^sub>B_graph \<phi> A b)"
 
 lemma \<V>\<^sub>B_equality:
@@ -649,7 +652,7 @@ lemma pwff_denotation_function_existence:
 
 text \<open>Tautologies:\<close>
 
-definition is_tautology :: "'a::dom_consts form \<Rightarrow> bool" where
+definition is_tautology :: "'a form \<Rightarrow> bool" where
   [iff]: "is_tautology A \<longleftrightarrow> A \<in> pwffs \<and> (\<forall>\<phi>. is_tv_assignment \<phi> \<longrightarrow> \<V>\<^sub>B \<phi> A = \<^bold>T)"
 
 lemma tautology_is_wffo:
@@ -875,7 +878,7 @@ definition is_pwff_substitution where
 
 text \<open>Tautologous pwff:\<close>
 
-definition is_tautologous :: "'a::dom_consts form \<Rightarrow> bool" where
+definition is_tautologous :: "'a form \<Rightarrow> bool" where
   [iff]: "is_tautologous B \<longleftrightarrow> (\<exists>\<theta> A. is_tautology A \<and> is_pwff_substitution \<theta> \<and> B = \<^bold>S \<theta> A)"
 
 lemma tautologous_is_wffo:
@@ -933,5 +936,8 @@ proof -
   ultimately show ?thesis
     by (metis is_tautologous_def)
 qed
+
+end
+
 
 end

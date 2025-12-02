@@ -31,9 +31,9 @@ proof -
     finally show ?case .
   next
     case (con_is_wff \<alpha> c)
-    from assms(1) and con_is_wff.prems(1) have "\<V> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<J> (c, \<alpha>)"
+    from assms(1) and con_is_wff.prems(1) have "\<V> \<phi> (FCon (CCon (c, \<alpha>))) = \<J> (CCon (c, \<alpha>))"
       using \<V>_is_wff_denotation_function by fastforce
-    also from assms(1) and con_is_wff.prems(2) have "\<dots> = \<V> \<psi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+    also from assms(1) and con_is_wff.prems(2) have "\<dots> = \<V> \<psi> (FCon (CCon (c, \<alpha>)))"
       using \<V>_is_wff_denotation_function by fastforce
     finally show ?case .
   next

@@ -119,15 +119,18 @@ qed
 
 subsection \<open>Constants\<close>
 
-type_synonym 'c con = "'c \<times> type"
+(* type_synonym 'c con = "'c \<times> type" *)
+
+datatype 'c con =
+  CCon "'c \<times> type"
+  | CQ "type"
+  | CIota
 
 subsection \<open>Formulas\<close>
 
 datatype 'd form =
   FVar \<open>'d var\<close>
 | FCon \<open>'d con\<close>
-| FQ type
-| FIota ("\<iota>")
 | FApp \<open>'d form\<close> \<open>'d form\<close> (infixl \<open>\<sqdot>\<close> 200)
 | FAbs \<open>'d var\<close> \<open>'d form\<close>
 
@@ -158,17 +161,13 @@ definition generalized_abs :: "'d var list \<Rightarrow> 'd form \<Rightarrow> '
 
 fun form_size :: "'d form \<Rightarrow> nat" where
   "form_size (x\<^bsub>\<alpha>\<^esub>) = 1"
-| "form_size (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = 1"
-| "form_size (FQ _) = 1"
-| "form_size FIota = 1"
+| "form_size (FCon c) = 1"
 | "form_size (A \<sqdot> B) = Suc (form_size A + form_size B)"
 | "form_size (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = Suc (form_size A)"
 
 fun form_depth :: "'d form \<Rightarrow> nat" where
   "form_depth (x\<^bsub>\<alpha>\<^esub>) = 0"
-| "form_depth (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = 0"
-| "form_depth (FQ _) = 0"
-| "form_depth FIota = 0"
+| "form_depth (FCon c) = 0"
 | "form_depth (A \<sqdot> B) = Suc (max (form_depth A) (form_depth B))"
 | "form_depth (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = Suc (form_depth A)"
 
@@ -176,9 +175,7 @@ subsection \<open>Subformulas\<close>
 
 fun subforms :: "'d form \<Rightarrow> 'd form set" where
   "subforms (x\<^bsub>\<alpha>\<^esub>) = {}"
-| "subforms (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
-| "subforms (FQ _) = {}"
-| "subforms FIota = {}"
+| "subforms (FCon c) = {}"
 | "subforms (A \<sqdot> B) = {A, B}"
 | "subforms (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = {A}"
 
@@ -187,9 +184,7 @@ type_synonym position = "direction list"
 
 fun positions :: "'d form \<Rightarrow> position set" where
   "positions (x\<^bsub>\<alpha>\<^esub>) = {[]}"
-| "positions (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {[]}"
-| "positions (FQ _) = {[]}"
-| "positions FIota = {[]}"
+| "positions (FCon c) = {[]}"
 | "positions (A \<sqdot> B) = {[]} \<union> {\<guillemotleft> # p | p. p \<in> positions A} \<union> {\<guillemotright> # p | p. p \<in> positions B}"
 | "positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = {[]} \<union> {\<guillemotleft> # p | p. p \<in> positions A}"
 
@@ -221,9 +216,9 @@ lemma superform_existence:
   using assms by (induction B p C rule: is_subform_at.induct) auto
 
 lemma subform_at_subforms_con:
-  assumes "\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<preceq>\<^bsub>p\<^esub> C"
+  assumes "FCon c \<preceq>\<^bsub>p\<^esub> C"
   shows "\<nexists>A. A \<preceq>\<^bsub>p @ [d]\<^esub> C"
-  using assms by (induction "\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>" p C rule: is_subform_at.induct) auto
+  using assms by (induction "FCon c" p C rule: is_subform_at.induct) auto
 
 lemma subform_at_subforms_var:
   fixes C :: \<open>'c form\<close>
@@ -266,8 +261,8 @@ lemma subforms_from_var:
   using assms by (auto elim: is_subform_at.elims)
 
 lemma subforms_from_con:
-  assumes "A \<preceq>\<^bsub>p\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
-  shows "A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>" and "p = []"
+  assumes "A \<preceq>\<^bsub>p\<^esub> FCon c"
+  shows "A = FCon c" and "p = []"
   using assms by (auto elim: is_subform_at.elims)
 
 lemma subforms_from_app:
@@ -454,9 +449,7 @@ end *)
 
 fun vars :: "'c form \<Rightarrow> 'c var set" where
   "vars (x\<^bsub>\<alpha>\<^esub>) = {(x, \<alpha>)}"
-| "vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
-| "vars (FQ _) = {}"
-| "vars FIota = {}"
+| "vars (FCon c) = {}"
 | "vars (A \<sqdot> B) = vars A \<union> vars B"
 | "vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = vars A \<union> {(x, \<alpha>)}"
 
@@ -529,9 +522,7 @@ end *)
 
 fun free_vars :: "'c form \<Rightarrow> 'c var set" where
   "free_vars (x\<^bsub>\<alpha>\<^esub>) = {(x, \<alpha>)}"
-| "free_vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
-| "free_vars (FQ _) = {}"
-| "free_vars FIota = {}"
+| "free_vars (FCon c) = {}"
 | "free_vars (A \<sqdot> B) = free_vars A \<union> free_vars B"
 | "free_vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = free_vars A - {(x, \<alpha>)}"
 
@@ -574,23 +565,15 @@ proof (induction A)
 next
   case (FCon k)
   then show ?case
-    using surj_pair[of k] by force
-next
-  case (FQ \<alpha>)
-  then show ?case
-    by simp
-next
-  case FIota
-  then show ?case
     by simp
 next
   case (FApp A B)
   have "free_vars (A \<sqdot> B) = free_vars A \<union> free_vars B"
-    using free_vars.simps(5) .
+    using free_vars.simps(3) .
   also from FApp.IH have "\<dots> \<subseteq> vars A \<union> vars B"
     by blast
   also have "\<dots> = vars (A \<sqdot> B)"
-    using vars.simps(5)[symmetric] .
+    using vars.simps(3)[symmetric] .
   finally show ?case
     by (simp only:)
 next
@@ -613,9 +596,7 @@ lemma singleton_form_set_vars:
 
 fun bound_vars where
   "bound_vars (x\<^bsub>\<alpha>\<^esub>) = {}"
-| "bound_vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {}"
-| "bound_vars (FQ _) = {}"
-| "bound_vars FIota = {}"
+| "bound_vars (FCon c) = {}"
 | "bound_vars (B \<sqdot> C) = bound_vars B \<union> bound_vars C"
 | "bound_vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = {(x, \<alpha>)} \<union> bound_vars B"
 
@@ -642,7 +623,7 @@ definition occurs_at :: "'c var \<Rightarrow> position \<Rightarrow> 'c form \<R
 
 lemma occurs_at_alt_def:
   shows "occurs_at v [] (FVar v') \<longleftrightarrow> (v = v')"
-  and "occurs_at v p (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<longleftrightarrow> False"
+  and "occurs_at v p (FCon c) \<longleftrightarrow> False"
   and "occurs_at v (\<guillemotleft> # p) (A \<sqdot> B) \<longleftrightarrow> occurs_at v p A"
   and "occurs_at v (\<guillemotright> # p) (A \<sqdot> B) \<longleftrightarrow> occurs_at v p B"
   and "occurs_at v (\<guillemotleft> # p) (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) \<longleftrightarrow> occurs_at v p A"
@@ -780,17 +761,7 @@ next
   case (FCon k)
   then show ?case
     using in_scope_of_abs_alt_def
-    by (metis form.distinct(17) subforms_from_con(1) surj_pair)
-next
-  case (FQ \<alpha>)
-  then show ?case
-    using in_scope_of_abs_alt_def
-    by (metis at_top_is_self_subform form.distinct(23) positions.simps(3) singletonD)
-  next
-  case FIota
-  then show ?case
-    using in_scope_of_abs_alt_def
-    by (metis at_top_is_self_subform form.distinct(27) positions.simps(4) singletonD)
+    by (metis form.distinct(10) subforms_from_con(1))
 next
   case (FApp B C)
   from FApp.prems obtain d and p' where "p = d # p'"
@@ -1028,13 +999,13 @@ lemma bound_vars_in_is_bound_at:
   assumes "v \<in> bound_vars A"
   obtains p where "p \<in> positions A" and "is_bound_at v p A \<or> v \<in> binders_at A p"
 using assms proof (induction A arbitrary: thesis rule: bound_vars.induct)
-  case (5 B C)
+  case (3 B C)
   from \<open>v \<in> bound_vars (B \<sqdot> C)\<close> consider (a) "v \<in> bound_vars B" | (b) "v \<in> bound_vars C"
     by fastforce
   then show ?case
   proof cases
     case a
-    with "5.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
+    with "3.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
       by blast
     from \<open>p \<in> positions B\<close> have "\<guillemotleft> # p \<in> positions (B \<sqdot> C)"
       by simp
@@ -1047,17 +1018,17 @@ using assms proof (induction A arbitrary: thesis rule: bound_vars.induct)
       then have "is_bound_at v (\<guillemotleft> # p) (B \<sqdot> C)"
         using is_bound_at_in_left_app by metis
       then show ?thesis
-        using "5.prems"(1) and is_subform_implies_in_positions by blast
+        using "3.prems"(1) and is_subform_implies_in_positions by blast
     next
       case a\<^sub>2
       then have "v \<in> binders_at (B \<sqdot> C) (\<guillemotleft> # p)"
         by simp
       then show ?thesis
-        using "5.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (B \<sqdot> C)\<close> by blast
+        using "3.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (B \<sqdot> C)\<close> by blast
     qed
   next
     case b
-    with "5.IH"(2) obtain p where "p \<in> positions C" and "is_bound_at v p C \<or> v \<in> binders_at C p"
+    with "3.IH"(2) obtain p where "p \<in> positions C" and "is_bound_at v p C \<or> v \<in> binders_at C p"
       by blast
     from \<open>p \<in> positions C\<close> have "\<guillemotright> # p \<in> positions (B \<sqdot> C)"
       by simp
@@ -1070,17 +1041,17 @@ using assms proof (induction A arbitrary: thesis rule: bound_vars.induct)
       then have "is_bound_at v (\<guillemotright> # p) (B \<sqdot> C)"
         using is_bound_at_in_right_app by metis
       then show ?thesis
-        using "5.prems"(1) and is_subform_implies_in_positions by blast
+        using "3.prems"(1) and is_subform_implies_in_positions by blast
     next
       case b\<^sub>2
       then have "v \<in> binders_at (B \<sqdot> C) (\<guillemotright> # p)"
         by simp
       then show ?thesis
-        using "5.prems"(1) and \<open>\<guillemotright> # p \<in> positions (B \<sqdot> C)\<close> by blast
+        using "3.prems"(1) and \<open>\<guillemotright> # p \<in> positions (B \<sqdot> C)\<close> by blast
     qed
   qed
 next
-  case (6 x \<alpha> B)
+  case (4 x \<alpha> B)
   from \<open>v \<in> bound_vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> consider (a) "v = (x, \<alpha>)" | (b) "v \<in> bound_vars B"
     by force
   then show ?case
@@ -1089,10 +1060,10 @@ next
     then have "v \<in> binders_at (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) [\<guillemotleft>]"
       by simp
     then show ?thesis
-      using "6.prems"(1) and is_subform_implies_in_positions by fastforce
+      using "4.prems"(1) and is_subform_implies_in_positions by fastforce
   next
     case b
-    with "6.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
+    with "4.IH"(1) obtain p where "p \<in> positions B" and "is_bound_at v p B \<or> v \<in> binders_at B p"
       by blast
     from \<open>p \<in> positions B\<close> have "\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)"
       by simp
@@ -1105,13 +1076,13 @@ next
       then have "is_bound_at v (\<guillemotleft> # p) (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)"
         using is_bound_at_to_abs by blast
       then show ?thesis
-        using "6.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
+        using "4.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
     next
       case b\<^sub>2
       then have "v \<in> binders_at (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) (\<guillemotleft> # p)"
         by simp
       then show ?thesis
-        using "6.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
+        using "4.prems"(1) and \<open>\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. B)\<close> by blast
     qed
   qed
 qed simp_all
@@ -1129,7 +1100,7 @@ lemma is_free_at_in_var:
   by simp
 
 lemma not_is_free_at_in_con:
-  shows "\<not> is_free_at v [] (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+  shows "\<not> is_free_at v [] (FCon c)"
   by simp
 
 lemma is_free_at_in_left_app:
@@ -1235,45 +1206,45 @@ lemma free_vars_in_is_free_at:
   assumes "v \<in> free_vars A"
   obtains p where "p \<in> positions A" and "is_free_at v p A"
 using assms proof (induction A arbitrary: thesis rule: free_vars.induct)
-  case (5 A B)
+  case (3 A B)
   from \<open>v \<in> free_vars (A \<sqdot> B)\<close> consider (a) "v \<in> free_vars A" | (b) "v \<in> free_vars B"
     by fastforce
   then show ?case
   proof cases
     case a
-    with "5.IH"(1) obtain p where "p \<in> positions A" and "is_free_at v p A"
+    with "3.IH"(1) obtain p where "p \<in> positions A" and "is_free_at v p A"
       by blast
     from \<open>p \<in> positions A\<close> have "\<guillemotleft> # p \<in> positions (A \<sqdot> B)"
       by simp
     moreover from \<open>is_free_at v p A\<close> have "is_free_at v (\<guillemotleft> # p) (A \<sqdot> B)"
       using is_free_at_in_left_app by metis
     ultimately show ?thesis
-      using "5.prems"(1) by presburger
+      using "3.prems"(1) by presburger
   next
     case b
-    with "5.IH"(2) obtain p where "p \<in> positions B" and "is_free_at v p B"
+    with "3.IH"(2) obtain p where "p \<in> positions B" and "is_free_at v p B"
       by blast
     from \<open>p \<in> positions B\<close> have "\<guillemotright> # p \<in> positions (A \<sqdot> B)"
       by simp
     moreover from \<open>is_free_at v p B\<close> have "is_free_at v (\<guillemotright> # p) (A \<sqdot> B)"
       using is_free_at_in_right_app by metis
     ultimately show ?thesis
-      using "5.prems"(1) by presburger
+      using "3.prems"(1) by presburger
   qed
 next
-  case (6 x \<alpha> A)
+  case (4 x \<alpha> A)
   from \<open>v \<in> free_vars (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)\<close> have "v \<in> free_vars A - {(x, \<alpha>)}" and "v \<noteq> (x, \<alpha>)"
     by simp_all
   then have "v \<in> free_vars A"
     by blast
-  with "6.IH" obtain p where "p \<in> positions A" and "is_free_at v p A"
+  with "4.IH" obtain p where "p \<in> positions A" and "is_free_at v p A"
     by blast
   from \<open>p \<in> positions A\<close> have "\<guillemotleft> # p \<in> positions (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
     by simp
   moreover from \<open>is_free_at v p A\<close> and \<open>v \<noteq> (x, \<alpha>)\<close> have "is_free_at v (\<guillemotleft> # p) (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
     using is_free_at_to_abs by metis
   ultimately show ?case
-    using "6.prems"(1) by presburger
+    using "4.prems"(1) by presburger
 qed simp_all
 
 lemma free_vars_alt_def:
@@ -1463,7 +1434,7 @@ lemma is_free_for_in_var [intro]:
   using subforms_from_var(2) by force
 
 lemma is_free_for_in_con [intro]:
-  shows "is_free_for A v (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+  shows "is_free_for A v (FCon c)"
   using subforms_from_con(2) by force
 
 lemma is_free_for_from_app:
@@ -1875,7 +1846,7 @@ lemma leftmost_subform_in_generalized_app_replacement:
 subsection \<open>Logical constants\<close>
 
 
-class dom_consts = 
+(* class dom_consts = 
   (* should we add `infinite`? (* requires importing "HOL-Library.Infinite_Typeclass" *)*)
   fixes "\<xx>"::'a 
     and "\<yy>"::'a 
@@ -1893,7 +1864,7 @@ lemma (in dom_consts) different_consts:
   shows "\<xx> \<noteq> \<yy>" and "\<xx> \<noteq> \<zz>" and "\<xx> \<noteq> \<ff>" and "\<xx> \<noteq> \<gg>" and "\<xx> \<noteq> \<hh>" and "\<xx> \<noteq> \<cc>" and "\<xx> \<noteq> \<cc>\<^sub>Q" and "\<xx> \<noteq> \<cc>\<^sub>\<iota>"
     and "\<yy> \<noteq> \<zz>" and "\<yy> \<noteq> \<ff>" and "\<yy> \<noteq> \<gg>" and "\<yy> \<noteq> \<hh>" and "\<yy> \<noteq> \<cc>" and "\<yy> \<noteq> \<cc>\<^sub>Q" and "\<yy> \<noteq> \<cc>\<^sub>\<iota>"
   using distinct_consts
-  by auto
+  by auto *)
 
 (* abbreviation (input) \<xx> where "\<xx> \<equiv> 0"
 abbreviation (input) \<yy> where "\<yy> \<equiv> Suc \<xx>"
@@ -1905,26 +1876,26 @@ abbreviation (input) \<cc> where "\<cc> \<equiv> Suc \<hh>"
 abbreviation (input) \<cc>\<^sub>Q where "\<cc>\<^sub>Q \<equiv> Suc \<cc>"
 abbreviation (input) \<cc>\<^sub>\<iota> where "\<cc>\<^sub>\<iota> \<equiv> Suc \<cc>\<^sub>Q" *)
 
-context dom_consts
-begin
+(* context dom_consts
+begin *)
 
 (* definition Q_constant_of_type :: "type \<Rightarrow> 'a con" where
   [simp]: "Q_constant_of_type \<alpha> = (\<cc>\<^sub>Q, \<alpha>\<rightarrow>\<alpha>\<rightarrow>o)"
 
 definition iota_constant :: "'a con" where
-  [simp]: "iota_constant \<equiv> (\<cc>\<^sub>\<iota>, (i\<rightarrow>o)\<rightarrow>i)"
+  [simp]: "iota_constant \<equiv> (\<cc>\<^sub>\<iota>, (i\<rightarrow>o)\<rightarrow>i)" *)
 
 definition Q :: "type \<Rightarrow> 'a form" (\<open>Q\<^bsub>_\<^esub>\<close>) where
-  [simp]: "Q\<^bsub>\<alpha>\<^esub> = FCon (Q_constant_of_type \<alpha>)"
+  [simp]: "Q\<^bsub>\<alpha>\<^esub> = FCon (CQ \<alpha>)"
 
 definition iota :: "'a form" (\<open>\<iota>\<close>) where
-  [simp]: "\<iota> = FCon iota_constant"
+  [simp]: "\<iota> = FCon CIota"
 
 definition is_Q_constant_of_type :: "'a con \<Rightarrow> type \<Rightarrow> bool" where
-  [iff]: "is_Q_constant_of_type p \<alpha> \<longleftrightarrow> p = Q_constant_of_type \<alpha>"
+  [iff]: "is_Q_constant_of_type p \<alpha> \<longleftrightarrow> p = CQ \<alpha>"
 
 definition is_iota_constant :: "'a con \<Rightarrow> bool" where
-  [iff]: "is_iota_constant p \<longleftrightarrow> p = iota_constant"
+  [iff]: "is_iota_constant p \<longleftrightarrow> p = CIota"
 
 definition is_logical_constant :: "'a con \<Rightarrow> bool" where
   [iff]: "is_logical_constant p \<longleftrightarrow> (\<exists>\<beta>. is_Q_constant_of_type p \<beta>) \<or> is_iota_constant p"
@@ -1937,41 +1908,50 @@ lemma constant_cases[case_names non_logical Q_constant \<iota>_constant, cases t
   and "\<And>\<beta>. is_Q_constant_of_type p \<beta> \<Longrightarrow> P"
   and "is_iota_constant p \<Longrightarrow> P"
   shows "P"
-  using assms by blast *)
+  using assms by blast
 
-end
+(* end *)
 
 subsection \<open>Definitions and abbreviations\<close>
 
-definition equality_of_type :: "'a::dom_consts form \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(_ =\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
-  [simp]: "A =\<^bsub>\<alpha>\<^esub> B = FQ \<alpha> \<sqdot> A \<sqdot> B"
+locale dom_consts =
+  fixes "\<xx>" and "\<gg>" and "\<yy>"
+  assumes distinct_consts: "distinct [\<xx>, \<yy>, \<gg>]" (* "distinct [\<xx>, \<yy>, \<zz>, \<ff>, \<gg>, \<hh>, \<cc>, \<cc>\<^sub>Q, \<cc>\<^sub>\<iota>]" *)
 
-definition equivalence :: "'a::dom_consts form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<equiv>\<^sup>\<Q>\<close> 102) where
+lemma (in dom_consts) different_consts:
+  shows "\<xx> \<noteq> \<yy>" and "\<xx> \<noteq> \<gg>" and "\<yy> \<noteq> \<gg>"
+  using distinct_consts
+  by auto
+
+definition equality_of_type :: "'a form \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(_ =\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
+  [simp]: "A =\<^bsub>\<alpha>\<^esub> B = FCon (CQ \<alpha>) \<sqdot> A \<sqdot> B"
+
+definition equivalence :: "'a form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<equiv>\<^sup>\<Q>\<close> 102) where
   [simp]: "A \<equiv>\<^sup>\<Q> B = A =\<^bsub>o\<^esub> B" \<comment> \<open>more modular than the definition in \<^cite>\<open>"andrews:2002"\<close>\<close>
 
-definition true :: "'a::dom_consts form" (\<open>T\<^bsub>o\<^esub>\<close>) where
-  [simp]: "T\<^bsub>o\<^esub> = FQ o =\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> FQ o"
+definition true :: "'a form" (\<open>T\<^bsub>o\<^esub>\<close>) where
+  [simp]: "T\<^bsub>o\<^esub> = FCon (CQ o) =\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> FCon (CQ o)"
 
-definition false :: "'a::dom_consts form" (\<open>F\<^bsub>o\<^esub>\<close>) where
+definition (in dom_consts) false :: "'a form" (\<open>F\<^bsub>o\<^esub>\<close>) where
   [simp]: "F\<^bsub>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. T\<^bsub>o\<^esub> =\<^bsub>o\<rightarrow>o\<^esub> \<lambda>\<xx>\<^bsub>o\<^esub>. \<xx>\<^bsub>o\<^esub>"
 
-definition PI :: "type \<Rightarrow> 'a::dom_consts form" (\<open>\<Prod>\<^bsub>_\<^esub>\<close>) where
-  [simp]: "\<Prod>\<^bsub>\<alpha>\<^esub> = FQ (\<alpha>\<rightarrow>o) \<sqdot> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. T\<^bsub>o\<^esub>)"
+definition (in dom_consts) PI :: "type \<Rightarrow> 'a form" (\<open>\<Prod>\<^bsub>_\<^esub>\<close>) where
+  [simp]: "\<Prod>\<^bsub>\<alpha>\<^esub> = FCon (CQ (\<alpha>\<rightarrow>o)) \<sqdot> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. T\<^bsub>o\<^esub>)"
 
-definition forall :: "'a::dom_consts \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(4\<forall>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
+definition (in dom_consts) forall :: "'a \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(4\<forall>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
   [simp]: "\<forall>x\<^bsub>\<alpha>\<^esub>. A = \<Prod>\<^bsub>\<alpha>\<^esub> \<sqdot> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
 
 text \<open>Generalized universal quantification. We define \<open>\<forall>\<^sup>\<Q>\<^sub>\<star> [x\<^sub>1, \<dots>, x\<^sub>n] A\<close> as \<open>\<forall>x\<^sub>1. \<cdots> \<forall>x\<^sub>n. A\<close>:\<close>
 
-definition generalized_forall :: "'a::dom_consts var list \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>\<forall>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [141, 141] 141) where
+definition (in dom_consts) generalized_forall :: "'a var list \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>\<forall>\<^sup>\<Q>\<^sub>\<star> _ _\<close> [141, 141] 141) where
   [simp]: "\<forall>\<^sup>\<Q>\<^sub>\<star> vs A = foldr (\<lambda>(x, \<alpha>) B. \<forall>x\<^bsub>\<alpha>\<^esub>. B) vs A"
 
-lemma innermost_subform_in_generalized_forall:
+lemma (in dom_consts) innermost_subform_in_generalized_forall:
   assumes "vs \<noteq> []"
   shows "A \<preceq>\<^bsub>foldr (\<lambda>_ p. [\<guillemotright>,\<guillemotleft>] @ p) vs []\<^esub> \<forall>\<^sup>\<Q>\<^sub>\<star> vs A"
   using assms by (induction vs) fastforce+
 
-lemma innermost_replacement_in_generalized_forall:
+lemma (in dom_consts) innermost_replacement_in_generalized_forall:
   assumes "vs \<noteq> []"
   shows "(\<forall>\<^sup>\<Q>\<^sub>\<star> vs C)\<lblot>foldr (\<lambda>_. (@) [\<guillemotright>,\<guillemotleft>]) vs [] \<leftarrow> B\<rblot> \<rhd> (\<forall>\<^sup>\<Q>\<^sub>\<star> vs B)"
 using assms proof (induction vs)
@@ -2008,34 +1988,34 @@ next
   qed
 qed
 
-lemma false_is_forall:
+lemma (in dom_consts) false_is_forall:
   shows "F\<^bsub>o\<^esub> = \<forall>\<xx>\<^bsub>o\<^esub>. \<xx>\<^bsub>o\<^esub>"
   unfolding false_def and forall_def and PI_def and equality_of_type_def ..
 
-definition conj_fun :: "'a::dom_consts form" (\<open>\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
+definition (in dom_consts) conj_fun :: "'a form" (\<open>\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
   [simp]: "\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> =
     \<lambda>\<xx>\<^bsub>o\<^esub>. \<lambda>\<yy>\<^bsub>o\<^esub>.
     (
       (\<lambda>\<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<sqdot> T\<^bsub>o\<^esub>) =\<^bsub>(o\<rightarrow>o\<rightarrow>o)\<rightarrow>o\<^esub> (\<lambda>\<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub> \<sqdot> \<yy>\<^bsub>o\<^esub>)
     )"
 
-definition conj_op :: "'a::dom_consts form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<and>\<^sup>\<Q>\<close> 131) where
+definition (in dom_consts) conj_op :: "'a form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<and>\<^sup>\<Q>\<close> 131) where
   [simp]: "A \<and>\<^sup>\<Q> B = \<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B"
 
 text \<open>Generalized conjunction. We define \<open>\<and>\<^sup>\<Q>\<^sub>\<star> [A\<^sub>1, \<dots>, A\<^sub>n]\<close> as \<open>A\<^sub>1 \<and>\<^sup>\<Q> (\<cdots> \<and>\<^sup>\<Q> (A\<^sub>n\<^sub>-\<^sub>1 \<and>\<^sup>\<Q> A\<^sub>n) \<cdots>)\<close>:\<close>
 
-definition generalized_conj_op :: "'a::dom_consts form list \<Rightarrow> 'a form" (\<open>\<and>\<^sup>\<Q>\<^sub>\<star> _\<close> [0] 131) where
+definition (in dom_consts) generalized_conj_op :: "'a form list \<Rightarrow> 'a form" (\<open>\<and>\<^sup>\<Q>\<^sub>\<star> _\<close> [0] 131) where
   [simp]: "\<and>\<^sup>\<Q>\<^sub>\<star> As = foldr1 (\<and>\<^sup>\<Q>) As"
 
-definition imp_fun :: "'a::dom_consts form" (\<open>\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where \<comment> \<open>\<open>\<equiv>\<close> used instead of \<open>=\<close>, see \<^cite>\<open>"andrews:2002"\<close>\<close>
+definition (in dom_consts) imp_fun :: "'a form" (\<open>\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where \<comment> \<open>\<open>\<equiv>\<close> used instead of \<open>=\<close>, see \<^cite>\<open>"andrews:2002"\<close>\<close>
   [simp]: "\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. \<lambda>\<yy>\<^bsub>o\<^esub>. (\<xx>\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<yy>\<^bsub>o\<^esub>)"
 
-definition imp_op :: "'a::dom_consts form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<supset>\<^sup>\<Q>\<close> 111) where
+definition (in dom_consts) imp_op :: "'a form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<supset>\<^sup>\<Q>\<close> 111) where
   [simp]: "A \<supset>\<^sup>\<Q> B = \<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B"
 
 text \<open>Generalized implication. We define \<open>[A\<^sub>1, \<dots>, A\<^sub>n] \<supset>\<^sup>\<Q>\<^sub>\<star> B\<close> as \<open>A\<^sub>1 \<supset>\<^sup>\<Q> (\<cdots> \<supset>\<^sup>\<Q> (A\<^sub>n \<supset>\<^sup>\<Q> B) \<cdots>)\<close>:\<close>
 
-definition generalized_imp_op :: "'a::dom_consts form list \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<supset>\<^sup>\<Q>\<^sub>\<star>\<close> 111) where
+definition (in dom_consts) generalized_imp_op :: "'a form list \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<supset>\<^sup>\<Q>\<^sub>\<star>\<close> 111) where
   [simp]: "As \<supset>\<^sup>\<Q>\<^sub>\<star> B = foldr (\<supset>\<^sup>\<Q>) As B"
 
 text \<open>
@@ -2043,31 +2023,32 @@ text \<open>
   same formula, namely \<open>Q\<^bsub>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A\<close>:
 \<close>
 
-definition neg :: "'a::dom_consts form \<Rightarrow> 'a form" (\<open>\<sim>\<^sup>\<Q> _\<close> [141] 141) where
-  [simp]: "\<sim>\<^sup>\<Q> A = FQ o \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A"
+definition (in dom_consts) neg :: "'a form \<Rightarrow> 'a form" (\<open>\<sim>\<^sup>\<Q> _\<close> [141] 141) where
+  [simp]: "\<sim>\<^sup>\<Q> A = FCon (CQ o) \<sqdot> F\<^bsub>o\<^esub> \<sqdot> A"
 
-definition disj_fun :: "'a::dom_consts form" (\<open>\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
+definition (in dom_consts) disj_fun :: "'a form" (\<open>\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>\<close>) where
   [simp]: "\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> = \<lambda>\<xx>\<^bsub>o\<^esub>. \<lambda>\<yy>\<^bsub>o\<^esub>. \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> \<xx>\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> \<yy>\<^bsub>o\<^esub>)"
 
-definition disj_op :: "'a::dom_consts form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<or>\<^sup>\<Q>\<close> 126) where
+definition (in dom_consts) disj_op :: "'a form \<Rightarrow> 'a form \<Rightarrow> 'a form" (infixl \<open>\<or>\<^sup>\<Q>\<close> 126) where
   [simp]: "A \<or>\<^sup>\<Q> B = \<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B"
 
-definition exists :: "'a::dom_consts \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(4\<exists>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
+definition (in dom_consts) exists :: "'a \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(4\<exists>_\<^bsub>_\<^esub>./ _)\<close> [0, 0, 141] 141) where
   [simp]: "\<exists>x\<^bsub>\<alpha>\<^esub>. A = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. \<sim>\<^sup>\<Q> A)"
 
-lemma exists_fv:
+lemma (in dom_consts) exists_fv:
   shows "free_vars (\<exists>x\<^bsub>\<alpha>\<^esub>. A) = free_vars A - {(x, \<alpha>)}"
   by simp
 
-definition inequality_of_type :: "'a::dom_consts form \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(_ \<noteq>\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
+definition (in dom_consts) inequality_of_type :: "'a form \<Rightarrow> type \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>(_ \<noteq>\<^bsub>_\<^esub>/ _)\<close> [103, 0, 103] 102) where
   [simp]: "A \<noteq>\<^bsub>\<alpha>\<^esub> B = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> B)"
 
 subsection \<open>Well-formed formulas\<close>
 
 inductive is_wff_of_type :: "type \<Rightarrow> 'a form \<Rightarrow> bool" where
   var_is_wff: "is_wff_of_type \<alpha> (x\<^bsub>\<alpha>\<^esub>)"
-| con_is_wff: "is_wff_of_type \<alpha> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
-| FQ_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) (FQ \<alpha>)"
+| con_is_wff: "is_wff_of_type \<alpha> (FCon (CCon (c, \<alpha>)))"
+| Q_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) (FCon (CQ \<alpha>))"
+| iota_is_wff: "is_wff_of_type ((i\<rightarrow>o)\<rightarrow>i) \<iota>"
 | app_is_wff: "is_wff_of_type \<beta> (A \<sqdot> B)" if "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) A" and "is_wff_of_type \<alpha> B"
 | abs_is_wff: "is_wff_of_type (\<alpha>\<rightarrow>\<beta>) (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)" if "is_wff_of_type \<beta> A"
 
@@ -2141,7 +2122,7 @@ next
 qed
 
 lemma Q_wff:
-  shows "FQ \<alpha> \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<alpha>\<rightarrow>o\<^esub>"
+  shows "(FCon (CQ \<alpha>)) \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<alpha>\<rightarrow>o\<^esub>"
   by auto
 
 (* lemma iota_wff:
@@ -2166,16 +2147,16 @@ lemma false_wff [intro]:
   shows "F\<^bsub>o\<^esub> \<in> wffs\<^bsub>o\<^esub>"
   by auto
 
-lemma pi_wff [intro]:
+lemma (in dom_consts) pi_wff [intro]:
   shows "\<Prod>\<^bsub>\<alpha>\<^esub> \<in> wffs\<^bsub>(\<alpha>\<rightarrow>o)\<rightarrow>o\<^esub>"
   using PI_def by fastforce
 
-lemma forall_wff [intro]:
+lemma (in dom_consts) forall_wff [intro]:
   assumes "A \<in> wffs\<^bsub>o\<^esub>"
   shows "\<forall>x\<^bsub>\<alpha>\<^esub>. A \<in> wffs\<^bsub>o\<^esub>"
   using assms and pi_wff unfolding forall_def by blast
 
-lemma generalized_forall_wff [intro]:
+lemma (in dom_consts) generalized_forall_wff [intro]:
   assumes "B \<in> wffs\<^bsub>o\<^esub>"
   shows "\<forall>\<^sup>\<Q>\<^sub>\<star> vs B \<in> wffs\<^bsub>o\<^esub>"
 using assms proof (induction vs)
@@ -2184,44 +2165,44 @@ using assms proof (induction vs)
     using surj_pair[of v] by force
 qed simp
 
-lemma conj_fun_wff [intro]:
+lemma (in dom_consts) conj_fun_wff [intro]:
   shows "\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<in> wffs\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>"
   by auto
 
-lemma conj_op_wff [intro]:
+lemma (in dom_consts) conj_op_wff [intro]:
   assumes "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<and>\<^sup>\<Q> B \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding conj_op_def by blast
 
-lemma imp_fun_wff [intro]:
+lemma (in dom_consts) imp_fun_wff [intro]:
   shows "\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<in> wffs\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>"
   by auto
 
-lemma imp_op_wff [intro]:
+lemma (in dom_consts) imp_op_wff [intro]:
   assumes "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<supset>\<^sup>\<Q> B \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding imp_op_def by blast
 
-lemma neg_wff [intro]:
+lemma (in dom_consts) neg_wff [intro]:
   assumes "A \<in> wffs\<^bsub>o\<^esub>"
   shows " \<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>"
   using assms by fastforce
 
-lemma disj_fun_wff [intro]:
+lemma (in dom_consts) disj_fun_wff [intro]:
   shows "\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<in> wffs\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub>"
   by auto
 
-lemma disj_op_wff [intro]:
+lemma (in dom_consts) disj_op_wff [intro]:
   assumes "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<or>\<^sup>\<Q> B \<in> wffs\<^bsub>o\<^esub>"
   using assms by auto
 
-lemma exists_wff [intro]:
+lemma (in dom_consts) exists_wff [intro]:
   assumes "A \<in> wffs\<^bsub>o\<^esub>"
   shows "\<exists>x\<^bsub>\<alpha>\<^esub>. A \<in> wffs\<^bsub>o\<^esub>"
   using assms by fastforce
 
-lemma inequality_wff [intro]:
+lemma (in dom_consts) inequality_wff [intro]:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<alpha>\<^esub>"
   shows "A \<noteq>\<^bsub>\<alpha>\<^esub> B \<in> wffs\<^bsub>o\<^esub>"
   using assms by fastforce
@@ -2229,7 +2210,8 @@ lemma inequality_wff [intro]:
 lemma wffs_from_app:
   assumes "A \<sqdot> B \<in> wffs\<^bsub>\<beta>\<^esub>"
   obtains \<alpha> where "A \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>" and "B \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  using assms by (blast elim: wffs_of_type_cases)
+  using assms wffs_of_type_cases[of "A \<sqdot> B" \<beta>]
+  by auto
 
 lemma wffs_from_generalized_app:
   assumes "\<sqdot>\<^sup>\<Q>\<^sub>\<star> B As \<in> wffs\<^bsub>\<beta>\<^esub>"
@@ -2267,7 +2249,8 @@ qed
 lemma wffs_from_abs:
   assumes "\<lambda>x\<^bsub>\<alpha>\<^esub>. A \<in> wffs\<^bsub>\<gamma>\<^esub>"
   obtains \<beta> where "\<gamma> = \<alpha>\<rightarrow>\<beta>" and "A \<in> wffs\<^bsub>\<beta>\<^esub>"
-  using assms by (blast elim: wffs_of_type_cases)
+  using assms wffs_of_type_cases[of "\<lambda>x\<^bsub>\<alpha>\<^esub>. A" \<gamma>]
+  by auto
 
 lemma wffs_from_equality:
   assumes "A =\<^bsub>\<alpha>\<^esub> B \<in> wffs\<^bsub>o\<^esub>"
@@ -2279,53 +2262,53 @@ lemma wffs_from_equivalence:
   shows "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding equivalence_def by (fact wffs_from_equality)+
 
-lemma wffs_from_forall:
+lemma (in dom_consts) wffs_from_forall:
   assumes "\<forall>x\<^bsub>\<alpha>\<^esub>. A \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding forall_def and PI_def
   by (fold equality_of_type_def) (drule wffs_from_equality, blast elim: wffs_from_abs)
 
-lemma wffs_from_conj_fun:
+lemma (in dom_consts) wffs_from_conj_fun:
   assumes "\<and>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   using assms by (auto elim: wffs_from_app wffs_from_abs)
 
-lemma wffs_from_conj_op:
+lemma (in dom_consts) wffs_from_conj_op:
   assumes "A \<and>\<^sup>\<Q> B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding conj_op_def by (elim wffs_from_conj_fun)+
 
-lemma wffs_from_imp_fun:
+lemma (in dom_consts) wffs_from_imp_fun:
   assumes "\<supset>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   using assms by (auto elim: wffs_from_app wffs_from_abs)
 
-lemma wffs_from_imp_op:
+lemma (in dom_consts) wffs_from_imp_op:
   assumes "A \<supset>\<^sup>\<Q> B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding imp_op_def by (elim wffs_from_imp_fun)+
 
-lemma wffs_from_neg:
+lemma (in dom_consts) wffs_from_neg:
   assumes "\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding neg_def by (fold equality_of_type_def) (drule wffs_from_equality, blast)
 
-lemma wffs_from_disj_fun:
+lemma (in dom_consts) wffs_from_disj_fun:
   assumes "\<or>\<^bsub>o\<rightarrow>o\<rightarrow>o\<^esub> \<sqdot> A \<sqdot> B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   using assms by (auto elim: wffs_from_app wffs_from_abs)
 
-lemma wffs_from_disj_op:
+lemma (in dom_consts) wffs_from_disj_op:
   assumes "A \<or>\<^sup>\<Q> B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>" and "B \<in> wffs\<^bsub>o\<^esub>"
   using assms and wffs_from_disj_fun unfolding disj_op_def by blast+
 
-lemma wffs_from_exists:
+lemma (in dom_consts) wffs_from_exists:
   assumes "\<exists>x\<^bsub>\<alpha>\<^esub>. A \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms unfolding exists_def using wffs_from_neg and wffs_from_forall by blast
 
-lemma wffs_from_inequality:
+lemma (in dom_consts) wffs_from_inequality:
   assumes "A \<noteq>\<^bsub>\<alpha>\<^esub> B \<in> wffs\<^bsub>o\<^esub>"
   shows "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<alpha>\<^esub>"
   using assms unfolding inequality_of_type_def using wffs_from_equality and wffs_from_neg by meson+
@@ -2339,24 +2322,17 @@ proof (induction arbitrary: \<alpha> \<beta> rule: form.induct)
   obtain x and \<gamma> where "v = (x, \<gamma>)"
     by fastforce
   with FVar.prems have "\<alpha> = \<gamma>" and "\<beta> = \<gamma>"
-    by (blast elim: wffs_of_type_cases)+
+    using wffs_of_type_cases
+    by auto
   then show ?case ..
 next
   case (FCon k)
-  obtain x and \<gamma> where "k = (x, \<gamma>)"
-    by fastforce
-  with FCon.prems have "\<alpha> = \<gamma>" and "\<beta> = \<gamma>"
-    by (blast elim: wffs_of_type_cases)+
-  then show ?case ..
-next
-  case (FQ x)
   then show ?case
-    by (metis form.distinct(11,19,21,23,3) form.inject(3) wffs_of_type_cases)
-next
-  case FIota
-  then show ?case 
-    by (metis form.distinct(14,19,25,27,6) wffs_of_type_simps)    
-next
+    apply (cases k; clarsimp)
+      apply (smt (verit) con.inject(1) form.distinct(1,7,9) form.inject(2) iota_def prod.inject wffs_of_type_simps)
+     apply (smt (verit) con.distinct(1,5) con.inject(2) form.distinct(1,7,9) form.inject(2) iota_def wffs_of_type_simps)
+    sorry
+  next
   case (FApp A B)
   from FApp.prems obtain \<alpha>' and \<beta>' where "A \<in> wffs\<^bsub>\<alpha>'\<rightarrow>\<alpha>\<^esub>" and "A \<in> wffs\<^bsub>\<beta>'\<rightarrow>\<beta>\<^esub>"
     by (blast elim: wffs_from_app)
@@ -2376,7 +2352,7 @@ qed
 lemma wffs_of_type_o_induct [consumes 1, case_names Var Con App]:
   assumes "A \<in> wffs\<^bsub>o\<^esub>"
   and "\<And>x. \<P> (x\<^bsub>o\<^esub>)"
-  and "\<And>c. \<P> (\<lbrace>c\<rbrace>\<^bsub>o\<^esub>)"
+  and "\<And>c. \<P> (FCon c)"
   and "\<And>A B \<alpha>. A \<in> wffs\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<P> (A \<sqdot> B)"
   shows "\<P> A"
   using assms by (cases rule: wffs_of_type_cases) simp_all
@@ -2421,11 +2397,11 @@ lemma is_free_for_in_true [intro]:
   shows "is_free_for A v (T\<^bsub>o\<^esub>)"
   by force
 
-lemma is_free_for_in_false [intro]:
+lemma (in dom_consts) is_free_for_in_false [intro]:
   shows "is_free_for A v (F\<^bsub>o\<^esub>)"
   unfolding false_def by (intro is_free_for_in_equality is_free_for_closed_form) simp_all
 
-lemma is_free_for_in_forall [intro]:
+lemma (in dom_consts) is_free_for_in_forall [intro]:
   assumes "is_free_for A v B" and "(x, \<alpha>) \<notin> free_vars A"
   shows "is_free_for A v (\<forall>x\<^bsub>\<alpha>\<^esub>. B)"
 unfolding forall_def and PI_def proof (fold equality_of_type_def)
@@ -2437,7 +2413,7 @@ unfolding forall_def and PI_def proof (fold equality_of_type_def)
     by (iprover intro: assms(1) is_free_for_in_equality is_free_for_in_true is_free_for_to_abs)
 qed
 
-lemma is_free_for_in_generalized_forall [intro]:
+lemma (in dom_consts) is_free_for_in_generalized_forall [intro]:
   assumes "is_free_for A v B" and "lset vs \<inter> free_vars A = {}"
   shows "is_free_for A v (\<forall>\<^sup>\<Q>\<^sub>\<star> vs B)"
 using assms proof (induction vs)
@@ -2458,7 +2434,7 @@ next
     by simp
 qed
 
-lemma is_free_for_in_conj [intro]:
+lemma (in dom_consts) is_free_for_in_conj [intro]:
   assumes "is_free_for A v B" and "is_free_for A v C"
   shows "is_free_for A v (B \<and>\<^sup>\<Q> C)"
 proof -
@@ -2472,7 +2448,7 @@ proof -
     by (fold conj_op_def)
 qed
 
-lemma is_free_for_in_imp [intro]:
+lemma (in dom_consts) is_free_for_in_imp [intro]:
   assumes "is_free_for A v B" and "is_free_for A v C"
   shows "is_free_for A v (B \<supset>\<^sup>\<Q> C)"
 proof -
@@ -2486,14 +2462,14 @@ proof -
     by (fold imp_op_def)
 qed
 
-lemma is_free_for_in_neg [intro]:
+lemma (in dom_consts) is_free_for_in_neg [intro]:
   assumes "is_free_for A v B"
   shows "is_free_for A v (\<sim>\<^sup>\<Q> B)"
   using assms unfolding neg_def 
   by (intro is_free_for_to_app is_free_for_in_false is_free_for_in_con)
     (meson free_vars.simps(3) is_free_for_closed_form)+
 
-lemma is_free_for_in_disj [intro]:
+lemma (in dom_consts) is_free_for_in_disj [intro]:
   assumes "is_free_for A v B" and "is_free_for A v C"
   shows "is_free_for A v (B \<or>\<^sup>\<Q> C)"
 proof -
@@ -2546,11 +2522,9 @@ definition is_substitution :: "'a substitution \<Rightarrow> bool" where
 
 fun substitute :: "'a substitution \<Rightarrow> 'a form \<Rightarrow> 'a form" (\<open>\<^bold>S _ _\<close> [51, 51]) where
   "\<^bold>S \<theta> (x\<^bsub>\<alpha>\<^esub>) = (case \<theta> $$ (x, \<alpha>) of None \<Rightarrow> x\<^bsub>\<alpha>\<^esub> | Some A \<Rightarrow> A)"
-| "\<^bold>S \<theta> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
+| "\<^bold>S \<theta> (FCon c) = FCon c"
 | "\<^bold>S \<theta> (A \<sqdot> B) = (\<^bold>S \<theta> A) \<sqdot> (\<^bold>S \<theta> B)"
 | "\<^bold>S \<theta> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = (if (x, \<alpha>) \<notin> fmdom' \<theta> then \<lambda>x\<^bsub>\<alpha>\<^esub>. \<^bold>S \<theta> A else \<lambda>x\<^bsub>\<alpha>\<^esub>. \<^bold>S (fmdrop (x, \<alpha>) \<theta>) A)"
-| "\<^bold>S \<theta> (FQ \<tau>) = FQ \<tau>"
-| "\<^bold>S \<theta> FIota = FIota"
 
 lemma empty_substitution_neutrality:
   shows "\<^bold>S {$$} A = A"
@@ -2560,7 +2534,8 @@ lemma substitution_preserves_typing:
   assumes "is_substitution \<theta>"
   and "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   shows "\<^bold>S \<theta> A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-using assms(2) and assms(1)[unfolded is_substitution_def] proof (induction arbitrary: \<theta>)
+  using assms(2) and assms(1)[unfolded is_substitution_def] 
+proof (induction arbitrary: \<theta>)
   case (var_is_wff \<alpha> x)
   then show ?case
     by (cases "(x, \<alpha>) \<in> fmdom' \<theta>") (use fmdom'_notI in \<open>force+\<close>)
@@ -2586,9 +2561,13 @@ next
     ultimately show ?thesis
       by fastforce
   qed
-qed force+
+next
+  case (iota_is_wff)
+  then show ?case
+    using wffs_of_type_intros(4) by force
+qed auto
 
-lemma derived_substitution_simps:
+lemma (in dom_consts) derived_substitution_simps:
   shows "\<^bold>S \<theta> T\<^bsub>o\<^esub> = T\<^bsub>o\<^esub>"
   and "\<^bold>S \<theta> F\<^bsub>o\<^esub> = F\<^bsub>o\<^esub>"
   and "\<^bold>S \<theta> (\<Prod>\<^bsub>\<alpha>\<^esub>) = \<Prod>\<^bsub>\<alpha>\<^esub>"
@@ -2644,7 +2623,7 @@ next
   qed
 qed
 
-lemma generalized_forall_substitution:
+lemma (in dom_consts) generalized_forall_substitution:
   shows "\<^bold>S \<theta> (\<forall>\<^sup>\<Q>\<^sub>\<star> vs A) = \<forall>\<^sup>\<Q>\<^sub>\<star> vs (\<^bold>S (fmdrop_set (fmdom' \<theta> \<inter> lset vs) \<theta>) A)"
 proof (induction vs arbitrary: \<theta>)
   case Nil
@@ -2683,7 +2662,7 @@ qed
 
 lemma singleton_substitution_simps:
   shows "\<^bold>S {(x, \<alpha>) \<Zinj> A} (y\<^bsub>\<beta>\<^esub>) = (if (x, \<alpha>) \<noteq> (y, \<beta>) then y\<^bsub>\<beta>\<^esub> else A)"
-  and "\<^bold>S {(x, \<alpha>) \<Zinj> A} (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
+  and "\<^bold>S {(x, \<alpha>) \<Zinj> A} (FCon c) = FCon c"
   and "\<^bold>S {(x, \<alpha>) \<Zinj> A} (B \<sqdot> C) = (\<^bold>S {(x, \<alpha>) \<Zinj> A} B) \<sqdot> (\<^bold>S {(x, \<alpha>) \<Zinj> A} C)"
   and "\<^bold>S {(x, \<alpha>) \<Zinj> A} (\<lambda>y\<^bsub>\<beta>\<^esub>. B) = \<lambda>y\<^bsub>\<beta>\<^esub>. (if (x, \<alpha>) = (y, \<beta>) then B else \<^bold>S {(x, \<alpha>) \<Zinj> A} B)"
   by (simp_all add: empty_substitution_neutrality fmdrop_fmupd_same)
@@ -2696,7 +2675,7 @@ using assms(1) proof (induction A rule: free_vars.induct)
   with assms(2) show ?case
     using surj_pair[of z] by (cases "x = (x', \<alpha>)") force+
 next
-  case (6 x' \<alpha> A)
+  case (4 x' \<alpha> A)
   then show ?case
     using surj_pair[of z]
     by (cases "x = (x', \<alpha>)") 
@@ -2711,7 +2690,7 @@ using assms(1) proof (induction A rule: vars.induct)
   with assms(2) show ?case
     using surj_pair[of z] by (cases "x = (x', \<alpha>)") force+
 next
-  case (6 x' \<alpha> A)
+  case (4 x' \<alpha> A)
   then show ?case
     using surj_pair[of z]
     by (cases "x = (x', \<alpha>)") (use singleton_substitution_simps(4) in smt, auto)
@@ -2745,7 +2724,7 @@ proof (induction A rule: form_size.induct)
     by (smt (verit, ccfv_threshold) form_size.simps(1) 
         old.prod.exhaust singleton_substitution_simps(1))
 next
-  case (6 x \<alpha> A)
+  case (4 x \<alpha> A)
   then show ?case
     by (cases "v = (x, \<alpha>)") (use singleton_substitution_simps(4) in smt, auto)
 qed simp_all
@@ -2810,7 +2789,7 @@ using assms proof (induction A arbitrary: z)
 next
   case (FCon k)
   then show ?case
-    using surj_pair[of k] by fastforce
+    by fastforce
 next
   case (FApp B C)
   let ?\<theta>\<^sub>z\<^sub>y = "{z \<Zinj> FVar y}" and ?\<theta>\<^sub>x\<^sub>z = "{x \<Zinj> FVar z}" and ?\<theta>\<^sub>x\<^sub>y = "{x \<Zinj> FVar y}"
@@ -2915,7 +2894,7 @@ next
       finally show ?thesis ..
     qed
   qed
-qed auto
+qed
 
 lemma absent_vars_substitution_preservation:
   assumes "v \<notin> vars A"
@@ -2928,7 +2907,7 @@ using assms proof (induction A arbitrary: \<theta>)
 next
   case (FCon k)
   then show ?case
-    using surj_pair[of k] by fastforce
+    by fastforce
 next
   case FApp
   then show ?case
@@ -2937,7 +2916,8 @@ next
   case (FAbs w B)
   from FAbs.prems(1) have "v \<notin> vars B"
     using vars.elims
-    by (smt (verit, del_insts) Un_insert_right insert_iff sup_bot.right_neutral surj_pair vars.simps(6))
+    by (smt (verit, del_insts) Un_insert_right insert_iff 
+        sup_bot.right_neutral surj_pair vars.simps(4))
   then show ?case
   proof (cases "w \<in> fmdom' \<theta>")
     case True
@@ -2956,7 +2936,7 @@ next
     then show ?thesis
       using FAbs.IH and FAbs.prems and surj_pair[of w] by fastforce
   qed
-qed auto
+qed
 
 lemma substitution_free_absorption:
   assumes "\<theta> $$ v = None" and "v \<notin> free_vars B"
@@ -3045,7 +3025,7 @@ using assms proof (induction B arbitrary: \<theta>)
 next
   case (FCon k)
   then show ?case
-    using surj_pair[of k] by fastforce
+    by fastforce
 next
   case (FApp C D)
   from FApp.prems(2) have "y \<notin> vars C" and "y \<notin> vars D"
@@ -3138,7 +3118,8 @@ next
           finally have "\<^bold>S ({x \<Zinj> FVar y} ++\<^sub>f \<theta>) (FAbs w B) = FAbs w (\<^bold>S (fmdrop w \<theta>) B)" .
           with FAbs.prems(2) and \<open>w = (v\<^sub>w, \<alpha>\<^sub>w)\<close> and FAbs.prems(4) show ?thesis
             using absent_vars_substitution_preservation 
-            by (metis Diff_iff FAbs.prems(3) True fmdom'_notD free_vars.simps(6) substitution_free_absorption)
+            by (metis Diff_iff FAbs.prems(3) True fmdom'_notD 
+                free_vars.simps(4) substitution_free_absorption)
         qed
         then show ?thesis
           using is_free_for_absent_var by simp
@@ -3189,7 +3170,8 @@ next
           finally have "\<^bold>S ({x \<Zinj> FVar y} ++\<^sub>f \<theta>) (FAbs w B) = FAbs w (\<^bold>S \<theta> B)" .
           with FAbs.prems(2,4) and \<open>w = (v\<^sub>w, \<alpha>\<^sub>w)\<close> show ?thesis
             using absent_vars_substitution_preservation
-            by (metis Diff_iff FAbs.prems(3) True fmdom'_notD free_vars.simps(6) substitution_free_absorption)
+            by (metis Diff_iff FAbs.prems(3) True fmdom'_notD 
+                free_vars.simps(4) substitution_free_absorption)
         qed
         then show ?thesis
           using is_free_for_absent_var by simp
@@ -3214,7 +3196,7 @@ next
       qed
     qed
   qed
-qed auto
+qed
 
 text \<open>
   The following lemma allows us to fuse a singleton substitution and a simultaneous substitution,
@@ -3239,26 +3221,29 @@ using assms(1,3,4) proof (induction B arbitrary: \<theta>)
     with False and FVar.prems(3) have "v \<notin> vars A'"
       by fastforce
     then have "\<^bold>S {v \<Zinj> A} A' = A'"
-      using free_var_singleton_substitution_neutrality and free_vars_in_all_vars' by blast
+      using free_var_singleton_substitution_neutrality 
+        free_vars_in_all_vars' by blast
     from \<open>\<theta> $$ v' = Some A'\<close> have "\<^bold>S {v \<Zinj> A} \<^bold>S \<theta> (FVar v') = \<^bold>S {v \<Zinj> A} A'"
       using surj_pair[of v'] by fastforce
     also from \<open>\<^bold>S {v \<Zinj> A} A' = A'\<close> have "\<dots> = A'"
       by (simp only:)
-    also from \<open>\<theta> $$ v' = Some A'\<close> and \<open>\<theta> $$ v = None\<close> have "\<dots> = \<^bold>S ({v \<Zinj> A} ++\<^sub>f \<theta>) (FVar v')"
+    also from \<open>\<theta> $$ v' = Some A'\<close> and \<open>\<theta> $$ v = None\<close> 
+    have "\<dots> = \<^bold>S ({v \<Zinj> A} ++\<^sub>f \<theta>) (FVar v')"
       using surj_pair[of v'] by fastforce
     finally show ?thesis .
   qed
 next
   case (FCon k)
   then show ?case
-    using surj_pair[of k] by fastforce
+    by fastforce
 next
   case (FApp C D)
   have "\<^bold>S {v \<Zinj> A} \<^bold>S \<theta> (C \<sqdot> D) = \<^bold>S {v \<Zinj> A} ((\<^bold>S \<theta> C) \<sqdot> (\<^bold>S \<theta> D))"
     by auto
   also have "\<dots> = (\<^bold>S {v \<Zinj> A} \<^bold>S \<theta> C) \<sqdot> (\<^bold>S {v \<Zinj> A} \<^bold>S \<theta> D)"
     by simp
-  also from FApp.IH have "\<dots> = (\<^bold>S ({v \<Zinj> A} ++\<^sub>f \<theta>) C) \<sqdot> (\<^bold>S ({v \<Zinj> A} ++\<^sub>f \<theta>) D)"
+  also from FApp.IH 
+  have "\<dots> = (\<^bold>S ({v \<Zinj> A} ++\<^sub>f \<theta>) C) \<sqdot> (\<^bold>S ({v \<Zinj> A} ++\<^sub>f \<theta>) D)"
     using FApp.prems(1,2,3) by presburger
   also have "\<dots> = \<^bold>S ({v \<Zinj> A} ++\<^sub>f \<theta>) (C \<sqdot> D)"
     by simp
@@ -3331,7 +3316,7 @@ next
       finally show ?thesis .
     qed
   qed
-qed auto
+qed
 
 lemma updated_substitution_is_substitution:
   assumes "v \<notin> fmdom' \<theta>" and "is_substitution (\<theta>(v \<Zinj> A))"
@@ -3468,7 +3453,7 @@ using assms proof (induction A arbitrary: \<theta> \<theta>')
 next
   case FCon
   then show ?case
-    by (metis prod.exhaust_sel substitute.simps(2))
+    by (metis substitute.simps(2))
 next
   case (FApp B C)
   have "\<^bold>S \<theta> (B \<sqdot> C) = (\<^bold>S \<theta> B) \<sqdot> (\<^bold>S \<theta> C)"
@@ -3517,7 +3502,7 @@ next
     finally show ?thesis
       using FAbs.prems(1) and False and surj_pair[of w] by fastforce
   qed
-qed auto
+qed
 
 text \<open>
   The following lemma proves that $
@@ -3717,7 +3702,7 @@ using assms proof (induction A arbitrary: \<theta>)
 next
   case (FCon k)
   then show ?case
-    using surj_pair[of k] by force
+    by force
 next
   case (FApp B C)
   then show ?case
@@ -3753,13 +3738,13 @@ next
     ultimately show ?thesis
       using \<open>v \<noteq> w\<close> and surj_pair[of w] by fastforce
   qed
-qed auto
+qed
 
 subsection \<open>Renaming of bound variables\<close>
 
 fun rename_bound_var :: "'c var \<Rightarrow> 'c \<Rightarrow> 'c form \<Rightarrow> 'c form" where
   "rename_bound_var v y (x\<^bsub>\<alpha>\<^esub>) = x\<^bsub>\<alpha>\<^esub>"
-| "rename_bound_var v y (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
+| "rename_bound_var v y (FCon c) = FCon c"
 | "rename_bound_var v y (B \<sqdot> C) = rename_bound_var v y B \<sqdot> rename_bound_var v y C"
 | "rename_bound_var v y (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) =
     (
@@ -3768,8 +3753,6 @@ fun rename_bound_var :: "'c var \<Rightarrow> 'c \<Rightarrow> 'c form \<Rightar
       else
         \<lambda>x\<^bsub>\<alpha>\<^esub>. (rename_bound_var v y B)
     )"
-| "rename_bound_var v y (FQ \<tau>) = FQ \<tau>"
-| "rename_bound_var v y FI = FI"
 
 lemma rename_bound_var_preserves_typing:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
@@ -3793,6 +3776,10 @@ using assms proof (induction A)
     with False show ?thesis
       by auto
   qed
+next
+  case (iota_is_wff)
+  then show ?case
+    using wffs_of_type_intros(4) by auto
 qed auto
 
 lemma old_bound_var_not_free_in_abs_after_renaming:
@@ -3846,10 +3833,14 @@ next
     using occurs_at_alt_def(2) 
     by force
 next
-  case (FQ_is_wff \<alpha>)
+  case (Q_is_wff \<alpha>)
   then show ?case
     using is_subform_implies_in_positions 
     by fastforce
+next
+  case (iota_is_wff \<alpha>)
+  then show ?case
+    using subforms_from_con(1) by auto
 next
   case (app_is_wff \<alpha> \<beta> A B)
   then show ?case
@@ -3877,7 +3868,7 @@ next
           =
           \<lambda>z\<^bsub>\<gamma>\<^esub>. \<^bold>S {(y, \<gamma>) \<Zinj> z\<^bsub>\<gamma>\<^esub>} (rename_bound_var (y, \<gamma>) z A)"
           using free_var_in_renaming_substitution and free_var_singleton_substitution_neutrality
-          by (metis Diff_iff free_vars.simps(6) rename_bound_var.simps(4))
+          by (metis Diff_iff free_vars.simps(4) rename_bound_var.simps(4))
         moreover have "\<not> occurs_at (y, \<gamma>) p (\<lambda>z\<^bsub>\<gamma>\<^esub>. \<^bold>S {(y, \<gamma>) \<Zinj> z\<^bsub>\<gamma>\<^esub>} (rename_bound_var (y, \<gamma>) z A))"
           using Left and Cons and * by simp
         ultimately show ?thesis
@@ -3919,10 +3910,14 @@ next
     using occurs_at_alt_def(2) 
     by (metis rename_bound_var.simps(2))
 next
-  case (FQ_is_wff \<alpha>)
+  case (Q_is_wff \<alpha>)
   then show ?case
     using is_subform_implies_in_positions 
     by fastforce
+next
+  case (iota_is_wff \<alpha>)
+  then show ?case
+    using subforms_from_con(1) by auto
 next
   case (app_is_wff \<alpha> \<beta> B C)
   from app_is_wff.prems(1) have "(z, \<gamma>) \<notin> vars B" and "(z, \<gamma>) \<notin> vars C"
@@ -4012,7 +4007,7 @@ proof (induction A)
   then show ?case
     using singleton_substitution_simps(4) and surj_pair[of v]
     by (cases "v = (y, \<gamma>)")
-      (smt (verit, best) bound_vars.simps(6) singleton_substitution_simps(4))+
+      (smt (verit, best) bound_vars.simps(4) singleton_substitution_simps(4))+
 qed force+
 
 lemma rename_bound_var_bound_vars:

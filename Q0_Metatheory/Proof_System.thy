@@ -7,8 +7,11 @@ begin
 
 subsection \<open>Axioms\<close>
 
+context dom_consts
+begin
+
 inductive_set
-  axioms :: "'c::dom_consts form set"
+  axioms :: "'a form set"
 where
   axiom_1:
     "\<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub> \<in> axioms"
@@ -17,7 +20,7 @@ where
 | axiom_3:
     "(\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<in> axioms"
 | axiom_4_1_con:
-    "(\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+    "(\<lambda>x\<^bsub>\<alpha>\<^esub>. FCon (CCon (c,\<beta>))) \<sqdot> A =\<^bsub>\<beta>\<^esub> FCon (CCon (c,\<beta>)) \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
 | axiom_4_1_var:
     "(\<lambda>x\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub> \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "y\<^bsub>\<beta>\<^esub> \<noteq> x\<^bsub>\<alpha>\<^esub>"
 | axiom_4_2:
@@ -31,15 +34,17 @@ where
 | axiom_4_5:
     "(\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<in> axioms" if "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>"
 | axiom_5:
-    "\<iota> \<sqdot> (FQ i \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub> \<in> axioms"
+    "\<iota> \<sqdot> ((FCon (CQ i)) \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub> \<in> axioms"
 
 lemma axioms_are_wffs_of_type_o:
   shows "axioms \<subseteq> wffs\<^bsub>o\<^esub>"
-  by (intro subsetI, cases rule: axioms.cases) auto
+  apply (intro subsetI, cases rule: axioms.cases) 
+  using wffs_of_type_intros(4) 
+  by force+
 
 subsection \<open>Inference rule R\<close>
 
-definition is_rule_R_app :: "position \<Rightarrow> 'c::dom_consts form \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> bool" where
+definition is_rule_R_app :: "position \<Rightarrow> 'a form \<Rightarrow> 'a form \<Rightarrow> 'a form \<Rightarrow> bool" where
   [iff]: "is_rule_R_app p D C E \<longleftrightarrow>
     (
       \<exists>\<alpha> A B.
@@ -56,7 +61,7 @@ lemma rule_R_original_form_is_wffo:
 
 subsection \<open>Proof and derivability\<close>
 
-inductive is_derivable :: "'c::dom_consts form \<Rightarrow> bool" where
+inductive is_derivable :: "'a form \<Rightarrow> bool" where
   dv_axiom: "is_derivable A" if "A \<in> axioms"
 | dv_rule_R: "is_derivable D" if "is_derivable C" and "is_derivable E" and "is_rule_R_app p D C E"
 
@@ -65,12 +70,12 @@ lemma derivable_form_is_wffso:
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms and axioms_are_wffs_of_type_o by (fastforce elim: is_derivable.cases)
 
-definition is_proof_step :: "'c::dom_consts form list \<Rightarrow> nat \<Rightarrow> bool" where
+definition is_proof_step :: "'a form list \<Rightarrow> nat \<Rightarrow> bool" where
   [iff]: "is_proof_step \<S> i' \<longleftrightarrow>
     \<S> ! i' \<in> axioms \<or>
     (\<exists>p j k. {j, k} \<subseteq> {0..<i'} \<and> is_rule_R_app p (\<S> ! i') (\<S> ! j) (\<S> ! k))"
 
-definition is_proof :: "'c::dom_consts form list \<Rightarrow> bool" where
+definition is_proof :: "'a form list \<Rightarrow> bool" where
   [iff]: "is_proof \<S> \<longleftrightarrow> (\<forall>i' < length \<S>. is_proof_step \<S> i')"
 
 lemma common_prefix_is_subproof:
@@ -249,7 +254,7 @@ proof -
     using less_Suc_eq by auto
 qed
 
-definition is_proof_of :: "'c::dom_consts form list \<Rightarrow> 'c form \<Rightarrow> bool" where
+definition is_proof_of :: "'a form list \<Rightarrow> 'a form \<Rightarrow> bool" where
   [iff]: "is_proof_of \<S> A \<longleftrightarrow> \<S> \<noteq> [] \<and> is_proof \<S> \<and> last \<S> = A"
 
 lemma proof_prefix_is_proof_of_last:
@@ -262,7 +267,7 @@ proof -
     by fastforce
 qed
 
-definition is_theorem :: "'c::dom_consts form \<Rightarrow> bool" where
+definition is_theorem :: "'a form \<Rightarrow> bool" where
   [iff]: "is_theorem A \<longleftrightarrow> (\<exists>\<S>. is_proof_of \<S> A)"
 
 lemma proof_form_is_wffo:
@@ -517,7 +522,7 @@ definition rule_R'_side_condition :: "'c form set \<Rightarrow> position \<Right
     capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at_set p C \<H> = {}"
 
 lemma rule_R'_side_condition_alt_def:
-  fixes \<H> :: "'c::dom_consts form set"
+  fixes \<H> :: "'a form set"
   assumes "C \<in> wffs\<^bsub>\<alpha>\<^esub>"
   shows "
     rule_R'_side_condition \<H> p D C (A =\<^bsub>\<alpha>\<^esub> B)
@@ -556,7 +561,7 @@ proof -
     by fast
 qed
 
-definition is_rule_R'_app :: "'c::dom_consts form set \<Rightarrow> position \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> 'c form \<Rightarrow> bool" where
+definition is_rule_R'_app :: "'a form set \<Rightarrow> position \<Rightarrow> 'a form \<Rightarrow> 'a form \<Rightarrow> 'a form \<Rightarrow> bool" where
   [iff]: "is_rule_R'_app \<H> p D C E \<longleftrightarrow> is_rule_R_app p D C E \<and> rule_R'_side_condition \<H> p D C E"
 
 lemma is_rule_R'_app_alt_def:
@@ -587,7 +592,7 @@ lemma rule_R'_preserves_typing:
 abbreviation is_hyps :: "'c form set \<Rightarrow> bool" where
   "is_hyps \<H> \<equiv> \<H> \<subseteq> wffs\<^bsub>o\<^esub> \<and> finite \<H>"
 
-inductive is_derivable_from_hyps :: "'c::dom_consts form set \<Rightarrow> 'c form \<Rightarrow> bool" (\<open>_ \<turnstile> _\<close> [50, 50] 50) for \<H> where
+inductive is_derivable_from_hyps :: "'a form set \<Rightarrow> 'a form \<Rightarrow> bool" (\<open>_ \<turnstile> _\<close> [50, 50] 50) for \<H> where
   dv_hyp: "\<H> \<turnstile> A" if "A \<in> \<H>" and "is_hyps \<H>"
 | dv_thm: "\<H> \<turnstile> A" if "is_theorem A" and "is_hyps \<H>"
 | dv_rule_R': "\<H> \<turnstile> D" if "\<H> \<turnstile> C" and "\<H> \<turnstile> E" and "is_rule_R'_app \<H> p D C E" and "is_hyps \<H>"
@@ -597,7 +602,7 @@ lemma hyp_derivable_form_is_wffso:
   shows "A \<in> wffs\<^bsub>o\<^esub>"
   using assms and theorem_is_wffo by (cases rule: is_derivable_from_hyps.cases) auto
 
-definition is_hyp_proof_step :: "'c::dom_consts form set \<Rightarrow> 'c form list \<Rightarrow> 'c form list \<Rightarrow> nat \<Rightarrow> bool" where
+definition is_hyp_proof_step :: "'a form set \<Rightarrow> 'a form list \<Rightarrow> 'a form list \<Rightarrow> nat \<Rightarrow> bool" where
   [iff]: "is_hyp_proof_step \<H> \<S>\<^sub>1 \<S>\<^sub>2 i' \<longleftrightarrow>
     \<S>\<^sub>2 ! i' \<in> \<H> \<or>
     \<S>\<^sub>2 ! i' \<in> lset \<S>\<^sub>1 \<or>
@@ -605,7 +610,7 @@ definition is_hyp_proof_step :: "'c::dom_consts form set \<Rightarrow> 'c form l
 
 type_synonym 'c hyp_proof = "'c form list \<times> 'c form list"
 
-definition is_hyp_proof :: "'c::dom_consts form set \<Rightarrow> 'c form list \<Rightarrow> 'c form list \<Rightarrow> bool" where
+definition is_hyp_proof :: "'a form set \<Rightarrow> 'a form list \<Rightarrow> 'a form list \<Rightarrow> bool" where
   [iff]: "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<longleftrightarrow> (\<forall>i' < length \<S>\<^sub>2. is_hyp_proof_step \<H> \<S>\<^sub>1 \<S>\<^sub>2 i')"
 
 lemma common_prefix_is_hyp_subproof_from:
@@ -909,7 +914,7 @@ proof (standard, intro allI impI)
   qed
 qed
 
-definition is_hyp_proof_of :: "'c::dom_consts form set \<Rightarrow> 'c form list \<Rightarrow> 'c form list \<Rightarrow> 'c form \<Rightarrow> bool" where
+definition is_hyp_proof_of :: "'a form set \<Rightarrow> 'a form list \<Rightarrow> 'a form list \<Rightarrow> 'a form \<Rightarrow> bool" where
   [iff]: "is_hyp_proof_of \<H> \<S>\<^sub>1 \<S>\<^sub>2 A \<longleftrightarrow>
     is_hyps \<H> \<and>
     is_proof \<S>\<^sub>1 \<and>
@@ -1144,5 +1149,7 @@ using assms(1,2) proof (rule dv_rule_R')
     using assms(2-5) and hyp_derivable_form_is_wffso and wffs_from_equality
     unfolding is_rule_R_app_def and is_rule_R'_app_def by metis
 qed
+
+end
 
 end

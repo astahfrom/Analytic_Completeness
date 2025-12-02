@@ -29,7 +29,7 @@ lemma vlambda_extensionality:
 
 subsection \<open>Frames\<close>
 
-locale frame =
+locale frame = dom_consts +
   fixes \<D> :: "type \<Rightarrow> V"
   assumes truth_values_domain_def: "\<D> o = \<bool>"
   and function_domain_def: "\<forall>\<alpha> \<beta>. \<D> (\<alpha>\<rightarrow>\<beta>) \<le> \<D> \<alpha> \<longmapsto> \<D> \<beta>"
@@ -132,7 +132,9 @@ text \<open>Wff denotation function:\<close>
 
 locale premodel = frame +
   fixes \<J> :: "'a con \<Rightarrow> V"
-
+  assumes Q_denotation: "\<forall>\<alpha>. \<J> (CQ \<alpha>) = q\<^bsub>\<alpha>\<^esub>"
+  and \<iota>_denotation: "is_unique_member_selector (\<J> CIota)"
+  and non_logical_constant_denotation: "\<forall>c. \<not> is_logical_constant c \<longrightarrow> \<J> c \<in> elts (\<D> \<alpha>)"
 begin
 
 definition is_wff_denotation_function :: "(('a var \<Rightarrow> V) \<Rightarrow> 'a form \<Rightarrow> V) \<Rightarrow> bool" where
@@ -141,9 +143,7 @@ definition is_wff_denotation_function :: "(('a var \<Rightarrow> V) \<Rightarrow
       \<forall>\<phi>. is_assignment \<phi> \<longrightarrow>
         (\<forall>A \<alpha>. A \<in> wffs\<^bsub>\<alpha>\<^esub> \<longrightarrow> \<V> \<phi> A \<in> elts (\<D> \<alpha>)) \<and> \<comment> \<open>closure condition, see note in page 186\<close>
         (\<forall>x \<alpha>. \<V> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)) \<and>
-        (\<forall>c \<alpha>. \<V> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<J> (c, \<alpha>)) \<and>
-        (\<forall>\<alpha>. \<V> \<phi> (FQ \<alpha>) = q\<^bsub>\<alpha>\<^esub>) \<and>
-        is_unique_member_selector (\<V> \<phi> FIota) \<and>
+        (\<forall>c. \<V> \<phi> (FCon c) = \<J> c) \<and>
         (\<forall>A B \<alpha> \<beta>. A \<in> wffs\<^bsub>\<beta>\<rightarrow>\<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<beta>\<^esub> \<longrightarrow> \<V> \<phi> (A \<sqdot> B) = (\<V> \<phi> A) \<bullet> (\<V> \<phi> B)) \<and>
         (\<forall>x B \<alpha> \<beta>. B \<in> wffs\<^bsub>\<beta>\<^esub> \<longrightarrow> \<V> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z \<^bold>: \<D> \<alpha>\<^bold>. \<V> (\<phi>((x, \<alpha>) := z)) B))
     )"
@@ -164,21 +164,21 @@ lemma wff_var_denotation:
 lemma wff_Q_denotation:
   assumes "is_wff_denotation_function \<V>"
   and "is_assignment \<phi>"
-  shows "\<V> \<phi> (FQ \<alpha>) = q\<^bsub>\<alpha>\<^esub>"
-  using assms
-  by force
+  shows "\<V> \<phi> (Q\<^bsub>\<alpha>\<^esub>) = q\<^bsub>\<alpha>\<^esub>"
+  using assms and Q_denotation by force
+
 
 lemma wff_iota_denotation:
   assumes "is_wff_denotation_function \<V>"
   and "is_assignment \<phi>"
   shows "is_unique_member_selector (\<V> \<phi> \<iota>)"
-  using assms[unfolded is_wff_denotation_function_def]
-  by fastforce
+  using assms and \<iota>_denotation by fastforce
 
 lemma wff_non_logical_constant_denotation:
   assumes "is_wff_denotation_function \<V>"
   and "is_assignment \<phi>"
-  shows "\<V> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = \<J> (c, \<alpha>)"
+  and "\<not> is_logical_constant c"
+  shows "\<V> \<phi> (FCon c) = \<J> c"
   using assms by auto
 
 lemma wff_app_denotation:
@@ -218,6 +218,14 @@ proof -
     case app_is_wff
     with assms(1,2) show ?case
       using wff_app_denotation by metis
+  next 
+    case (Q_is_wff \<alpha>)
+    with assms(1,2)show ?case
+      by simp
+  next 
+    case iota_is_wff
+    with assms(1,2)show ?case
+      by simp
   next
     case (abs_is_wff \<beta> A \<alpha> x)
     have "is_assignment (\<phi>((x, \<alpha>) := z))" if "z \<in> elts (\<D> \<alpha>)" for z
@@ -231,10 +239,6 @@ proof -
     also have "\<dots> = \<V>' \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A)"
       by (fact wff_abs_denotation[OF assms(2) abs_is_wff.prems abs_is_wff.hyps, symmetric])
     finally show ?case .
-  next
-    case (FQ_is_wff \<alpha> \<beta>)
-    thus ?case
-      by (metis assms(1,2) wff_Q_denotation)
   qed
 qed
 
@@ -288,7 +292,7 @@ lemma fully_applied_imp_fun_denotation_is_domain_respecting:
 end
 
 abbreviation is_general_model :: "model_structure \<Rightarrow> bool" where
-  "is_general_model \<M> \<equiv> case \<M> of (\<D>, \<J>, \<V>) \<Rightarrow> general_model \<D> \<J> \<V>"
+  "is_general_model \<M> \<equiv> case \<M> of (\<D>, \<J>, \<V>) \<Rightarrow> general_model 0 1 2 \<D> \<J> \<V>"
 
 subsection \<open>Standard models\<close>
 
@@ -296,7 +300,7 @@ locale standard_model = general_model +
   assumes full_function_domain_def: "\<forall>\<alpha> \<beta>. \<D> (\<alpha>\<rightarrow>\<beta>) = \<D> \<alpha> \<longmapsto> \<D> \<beta>"
 
 abbreviation is_standard_model :: "model_structure \<Rightarrow> bool" where
-  "is_standard_model \<M> \<equiv> case \<M> of (\<D>, \<J>, \<V>) \<Rightarrow> standard_model \<D> \<J> \<V>"
+  "is_standard_model \<M> \<equiv> case \<M> of (\<D>, \<J>, \<V>) \<Rightarrow> standard_model 0 1 2 \<D> \<J> \<V>"
 
 lemma standard_model_is_general_model:
   assumes "is_standard_model \<M>"
