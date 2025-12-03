@@ -48,7 +48,7 @@ section \<open>Operations\<close>
 
 abbreviation \<open>is_logical_name c \<equiv> c = \<cc>\<^sub>Q \<or> c = \<cc>\<^sub>\<iota>\<close>
 
-abbreviation \<open>is_param c \<equiv> \<not> is_logical_name c\<close>
+definition \<open>is_param c \<equiv> \<not> is_logical_name c\<close>
 
 fun map_con :: "(nat \<Rightarrow> nat) \<Rightarrow> form \<Rightarrow> form" where
   "map_con _ (x\<^bsub>\<alpha>\<^esub>) = (x\<^bsub>\<alpha>\<^esub>)"
@@ -118,7 +118,7 @@ lemma map_con_FVar [dest]: \<open>map_con f A = x\<^bsub>\<alpha>\<^esub> \<Long
   by (induct A) (auto split: if_splits)
 
 lemma map_con_FCon_not_param [dest]: \<open>map_con f A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<not> is_param c \<Longrightarrow> A = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
-  by (induct A) (auto split: if_splits)
+  unfolding is_param_def by (induct A) (auto split: if_splits)
 
 lemma map_con_FApp [dest!]: \<open>map_con f A = B \<sqdot> C \<Longrightarrow> \<exists>B' C'. map_con f B' = B \<and> map_con f C' = C \<and> A = B' \<sqdot> C'\<close>
   by (induct A) (auto split: if_splits)
@@ -127,7 +127,7 @@ lemma map_con_FAbs [dest!]: \<open>map_con f A = \<lambda>x\<^bsub>\<alpha>\<^es
   by (induct A) (auto split: if_splits)
 
 lemma map_con_cQ [dest]: \<open>map_con f A = \<lbrace>\<cc>\<^sub>Q\<rbrace>\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A = \<lbrace>\<cc>\<^sub>Q\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
-  by blast
+  by (auto simp: is_param_def)
 
 lemma map_con_Q [dest]: \<open>map_con f A = Q\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A = Q\<^bsub>\<alpha>\<^esub>\<close>
   by auto
@@ -183,9 +183,9 @@ proof
       then have *: \<open>\<delta> A c = [ \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         by (metis (no_types, lifting) MCS.CDelta case_prod_conv delta_match.intros delta_match_THE delta_match_uniq surj_pair)
       moreover have \<open>\<not> is_logical_name (f c)\<close>
-        using 1 unfolding P.is_subst_def by blast
+        using 1 unfolding P.is_subst_def by (auto simp: is_param_def)
       ultimately have \<open>map (map_con f) (\<delta> A c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        using 1 by simp
+        using 1 by (auto simp: is_param_def)
       moreover have \<open>delta_match (map_con f A) (\<alpha>, map_con f B)\<close>
         using A map_con_delta_match by fast
       then have \<open>\<delta> (map_con f A) (f c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
@@ -228,12 +228,37 @@ locale MyHintikka = Hintikka map_con cons_form is_param Kinds H
   for H :: \<open>form set\<close>
 begin
 
+thm sat\<^sub>H[of C.kind, simplified]
+
 lemmas
   confl = sat\<^sub>H[of C.kind] and
   alpha = sat\<^sub>H[of A.kind] and
   beta = sat\<^sub>H[of B.kind] and
   gamma = sat\<^sub>H[of G.kind] and
   delta = sat\<^sub>H[of D.kind]
+
+lemma \<open>F\<^bsub>o\<^esub> \<notin> H\<close>
+  using confl by (force intro: CFalse)
+
+lemma \<open>x\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> \<notin> H\<close>
+  using confl by (force intro: CVar[of x])
+
+lemma \<open>\<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H\<close>
+  using confl by (force intro: CCon[of c])
+
+lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<and>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H\<close>
+  using alpha by (force intro: CConP[of A B])  
+
+lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<and>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H\<close>
+  using alpha by (force intro: CConP[of A B])  
+
+lemma \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> o\<^esub> \<Longrightarrow> \<forall>x\<^bsub>\<alpha>\<^esub>. A \<in> H \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A \<sqdot> B \<in> H\<close>
+  using gamma by (force intro: CPiP[of A \<alpha> x])  
+
+(* TODO: probably need a type check here and in CDelta? *)
+lemma \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> H \<Longrightarrow> \<exists>c. \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<in> H\<close>
+  oops
+ (* using delta CDelta by (force intro: CDelta split: if_splits) *)
 
 end
 
