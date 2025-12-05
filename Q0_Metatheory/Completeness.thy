@@ -2,7 +2,6 @@ theory Completeness imports
     Consistency
 begin
 
-
 instance type :: countable
   by countable_datatype
 
@@ -60,7 +59,11 @@ lemma "is_form VA \<Longrightarrow> V_of_form (form_of_V VA) = VA"
 (* Do we need to align this with bool_to_V???? *)
 
 context
+  fixes G :: "form set"
   fixes H :: "form set"
+  assumes "\<not> is_inconsistent_set G"
+  assumes "\<not> is_inconsistent_set H"
+  (* WARNING: Actually the assumption on H should be that it "is as described in lemma 5500" *)
 begin
 
 definition V_of_form_set :: "form set \<Rightarrow> V" where
@@ -98,6 +101,7 @@ lemma one_gamma: "D \<tau> = set {V A \<gamma>| A \<gamma>. is_closed_wff_of_typ
   sorry
 
 
+
 section \<open>2\<gamma>\<close>
 
 lemma two_gamma:
@@ -121,6 +125,10 @@ lemma non_logical_constant_denotation_V:
 lemma non_logical_constant_denotation_J: 
   "\<not> is_logical_constant (c, \<alpha>) \<Longrightarrow> J (c, \<alpha>) \<in> elts (D \<alpha>)"
   using non_logical_constant_denotation_V unfolding J.simps by auto
+
+
+
+(* False *)
 
 
 (* Q is identity relation*)
@@ -157,23 +165,18 @@ interpretation premodel D J
 
 section \<open>M is general model\<close>
 
-definition "list_of_set xs = (SOME xl. List.set xl = xs \<and> length xl = card xs)"
-
-definition "free_vars_list (C::form) = list_of_set (free_vars C)"
-
-fun E :: "(var \<Rightarrow> V) \<Rightarrow> var \<Rightarrow> form" where
-  "E \<phi> (x,\<delta>) = (SOME A. \<phi> (x,\<delta>) = V A \<delta>)" 
+definition fun_E :: "(var \<Rightarrow> V) \<Rightarrow> (var \<Rightarrow> form)" where
+  "fun_E \<phi> = (\<lambda>(x,\<delta>). (SOME A. \<phi> (x,\<delta>) = V A \<delta>))" 
   (* Andrews asks for "the first formula such that". But I think SOME formula is sufficient. *)
 
-definition \<theta>\<^sub>E'' :: "(var \<Rightarrow> V) \<Rightarrow> var list \<Rightarrow> form list" where
-  "\<theta>\<^sub>E'' \<phi> xs = map (E \<phi>) xs"
+definition map_E :: "var set \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> (var \<rightharpoonup> form)" where
+  "map_E xs \<phi> = map_restrict_set xs (Some \<circ> (fun_E \<phi>))"
 
-definition \<theta>\<^sub>E' :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> form list" where
-  "\<theta>\<^sub>E' \<phi> C = \<theta>\<^sub>E'' \<phi> (free_vars_list C)"
+definition subst_E :: "var set \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> substitution" where
+  "subst_E xs \<phi> = Abs_fmap (map_E xs \<phi>)"
 
-definition \<theta>\<^sub>E :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> substitution" where 
-  "\<theta>\<^sub>E \<phi> C = fmap_of_list (zip (free_vars_list C) (\<theta>\<^sub>E' \<phi> C))"
-(* This \<theta>\<^sub>E should be correct, but maybe can be in a more proof friendly way. *)
+definition \<theta>\<^sub>E :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> substitution" where
+  "\<theta>\<^sub>E \<phi> C = subst_E (free_vars C) \<phi>"
 
 definition C\<phi> :: "form \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> type \<Rightarrow> form" where
   "C\<phi> C \<phi> \<gamma> = \<^bold>S (\<theta>\<^sub>E \<phi> C) C"
@@ -187,20 +190,23 @@ definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V"
 lemma g: "A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> V\<phi> \<phi> A \<in> elts (D \<alpha>)"
   sorry
 
+
 (* For any variable *)
-lemma denotation_function_a: "V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)"
+lemma denotation_function_a: "\<phi> \<leadsto> local.D \<Longrightarrow> V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)"
   sorry
 
 (* For any primitive constant *)
-lemma denotation_function_b: "V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = J (c, \<alpha>)"
+lemma denotation_function_b: "\<phi> \<leadsto> local.D \<Longrightarrow> V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = J (c, \<alpha>)"
   sorry
 
-(* Application*)
-lemma denotation_function_c: "A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (A \<sqdot> B) = V\<phi> \<phi> A \<bullet> V\<phi> \<phi> B"
+(* Application *)
+lemma denotation_function_c: 
+  "\<phi> \<leadsto> local.D \<Longrightarrow> A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (A \<sqdot> B) = V\<phi> \<phi> A \<bullet> V\<phi> \<phi> B"
   sorry
 
 (* Abstraction *)
-lemma denotation_function_d: "B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z\<^bold>:D \<alpha> \<^bold>. V\<phi> (\<phi>((x, \<alpha>) := z)) B)"
+lemma denotation_function_d: 
+  "\<phi> \<leadsto> local.D \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z\<^bold>:D \<alpha> \<^bold>. V\<phi> (\<phi>((x, \<alpha>) := z)) B)"
   sorry
 
 lemma denotation_function: "is_wff_denotation_function V\<phi>"
@@ -212,7 +218,6 @@ interpretation general_model D J V\<phi>
   apply unfold_locales
   using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d 
     denotation_function by auto
-
 
 end
 
