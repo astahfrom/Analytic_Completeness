@@ -7,19 +7,25 @@ section \<open>5500 Extension lemma\<close>
 definition consistent :: "form set \<Rightarrow> bool" where
   "consistent G \<longleftrightarrow> \<not>is_inconsistent_set G"
 
+definition sentence_set :: "form set \<Rightarrow> bool" where
+  "sentence_set G \<longleftrightarrow> (\<forall>F \<in> G. is_sentence F)"
+
 definition complete :: "form set \<Rightarrow> bool" where
   "complete H = (\<forall>A. is_sentence A \<longrightarrow> (H \<turnstile> A \<or> H \<turnstile> \<sim>\<^sup>\<Q> A))"
 
 definition extensionally_complete :: "form set \<Rightarrow> bool" where
   "extensionally_complete H \<longleftrightarrow> 
-    (\<forall>A B \<alpha> \<beta>. A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<longrightarrow> 
-               B \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<longrightarrow> 
-                 (\<exists>C \<in> (wffs\<^bsub>\<beta>\<^esub>). H \<turnstile> ((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B)))"
+    (\<forall>A B \<alpha> \<beta>. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
+               is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
+               (\<exists>C. is_closed_wff_of_type C \<beta> \<and>
+                    H \<turnstile> ((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B)))"
 
 lemma extension_lemma:
   (* WARNING: We are missing the cardinality thing, i.e. property (5) of the lemma *)
   assumes "consistent G"
+  assumes "sentence_set G"
   obtains H where
+    "sentence_set H"
     "G \<subseteq> H"
     "consistent H"
     "complete H"
@@ -30,6 +36,7 @@ lemma extension_lemma:
 (* WARNING: We are missing the cardinality thing, i.e. property (5) of the lemma *)
 definition is_H_extension_of :: "form set \<Rightarrow> form set \<Rightarrow> bool" where
   "is_H_extension_of H G \<longleftrightarrow>
+    sentence_set H \<and>
     G \<subseteq> H \<and>
     consistent H \<and>
     complete H \<and>
@@ -37,10 +44,17 @@ definition is_H_extension_of :: "form set \<Rightarrow> form set \<Rightarrow> b
 
 lemma extension_lemma2: 
   assumes "consistent G"
+  assumes "sentence_set G"
   obtains H where "is_H_extension_of H G"
   by (meson assms extension_lemma is_H_extension_of_def)
 
 section \<open>5501 Henkin's theorem\<close>
+
+definition frugal_model :: "(Syntax.type \<Rightarrow> V) \<Rightarrow> (nat \<times> Syntax.type \<Rightarrow> V) \<Rightarrow> ((nat \<times> Syntax.type \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V) \<Rightarrow> bool" where
+  "frugal_model D J V \<longleftrightarrow> undefined D J V"
+
+definition is_frugal_model :: "model_structure \<Rightarrow> bool" where
+  "is_frugal_model M \<longleftrightarrow> undefined M"
 
 instance type :: countable
   by countable_datatype
@@ -258,6 +272,27 @@ interpretation general_model D J V\<phi>
   using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d 
     denotation_function by auto
 
+(* TODO: Actually we need "frugal general model here!" *)
+(* TODO: And we need to state that it satisfies the formula set. *)
+
 end
+
+
+section \<open>5502 Henkin's Completeness and Soundness Theorem\<close>
+
+theorem sound_complete_c:
+  assumes "sentence_set G"
+  shows "G \<turnstile> A \<longleftrightarrow> (\<forall>M. is_frugal_model M \<longrightarrow> is_model_for M G \<longrightarrow> M \<Turnstile> A)"
+  sorry
+
+theorem sound_complete_b:
+  assumes "sentence_set G"
+  shows "G \<turnstile> A \<longleftrightarrow> (\<forall>M. is_general_model M \<longrightarrow> is_model_for M G \<longrightarrow> M \<Turnstile> A)"
+  sorry
+
+theorem sound_complete_a:
+  "\<turnstile> A \<longleftrightarrow> \<Turnstile> A"
+  sorry
+
 
 end
