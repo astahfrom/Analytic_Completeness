@@ -14,7 +14,7 @@ definition complete :: "form set \<Rightarrow> bool" where
   "complete H = (\<forall>A. is_sentence A \<longrightarrow> (H \<turnstile> A \<or> H \<turnstile> \<sim>\<^sup>\<Q> A))"
 
 definition extensionally_complete :: "form set \<Rightarrow> bool" where
-  "extensionally_complete H \<longleftrightarrow> 
+  "extensionally_complete H \<longleftrightarrow>
     (\<forall>A B \<alpha> \<beta>. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
                is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
                (\<exists>C. is_closed_wff_of_type C \<beta> \<and>
@@ -48,13 +48,16 @@ lemma extension_lemma2:
   obtains H where "is_H_extension_of H G"
   by (meson assms extension_lemma is_H_extension_of_def)
 
+
 section \<open>5501 Henkin's theorem\<close>
 
+(* Warning -- replace undefined with something. Probably something from ZFC_Cardinals *)
 definition frugal_model :: "(Syntax.type \<Rightarrow> V) \<Rightarrow> (nat \<times> Syntax.type \<Rightarrow> V) \<Rightarrow> ((nat \<times> Syntax.type \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V) \<Rightarrow> bool" where
-  "frugal_model D J V \<longleftrightarrow> undefined D J V"
+  "frugal_model D J V \<longleftrightarrow> general_model D J V \<and> undefined D J V"
 
 definition is_frugal_model :: "model_structure \<Rightarrow> bool" where
-  "is_frugal_model M \<longleftrightarrow> undefined M"
+  "is_frugal_model \<M> \<equiv> case \<M> of (\<D>, \<J>, \<V>) \<Rightarrow> frugal_model \<D> \<J> \<V>"
+
 
 instance type :: countable
   by countable_datatype
@@ -272,10 +275,20 @@ interpretation general_model D J V\<phi>
   using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d 
     denotation_function by auto
 
-(* TODO: Actually we need "frugal general model here!" *)
-(* TODO: And we need to state that it satisfies the formula set. *)
+lemma canon_frugal: "frugal_model D J V\<phi>"
+  sorry
+
+lemma canon_model_for: "is_model_for (D,J,V\<phi>) G"
+  sorry
 
 end
+
+theorem henkins_theorem:
+  assumes "sentence_set G"
+  assumes "consistent G"
+  shows "\<exists>M. is_frugal_model M \<and> is_model_for M G"
+  unfolding is_frugal_model_def
+  using canon_frugal canon_model_for assms(1,2) extension_lemma2 by (metis case_prodI)
 
 
 section \<open>5502 Henkin's Completeness and Soundness Theorem\<close>
