@@ -2,6 +2,46 @@ theory Completeness imports
     Consistency
 begin
 
+section \<open>5500 Extension lemma\<close>
+
+definition consistent :: "form set \<Rightarrow> bool" where
+  "consistent G \<longleftrightarrow> \<not>is_inconsistent_set G"
+
+definition complete :: "form set \<Rightarrow> bool" where
+  "complete H = (\<forall>A. is_sentence A \<longrightarrow> (H \<turnstile> A \<or> H \<turnstile> \<sim>\<^sup>\<Q> A))"
+
+definition extensionally_complete :: "form set \<Rightarrow> bool" where
+  "extensionally_complete H \<longleftrightarrow> 
+    (\<forall>A B \<alpha> \<beta>. A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<longrightarrow> 
+               B \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<longrightarrow> 
+                 (\<exists>C \<in> (wffs\<^bsub>\<beta>\<^esub>). H \<turnstile> ((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B)))"
+
+lemma extension_lemma:
+  (* WARNING: We are missing the cardinality thing, i.e. property (5) of the lemma *)
+  assumes "consistent G"
+  obtains H where
+    "G \<subseteq> H"
+    "consistent H"
+    "complete H"
+    "extensionally_complete H"
+  sorry
+
+(* Definition capturing extension lemma properties *)
+(* WARNING: We are missing the cardinality thing, i.e. property (5) of the lemma *)
+definition is_H_extension_of :: "form set \<Rightarrow> form set \<Rightarrow> bool" where
+  "is_H_extension_of H G \<longleftrightarrow>
+    G \<subseteq> H \<and>
+    consistent H \<and>
+    complete H \<and>
+    extensionally_complete H"
+
+lemma extension_lemma2: 
+  assumes "consistent G"
+  obtains H where "is_H_extension_of H G"
+  by (meson assms extension_lemma is_H_extension_of_def)
+
+section \<open>5501 Henkin's theorem\<close>
+
 instance type :: countable
   by countable_datatype
 
@@ -61,9 +101,8 @@ lemma "is_form VA \<Longrightarrow> V_of_form (form_of_V VA) = VA"
 context
   fixes G :: "form set"
   fixes H :: "form set"
-  assumes "\<not> is_inconsistent_set G"
-  assumes "\<not> is_inconsistent_set H"
-  (* WARNING: Actually the assumption on H should be that it "is as described in lemma 5500" *)
+  assumes "consistent G"
+  assumes "is_H_extension_of H G"
 begin
 
 definition V_of_form_set :: "form set \<Rightarrow> V" where
@@ -95,7 +134,7 @@ lemma unambiguity:
   sorry
 
 
-section \<open>1\<gamma>\<close>
+subsection \<open>1\<gamma>\<close>
 
 lemma one_gamma: "D \<tau> = set {V A \<gamma>| A \<gamma>. is_closed_wff_of_type A \<gamma>}"
   sorry
@@ -111,7 +150,7 @@ lemma two_gamma:
   sorry
 
 
-section \<open>M is interpretation\<close>
+subsection \<open>M is interpretation\<close>
 
 fun J :: "nat \<times> Syntax.type \<Rightarrow> V" where 
   "J (c,\<tau>) = V (FCon (c,\<tau>)) \<tau>"
@@ -163,7 +202,7 @@ interpretation premodel D J
   done
 
 
-section \<open>M is general model\<close>
+subsection \<open>M is general model\<close>
 
 definition fun_E :: "(var \<Rightarrow> V) \<Rightarrow> (var \<Rightarrow> form)" where
   "fun_E \<phi> = (\<lambda>(x,\<delta>). (SOME A. \<phi> (x,\<delta>) = V A \<delta>))" 
