@@ -20,8 +20,8 @@ definition extensionally_complete :: "form set \<Rightarrow> bool" where
                (\<exists>C. is_closed_wff_of_type C \<beta> \<and>
                     H \<turnstile> ((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B)))"
 
+term Card \<comment> \<open>WARNING: We are missing the cardinality thing, i.e. property (5) of the lemma. Can we use something the library that contains Card?\<close>
 lemma extension_lemma:
-  (* WARNING: We are missing the cardinality thing, i.e. property (5) of the lemma *)
   assumes "consistent G"
   assumes "sentence_set G"
   obtains H where
@@ -51,7 +51,9 @@ lemma extension_lemma2:
 
 section \<open>5501 Henkin's theorem\<close>
 
-(* Warning -- replace undefined with something. Probably something from ZFC_Cardinals *)
+term Card \<comment> \<open>WARNING: We are missing the cardinality thing, i.e. property (5) of the lemma. Can we use something the library that contains Card
+                       Clearly the definition should not say "undefined"\<close>
+
 definition frugal_model :: "(Syntax.type \<Rightarrow> V) \<Rightarrow> (nat \<times> Syntax.type \<Rightarrow> V) \<Rightarrow> ((nat \<times> Syntax.type \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V) \<Rightarrow> bool" where
   "frugal_model D J V \<longleftrightarrow> general_model D J V \<and> undefined D J V"
 
@@ -142,23 +144,169 @@ fun
 | "V A (\<beta> \<rightarrow> \<alpha>) = (\<^bold>\<lambda>VC\<beta> \<^bold>: D \<beta>\<^bold>. (let C = get_rep VC\<beta> \<beta> in V (A \<sqdot> C) \<alpha>))"
 | "get_rep VC\<beta> \<beta> = (SOME C. V C \<beta> = VC\<beta> \<and> C \<in> wffs\<^bsub>\<beta>\<^esub>)"
 
-lemma unambiguity:
-  assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
-  assumes "is_closed_wff_of_type B \<beta>"
-  assumes "is_closed_wff_of_type C \<beta>"
-  assumes "V B \<beta> = V C \<beta>"
-  shows "V (A \<sqdot> B) \<alpha> = V (A \<sqdot> C) \<alpha>"
+lemma one_o: "D o = set {V A o| A. is_closed_wff_of_type A o}"
+proof -
+  have "{bool_to_V True, bool_to_V False} =
+     {uu. \<exists>A. (H \<turnstile> A \<longrightarrow> uu = bool_to_V True \<and> A \<in> wffs\<^bsub>o\<^esub> \<and> free_vars A = {}) \<and> (\<not> H \<turnstile> A \<longrightarrow> uu = bool_to_V False \<and> A \<in> wffs\<^bsub>o\<^esub> \<and> free_vars A = {})}"
+    apply auto
+    apply (metis Completeness.complete_def F_fv T_fv \<open>is_H_extension_of H G\<close> equality_of_type_def false_wff is_H_extension_of_def is_closed_wff_of_type_def
+        is_sentence_def neg_def prop_5219_2 true_wff)
+    using F_fv \<open>is_H_extension_of H G\<close> consistent_def is_H_extension_of_def by blast
+  then show ?thesis
+    by auto
+qed
+
+lemma two_o:
+  assumes "is_closed_wff_of_type A o"
+  assumes "is_closed_wff_of_type B o"
+  shows "V A o = V B o \<longleftrightarrow> H \<turnstile> A =\<^bsub>o\<^esub> B"
+proof -
+  show ?thesis
+    apply auto
+         apply (metis Q_constant_of_type_def Q_def equality_of_type_def hyp_derivable_form_is_wffso prop_5201_3 prop_5219_1 prop_5219_2)
+        apply (metis bool_to_V_injectivity inv_f_f)
+       apply (metis Q_constant_of_type_def Q_def equality_of_type_def equivalence_def prop_5201_1)
+      apply (metis bool_to_V_injectivity inv_f_f)
+     apply (metis Q_constant_of_type_def Q_def equality_of_type_def equivalence_def prop_5201_1 prop_5201_2)
+    apply (metis Completeness.complete_def Q_constant_of_type_def Q_def \<open>is_H_extension_of H G\<close> assms(1,2) equality_of_type_def is_H_extension_of_def is_sentence_def
+        neg_def prop_5201_2 prop_5201_3)
+    done
+qed
+
+lemma one_i: "D i = set {V A i| A. is_closed_wff_of_type A i}"
+proof -
+  show ?thesis
+    by auto (* defined to hold *)
+qed
+
+lemma inj_V_of_form: "inj V_of_form"
+  by (metis V_of_form_def embeddable_class.ex_inj someI_ex)
+
+lemma cool_lemma:
+  assumes "V_of_form_set As = V_of_form_set Bs"
+  shows "As = Bs"
+proof -
+  have "small (V_of_form ` As)"
+    by simp
+  have "small (V_of_form ` Bs)"
+    by simp
+  show ?thesis
+    using V_of_form_set_def inj_V_of_form assms inj_image_eq_iff by fastforce
+qed
+
+lemma two_i:
+  assumes "is_closed_wff_of_type A i"
+  assumes "is_closed_wff_of_type B i"
+  shows "V A i = V B i \<longleftrightarrow> H \<turnstile> A =\<^bsub>i\<^esub> B"
+proof -
+  have "small {B \<in> (wffs\<^bsub>i\<^esub>). free_vars B = {} \<and> H \<turnstile> \<lbrace>Suc (Suc (Suc (Suc (Suc (Suc (Suc 0))))))\<rbrace>\<^bsub>i \<rightarrow> i \<rightarrow> o\<^esub> \<sqdot> A \<sqdot> B}"
+    by (simp add: setcompr_eq_image)
+  have "small {Ba \<in> (wffs\<^bsub>i\<^esub>). free_vars Ba = {} \<and> H \<turnstile> \<lbrace>Suc (Suc (Suc (Suc (Suc (Suc (Suc 0))))))\<rbrace>\<^bsub>i \<rightarrow> i \<rightarrow> o\<^esub> \<sqdot> B \<sqdot> Ba}"
+    by (simp add: setcompr_eq_image)
+  show ?thesis
+    apply auto
+    subgoal
+      apply (subgoal_tac 
+          "{B \<in> (wffs\<^bsub>i\<^esub>). free_vars B = {} \<and> H \<turnstile> \<lbrace>Suc (Suc (Suc (Suc (Suc (Suc (Suc 0))))))\<rbrace>\<^bsub>i \<rightarrow> i \<rightarrow> o\<^esub> \<sqdot> A \<sqdot> B} =
+         {Ba \<in> (wffs\<^bsub>i\<^esub>). free_vars Ba = {} \<and> H \<turnstile> \<lbrace>Suc (Suc (Suc (Suc (Suc (Suc (Suc 0))))))\<rbrace>\<^bsub>i \<rightarrow> i \<rightarrow> o\<^esub> \<sqdot> B \<sqdot> Ba}")
+       apply (metis (mono_tags, lifting) CollectD CollectI F_fv Q_constant_of_type_def Q_def assms(1) equality_of_type_def false_wff
+          hyp_derivability_implies_hyp_proof_existence hyp_prop_5200 is_closed_wff_of_type_def is_hyp_proof_of_def prop_5201_2 two_o)
+      using cool_lemma apply auto
+      done
+    subgoal
+      apply (metis Q_constant_of_type_def Q_def equality_of_type_def prop_5201_2 prop_5201_3)
+      done
+    done
+qed
+
+lemma one_fun:
+  "D (\<beta> \<rightarrow> \<alpha>) = set {V A (\<beta> \<rightarrow> \<alpha>)| A. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)}"
+  by auto (* Defined to hold *)
+
+lemma fun_ext_vfuncset:
+  assumes "f \<in> elts (A \<longmapsto> B)" "g \<in> elts (A \<longmapsto> B)" "\<And>x. x \<in> elts A \<Longrightarrow> app f x = app g x"
+  shows "f = g"
+  using assms ZFC_Cardinals.fun_ext by auto
+
+lemma well_typed: (* Easy? Difficult? *)
+  "V A \<gamma> \<in> elts (D \<gamma>)"
+  sorry
+
+lemma fun_typed: (* Not sure how best phrased... And do we need it? *)
+  "elts (D (\<beta> \<rightarrow> \<alpha>)) \<subseteq> elts ((D \<beta> \<longmapsto> D \<alpha>))"
   sorry
 
 
 subsection \<open>1\<gamma>\<close>
 
-lemma one_gamma: "D \<tau> = set {V A \<gamma>| A \<gamma>. is_closed_wff_of_type A \<gamma>}"
-  sorry
+lemma one_gamma: "D \<gamma> = set {V A \<gamma>| A. is_closed_wff_of_type A \<gamma>}"
+  using one_i one_o one_fun by (cases \<gamma>) auto
 
 
+subsection \<open>2\<gamma>\<close>
 
-section \<open>2\<gamma>\<close>
+lemma two_fun:
+  assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
+  assumes "is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)"
+  shows "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B"
+proof
+  assume "H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B"
+  have "\<forall>C. is_closed_wff_of_type C \<beta> \<longrightarrow> H \<turnstile> A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C"
+    using \<open>H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B\<close> prop_5201_5 by auto
+
+  {
+    fix C
+    assume "is_closed_wff_of_type C \<beta>"
+    have "(V A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>) = V (A \<sqdot> C) \<alpha>"
+      sorry
+    also have "... = V (B \<sqdot> C) \<alpha>"
+      sorry
+    also have "... = (V B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>)"
+      sorry
+    finally have "(V A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>) = (V B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>)"
+      .
+  }
+  note C_application = this
+
+  show "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>)"
+  proof (rule fun_ext_vfuncset[of _ "D \<beta>" "D \<alpha>"])
+    show "V A (\<beta> \<rightarrow> \<alpha>) \<in> elts (D \<beta> \<longmapsto> D \<alpha>)"
+      by (simp add: VPi_I well_typed)
+  next
+    show "V B (\<beta> \<rightarrow> \<alpha>) \<in> elts (D \<beta> \<longmapsto> D \<alpha>)"
+      by (simp add: VPi_I well_typed)
+  next 
+    fix VC\<beta>
+    assume "VC\<beta> \<in> elts (D \<beta>)"
+    then obtain C where "V C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>"
+      by (smt (verit) one_gamma elts_of_set emptyE mem_Collect_eq)
+
+    then show "V A (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta> = V B (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta>"
+      using C_application by blast
+  qed
+next
+  assume "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>)"
+  show "H \<turnstile> A =\<^bsub>(\<beta> \<rightarrow> \<alpha>)\<^esub> B"
+    sorry
+qed
+
+(*
+lemma unambiguity: (* The book's proof seems to be using 2\<gamma> which is not yet proved... *)
+  assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
+  assumes "is_closed_wff_of_type B \<beta>"
+  assumes "is_closed_wff_of_type C \<beta>"
+  assumes "V B \<beta> = V C \<beta>"
+  shows "V (A \<sqdot> B) \<alpha> = V (A \<sqdot> C) \<alpha>"
+proof -
+  have "H \<turnstile> (B =\<^bsub>\<beta>\<^esub> C)"
+    using assms(2,3,4)
+    sorry
+  then have "H \<turnstile> (A \<sqdot> B =\<^bsub>\<alpha>\<^esub> A \<sqdot> C)"
+    using assms(1) prop_5201_6 by auto
+  then show ?thesis
+    sorry
+qed
+*)
 
 lemma two_gamma:
   assumes "is_closed_wff_of_type A \<gamma>"
@@ -209,7 +357,7 @@ lemma function_domain: "D (\<alpha> \<rightarrow> \<beta>) \<le> D \<alpha> \<lo
 
 (* I cannot find this in the book's proof. Too obvious maybe? *)
 lemma domain_nonemptiness: "D \<alpha> \<noteq> 0"
-  using D.simps(1) one_gamma by auto
+  sorry
 
 (* M constitutes an interpretation (premodel) *)
 interpretation premodel D J
@@ -245,7 +393,6 @@ definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V"
 
 lemma g: "A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> V\<phi> \<phi> A \<in> elts (D \<alpha>)"
   sorry
-
 
 (* For any variable *)
 lemma denotation_function_a: "\<phi> \<leadsto> local.D \<Longrightarrow> V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)"
@@ -305,7 +452,7 @@ theorem sound_complete_b:
 
 theorem sound_complete_a:
   "\<turnstile> A \<longleftrightarrow> \<Turnstile> A"
-  sorry
+  by (simp add: sentence_set_def sound_complete_b)
 
 
 end
