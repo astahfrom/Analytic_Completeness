@@ -294,7 +294,7 @@ fun unambigious :: "type \<Rightarrow> bool" where
 definition good_type :: "type \<Rightarrow> bool" where
   "good_type \<gamma> \<longleftrightarrow> two_gamma \<gamma> \<and> unambigious \<gamma>"
 
-lemma "good_type \<gamma>"
+lemma all_good: "good_type \<gamma>"
 proof (induction \<gamma>)
   case TInd
   then show ?case
@@ -410,8 +410,66 @@ next
       qed
     next
       assume "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>)"
-      show "H \<turnstile> A =\<^bsub>(\<beta> \<rightarrow> \<alpha>)\<^esub> B"
-        sorry
+      {
+        fix C
+        assume "is_closed_wff_of_type C \<beta>"
+        assume "H \<turnstile> ((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B)"
+        have "V (A \<sqdot> C) \<alpha> = (V A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>)"
+          apply auto (* proof copy pasted from above *)
+          apply (subgoal_tac "V C \<beta> \<in> elts (D \<beta>)") 
+          subgoal
+            apply auto
+            unfolding is_closed_wff_of_type_def[symmetric]
+            unfolding get_rep.simps[symmetric]
+            apply (subgoal_tac "V (get_rep (V C \<beta>) \<beta>) \<beta> = V C \<beta>") (* Not sure this is the way to go *)
+            subgoal
+              apply -
+              apply auto
+              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambigious (\<beta> \<rightarrow> \<alpha>)\<close>
+                  is_closed_wff_of_type_def some_eq_ex unambigious.simps(3))
+              done
+            subgoal
+              apply (metis (mono_tags, lifting) \<open>is_closed_wff_of_type C \<beta>\<close> get_rep.simps verit_sko_ex')
+              done
+            done
+          subgoal
+            using \<open>is_closed_wff_of_type C \<beta>\<close> well_typed apply auto
+            done
+          done
+        also have "... = (V B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>)"
+          using \<open>V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>)\<close> by presburger
+        also have "... = V (B \<sqdot> C) \<alpha>"
+            (* Copy paste of the argument from first equality in this chain *)
+          apply auto
+          apply (subgoal_tac "V C \<beta> \<in> elts (D \<beta>)") 
+          subgoal
+            apply auto
+            unfolding is_closed_wff_of_type_def[symmetric]
+            unfolding get_rep.simps[symmetric]
+            apply (subgoal_tac "V (get_rep (V C \<beta>) \<beta>) \<beta> = V C \<beta>") (* Not sure this is the way to go *)
+            subgoal
+              apply -
+              apply auto
+              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambigious (\<beta> \<rightarrow> \<alpha>)\<close>
+                  is_closed_wff_of_type_def some_eq_ex unambigious.simps(3))
+              done
+            subgoal
+              apply (metis (mono_tags, lifting) \<open>is_closed_wff_of_type C \<beta>\<close> get_rep.simps verit_sko_ex')
+              done
+            done
+          subgoal
+            using \<open>is_closed_wff_of_type C \<beta>\<close> well_typed apply auto
+            done
+          done
+        finally have "V (A \<sqdot> C) \<alpha> = V (B \<sqdot> C) \<alpha>"
+          .
+        then have "H \<turnstile> A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C"
+          using TFun.IH(2) \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close>
+            \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close>
+            good_type_def two_gamma_def wffs_of_type_intros(3) by force
+      }
+      then show "H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B"
+        by (metis \<open>is_H_extension_of H G\<close> \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> extensionally_complete_def is_H_extension_of_def prop_5224)
     qed
   }
   then have "two_gamma (\<beta> \<rightarrow> \<alpha>)"
@@ -427,6 +485,8 @@ lemma two_fun:
   assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
   assumes "is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)"
   shows "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B"
+  using all_good assms(1,2) good_type_def two_gamma_def by presburger
+(*
 proof
   assume "H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B"
   have "\<forall>C. is_closed_wff_of_type C \<beta> \<longrightarrow> H \<turnstile> A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C"
@@ -484,7 +544,7 @@ next
   show "H \<turnstile> A =\<^bsub>(\<beta> \<rightarrow> \<alpha>)\<^esub> B"
     sorry
 qed
-
+*)
 (*
 lemma unambiguity: (* The book's proof seems to be using 2\<gamma> which is not yet proved... *)
   assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
@@ -507,7 +567,7 @@ lemma two_gamma:
   assumes "is_closed_wff_of_type A \<gamma>"
   assumes "is_closed_wff_of_type B \<gamma>"
   shows "V A \<gamma> = V B \<gamma> \<longleftrightarrow> H \<turnstile> A =\<^bsub>\<gamma>\<^esub> B"
-  sorry
+  using all_good assms(1,2) good_type_def two_gamma_def by presburger
 
 
 subsection \<open>M is interpretation\<close>
