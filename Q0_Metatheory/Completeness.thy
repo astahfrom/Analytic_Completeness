@@ -592,12 +592,15 @@ definition C\<phi> :: "form \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> fo
   "C\<phi> C \<phi> = \<^bold>S (\<theta>\<^sub>E \<phi> C) C"
 
 definition type_of :: "form \<Rightarrow> type" where
-  "type_of A = (SOME \<tau>. A \<in> wffs\<^bsub>\<tau>\<^esub>)"
+  "type_of A = (SOME \<gamma>. A \<in> wffs\<^bsub>\<gamma>\<^esub>)"
+
+lemma "A \<in> wffs\<^bsub>\<gamma>\<^esub> \<Longrightarrow> type_of A = \<gamma>"
+  using type_of_def wff_has_unique_type by auto
 
 definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V" where
   "V\<phi> \<phi> C = V (C\<phi> C \<phi>) (type_of C)"
 
-lemma g: "A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> V\<phi> \<phi> A \<in> elts (D \<alpha>)"
+lemma g: "\<phi> \<leadsto> local.D \<Longrightarrow> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> V\<phi> \<phi> A \<in> elts (D \<alpha>)"
   sorry
 
 (* For any variable *)
@@ -624,9 +627,7 @@ lemma denotation_function: "is_wff_denotation_function V\<phi>"
   by auto
 
 interpretation general_model D J V\<phi>
-  apply unfold_locales
-  using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d 
-    denotation_function by auto
+  apply unfold_locales using denotation_function by auto
 
 lemma canon_frugal: "frugal_model D J V\<phi>"
   sorry
