@@ -600,8 +600,12 @@ lemma "A \<in> wffs\<^bsub>\<gamma>\<^esub> \<Longrightarrow> type_of A = \<gamm
 definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V" where
   "V\<phi> \<phi> C = V (C\<phi> C \<phi>) (type_of C)"
 
+term is_substitution
+
 lemma g: "\<phi> \<leadsto> local.D \<Longrightarrow> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> V\<phi> \<phi> A \<in> elts (D \<alpha>)"
-  sorry
+  sorry (* If we can prove \<theta>\<^sub>E satisfies the "is_substitution" Isabelle/HOL-predicate then I think
+           we can also prove this? Because substitutions preserve types.
+           Thus C\<phi> preserves A's type and thus interpreting A gives us something in D \<alpha> *)
 
 (* For any variable *)
 lemma denotation_function_a: "\<phi> \<leadsto> local.D \<Longrightarrow> V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)"
