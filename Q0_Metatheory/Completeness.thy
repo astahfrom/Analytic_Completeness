@@ -528,7 +528,8 @@ fun J :: "nat \<times> Syntax.type \<Rightarrow> V" where
 (* Mapping primitive constants into D\<^sub>\<alpha>*)
 lemma non_logical_constant_denotation_V: 
   "\<not> is_logical_constant (c, \<alpha>) \<Longrightarrow> V (FCon (c, \<alpha>)) \<alpha> \<in> elts (D \<alpha>)"
-  sorry
+  using free_vars_form.simps(2) is_closed_wff_of_type_def well_typed wffs_of_type_intros(2) by presburger
+  (* I did sledgehammer instead of looking at Andrews's proof *)
 
 lemma non_logical_constant_denotation_J: 
   "\<not> is_logical_constant (c, \<alpha>) \<Longrightarrow> J (c, \<alpha>) \<in> elts (D \<alpha>)"
@@ -557,11 +558,12 @@ lemma \<iota>_denotation_J: "frame.is_unique_member_selector D (J iota_constant)
 
 (* I cannot find this in the book's proof. Too obvious maybe? *)
 lemma function_domain: "D (\<alpha> \<rightarrow> \<beta>) \<le> D \<alpha> \<longmapsto> D \<beta>"
-  sorry
+  using all_good fun_typed good_type_def by blast
 
 (* I cannot find this in the book's proof. Too obvious maybe? *)
 lemma domain_nonemptiness: "D \<alpha> \<noteq> 0"
-  sorry
+  by (metis all_not_in_conv elts_0 free_vars_form.simps(2) is_closed_wff_of_type_def 
+      well_typed wffs_of_type_simps)
 
 (* M constitutes an interpretation (premodel) *)
 interpretation premodel D J
@@ -586,14 +588,14 @@ definition subst_E :: "var set \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow>
 definition \<theta>\<^sub>E :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> substitution" where
   "\<theta>\<^sub>E \<phi> C = subst_E (free_vars C) \<phi>"
 
-definition C\<phi> :: "form \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> type \<Rightarrow> form" where
-  "C\<phi> C \<phi> \<gamma> = \<^bold>S (\<theta>\<^sub>E \<phi> C) C"
+definition C\<phi> :: "form \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> form" where
+  "C\<phi> C \<phi> = \<^bold>S (\<theta>\<^sub>E \<phi> C) C"
 
 definition type_of :: "form \<Rightarrow> type" where
   "type_of A = (SOME \<tau>. A \<in> wffs\<^bsub>\<tau>\<^esub>)"
 
 definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V" where
-  "V\<phi> \<phi> C = V (C\<phi> C \<phi> (type_of C)) (type_of C)"
+  "V\<phi> \<phi> C = V (C\<phi> C \<phi>) (type_of C)"
 
 lemma g: "A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> V\<phi> \<phi> A \<in> elts (D \<alpha>)"
   sorry
