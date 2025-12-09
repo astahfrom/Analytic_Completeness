@@ -274,8 +274,6 @@ lemma one_gamma: "D \<gamma> = set {V A \<gamma>| A. is_closed_wff_of_type A \<g
 
 subsection \<open>2\<gamma>\<close>
 
-(* Crazy idea: *)
-
 definition two_gamma :: "type \<Rightarrow> bool" where
   "two_gamma \<gamma> \<longleftrightarrow>
     (\<forall>A B. is_closed_wff_of_type A \<gamma> \<longrightarrow> is_closed_wff_of_type B \<gamma> \<longrightarrow>
@@ -479,89 +477,11 @@ next
     unfolding good_type_def using una by metis
 qed
 
-(* End crazy idea *)
-
 lemma two_fun:
   assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
   assumes "is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)"
   shows "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B"
   using all_good assms(1,2) good_type_def two_gamma_def by presburger
-(*
-proof
-  assume "H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B"
-  have "\<forall>C. is_closed_wff_of_type C \<beta> \<longrightarrow> H \<turnstile> A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C"
-    using \<open>H \<turnstile> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B\<close> prop_5201_5 by auto
-
-  {
-    fix C
-    assume "is_closed_wff_of_type C \<beta>"
-    have "(V A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>) = V (A \<sqdot> C) \<alpha>"
-      apply auto
-      apply (subgoal_tac "V C \<beta> \<in> elts (D \<beta>)") 
-      subgoal
-        apply auto
-        unfolding is_closed_wff_of_type_def[symmetric]
-        unfolding get_rep.simps[symmetric]
-        apply (subgoal_tac "V (get_rep (V C \<beta>) \<beta>) \<beta> = V C \<beta>") (* Not sure this is the way to go *)
-        subgoal
-          apply auto
-          (* By unambiguity... But  *)
-          sorry
-        subgoal
-          apply (metis (mono_tags, lifting) \<open>is_closed_wff_of_type C \<beta>\<close> get_rep.simps verit_sko_ex')
-          done
-        done
-      subgoal
-        using \<open>is_closed_wff_of_type C \<beta>\<close> well_typed apply auto
-        done
-      done
-    also have "... = V (B \<sqdot> C) \<alpha>"
-      sorry
-    also have "... = (V B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>)"
-      sorry
-    finally have "(V A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>) = (V B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>)"
-      .
-  }
-  note C_application = this
-
-  show "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>)"
-  proof (rule fun_ext_vfuncset[of _ "D \<beta>" "D \<alpha>"])
-    show "V A (\<beta> \<rightarrow> \<alpha>) \<in> elts (D \<beta> \<longmapsto> D \<alpha>)"
-      by (metis assms(1) fun_typed subsetD well_typed)
-  next
-    show "V B (\<beta> \<rightarrow> \<alpha>) \<in> elts (D \<beta> \<longmapsto> D \<alpha>)"
-      by (metis assms(2) fun_typed subsetD well_typed)
-  next 
-    fix VC\<beta>
-    assume "VC\<beta> \<in> elts (D \<beta>)"
-    then obtain C where "V C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>"
-      by (smt (verit) one_gamma elts_of_set emptyE mem_Collect_eq)
-    then show "V A (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta> = V B (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta>"
-      using C_application by blast
-  qed
-next
-  assume "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>)"
-  show "H \<turnstile> A =\<^bsub>(\<beta> \<rightarrow> \<alpha>)\<^esub> B"
-    sorry
-qed
-*)
-(*
-lemma unambiguity: (* The book's proof seems to be using 2\<gamma> which is not yet proved... *)
-  assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
-  assumes "is_closed_wff_of_type B \<beta>"
-  assumes "is_closed_wff_of_type C \<beta>"
-  assumes "V B \<beta> = V C \<beta>"
-  shows "V (A \<sqdot> B) \<alpha> = V (A \<sqdot> C) \<alpha>"
-proof -
-  have "H \<turnstile> (B =\<^bsub>\<beta>\<^esub> C)"
-    using assms(2,3,4)
-    sorry
-  then have "H \<turnstile> (A \<sqdot> B =\<^bsub>\<alpha>\<^esub> A \<sqdot> C)"
-    using assms(1) prop_5201_6 by auto
-  then show ?thesis
-    sorry
-qed
-*)
 
 lemma two_gamma:
   assumes "is_closed_wff_of_type A \<gamma>"
