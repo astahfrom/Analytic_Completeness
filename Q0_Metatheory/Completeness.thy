@@ -259,10 +259,10 @@ next
     done
 qed
 
-fun unambigious :: "type \<Rightarrow> bool" where
-  "unambigious i \<longleftrightarrow> True"
-| "unambigious o \<longleftrightarrow> True"
-| "unambigious (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> 
+fun unambiguous :: "type \<Rightarrow> bool" where
+  "unambiguous i \<longleftrightarrow> True"
+| "unambiguous o \<longleftrightarrow> True"
+| "unambiguous (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> 
      (\<forall>A B C. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
               is_closed_wff_of_type B \<beta> \<longrightarrow>
               is_closed_wff_of_type C \<beta> \<longrightarrow> 
@@ -277,9 +277,9 @@ lemma one_gamma: "D \<gamma> = set {V A \<gamma>| A. is_closed_wff_of_type A \<g
 
 lemma fun_typed: (* We could make being funtyped part of being good and make this
                     proof part of the induction.
-                    Or we could extract theorems from the big proofs where we, like here,
+                    Or we could extract theorems from the big proof where we, like here,
                     have the needed assumptions *)
-  assumes "unambigious (\<beta> \<rightarrow> \<alpha>)"
+  assumes "unambiguous (\<beta> \<rightarrow> \<alpha>)"
   shows "elts (D (\<beta> \<rightarrow> \<alpha>)) \<subseteq> elts ((D \<beta> \<longmapsto> D \<alpha>))"
 proof 
   fix f
@@ -321,17 +321,17 @@ definition two_gamma :: "type \<Rightarrow> bool" where
            V A \<gamma> = V B \<gamma> \<longleftrightarrow> H \<turnstile> A =\<^bsub>\<gamma>\<^esub> B)"
 
 definition good_type :: "type \<Rightarrow> bool" where
-  "good_type \<gamma> \<longleftrightarrow> two_gamma \<gamma> \<and> unambigious \<gamma>"
+  "good_type \<gamma> \<longleftrightarrow> two_gamma \<gamma> \<and> unambiguous \<gamma>"
 
 lemma all_good: "good_type \<gamma>"
 proof (induction \<gamma>)
   case TInd
   then show ?case
-    using good_type_def two_gamma_def two_i unambigious.simps(1) by blast
+    using good_type_def two_gamma_def two_i unambiguous.simps(1) by blast
 next
   case TBool
   then show ?case
-    using good_type_def two_gamma_def two_o unambigious.simps(2) by blast
+    using good_type_def two_gamma_def two_o unambiguous.simps(2) by blast
 next
   case (TFun \<beta> \<alpha>)
 
@@ -347,8 +347,8 @@ next
     (* Sledgehammer could do it... But we could maybe write Andrew's short proof out and only
        Sledgehammer the intermediate steps. *)
   }
-  then have una: "unambigious (\<beta> \<rightarrow> \<alpha>)"
-    unfolding unambigious.simps by metis
+  then have una: "unambiguous (\<beta> \<rightarrow> \<alpha>)"
+    unfolding unambiguous.simps by metis
 
   {
     fix A B
@@ -375,8 +375,8 @@ next
             subgoal
               apply -
               apply auto
-              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambigious (\<beta> \<rightarrow> \<alpha>)\<close>
-                  is_closed_wff_of_type_def some_eq_ex unambigious.simps(3))
+              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambiguous (\<beta> \<rightarrow> \<alpha>)\<close>
+                  is_closed_wff_of_type_def some_eq_ex unambiguous.simps(3))
               done
             subgoal
               apply (metis (mono_tags, lifting) \<open>is_closed_wff_of_type C \<beta>\<close> get_rep.simps verit_sko_ex')
@@ -404,8 +404,8 @@ next
             subgoal
               apply -
               apply auto
-              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambigious (\<beta> \<rightarrow> \<alpha>)\<close>
-                  is_closed_wff_of_type_def some_eq_ex unambigious.simps(3))
+              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambiguous (\<beta> \<rightarrow> \<alpha>)\<close>
+                  is_closed_wff_of_type_def some_eq_ex unambiguous.simps(3))
               done
             subgoal
               apply (metis (mono_tags, lifting) \<open>is_closed_wff_of_type C \<beta>\<close> get_rep.simps verit_sko_ex')
@@ -452,8 +452,8 @@ next
             subgoal
               apply -
               apply auto
-              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambigious (\<beta> \<rightarrow> \<alpha>)\<close>
-                  is_closed_wff_of_type_def some_eq_ex unambigious.simps(3))
+              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambiguous (\<beta> \<rightarrow> \<alpha>)\<close>
+                  is_closed_wff_of_type_def some_eq_ex unambiguous.simps(3))
               done
             subgoal
               apply (metis (mono_tags, lifting) \<open>is_closed_wff_of_type C \<beta>\<close> get_rep.simps verit_sko_ex')
@@ -477,8 +477,8 @@ next
             subgoal
               apply -
               apply auto
-              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambigious (\<beta> \<rightarrow> \<alpha>)\<close>
-                  is_closed_wff_of_type_def some_eq_ex unambigious.simps(3))
+              apply (smt (verit, ccfv_threshold) \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type C \<beta>\<close> \<open>local.unambiguous (\<beta> \<rightarrow> \<alpha>)\<close>
+                  is_closed_wff_of_type_def some_eq_ex unambiguous.simps(3))
               done
             subgoal
               apply (metis (mono_tags, lifting) \<open>is_closed_wff_of_type C \<beta>\<close> get_rep.simps verit_sko_ex')
