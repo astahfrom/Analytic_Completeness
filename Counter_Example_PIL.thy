@@ -53,13 +53,11 @@ text \<open>Nowhere-or-twice says that if formula p holds somewhere, then it hol
 text \<open>(We ignore de Bruijn complications and only instantiate with closed formulas.)\<close>
 
 abbreviation \<open>nowhere_or_twice p \<equiv>
-  \<^bold>@ (\<^bold>\<circle>0) (\<^bold>\<diamond> p) \<^bold>\<longrightarrow>
-  \<^bold>@ (\<^bold>\<circle>0) (\<^bold>\<diamond> (\<^bold>\<down> (
-    \<^bold>@ (\<^bold>\<circle>0) (\<^bold>\<diamond> (\<^bold>\<down> (
-      (\<^bold>@ (\<^bold>#1) p) \<^bold>\<and>
-      (\<^bold>@ (\<^bold>#0) p) \<^bold>\<and>
-      \<^bold>\<not> (\<^bold>@ (\<^bold>#0) (\<^bold>\<bullet>(\<^bold>#1)))
-  ))))))\<close>
+  (\<^bold>\<diamond> p) \<^bold>\<longrightarrow>
+  (\<^bold>\<diamond> (\<^bold>\<down> (\<^bold>\<diamond> (\<^bold>\<down> (
+    (\<^bold>@ (\<^bold>#1) p) \<^bold>\<and>
+    (\<^bold>@ (\<^bold>#0) p) \<^bold>\<and>
+    \<^bold>\<not> (\<^bold>@ (\<^bold>#0) (\<^bold>\<bullet>(\<^bold>#1))))))))\<close>
 
 text \<open>Finite unions of arithmetic progressions are either empty or infinite.\<close>
 
