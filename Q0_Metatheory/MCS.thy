@@ -24,25 +24,83 @@ inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> b
 
 inductive gamma_class :: \<open>form list \<Rightarrow> (form set \<Rightarrow> _) \<times> (form \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
   CPiP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<forall>x\<^bsub>\<alpha>\<^esub>. A ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>B. [ A \<sqdot> B ])\<close>
+| CExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>C. [ A \<sqdot> C =\<^bsub>\<beta>\<^esub>  B \<sqdot> C ])\<close>
 
-inductive delta_match :: \<open>form \<Rightarrow> type \<times> form \<Rightarrow> bool\<close> where
-  \<open>delta_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)) (\<alpha>, A)\<close>
+subsection \<open>Negated Forall\<close>
 
-inductive_cases delta_matchE [elim]: \<open>delta_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)) (\<alpha>', A')\<close>
+inductive exists_match :: \<open>form \<Rightarrow> type \<times> form \<Rightarrow> bool\<close> where
+  \<open>exists_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)) (\<alpha>, A)\<close>
 
-lemma delta_match_uniq [dest]: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match A (\<alpha>', B') \<Longrightarrow> \<alpha> = \<alpha>' \<and> B = B'\<close>
-  by (auto elim: delta_match.cases)
+inductive_cases exists_matchE [elim]: \<open>exists_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)) (\<alpha>', A')\<close>
 
-lemma delta_match_THE [intro]: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match A (THE (\<alpha>, B). delta_match A (\<alpha>, B))\<close>
-  using delta_match_uniq theI by fastforce
+lemma exists_match_uniq [dest]: \<open>exists_match C (\<alpha>, A) \<Longrightarrow> exists_match C (\<alpha>', A') \<Longrightarrow> \<alpha> = \<alpha>' \<and> A = A'\<close>
+  by (auto elim: exists_match.cases)
+
+lemma exists_match_THE [intro]: \<open>exists_match C (\<alpha>, A) \<Longrightarrow> exists_match C (THE (\<alpha>, A). exists_match C (\<alpha>, A))\<close>
+  using exists_match_uniq theI by fastforce
+
+lemma THE_exists_match: \<open>exists_match C (\<alpha>, A) \<Longrightarrow> (THE (\<alpha>, A). exists_match C (\<alpha>, A)) = (\<alpha>, A)\<close>
+  by blast
+
+lemma exists_matchD [dest]: \<open>exists_match C (\<alpha>, A) \<Longrightarrow> \<exists>x. C = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A)\<close>
+  by (auto elim: exists_match.cases)
+
+lemma exists_matchI [intro]: \<open>\<exists>x. C = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. A) \<Longrightarrow> exists_match C (\<alpha>, A)\<close>
+  using exists_match.intros by blast
+
+
+subsection \<open>Negated Equality\<close>
+
+inductive ineq_match :: \<open>form \<Rightarrow> type \<times> type \<times> form \<times> form \<Rightarrow> bool\<close> where
+  \<open>ineq_match (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)) (\<alpha>, \<beta>, A, B)\<close>
+
+inductive_cases ineq_matchE [elim]: \<open>ineq_match (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)) (\<alpha>', \<beta>', A', B')\<close>
+
+lemma ineq_match_uniq [dest]: \<open>ineq_match C (\<alpha>, \<beta>, A, B) \<Longrightarrow> ineq_match C (\<alpha>', \<beta>', A', B') \<Longrightarrow> \<alpha> = \<alpha>' \<and> \<beta> = \<beta>' \<and> A = A' \<and> B = B'\<close>
+  by (auto elim: ineq_match.cases)
+
+lemma ineq_match_THE [intro]: \<open>ineq_match C (\<alpha>, \<beta>, A, B) \<Longrightarrow> ineq_match C (THE (\<alpha>, \<beta>, A, B). ineq_match C (\<alpha>, \<beta>, A, B))\<close>
+  using ineq_match_uniq theI by fastforce
+
+lemma THE_ineq_match: \<open>ineq_match C (\<alpha>, \<beta>, A, B) \<Longrightarrow> (THE (\<alpha>, \<beta>, A, B). ineq_match C (\<alpha>, \<beta>, A, B)) = (\<alpha>, \<beta>, A, B)\<close>
+  by blast
+
+lemma ineq_matchD [dest]: \<open>ineq_match C (\<alpha>, \<beta>, A, B) \<Longrightarrow> C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+  by (auto elim!: ineq_match.cases)
+
+lemma ineq_matchI [intro]: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<Longrightarrow> ineq_match C (\<alpha>, \<beta>, A, B)\<close>
+  using ineq_match.intros by blast
+
+
+subsection \<open>Delta\<close>
+
+(*
+  I cannot tell whether this actually holds with the encoding of syntax. I don't know if it matters.
+  I don't even know which one we need for the model existence.
+*)
+proposition \<open>exists_match C p \<Longrightarrow> ineq_match C q \<Longrightarrow> False\<close>
+  apply (elim exists_match.cases ineq_match.cases)
+  oops
 
 fun \<delta> :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> where
-  CDelta: \<open>\<delta> A c =
-    (if A \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> B. delta_match A (\<alpha>, B)) then 
-       case THE (\<alpha>, B). delta_match A (\<alpha>, B) of
-         (\<alpha>, B) \<Rightarrow> [ \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
-    else [])\<close>
+  CDelta: \<open>\<delta> C c =
+    (if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> A. exists_match C (\<alpha>, A)) then 
+       case THE (\<alpha>, A). exists_match C (\<alpha>, A) of
+         (\<alpha>, A) \<Rightarrow> [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
+     else if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B)) then 
+       case THE (\<alpha>, \<beta>, A, B). ineq_match C (\<alpha>, \<beta>, A, B) of
+         (\<alpha>, \<beta>, A, B) \<Rightarrow> [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
+     else [])\<close>
 
+lemma exists_match_delta [simp]:
+  assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>exists_match C (\<alpha>, A)\<close>
+  shows \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+  unfolding CDelta using assms THE_exists_match by auto
+
+lemma ineq_match_delta [simp]:
+  assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>\<not> (\<exists>\<alpha> A. exists_match C (\<alpha>, A))\<close> \<open>ineq_match C (\<alpha>, \<beta>, A, B)\<close>
+  shows \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+    unfolding CDelta using assms THE_ineq_match by auto
 
 section \<open>Operations\<close>
 
@@ -104,15 +162,11 @@ qed
 lemma finite_cons_form [simp]: \<open>finite (cons_form A)\<close>
   by (induct A) auto
 
-lemma map_con_delta_match [intro]: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> delta_match (map_con f A) (\<alpha>, map_con f B)\<close>
-  by (auto elim: delta_match.cases simp: delta_match.simps)
+lemma map_con_exists_match [intro]: \<open>exists_match C (\<alpha>, A) \<Longrightarrow> exists_match (map_con f C) (\<alpha>, map_con f A)\<close>
+  by (auto elim: exists_match.cases simp: exists_match.simps)
 
-lemma delta_matchD [dest]: \<open>delta_match A (\<alpha>, B) \<Longrightarrow> \<exists>x. A = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)\<close>
-  by (auto elim: delta_match.cases)
-
-lemma delta_matchI [intro]: \<open>\<exists>x. A = \<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<Longrightarrow> delta_match A (\<alpha>, B)\<close>
-  using delta_match.intros by blast
-
+lemma map_con_ineq_match [intro]: \<open>ineq_match C (\<alpha>, \<beta>, A, B) \<Longrightarrow> ineq_match (map_con f C) (\<alpha>, \<beta>, map_con f A, map_con f B)\<close>
+  by (auto elim: ineq_match.cases simp: ineq_match.simps)
 
 subsection \<open>Parameter Substitution Inversion\<close>
 
@@ -149,9 +203,11 @@ lemma map_con_neg [dest]: \<open>map_con f A = \<sim>\<^sup>\<Q> B \<Longrightar
 lemma map_con_forall [dest]: \<open>map_con f A = \<forall>x\<^bsub>\<alpha>\<^esub>. B \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> A = \<forall>x\<^bsub>\<alpha>\<^esub>. B'\<close>
   by auto
 
-lemma delta_match_map_con [dest]: \<open>delta_match (map_con f A) (\<alpha>, B) \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> delta_match A (\<alpha>, B')\<close>
+lemma exists_match_map_con [dest]: \<open>exists_match (map_con f A) (\<alpha>, B) \<Longrightarrow> \<exists>B'. map_con f B' = B \<and> exists_match A (\<alpha>, B')\<close>
   by fast
 
+lemma ineq_match_map_con [dest]: \<open>ineq_match (map_con f C) (\<alpha>, \<beta>, A, B) \<Longrightarrow> \<exists>A' B'. map_con f A' = A \<and> map_con f B' = B \<and> ineq_match C (\<alpha>, \<beta>, A', B')\<close>
+  by fast
 
 section \<open>Interpretations\<close>
 
@@ -168,7 +224,7 @@ interpretation B: Beta map_con cons_form is_param beta_class
   by unfold_locales (auto elim!: beta_class.cases simp: beta_class.simps)
 
 interpretation G: Gamma map_con map_con cons_form is_param gamma_class
-  by unfold_locales (auto elim!: gamma_class.cases simp: gamma_class.simps)
+  by unfold_locales (elim gamma_class.cases, auto simp: gamma_class.simps)
 
 interpretation D: Delta map_con cons_form is_param \<delta>
 proof
@@ -176,33 +232,51 @@ proof
   assume \<open>is_param x\<close> \<open>P.is_subst f\<close>
   then show \<open>\<delta> (map_con f p) (f x) = map (map_con f) (\<delta> p x)\<close>
   proof (induct p x rule: \<delta>.induct)
-    case (1 A c)
-    then show ?case
-    proof (cases \<open>A \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> B. delta_match A (\<alpha>, B))\<close>)
+    case (1 C c)
+    then have c: \<open>\<not> is_logical_name (f c)\<close>
+      unfolding P.is_subst_def by (auto simp: is_param_def)
+   
+    from 1 show ?case
+    proof (cases \<open>C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> A. exists_match C (\<alpha>, A))\<close>)
       case True
-      then obtain \<alpha> B y where A: \<open>A = \<sim>\<^sup>\<Q> (\<forall>y\<^bsub>\<alpha>\<^esub>. B)\<close>
-        by (auto elim: delta_match.cases)
-      then have *: \<open>\<delta> A c = [ \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        using True MCS.CDelta
-        by (metis (no_types, lifting) case_prod_conv delta_match.intros delta_match_THE delta_match_uniq surj_pair)
-      moreover have \<open>\<not> is_logical_name (f c)\<close>
-        using 1 unfolding P.is_subst_def by (auto simp: is_param_def)
-      ultimately have *: \<open>map (map_con f) (\<delta> A c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        using 1 by (auto simp: is_param_def)
-     
-      have \<open>delta_match (map_con f A) (\<alpha>, map_con f B)\<close>
-        using A map_con_delta_match by fast
-      moreover have \<open>map_con f A \<in> wffs\<^bsub>o\<^esub>\<close>
+      then obtain \<alpha> A y where C: \<open>C = \<sim>\<^sup>\<Q> (\<forall>y\<^bsub>\<alpha>\<^esub>. A)\<close>
+        by (auto elim: exists_match.cases)
+      then have *: \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        using True MCS.CDelta exists_match_delta by blast
+      then have *: \<open>map (map_con f) (\<delta> C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        using 1 c by (auto simp: is_param_def)
+      have \<open>exists_match (map_con f C) (\<alpha>, map_con f A)\<close>
+        using C map_con_exists_match by blast
+      moreover have \<open>map_con f C \<in> wffs\<^bsub>o\<^esub>\<close>
         using True wff_map_con by blast
-      ultimately have \<open>\<delta> (map_con f A) (f c) = [ \<sim>\<^sup>\<Q> (map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        unfolding MCS.CDelta using delta_match_THE delta_match_uniq 
-        by (metis (no_types, lifting) HOL.ext case_prod_conv surj_pair)
+      ultimately have \<open>\<delta> (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        unfolding MCS.CDelta using exists_match_delta by auto
       then show ?thesis
         using * by simp
     next
-      case False
+      case not_exists: False
       then show ?thesis
-        by auto
+      proof (cases \<open>C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B))\<close>)
+        case True
+        then obtain \<alpha> \<beta> A B where C: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+          by (auto elim: exists_match.cases)
+        then have *: \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        using True MCS.CDelta not_exists ineq_match_delta by blast
+        then have *: \<open>map (map_con f) (\<delta> C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+          using 1 c by (auto simp: is_param_def)
+        have \<open>ineq_match (map_con f C) (\<alpha>, \<beta>, map_con f A, map_con f B)\<close>
+          using C map_con_ineq_match by blast
+        moreover have \<open>map_con f C \<in> wffs\<^bsub>o\<^esub>\<close>
+          using True wff_map_con by blast
+        ultimately have \<open>\<delta> (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+          unfolding MCS.CDelta using not_exists ineq_match_delta by auto
+        then show ?thesis
+          using * by simp
+      next
+        case False
+        then show ?thesis
+          using not_exists by auto
+      qed
     qed
   qed
 qed
@@ -232,8 +306,6 @@ locale MyHintikka = Hintikka map_con cons_form is_param Kinds H
   for H :: \<open>form set\<close>
 begin
 
-thm sat\<^sub>H[of C.kind, simplified]
-
 lemmas
   confl = sat\<^sub>H[of C.kind] and
   alpha = sat\<^sub>H[of A.kind] and
@@ -262,14 +334,14 @@ lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub
 lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<forall>x\<^bsub>\<alpha>\<^esub>. A \<in> H \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A \<sqdot> B \<in> H\<close>
   using gamma by (force intro: CPiP[of A x \<alpha>])
 
-lemma 
+lemma
   assumes \<open>B \<in> wffs\<^bsub>o\<^esub>\<close> \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> H\<close>
   shows \<open>\<exists>c. is_param c \<and> \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<in> H\<close>
 proof -
-  have \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> B. delta_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)) (\<alpha>, B))\<close>
+  have \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> B. exists_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)) (\<alpha>, B))\<close>
     using assms(1) by blast
   then have \<open>\<delta> (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)) c = [ \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close> for c
-    by (metis (mono_tags, lifting) \<delta>.simps case_prod_conv delta_match.intros delta_matchE delta_match_THE
+    by (metis (mono_tags, lifting) \<delta>.simps case_prod_conv exists_match.intros exists_matchE exists_match_THE
         surj_pair)
   then show ?thesis
     using delta assms(2) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
