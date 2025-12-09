@@ -10,7 +10,6 @@ inductive confl_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 | CVar: \<open>[ \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ x\<^bsub>o\<^esub> ]\<close>
 | CCon: \<open>[ \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ \<lbrace>c\<rbrace>\<^bsub>o\<^esub> ]\<close>
 
-
 inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
 (*
   CEta: \<open>[ A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A ] \<leadsto>\<^sub>\<alpha> [ \<eta> A]\<close> (* normal form ? *)
@@ -345,6 +344,51 @@ proof -
         surj_pair)
   then show ?thesis
     using delta assms(2) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
+qed
+
+end
+
+subsection \<open>Derivational Consistency\<close>
+
+definition is_consistent_set :: "form set \<Rightarrow> bool" where
+  [iff]: "is_consistent_set \<G> \<longleftrightarrow> is_hyps \<G> \<and> \<not> is_inconsistent_set \<G>"
+
+interpretation DC: Derivational_Confl map_con cons_form is_param confl_class is_consistent_set
+proof
+  fix H ps qs q
+  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> and *: \<open>lset ps \<subseteq> H\<close> \<open>q \<in> lset qs\<close> \<open>q \<in> H\<close>
+  then show \<open>\<not> is_consistent_set H\<close>
+  proof cases
+    case CFalse
+    then have \<open>F\<^bsub>o\<^esub> \<in> H\<close>
+      using * by simp
+    then show ?thesis
+      using dv_hyp by blast
+  next
+    case (CVar x)
+    then show ?thesis
+    proof safe
+      assume H: \<open>H \<subseteq> wffs\<^bsub>o\<^esub>\<close> \<open>finite H\<close>
+      from CVar have \<open>\<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> \<in> H\<close> \<open>x\<^bsub>o\<^esub> \<in> H\<close>
+        using * by simp_all
+      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub>\<close> \<open>H \<turnstile> x\<^bsub>o\<^esub>\<close>
+        using dv_hyp H by blast+
+      then show \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
+        using H by (metis equality_of_type_def equivalence_def neg_def prop_5201_1 prop_5201_2)
+    qed
+  next
+    case (CCon c)
+    then show ?thesis
+    proof safe
+      assume H: \<open>H \<subseteq> wffs\<^bsub>o\<^esub>\<close> \<open>finite H\<close>
+      from CCon have \<open>\<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<in> H\<close> \<open>\<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<in> H\<close>
+        using * by simp_all
+      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub>\<close> \<open>H \<turnstile> \<lbrace>c\<rbrace>\<^bsub>o\<^esub>\<close>
+        using dv_hyp H by blast+
+      then show \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
+        using H by (metis equality_of_type_def equivalence_def neg_def prop_5201_1 prop_5201_2)
+    qed
+  qed
 qed
 
 end
