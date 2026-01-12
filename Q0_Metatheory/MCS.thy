@@ -391,6 +391,9 @@ proof
   qed
 qed
 
+
+subsection \<open>Conjunctive Consistency\<close>
+
 lemma pre_is_taut_conj:
   assumes \<open>A \<in> pwffs\<close> and \<open>B \<in> pwffs\<close>
   shows \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
@@ -523,8 +526,10 @@ qed
 
 interpretation DA: Weak_Derivational_Alpha map_con cons_form \<open>\<lambda>_. True\<close> alpha_class "is_consistent_set \<circ> lset"
 proof(standard)
-  fix Hs and ps qs :: \<open>form list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and sub: \<open>lset ps \<subseteq> lset Hs\<close>
+  fix Hs 
+    and ps qs :: \<open>form list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> 
+    and sub: \<open>lset ps \<subseteq> lset Hs\<close>
     and consistent: \<open>(is_consistent_set \<circ> lset) Hs\<close>
   hence well_formed: \<open>(lset qs \<union> lset Hs) \<subseteq> wffs\<^bsub>o\<^esub>\<close>
   proof(cases)
@@ -581,6 +586,26 @@ proof(standard)
     by simp
 qed
 
+
+subsection \<open>Disjunctive Consistency\<close>
+
+interpretation DB: Weak_Derivational_Beta map_con cons_form \<open>\<lambda>_. True\<close> beta_class "is_consistent_set \<circ> lset"
+proof
+  fix Hs and ps qs
+  assume \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
+    and sub: \<open>lset ps \<subseteq> lset Hs\<close>
+    and consistent: \<open>(is_consistent_set \<circ> lset) Hs\<close>
+  thus \<open>\<exists>q\<in>lset qs. (is_consistent_set \<circ> lset) (q # Hs)\<close>
+  proof(cases)
+    case (CConN A B)
+    then show ?thesis
+      sorry
+  next
+    case (CImpP A B)
+    then show ?thesis
+      sorry
+  qed
+qed
 
 
 
