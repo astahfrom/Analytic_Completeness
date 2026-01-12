@@ -391,40 +391,50 @@ proof
   qed
 qed
 
-lemma pre_is_taut_conj1:
+lemma pre_is_taut_conj:
   assumes \<open>A \<in> pwffs\<close> and \<open>B \<in> pwffs\<close>
   shows \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
-  unfolding is_tautology_def
-proof(safe; (intro assms)?)
-  have \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A\<close>
+    and \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+    and \<open>is_tautology ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> A)\<close>
+    and \<open>is_tautology ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)\<close>
+proof-
+  have val_eq: 
+    \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A\<close>
+    \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> B\<close>
+    \<open>\<V>\<^sub>B \<phi> ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> A) = ((\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<supset> \<V>\<^sub>B \<phi> B)) \<^bold>\<supset> \<V>\<^sub>B \<phi> A)\<close>
+    \<open>\<V>\<^sub>B \<phi> ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B) = ((\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<supset> \<V>\<^sub>B \<phi> B)) \<^bold>\<supset> \<sim> \<V>\<^sub>B \<phi> B)\<close>
     if \<open>is_tv_assignment \<phi>\<close> for \<phi>
     using assms that
-    by (simp only: \<V>\<^sub>B_simps)
-  moreover have \<open>(\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A = \<^bold>T\<close> for \<phi>
-    by simp
-  ultimately show \<open>\<And>\<phi>. \<forall>p. \<phi> p \<in> elts \<bool> \<Longrightarrow> \<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = \<^bold>T\<close>
-    by force
-qed
-
-lemma pre_is_taut_conj2:
-  assumes \<open>A \<in> pwffs\<close> and \<open>B \<in> pwffs\<close>
-  shows \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
-  unfolding is_tautology_def
-proof(safe; (intro assms)?)
-  have \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> B\<close>
-    if \<open>is_tv_assignment \<phi>\<close> for \<phi>
-    using assms that
-    by (simp only: \<V>\<^sub>B_simps)
-  moreover have \<open>(\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> B = \<^bold>T\<close> for \<phi>
-    by simp
-  ultimately show \<open>\<And>\<phi>. \<forall>p. \<phi> p \<in> elts \<bool> \<Longrightarrow> \<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B) = \<^bold>T\<close>
-    by force
+    by (simp_all only: \<V>\<^sub>B_simps)
+  moreover have eq_true: 
+    \<open>(\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A = \<^bold>T\<close>
+    \<open>(\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> B = \<^bold>T\<close> 
+    \<open>((\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<supset> \<V>\<^sub>B \<phi> B)) \<^bold>\<supset> \<V>\<^sub>B \<phi> A) = \<^bold>T\<close>
+    \<open>((\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<supset> \<V>\<^sub>B \<phi> B)) \<^bold>\<supset> \<sim> \<V>\<^sub>B \<phi> B) = \<^bold>T\<close> for \<phi>
+    by simp_all
+  ultimately show \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
+    unfolding is_tautology_def
+    by (safe; (intro assms)?) force
+  show \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+    using val_eq eq_true
+    unfolding is_tautology_def
+    by (safe; (intro assms)?) force
+  show \<open>is_tautology ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> A)\<close>
+    using val_eq eq_true
+    unfolding is_tautology_def
+    by (safe; (intro assms)?) force
+  show \<open>is_tautology ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)\<close>
+    using val_eq eq_true
+    unfolding is_tautology_def
+    by (safe; (intro assms)?) force
 qed
 
 lemma is_taut_conj:
   assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
   shows \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
     and \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+    and \<open>is_tautologous ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> A)\<close>
+    and \<open>is_tautologous ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)\<close>
 proof-
   obtain p r where \<open>(p, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
     and \<open>(r, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close> and \<open>p \<noteq> r\<close>
@@ -435,51 +445,80 @@ proof-
   have theta_is_pwff: \<open>is_pwff_substitution ?\<theta>\<close>
     using assms
     by simp
-  have \<open>is_tautology (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
-    by (intro pre_is_taut_conj1 pwffs.intros) 
-  moreover have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+  have tauts:
+    \<open>is_tautology (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+    \<open>is_tautology (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
+    \<open>is_tautology ((\<sim>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)) \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+    \<open>is_tautology ((\<sim>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
+    by (intro pre_is_taut_conj pwffs.intros)+
+  have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
     using \<open>p \<noteq> r\<close>
     by simp
-  ultimately show \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
-    using theta_is_pwff
+  thus \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
+    using theta_is_pwff tauts(1)
     by blast
-  have \<open>is_tautology (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
-    by (intro pre_is_taut_conj2 pwffs.intros) 
-  moreover have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
+  have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
     using \<open>p \<noteq> r\<close>
     by simp
-  ultimately show \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
-    using theta_is_pwff
+  thus \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+    using theta_is_pwff tauts(2)
     by blast
+  have \<open>(\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> A) =  \<^bold>S ?\<theta> ((\<sim>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)) \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+    using \<open>p \<noteq> r\<close>
+    by simp
+  thus \<open>is_tautologous ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> A)\<close>
+    using theta_is_pwff tauts(3)
+    by blast
+  have \<open>(\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B) =  \<^bold>S ?\<theta> ((\<sim>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
+    using \<open>p \<noteq> r\<close>
+    by simp
+  thus \<open>is_tautologous ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)\<close>
+    using theta_is_pwff tauts(4)
+    by blast
+qed
+
+lemma derivable_from_tautologous_imp_op:
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+    and \<open>is_tautologous (A \<supset>\<^sup>\<Q> B)\<close>
+  shows \<open>{A} \<turnstile> B\<close>
+proof-
+  have \<open>is_hyps {A}\<close>
+    using \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+    by simp
+  have obs: \<open>([X] \<supset>\<^sup>\<Q>\<^sub>\<star> Y) = (X \<supset>\<^sup>\<Q> Y)\<close> for X Y
+    by simp_all
+  show \<open>{A} \<turnstile> B\<close>
+    using tautologous_horn_clause_is_hyp_derivable
+      [OF \<open>is_hyps {A}\<close> \<open>is_hyps {A}\<close>, where hs=\<open>[A]\<close>]
+    \<open>is_tautologous (A \<supset>\<^sup>\<Q> B)\<close>
+    unfolding obs
+    by (metis \<open>is_hyps {A}\<close> dv_hyp empty_set 
+        list.simps(15))
 qed
 
 lemma rule_conj:
   assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-  shows \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> A\<close> and \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> B\<close>
-proof (rule_tac hs="[A \<and>\<^sup>\<Q> B]" and \<G>="{A \<and>\<^sup>\<Q> B}" in rule_P(1))
-  have obs: \<open>([A \<and>\<^sup>\<Q> B] \<supset>\<^sup>\<Q>\<^sub>\<star> A) = (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
-    \<open>([A \<and>\<^sup>\<Q> B] \<supset>\<^sup>\<Q>\<^sub>\<star> B) = (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
-    by simp_all
-  show f1: \<open>is_hyps {A \<and>\<^sup>\<Q> B}\<close>
+  shows \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> A\<close> 
+    and \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> B\<close>
+    and \<open>{\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)} \<turnstile> A\<close>
+    and \<open>{\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)} \<turnstile> \<sim>\<^sup>\<Q> B\<close>
+proof-
+  show \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> A\<close>
+    apply (rule derivable_from_tautologous_imp_op[OF _ is_taut_conj(1)])
     using assms
-    by fastforce
-  show f2: \<open>is_hyps {A \<and>\<^sup>\<Q> B}\<close>
-    using assms
-    by fastforce
-  show f3: \<open>\<forall>\<psi>\<in>{A \<and>\<^sup>\<Q> B}. {A \<and>\<^sup>\<Q> B} \<turnstile> \<psi>\<close>
-    using assms
-    by (metis ID.set_finite conj_op_wff insert_subset 
-        is_derivable_from_hyps.simps prop_5211)
-  show f4: \<open>lset [A \<and>\<^sup>\<Q> B] = {A \<and>\<^sup>\<Q> B}\<close>
-    by simp
-  show \<open>is_tautologous ([A \<and>\<^sup>\<Q> B] \<supset>\<^sup>\<Q>\<^sub>\<star> A)\<close>
-    unfolding obs
-    by (rule is_taut_conj(1)[OF assms])
+    by fastforce+
   show \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> B\<close>
-    using rule_P(1)[OF f1 f2 f3 f4, of B]
-      is_taut_conj(2)[OF assms]
-    unfolding obs
-    by blast
+    apply (rule derivable_from_tautologous_imp_op[OF _ is_taut_conj(2)])
+    using assms
+    by fastforce+
+  show \<open>{\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)} \<turnstile> A\<close>
+    apply (rule derivable_from_tautologous_imp_op[OF _ is_taut_conj(3)])
+    using assms
+    by fastforce+
+  show \<open>{\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)} \<turnstile> \<sim>\<^sup>\<Q> B\<close>
+    apply (rule derivable_from_tautologous_imp_op[OF _ is_taut_conj(4)])
+    using assms
+    by fastforce+
 qed
 
 interpretation DA: Weak_Derivational_Alpha map_con cons_form \<open>\<lambda>_. True\<close> alpha_class "is_consistent_set \<circ> lset"
@@ -515,12 +554,24 @@ proof(standard)
       using consistent
       by simp (metis CConP(1) rule_conj(2)[OF CConP(3,4)] 
           list.simps(15) set_empty2)
-    then show ?thesis
-      using calculation local.CConP(2) 
+    ultimately show ?thesis
+      using local.CConP(2) 
       by force
   next
     case (CImpN B C)
-    then show ?thesis sorry
+    have \<open>lset Hs \<turnstile> B\<close>
+      apply (rule prop_5241[OF _ _ sub])
+      using consistent
+      by simp (metis list.set(1) list.simps(15) 
+          CImpN(1,3,4) rule_conj(3))
+    moreover have \<open>lset Hs \<turnstile> \<sim>\<^sup>\<Q> C\<close>
+      apply (rule prop_5241[OF _ _ sub])
+      using consistent
+      by simp (metis list.set(1) list.simps(15) 
+          CImpN(1,3,4) rule_conj(4))
+    ultimately show ?thesis
+      using local.CImpN(2) 
+      by force
   qed
   have \<open>(is_consistent_set (lset qs \<union> lset Hs))\<close>
     by (metis \<open>\<forall>F\<in>lset qs. lset Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> lset Hs)\<close> well_formed
