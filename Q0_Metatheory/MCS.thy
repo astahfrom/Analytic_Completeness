@@ -487,7 +487,7 @@ proof(standard)
   fix Hs and ps qs :: \<open>form list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and sub: \<open>lset ps \<subseteq> lset Hs\<close>
     and consistent: \<open>(is_consistent_set \<circ> lset) Hs\<close>
-  hence \<open>(lset qs \<union> lset Hs) \<subseteq> wffs\<^bsub>o\<^esub>\<close>
+  hence well_formed: \<open>(lset qs \<union> lset Hs) \<subseteq> wffs\<^bsub>o\<^esub>\<close>
   proof(cases)
     case (CConP B C)
     then show ?thesis
@@ -523,9 +523,9 @@ proof(standard)
     then show ?thesis sorry
   qed
   have \<open>(is_consistent_set (lset qs \<union> lset Hs))\<close>
-    unfolding is_consistent_set_def
-      is_inconsistent_set_def
-    sorry
+    by (metis \<open>\<forall>F\<in>lset qs. lset Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> lset Hs)\<close> well_formed
+        comp_apply consistent finite_Un generalized_deduction_theorem generalized_modus_ponens
+        is_consistent_set_def is_inconsistent_set_def sup_commute)
   thus "(is_consistent_set \<circ> lset) (qs @ Hs)"
     by simp
 qed
