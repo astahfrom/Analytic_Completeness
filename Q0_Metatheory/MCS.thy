@@ -1,6 +1,6 @@
 theory MCS imports
   "../Analytic_Completeness"
-  Consistency
+  "Q0_Metatheory.Consistency"
 begin
 
 section \<open>Consistency Property\<close>
@@ -390,5 +390,147 @@ proof
     qed
   qed
 qed
+
+lemma pre_is_taut_conj1:
+  assumes \<open>A \<in> pwffs\<close> and \<open>B \<in> pwffs\<close>
+  shows \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
+  unfolding is_tautology_def
+proof(safe; (intro assms)?)
+  have \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A\<close>
+    if \<open>is_tv_assignment \<phi>\<close> for \<phi>
+    using assms that
+    by (simp only: \<V>\<^sub>B_simps)
+  moreover have \<open>(\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A = \<^bold>T\<close> for \<phi>
+    by simp
+  ultimately show \<open>\<And>\<phi>. \<forall>p. \<phi> p \<in> elts \<bool> \<Longrightarrow> \<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = \<^bold>T\<close>
+    by force
+qed
+
+lemma pre_is_taut_conj2:
+  assumes \<open>A \<in> pwffs\<close> and \<open>B \<in> pwffs\<close>
+  shows \<open>is_tautology (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+  unfolding is_tautology_def
+proof(safe; (intro assms)?)
+  have \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> B\<close>
+    if \<open>is_tv_assignment \<phi>\<close> for \<phi>
+    using assms that
+    by (simp only: \<V>\<^sub>B_simps)
+  moreover have \<open>(\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> B = \<^bold>T\<close> for \<phi>
+    by simp
+  ultimately show \<open>\<And>\<phi>. \<forall>p. \<phi> p \<in> elts \<bool> \<Longrightarrow> \<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B) = \<^bold>T\<close>
+    by force
+qed
+
+lemma is_taut_conj:
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+  shows \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
+    and \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+proof-
+  obtain p r where \<open>(p, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
+    and \<open>(r, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close> and \<open>p \<noteq> r\<close>
+    using fresh_var_existence[of \<open>vars A \<union> vars B\<close>]
+    by (metis ID.set_finite UnCI finite_Un 
+        fresh_var_existence insert_iff vars_form_finiteness)
+  let ?\<theta> = \<open>{(p, o) \<Zinj> A, (r,o) \<Zinj> B}\<close>
+  have theta_is_pwff: \<open>is_pwff_substitution ?\<theta>\<close>
+    using assms
+    by simp
+  have \<open>is_tautology (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+    by (intro pre_is_taut_conj1 pwffs.intros) 
+  moreover have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+    using \<open>p \<noteq> r\<close>
+    by simp
+  ultimately show \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
+    using theta_is_pwff
+    by blast
+  have \<open>is_tautology (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
+    by (intro pre_is_taut_conj2 pwffs.intros) 
+  moreover have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>)\<close>
+    using \<open>p \<noteq> r\<close>
+    by simp
+  ultimately show \<open>is_tautologous (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+    using theta_is_pwff
+    by blast
+qed
+
+lemma rule_conj:
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+  shows \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> A\<close> and \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> B\<close>
+proof (rule_tac hs="[A \<and>\<^sup>\<Q> B]" and \<G>="{A \<and>\<^sup>\<Q> B}" in rule_P(1))
+  have obs: \<open>([A \<and>\<^sup>\<Q> B] \<supset>\<^sup>\<Q>\<^sub>\<star> A) = (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
+    \<open>([A \<and>\<^sup>\<Q> B] \<supset>\<^sup>\<Q>\<^sub>\<star> B) = (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B)\<close>
+    by simp_all
+  show f1: \<open>is_hyps {A \<and>\<^sup>\<Q> B}\<close>
+    using assms
+    by fastforce
+  show f2: \<open>is_hyps {A \<and>\<^sup>\<Q> B}\<close>
+    using assms
+    by fastforce
+  show f3: \<open>\<forall>\<psi>\<in>{A \<and>\<^sup>\<Q> B}. {A \<and>\<^sup>\<Q> B} \<turnstile> \<psi>\<close>
+    using assms
+    by (metis ID.set_finite conj_op_wff insert_subset 
+        is_derivable_from_hyps.simps prop_5211)
+  show f4: \<open>lset [A \<and>\<^sup>\<Q> B] = {A \<and>\<^sup>\<Q> B}\<close>
+    by simp
+  show \<open>is_tautologous ([A \<and>\<^sup>\<Q> B] \<supset>\<^sup>\<Q>\<^sub>\<star> A)\<close>
+    unfolding obs
+    by (rule is_taut_conj(1)[OF assms])
+  show \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> B\<close>
+    using rule_P(1)[OF f1 f2 f3 f4, of B]
+      is_taut_conj(2)[OF assms]
+    unfolding obs
+    by blast
+qed
+
+interpretation DA: Weak_Derivational_Alpha map_con cons_form \<open>\<lambda>_. True\<close> alpha_class "is_consistent_set \<circ> lset"
+proof(standard)
+  fix Hs and ps qs :: \<open>form list\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> and sub: \<open>lset ps \<subseteq> lset Hs\<close>
+    and consistent: \<open>(is_consistent_set \<circ> lset) Hs\<close>
+  hence \<open>(lset qs \<union> lset Hs) \<subseteq> wffs\<^bsub>o\<^esub>\<close>
+  proof(cases)
+    case (CConP B C)
+    then show ?thesis
+      using consistent by force
+  next
+    case (CImpN B C)
+    then show ?thesis 
+      using consistent by force
+  qed
+  moreover have \<open>finite (lset qs \<union> lset Hs)\<close>
+    by simp
+  ultimately have \<open>is_hyps (lset qs \<union> lset Hs)\<close>
+    unfolding is_consistent_set_def ..
+  from \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
+  have \<open>\<forall>F \<in> lset qs. lset Hs \<turnstile> F\<close>
+  proof(cases)
+    case (CConP B C)
+    have \<open>lset Hs \<turnstile> B\<close>
+      apply (rule prop_5241[OF _ _ sub])
+      using consistent
+      by simp (metis CConP(1) rule_conj(1)[OF CConP(3,4)] 
+          list.simps(15) set_empty2)
+    moreover have \<open>lset Hs \<turnstile> C\<close>
+      apply (rule prop_5241[OF _ _ sub])
+      using consistent
+      by simp (metis CConP(1) rule_conj(2)[OF CConP(3,4)] 
+          list.simps(15) set_empty2)
+    then show ?thesis
+      using calculation local.CConP(2) 
+      by force
+  next
+    case (CImpN B C)
+    then show ?thesis sorry
+  qed
+  have \<open>(is_consistent_set (lset qs \<union> lset Hs))\<close>
+    unfolding is_consistent_set_def
+      is_inconsistent_set_def
+    sorry
+  thus "(is_consistent_set \<circ> lset) (qs @ Hs)"
+    by simp
+qed
+
+
+
 
 end
