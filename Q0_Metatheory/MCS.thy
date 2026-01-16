@@ -9,6 +9,7 @@ inductive confl_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
   CFalse: \<open>[ F\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ F\<^bsub>o\<^esub> ]\<close>
 | CVar: \<open>[ \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ x\<^bsub>o\<^esub> ]\<close>
 | CCon: \<open>[ \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ \<lbrace>c\<rbrace>\<^bsub>o\<^esub> ]\<close>
+| CIneq: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow>  [ \<sim>\<^sup>\<Q> (A =\<^bsub>o\<^esub> A) ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> (A =\<^bsub>o\<^esub> A) ]\<close>
 
 inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
 (*
@@ -16,14 +17,16 @@ inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 |*)
   CConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<and>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ A, B ]\<close>
 | CImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A, \<sim>\<^sup>\<Q> B ]\<close>
+| CEqual: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A =\<^bsub>o\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ (A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)]\<close>
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, \<sim>\<^sup>\<Q> B ]\<close>
 | CImpP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<supset>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, B ]\<close>
+| CDisP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<or>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ A, B ]\<close>
 
 inductive gamma_class :: \<open>form list \<Rightarrow> (form set \<Rightarrow> _) \<times> (form \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
   CPiP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<forall>x\<^bsub>\<alpha>\<^esub>. A ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>B. [ A \<sqdot> B ])\<close>
-| CExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>C. [ A \<sqdot> C =\<^bsub>\<beta>\<^esub>  B \<sqdot> C ])\<close>
+| CExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>C. [ A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C ])\<close>
 
 subsection \<open>Negated Forall\<close>
 
@@ -153,9 +156,7 @@ next
 next
   case (FAbs x1a A)
   then show ?case
-    (* slow *)
-    by (metis form.distinct(11,5,9) form.inject(4) map_con.simps(4) vars_form.elims wffs_of_type_cases
-        wffs_of_type_intros(4))
+    by (metis map_con.simps(4) surj_pair wffs_from_abs wffs_of_type_intros(4))
 qed
 
 lemma finite_cons_form [simp]: \<open>finite (cons_form A)\<close>
@@ -312,28 +313,43 @@ lemmas
   gamma = sat\<^sub>H[of G.kind] and
   delta = sat\<^sub>H[of D.kind]
 
-lemma \<open>F\<^bsub>o\<^esub> \<notin> H\<close>
+lemma cFalse: \<open>F\<^bsub>o\<^esub> \<notin> H\<close>
   using confl by (force intro: CFalse)
 
-lemma \<open>x\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> \<notin> H\<close>
+lemma cVar: \<open>x\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> \<notin> H\<close>
   using confl by (force intro: CVar[of x])
 
-lemma \<open>\<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H\<close>
+lemma cCon: \<open>\<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H\<close>
   using confl by (force intro: CCon[of c])
 
-lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<and>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H\<close>
+lemma cIneq: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A =\<^bsub>o\<^esub> A) \<notin> H\<close>
+  using confl by (force intro: CIneq[of A])
+
+lemma cConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<and>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H\<close>
   using alpha by (force intro: CConP[of A B])
 
-lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<and>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H\<close>
-  using alpha by (force intro: CConP[of A B])
+lemma cImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
+  using alpha by (force intro: CImpN[of A B])
 
-lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<supset>\<^sup>\<Q> B \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> B \<in> H\<close>
+lemma cEqual: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A =\<^bsub>o\<^esub> B \<in> H \<Longrightarrow> ((A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)) \<in> H\<close>
+  using alpha by (force intro: CEqual[of A B])
+
+lemma cConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> \<sim>\<^sup>\<Q> B \<in> H\<close>
+  using beta by (force intro: CConN[of A B])
+
+lemma cImpP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<supset>\<^sup>\<Q> B \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> B \<in> H\<close>
   using beta by (force intro: CImpP[of A B])
 
-lemma \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<forall>x\<^bsub>\<alpha>\<^esub>. A \<in> H \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A \<sqdot> B \<in> H\<close>
+lemma cDisP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<or>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<or> B \<in> H\<close>
+  using beta by (force intro: CDisP[of A B])
+
+lemma cPiP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<forall>x\<^bsub>\<alpha>\<^esub>. A \<in> H \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A \<sqdot> B \<in> H\<close>
   using gamma by (force intro: CPiP[of A x \<alpha>])
 
-lemma
+lemma cExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> H \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> (A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C) \<in> H\<close>
+  using gamma by (force intro: CExt[of A \<alpha>])
+
+lemma cDelta:
   assumes \<open>B \<in> wffs\<^bsub>o\<^esub>\<close> \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> H\<close>
   shows \<open>\<exists>c. is_param c \<and> \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<in> H\<close>
 proof -
@@ -346,7 +362,50 @@ proof -
     using delta assms(2) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
 qed
 
+(*
+If s \<equiv>\<beta>\<eta> t and s \<in> H, then t \<in> H.
+Do we have this? Do we even have notions of beta and eta?
+*)
+
+lemma equal_ext: \<open>T\<^bsub>o\<^esub> \<in> H  \<Longrightarrow> A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (Q\<^bsub>o\<^esub> \<sqdot> A =\<^bsub>o \<rightarrow> o\<^esub> Q\<^bsub>o\<^esub> \<sqdot> A) \<in> H\<close>
+  using cExt by fastforce
+
+lemma equal_parts: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (A =\<^bsub>o\<^esub> B) \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
+  by (metis cConP cDisP cEqual conj_op_wff neg_wff)
+
+lemma true_saturation:
+  assumes \<open>T\<^bsub>o\<^esub> \<in> H\<close> \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+  shows \<open>A \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H\<close>
+proof -
+  have \<open>(Q\<^bsub>o\<^esub> \<sqdot> A =\<^bsub>o \<rightarrow> o\<^esub> Q\<^bsub>o\<^esub> \<sqdot> A) \<in> H\<close>
+    using equal_ext assms by fast
+  then have \<open>((A =\<^bsub>o\<^esub> A) =\<^bsub>o\<^esub> (A =\<^bsub>o\<^esub> A)) \<in> H\<close>
+    using assms(2) gamma by (force intro: CExt[where A=\<open>Q\<^bsub>o\<^esub> \<sqdot> A\<close> and B=\<open>Q\<^bsub>o\<^esub> \<sqdot> A\<close>])
+  then show ?thesis
+    by (metis assms(2) cIneq equal_parts equality_wff)
+qed
+
 end
+
+theorem extension_lemma:
+  fixes S :: \<open>form set\<close>
+  assumes \<open>P.prop\<^sub>E Kinds C\<close>
+    and \<open>S \<in> C\<close>
+    and \<open>P.enough_new S\<close>
+    and \<open>T\<^bsub>o\<^esub> \<in> S\<close>
+    and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+  shows \<open>A \<in> (mk_mcs C S) \<or> \<sim>\<^sup>\<Q> A \<in> (mk_mcs C S)\<close>
+proof -
+  have *: \<open>MyHintikka (mk_mcs C S)\<close>
+  proof
+    show \<open>P.prop\<^sub>H Kinds (mk_mcs C S)\<close>
+      using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
+  qed
+  moreover have \<open>T\<^bsub>o\<^esub> \<in> mk_mcs C S\<close>
+    using assms(4) Extend_subset by blast
+  ultimately show ?thesis
+    using MyHintikka.true_saturation assms(5) by blast
+qed
 
 subsection \<open>Derivational Consistency\<close>
 
