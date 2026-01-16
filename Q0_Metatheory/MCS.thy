@@ -1,15 +1,26 @@
 theory MCS imports
   "../Analytic_Completeness"
-  "Q0_Metatheory.Consistency"
+  "Consistency"
 begin
+
+(* Modified from Anders's definition. *)
+definition extensionally_complete_membership :: "form set \<Rightarrow> bool" where
+  \<open>extensionally_complete_membership H \<longleftrightarrow>
+    (\<forall>A B \<alpha> \<beta>. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
+               is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
+               (\<exists>C. is_closed_wff_of_type C \<beta> \<and>
+                    (((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<in> H \<longrightarrow> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)))\<close>
+
 
 section \<open>Consistency Property\<close>
 
+(* I don't know if we need to restrict everything to sentences. *)
+
 inductive confl_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
   CFalse: \<open>[ F\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ F\<^bsub>o\<^esub> ]\<close>
-| CVar: \<open>[ \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ x\<^bsub>o\<^esub> ]\<close>
-| CCon: \<open>[ \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ \<lbrace>c\<rbrace>\<^bsub>o\<^esub> ]\<close>
-| CIneq: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow>  [ \<sim>\<^sup>\<Q> (A =\<^bsub>o\<^esub> A) ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> (A =\<^bsub>o\<^esub> A) ]\<close>
+| CTrueN: \<open>[\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> ]\<close>
+| CNot: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> A ] \<leadsto>\<^sub>\<crossmark> [ A ]\<close>
+| CIrr: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow>  [ \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> A) ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> A) ]\<close>
 
 inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
 (*
@@ -17,7 +28,9 @@ inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 |*)
   CConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<and>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ A, B ]\<close>
 | CImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A, \<sim>\<^sup>\<Q> B ]\<close>
-| CEqual: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A =\<^bsub>o\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ (A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)]\<close>
+| CDisN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<or>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ \<sim>\<^sup>\<Q> A, \<sim>\<^sup>\<Q> B ]\<close>
+| CEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<equiv>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ (A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)]\<close>
+| CEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ (A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> B)]\<close>
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, \<sim>\<^sup>\<Q> B ]\<close>
@@ -86,21 +99,21 @@ proposition \<open>exists_match C p \<Longrightarrow> ineq_match C q \<Longright
 
 fun \<delta> :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> where
   CDelta: \<open>\<delta> C c =
-    (if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> A. exists_match C (\<alpha>, A)) then 
-       case THE (\<alpha>, A). exists_match C (\<alpha>, A) of
-         (\<alpha>, A) \<Rightarrow> [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
-     else if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B)) then 
+    (if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B)) then 
        case THE (\<alpha>, \<beta>, A, B). ineq_match C (\<alpha>, \<beta>, A, B) of
          (\<alpha>, \<beta>, A, B) \<Rightarrow> [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
+     else if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> A. exists_match C (\<alpha>, A)) then 
+       case THE (\<alpha>, A). exists_match C (\<alpha>, A) of
+         (\<alpha>, A) \<Rightarrow> [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
      else [])\<close>
 
 lemma exists_match_delta [simp]:
-  assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>exists_match C (\<alpha>, A)\<close>
+  assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>exists_match C (\<alpha>, A)\<close> \<open>\<nexists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B)\<close>
   shows \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
   unfolding CDelta using assms THE_exists_match by auto
 
 lemma ineq_match_delta [simp]:
-  assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>\<not> (\<exists>\<alpha> A. exists_match C (\<alpha>, A))\<close> \<open>ineq_match C (\<alpha>, \<beta>, A, B)\<close>
+  assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>ineq_match C (\<alpha>, \<beta>, A, B)\<close>
   shows \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
     unfolding CDelta using assms THE_ineq_match by auto
 
@@ -235,47 +248,47 @@ proof
     case (1 C c)
     then have c: \<open>\<not> is_logical_name (f c)\<close>
       unfolding P.is_subst_def by (auto simp: is_param_def)
-   
+
     from 1 show ?case
-    proof (cases \<open>C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> A. exists_match C (\<alpha>, A))\<close>)
+    proof (cases \<open>C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B))\<close>)
       case True
-      then obtain \<alpha> A y where C: \<open>C = \<sim>\<^sup>\<Q> (\<forall>y\<^bsub>\<alpha>\<^esub>. A)\<close>
+      then obtain \<alpha> \<beta> A B where C: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by (auto elim: exists_match.cases)
-      then have *: \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        using True MCS.CDelta exists_match_delta by blast
-      then have *: \<open>map (map_con f) (\<delta> C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+      then have *: \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        using True MCS.CDelta ineq_match_delta by blast
+      then have *: \<open>map (map_con f) (\<delta> C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         using 1 c by (auto simp: is_param_def)
-      have \<open>exists_match (map_con f C) (\<alpha>, map_con f A)\<close>
-        using C map_con_exists_match by blast
+      have \<open>ineq_match (map_con f C) (\<alpha>, \<beta>, map_con f A, map_con f B)\<close>
+        using C map_con_ineq_match by blast
       moreover have \<open>map_con f C \<in> wffs\<^bsub>o\<^esub>\<close>
         using True wff_map_con by blast
-      ultimately have \<open>\<delta> (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        unfolding MCS.CDelta using exists_match_delta by auto
+      ultimately have \<open>\<delta> (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        unfolding MCS.CDelta using ineq_match_delta by auto
       then show ?thesis
         using * by simp
     next
-      case not_exists: False
+      case not_ineq: False
       then show ?thesis
-      proof (cases \<open>C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B))\<close>)
+      proof (cases \<open>C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> A. exists_match C (\<alpha>, A))\<close>)
         case True
-        then obtain \<alpha> \<beta> A B where C: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+        then obtain \<alpha> A y where C: \<open>C = \<sim>\<^sup>\<Q> (\<forall>y\<^bsub>\<alpha>\<^esub>. A)\<close>
           by (auto elim: exists_match.cases)
-        then have *: \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        using True MCS.CDelta not_exists ineq_match_delta by blast
-        then have *: \<open>map (map_con f) (\<delta> C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        then have *: \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+          using True MCS.CDelta exists_match_delta not_ineq by blast
+        then have *: \<open>map (map_con f) (\<delta> C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
           using 1 c by (auto simp: is_param_def)
-        have \<open>ineq_match (map_con f C) (\<alpha>, \<beta>, map_con f A, map_con f B)\<close>
-          using C map_con_ineq_match by blast
+        have \<open>exists_match (map_con f C) (\<alpha>, map_con f A)\<close>
+          using C map_con_exists_match by blast
         moreover have \<open>map_con f C \<in> wffs\<^bsub>o\<^esub>\<close>
           using True wff_map_con by blast
-        ultimately have \<open>\<delta> (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-          unfolding MCS.CDelta using not_exists ineq_match_delta by auto
+        ultimately have \<open>\<delta> (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+          unfolding MCS.CDelta using exists_match_delta not_ineq by auto
         then show ?thesis
           using * by simp
       next
         case False
         then show ?thesis
-          using not_exists by auto
+          using not_ineq by auto
       qed
     qed
   qed
@@ -316,14 +329,14 @@ lemmas
 lemma cFalse: \<open>F\<^bsub>o\<^esub> \<notin> H\<close>
   using confl by (force intro: CFalse)
 
-lemma cVar: \<open>x\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> \<notin> H\<close>
-  using confl by (force intro: CVar[of x])
+lemma cTrueN: \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<notin> H\<close>
+  using confl by (force intro: CTrueN)
 
-lemma cCon: \<open>\<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H \<or> \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<notin> H\<close>
-  using confl by (force intro: CCon[of c])
+lemma cNot: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<notin> H \<or> \<sim>\<^sup>\<Q> A \<notin> H\<close>
+  using confl by (force intro: CNot[of A])
 
-lemma cIneq: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A =\<^bsub>o\<^esub> A) \<notin> H\<close>
-  using confl by (force intro: CIneq[of A])
+lemma cIrr: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> A) \<notin> H\<close>
+  using confl by (force intro: CIrr[of A])
 
 lemma cConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<and>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H\<close>
   using alpha by (force intro: CConP[of A B])
@@ -331,8 +344,14 @@ lemma cConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs
 lemma cImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using alpha by (force intro: CImpN[of A B])
 
-lemma cEqual: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A =\<^bsub>o\<^esub> B \<in> H \<Longrightarrow> ((A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)) \<in> H\<close>
-  using alpha by (force intro: CEqual[of A B])
+lemma cDisN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<or>\<^sup>\<Q> B) \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
+  using alpha by (force intro: CDisN[of A B])
+
+lemma cEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> ((A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)) \<in> H\<close>
+  using alpha by (force intro: CEqvP[of A B])
+
+lemma cEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<in> H \<Longrightarrow> ((A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> B)) \<in> H\<close>
+  using alpha by (force intro: CEqvN[of A B])
 
 lemma cConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using beta by (force intro: CConN[of A B])
@@ -349,40 +368,125 @@ lemma cPiP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<forall>x\<^
 lemma cExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> H \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> (A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C) \<in> H\<close>
   using gamma by (force intro: CExt[of A \<alpha>])
 
-lemma cDelta:
+lemma cExists:
   assumes \<open>B \<in> wffs\<^bsub>o\<^esub>\<close> \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> H\<close>
+    and not_ineq: \<open>\<nexists>\<alpha>' \<beta>' A' B'. ineq_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)) (\<alpha>', \<beta>', A', B')\<close>
   shows \<open>\<exists>c. is_param c \<and> \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<in> H\<close>
 proof -
-  have \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> B. exists_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)) (\<alpha>, B))\<close>
+  have \<open>\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B) \<in> wffs\<^bsub>o\<^esub> \<and> exists_match (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)) (\<alpha>, B)\<close>
     using assms(1) by blast
   then have \<open>\<delta> (\<sim>\<^sup>\<Q> (\<forall>x\<^bsub>\<alpha>\<^esub>. B)) c = [ \<sim>\<^sup>\<Q> (B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close> for c
-    by (metis (mono_tags, lifting) \<delta>.simps case_prod_conv exists_match.intros exists_matchE exists_match_THE
-        surj_pair)
+    using exists_match_delta not_ineq by blast
   then show ?thesis
     using delta assms(2) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
 qed
 
+lemma cIneq:
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> H\<close>
+  shows \<open>\<exists>c. is_param c \<and> \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<in> H\<close>
+proof -
+  have \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> wffs\<^bsub>o\<^esub> \<and> ineq_match (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)) (\<alpha>, \<beta>, A, B)\<close>
+    using assms(1-2) by blast
+  then have \<open>\<delta> (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)) c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close> for c
+    using ineq_match_delta by fast
+  then show ?thesis
+    using delta assms(3) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
+qed
+
+lemma equal_parts: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
+  by (metis cConP cDisP cEqvP conj_op_wff neg_wff)
+
 (*
-If s \<equiv>\<beta>\<eta> t and s \<in> H, then t \<in> H.
-Do we have this? Do we even have notions of beta and eta?
+  This proof comes from:
+  On Reductions of Hintikka Sets for Higher-Order Logic
+  Alexander Steen, Christoph Benzmüller
 *)
-
-lemma equal_ext: \<open>T\<^bsub>o\<^esub> \<in> H  \<Longrightarrow> A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (Q\<^bsub>o\<^esub> \<sqdot> A =\<^bsub>o \<rightarrow> o\<^esub> Q\<^bsub>o\<^esub> \<sqdot> A) \<in> H\<close>
-  using cExt by fastforce
-
-lemma equal_parts: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (A =\<^bsub>o\<^esub> B) \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
-  by (metis cConP cDisP cEqual conj_op_wff neg_wff)
-
-lemma true_saturation:
+lemma true_implies_saturation:
   assumes \<open>T\<^bsub>o\<^esub> \<in> H\<close> \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
   shows \<open>A \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H\<close>
 proof -
   have \<open>(Q\<^bsub>o\<^esub> \<sqdot> A =\<^bsub>o \<rightarrow> o\<^esub> Q\<^bsub>o\<^esub> \<sqdot> A) \<in> H\<close>
-    using equal_ext assms by fast
-  then have \<open>((A =\<^bsub>o\<^esub> A) =\<^bsub>o\<^esub> (A =\<^bsub>o\<^esub> A)) \<in> H\<close>
-    using assms(2) gamma by (force intro: CExt[where A=\<open>Q\<^bsub>o\<^esub> \<sqdot> A\<close> and B=\<open>Q\<^bsub>o\<^esub> \<sqdot> A\<close>])
+    using cExt assms by fastforce
+  then have \<open>((A \<equiv>\<^sup>\<Q> A) =\<^bsub>o\<^esub> (A \<equiv>\<^sup>\<Q> A)) \<in> H\<close>
+    using assms(2) cExt unfolding equivalence_def equality_of_type_def
+    by (meson Q_wff wffs_of_type_intros(3))
   then show ?thesis
-    by (metis assms(2) cIneq equal_parts equality_wff)
+    using assms(2) by (metis cIrr equal_parts equality_wff equivalence_def)
+qed
+
+(*
+  If we had something like \<open>pwffs\<close> for \<open>wffs\<^bsub>o\<^esub>\<close> then we could use the Hintikka properties to
+    prove this in general (I think?).
+  But is it implausible to get a handle on all formulas like that?
+  Would we need to talk about \<beta>, \<eta> normal forms?
+  The "Properties for acceptable Hintikka sets" from Steen and Benzmüller are closed under \<beta>, \<eta> equivalence.
+
+  Alternatively: If we Steen and Benzmüller,
+    do we 
+*)
+lemma propositionally_consistent:
+  assumes \<open>A \<in> pwffs\<close>
+  shows \<open>\<not> (A \<in> H \<and> \<sim>\<^sup>\<Q> A \<in> H)\<close>
+  using assms
+proof (induct A)
+  case T_pwff
+  then show ?case
+    using cTrueN by meson
+next
+  case F_pwff
+  then show ?case
+    using cFalse by meson
+next
+  case (var_pwff p)
+  then show ?case
+    using cNot by blast
+next
+  case (neg_pwff A)
+  then show ?case
+    using cNot pwffs_subset_of_wffso by blast
+next
+  case (conj_pwff A B)
+  then show ?case
+    by (metis cConN cConP pwffs_subset_of_wffso subsetD)
+next
+  case (disj_pwff A B)
+  then show ?case
+    by (metis cDisN cDisP pwffs_subset_of_wffso subsetD)
+next
+  case (imp_pwff A B)
+  then show ?case
+    by (metis cImpN cImpP pwffs_subset_of_wffso subsetD)
+next
+  case (eqv_pwff A B)
+  then show ?case
+    by (smt (verit, ccfv_threshold) cConP cDisP cEqvN conj_op_wff equal_parts neg_wff pwffs_subset_of_wffso subsetD)
+qed
+
+lemma true_implies_extensionally_complete_membership:
+  assumes \<open>T\<^bsub>o\<^esub> \<in> H\<close>
+  shows \<open>extensionally_complete_membership H\<close>
+  unfolding extensionally_complete_membership_def
+proof safe
+  fix A B \<alpha> \<beta>
+  assume *: \<open>A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub>\<close>
+  then consider (pos) \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close> | (neg) \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H\<close>
+    using assms true_implies_saturation by (meson equality_wff)
+  then show \<open>\<exists>C. is_closed_wff_of_type C \<beta> \<and> (A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C \<in> H \<longrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H)\<close>
+  proof cases
+    case pos
+    then show ?thesis
+      by force
+  next
+    case neg
+    then obtain c where \<open>is_param c\<close> \<open>\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> H\<close>
+      using * cIneq by blast
+    then have \<open>(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<notin> H\<close>
+      using cNot * by (meson equality_wff wffs_of_type_intros(2,3))
+    then have \<open>A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> \<in> H \<longrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
+      by meson
+    then show ?thesis
+      by fastforce
+  qed
 qed
 
 end
@@ -394,7 +498,7 @@ theorem extension_lemma:
     and \<open>P.enough_new S\<close>
     and \<open>T\<^bsub>o\<^esub> \<in> S\<close>
     and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-  shows \<open>A \<in> (mk_mcs C S) \<or> \<sim>\<^sup>\<Q> A \<in> (mk_mcs C S)\<close>
+  shows \<open>(A \<in> (mk_mcs C S) \<or> \<sim>\<^sup>\<Q> A \<in> (mk_mcs C S)) \<and> extensionally_complete_membership (mk_mcs C S)\<close>
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
@@ -404,7 +508,8 @@ proof -
   moreover have \<open>T\<^bsub>o\<^esub> \<in> mk_mcs C S\<close>
     using assms(4) Extend_subset by blast
   ultimately show ?thesis
-    using MyHintikka.true_saturation assms(5) by blast
+    using MyHintikka.true_implies_saturation MyHintikka.true_implies_extensionally_complete_membership assms(5)
+    by blast
 qed
 
 subsection \<open>Derivational Consistency\<close>
@@ -424,28 +529,35 @@ proof
     then show ?thesis
       using dv_hyp by blast
   next
-    case (CVar x)
+    case CTrueN
+    then have \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<in> H\<close>
+      using * by simp
+    then show ?thesis
+      using dv_hyp
+      by (metis equality_of_type_def false_wff is_consistent_set_def is_inconsistent_set_def neg_def prop_5219_2)
+  next
+    case (CNot A)
     then show ?thesis
     proof safe
       assume H: \<open>H \<subseteq> wffs\<^bsub>o\<^esub>\<close> \<open>finite H\<close>
-      from CVar have \<open>\<sim>\<^sup>\<Q> x\<^bsub>o\<^esub> \<in> H\<close> \<open>x\<^bsub>o\<^esub> \<in> H\<close>
+      from CNot have \<open>\<sim>\<^sup>\<Q> A \<in> H\<close> \<open>A \<in> H\<close>
         using * by simp_all
-      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> x\<^bsub>o\<^esub>\<close> \<open>H \<turnstile> x\<^bsub>o\<^esub>\<close>
+      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> A\<close> \<open>H \<turnstile> A\<close>
         using dv_hyp H by blast+
       then show \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
         using H by (metis equality_of_type_def equivalence_def neg_def prop_5201_1 prop_5201_2)
     qed
   next
-    case (CCon c)
+    case (CIrr A)
     then show ?thesis
     proof safe
       assume H: \<open>H \<subseteq> wffs\<^bsub>o\<^esub>\<close> \<open>finite H\<close>
-      from CCon have \<open>\<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<in> H\<close> \<open>\<lbrace>c\<rbrace>\<^bsub>o\<^esub> \<in> H\<close>
-        using * by simp_all
-      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> \<lbrace>c\<rbrace>\<^bsub>o\<^esub>\<close> \<open>H \<turnstile> \<lbrace>c\<rbrace>\<^bsub>o\<^esub>\<close>
-        using dv_hyp H by blast+
+      with CIrr have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> A)\<close>
+        by (metis "*"(1) dv_hyp insert_subset list.simps(15))
+      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>o\<^esub> A)\<close>
+        by auto
       then show \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
-        using H by (metis equality_of_type_def equivalence_def neg_def prop_5201_1 prop_5201_2)
+        by (metis H(1,2) equality_of_type_def equivalence_def hyp_prop_5200 local.CIrr(3) neg_def prop_5201_1 prop_5201_2)
     qed
   qed
 qed
@@ -599,6 +711,18 @@ proof(standard)
     case (CImpN B C)
     then show ?thesis 
       using consistent by force
+  next
+    case (CDisN B C)
+    then show ?thesis 
+      using consistent by force
+  next
+    case (CEqvP B C)
+    then show ?thesis 
+      using consistent by force
+  next
+    case (CEqvN B C)
+    then show ?thesis 
+      using consistent by force
   qed
   moreover have \<open>finite (lset qs \<union> lset Hs)\<close>
     by simp
@@ -636,6 +760,18 @@ proof(standard)
     ultimately show ?thesis
       using local.CImpN(2) 
       by force
+  next
+    case (CDisN B C)
+    then show ?thesis 
+      sorry
+  next
+    case (CEqvP B C)
+    then show ?thesis 
+      sorry
+  next
+    case (CEqvN B C)
+    then show ?thesis 
+      sorry
   qed
   have \<open>(is_consistent_set (lset qs \<union> lset Hs))\<close>
     by (metis \<open>\<forall>F\<in>lset qs. lset Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> lset Hs)\<close> well_formed
