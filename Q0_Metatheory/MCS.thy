@@ -9,7 +9,7 @@ definition extensionally_complete_membership :: "form set \<Rightarrow> bool" wh
     (\<forall>A B \<alpha> \<beta>. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
                is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
                (\<exists>C. is_closed_wff_of_type C \<beta> \<and>
-                    (((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<in> H \<longrightarrow> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)))\<close>
+                    (((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)))\<close>
 
 
 section \<open>Consistency Property\<close>
@@ -29,13 +29,13 @@ inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
   CConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<and>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ A, B ]\<close>
 | CImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A, \<sim>\<^sup>\<Q> B ]\<close>
 | CDisN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<or>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ \<sim>\<^sup>\<Q> A, \<sim>\<^sup>\<Q> B ]\<close>
-| CEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<equiv>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ (A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)]\<close>
-| CEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ (A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> B)]\<close>
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, \<sim>\<^sup>\<Q> B ]\<close>
 | CImpP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<supset>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, B ]\<close>
 | CDisP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<or>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ A, B ]\<close>
+| CEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<equiv>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ A \<and>\<^sup>\<Q> B, \<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B]\<close>
+| CEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<beta> [ A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B, \<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> B]\<close>
 
 inductive gamma_class :: \<open>form list \<Rightarrow> (form set \<Rightarrow> _) \<times> (form \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
   CPiP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<forall>x\<^bsub>\<alpha>\<^esub>. A ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>B. [ A \<sqdot> B ])\<close>
@@ -347,12 +347,6 @@ lemma cImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs
 lemma cDisN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<or>\<^sup>\<Q> B) \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using alpha by (force intro: CDisN[of A B])
 
-lemma cEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> ((A \<and>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)) \<in> H\<close>
-  using alpha by (force intro: CEqvP[of A B])
-
-lemma cEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<in> H \<Longrightarrow> ((A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B) \<or>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> B)) \<in> H\<close>
-  using alpha by (force intro: CEqvN[of A B])
-
 lemma cConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using beta by (force intro: CConN[of A B])
 
@@ -361,6 +355,12 @@ lemma cImpP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs
 
 lemma cDisP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<or>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<or> B \<in> H\<close>
   using beta by (force intro: CDisP[of A B])
+
+lemma cEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<and>\<^sup>\<Q> B \<in> H \<or> \<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B \<in> H\<close>
+  using beta by (force intro: CEqvP[of A B])
+
+lemma cEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B \<in> H \<or> \<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> B \<in> H\<close>
+  using beta by (force intro: CEqvN[of A B])
 
 lemma cPiP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<forall>x\<^bsub>\<alpha>\<^esub>. A \<in> H \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A \<sqdot> B \<in> H\<close>
   using gamma by (force intro: CPiP[of A x \<alpha>])
@@ -394,7 +394,7 @@ proof -
 qed
 
 lemma equal_parts: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<in> H \<and> B \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
-  by (metis cConP cDisP cEqvP conj_op_wff neg_wff)
+  by (metis cConP cEqvP neg_wff)
 
 (*
   This proof comes from:
@@ -471,11 +471,12 @@ proof safe
   assume *: \<open>A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub>\<close>
   then consider (pos) \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close> | (neg) \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H\<close>
     using assms true_implies_saturation by (meson equality_wff)
-  then show \<open>\<exists>C. is_closed_wff_of_type C \<beta> \<and> (A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C \<in> H \<longrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H)\<close>
+  then show \<open>\<exists>C. is_closed_wff_of_type C \<beta> \<and> ((A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)\<close>
   proof cases
     case pos
     then show ?thesis
-      by force
+      by (metis "*"(1,2) assms cImpN cNot equality_wff free_vars_form.simps(2) imp_op_wff is_closed_wff_of_type_def true_implies_saturation
+          wffs_of_type_intros(2,3))
   next
     case neg
     then obtain c where \<open>is_param c\<close> \<open>\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> H\<close>
@@ -485,7 +486,8 @@ proof safe
     then have \<open>A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> \<in> H \<longrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
       by meson
     then show ?thesis
-      by fastforce
+      by (metis "*"(1,2) \<open>A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> \<notin> H\<close> assms cImpN equality_wff free_vars_form.simps(2) imp_op_wff
+          is_closed_wff_of_type_def true_implies_saturation wffs_of_type_intros(2,3))
   qed
 qed
 
@@ -715,14 +717,6 @@ proof(standard)
     case (CDisN B C)
     then show ?thesis 
       using consistent by force
-  next
-    case (CEqvP B C)
-    then show ?thesis 
-      using consistent by force
-  next
-    case (CEqvN B C)
-    then show ?thesis 
-      using consistent by force
   qed
   moreover have \<open>finite (lset qs \<union> lset Hs)\<close>
     by simp
@@ -765,13 +759,6 @@ proof(standard)
     then show ?thesis 
       sorry
   next
-    case (CEqvP B C)
-    then show ?thesis 
-      sorry
-  next
-    case (CEqvN B C)
-    then show ?thesis 
-      sorry
   qed
   have \<open>(is_consistent_set (lset qs \<union> lset Hs))\<close>
     by (metis \<open>\<forall>F\<in>lset qs. lset Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> lset Hs)\<close> well_formed
@@ -793,12 +780,19 @@ proof
   thus \<open>\<exists>q\<in>lset qs. (is_consistent_set \<circ> lset) (q # Hs)\<close>
   proof(cases)
     case (CConN A B)
-    then show ?thesis
-      sorry
+    then show ?thesis sorry
   next
     case (CImpP A B)
-    then show ?thesis
-      sorry
+    then show ?thesis sorry
+  next
+    case (CDisP A B)
+    then show ?thesis sorry
+  next
+    case (CEqvP A B)
+    then show ?thesis sorry
+  next
+    case (CEqvN A B)
+    then show ?thesis sorry
   qed
 qed
 
