@@ -87,6 +87,7 @@ inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 | CSym: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ B =\<^bsub>\<alpha>\<^esub> A ]\<close>
 | CTrans: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B, B =\<^bsub>\<alpha>\<^esub> C ] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>\<alpha>\<^esub> C ]\<close>
 | CCong: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B ]\<close>
+| CIota: \<open>A \<in> wffs\<^bsub>i\<^esub> \<Longrightarrow> [] \<leadsto>\<^sub>\<alpha> [ \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A ]\<close>
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, \<sim>\<^sup>\<Q> B ]\<close>
@@ -348,6 +349,9 @@ lemma cTrans: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<
 
 lemma cCong: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H \<Longrightarrow> C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B \<in> H\<close>
   using alpha by (force intro: CCong[of A \<alpha> B C \<beta>])
+
+lemma cIota: \<open>A \<in> wffs\<^bsub>i\<^esub> \<Longrightarrow> (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A) \<in> H\<close>
+  using alpha by (force intro: CIota[of A])
 
 lemma cConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using beta by (force intro: CConN[of A B])
@@ -893,10 +897,19 @@ qed
 lemma Q_denotation_J: "J (Q_constant_of_type \<alpha>) = q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>"
   using Q_denotation_V by auto
 
-
 (* \<iota> is one element set*)
 lemma \<iota>_denotation_V: "frame.is_unique_member_selector D (V \<iota> ((i\<rightarrow>o)\<rightarrow>i))"
-  sorry
+  unfolding frame.is_unique_member_selector_def[OF domain_frame]
+proof safe
+  fix x
+  assume *: \<open>x \<in> elts (D i)\<close>
+  then obtain A where \<open>A \<in> wffs\<^bsub>i\<^esub>\<close> \<open>V A i = x\<close>
+    by (meson V_for_elts)
+  then show \<open>V \<iota> ((i \<rightarrow> o) \<rightarrow> i) \<bullet> {x}\<^bsub>i\<^esub>\<^bsup>D\<^esup> = x\<close> 
+    using * cIota 
+    by (metis distrib_V_app Q_denotation_V Q_wff ZFC_Cardinals.beta domain_frame
+        frame.identity_relation_def iota_wff two_i wffs_of_type_intros(3))
+qed
 
 lemma \<iota>_denotation_J: "frame.is_unique_member_selector D (J iota_constant)"
   by (metis J.simps \<iota>_denotation_V iota_constant_def iota_def)
