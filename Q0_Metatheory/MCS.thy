@@ -929,7 +929,7 @@ definition fun_E :: "(var \<Rightarrow> V) \<Rightarrow> (var \<Rightarrow> form
   (* Andrews asks for "the first formula such that". But I think SOME formula is sufficient. *)
 
 definition map_E :: "var set \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> (var \<rightharpoonup> form)" where
-  "map_E xs \<phi> = map_restrict_set xs (Some \<circ> (fun_E \<phi>))"
+  "map_E xs \<phi> = map_restrict_set xs (Some \<circ> fun_E \<phi>)"
 
 definition subst_E :: "var set \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> substitution" where
   "subst_E xs \<phi> = Abs_fmap (map_E xs \<phi>)"
@@ -948,6 +948,142 @@ lemma "A \<in> wffs\<^bsub>\<gamma>\<^esub> \<Longrightarrow> type_of A = \<gamm
 
 definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V" where
   "V\<phi> \<phi> C = V (C\<phi> C \<phi>) (type_of C)"
+
+(* 
+   The transpositive of this would also hold. 
+   We "ought" to prove that. 
+*)
+lemma fmdom'_map_restrict_set:
+  assumes "finite xs"
+  assumes "x \<in> fmdom' (Abs_fmap (map_restrict_set xs (Some \<circ> f)))"
+  shows "x \<in> xs"
+  using assms
+proof (induction)
+  case empty
+  have None: "\<And>g. (map_filter (\<lambda>a. False) (\<lambda>a. Some (g a))) = (\<lambda>a. None)"
+    by (simp add: Finite_Map.map_filter_def)
+  from empty show ?case
+    unfolding map_restrict_set_def
+    apply auto
+    unfolding None
+    by (metis empty_iff fmdom'_empty fmempty_def)
+next
+  case (insert y F)
+  have None: "\<And>g. (map_filter (\<lambda>a. False) (\<lambda>a. Some (g a))) = (\<lambda>a. None)"
+    by (simp add: Finite_Map.map_filter_def)
+  show ?case
+  proof (cases "x = y")
+    case True
+    then show ?thesis
+      by auto
+  next
+    case False
+    have "finite (dom (map_restrict_set F (Some \<circ> f)))"
+      by (metis Finite_Map.map_filter_def domIff finite_subset insert.hyps(1) map_restrict_set_def subsetI)
+    have "finite (dom (map_restrict_set (insert y F) (Some \<circ> f)))"
+      by (metis Finite_Map.map_filter_def domIff finite_insert finite_subset insert.hyps(1) map_restrict_set_def subsetI)
+    from insert(4) have "x \<in> dom (map_restrict_set (insert y F) (Some \<circ> f))"
+      by (metis \<open>finite (dom (map_restrict_set (insert y F) (Some \<circ> f)))\<close> eq_onp_same_args fmdom'.abs_eq)
+    then have "x \<in> dom (map_restrict_set F (Some \<circ> f))"
+      by (simp add: False Finite_Map.map_filter_def domIff map_restrict_set_def)
+    then have "x \<in> fmdom' (Abs_fmap (map_restrict_set F (Some \<circ> f)))"
+      by (simp add: \<open>finite (dom (map_restrict_set F (Some \<circ> f)))\<close> eq_onp_same_args fmdom'.abs_eq)
+    then show ?thesis
+      using insert by blast
+  qed
+qed
+
+(* Are these assumptions really needed?*)
+lemma \<theta>\<^sub>E_is_substitution:
+  assumes "\<phi> \<leadsto> D"
+  shows "is_substitution (\<theta>\<^sub>E \<phi> C)"
+proof safe
+  fix x \<beta>
+  assume a: "(x, \<beta>) \<in> fmdom' (\<theta>\<^sub>E \<phi> C)"
+
+  have "\<exists>A. \<phi> (x,\<beta>) = V A \<beta> \<and> A \<in> wffs\<^bsub>\<beta>\<^esub>"
+    using assms by (metis V_for_elts frame.is_assignment_def frame_axioms)
+
+  have fc: "finite (free_vars C)"
+    by (simp add: free_vars_form_finiteness)
+
+  have "dom (map_E (free_vars C) \<phi>) = free_vars C"
+    unfolding map_E_def by (auto simp: Finite_Map.map_filter_def map_restrict_set_def split: if_splits)
+
+  from a have b: "(x, \<beta>) \<in> free_vars C"
+    unfolding \<theta>\<^sub>E_def subst_E_def map_E_def
+    by (metis fmdom'_map_restrict_set free_vars_form_finiteness)
+
+  have "fun_E \<phi> (x, \<beta>) \<in> wffs\<^bsub>\<beta>\<^esub>"
+    using \<open>\<exists>A. \<phi> (x, \<beta>) = V A \<beta> \<and> A \<in> wffs\<^bsub>\<beta>\<^esub>\<close> unfolding case_prod_conv fun_E_def some_eq_ex[symmetric]
+    by fast
+  then have "(map_E (free_vars C) \<phi>) (x, \<beta>) \<in> Some ` wffs\<^bsub>\<beta>\<^esub>"
+    using b unfolding fun_E_def map_E_def
+    by (simp add: Finite_Map.map_filter_def map_restrict_set_def)
+  then have
+    "\<exists>xa. xa \<in> wffs\<^bsub>\<beta>\<^esub> \<and> map_E (free_vars C) \<phi> (x, \<beta>) = Some xa"
+    by blast
+  then have
+    "\<exists>xa. subst_E (free_vars C) \<phi> $$ (x, \<beta>) = Some xa \<and> xa \<in> wffs\<^bsub>\<beta>\<^esub>"
+    unfolding image_def subst_E_def using \<open>dom (map_E (free_vars C) \<phi>) = free_vars C\<close>
+    by (metis Abs_fmap_inverse  free_vars_form_finiteness mem_Collect_eq)
+  then have
+    "\<exists>xa. subst_E (free_vars C) \<phi> $$ (x, \<beta>) = Some xa \<and> xa \<in> wffs\<^bsub>\<beta>\<^esub>"
+    unfolding subst_E_def by auto
+  then have "subst_E (free_vars C) \<phi> $$! (x, \<beta>) \<in> wffs\<^bsub>\<beta>\<^esub>"
+    by auto
+  then show "((\<theta>\<^sub>E \<phi> C) $$! (x, \<beta>)) \<in> wffs\<^bsub>\<beta>\<^esub>"
+    using \<theta>\<^sub>E_def by auto
+qed
+
+lemma g:
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  shows \<open>V\<phi> \<phi> A \<in> elts (D \<alpha>)\<close>
+  using \<theta>\<^sub>E_is_substitution[OF \<phi>] A
+  by (metis C\<phi>_def V\<phi>_def someI_ex substitution_preserves_typing type_of_def well_typed wff_has_unique_type)
+
+(* For any variable *)
+lemma denotation_function_a: 
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close>
+  shows "V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)"
+proof -
+  obtain C where C: \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>\<phi> (x,\<alpha>) = V C \<alpha>\<close>
+    by (metis V_for_elts assms is_assignment_def)
+  then have \<open>is_substitution (\<theta>\<^sub>E \<phi> C)\<close>
+    using assms \<theta>\<^sub>E_is_substitution by simp
+  then show ?thesis
+    unfolding V\<phi>_def C\<phi>_def \<theta>\<^sub>E_def subst_E_def map_E_def map_restrict_set_def fun_E_def
+    apply auto
+    sorry
+qed
+
+(* For any primitive constant *)
+lemma denotation_function_b: "\<phi> \<leadsto> D \<Longrightarrow> V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = J (c, \<alpha>)"
+  sorry
+
+(* Application *)
+lemma denotation_function_c: 
+  "\<phi> \<leadsto> D \<Longrightarrow> A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (A \<sqdot> B) = V\<phi> \<phi> A \<bullet> V\<phi> \<phi> B"
+  sorry
+
+(* Abstraction *)
+lemma denotation_function_d: 
+  "\<phi> \<leadsto> D \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z\<^bold>:D \<alpha> \<^bold>. V\<phi> (\<phi>((x, \<alpha>) := z)) B)"
+  sorry
+
+lemma denotation_function: "is_wff_denotation_function V\<phi>"
+  unfolding is_wff_denotation_function_def
+  using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d 
+  by auto
+
+interpretation general_model D J V\<phi>
+  apply unfold_locales using denotation_function by auto
+
+lemma canon_frugal: "frugal_model D J V\<phi>"
+  oops
+
+lemma canon_model_for: "is_model_for (D,J,V\<phi>) H"
+  sorry
 
 
 end
