@@ -815,9 +815,6 @@ subsection \<open>M is interpretation\<close>
 fun J :: "nat \<times> Syntax.type \<Rightarrow> V" where 
   "J (c,\<tau>) = V (FCon (c,\<tau>)) \<tau>"
 
-
-find_consts \<open>V \<Rightarrow> V \<Rightarrow> V\<close>
-
 (* Mapping primitive constants into D\<^sub>\<alpha>*)
 lemma non_logical_constant_denotation_V: 
   "\<not> is_logical_constant (c, \<alpha>) \<Longrightarrow> V (FCon (c, \<alpha>)) \<alpha> \<in> elts (D \<alpha>)"
@@ -846,28 +843,52 @@ lemma distrib_V_app:
   by (smt (verit, del_insts) ZFC_Cardinals.beta all_good good_type_def someI_ex
       unambiguous.simps(3) well_typed)
 
+lemma V_for_elts: \<open>x \<in> elts (D \<alpha>) \<Longrightarrow> \<exists>A \<in> wffs\<^bsub>\<alpha>\<^esub> . V A \<alpha> = x\<close>
+  using one_gamma by (smt (verit, best) all_not_in_conv elts_of_set mem_Collect_eq)
 
-lemma Q_denotation_V_ish:
-  assumes A: "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and B: "B \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  shows "V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> V A \<alpha> \<bullet> V B \<alpha> = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> V A \<alpha> \<bullet> V B \<alpha>"
+lemma Q_denotation_V_2:
+  assumes "x \<in> elts (D \<alpha>)" "y \<in> elts (D \<alpha>)"
+  shows "V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> x \<bullet> y = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x \<bullet> y"
 proof -
-  have \<open>V A \<alpha> = V B \<alpha> \<longleftrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H\<close>
-    using assms two_gamma by blast
+  obtain A B where A: "A \<in> wffs\<^bsub>\<alpha>\<^esub>" \<open>V A \<alpha> = x\<close> and B: "B \<in> wffs\<^bsub>\<alpha>\<^esub>" \<open>V B \<alpha> = y\<close>
+    using V_for_elts assms by meson
+  then have \<open>V A \<alpha> = V B \<alpha> \<longleftrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H\<close>
+    using two_gamma by blast
   also have \<open>\<dots> \<longleftrightarrow> V (Q\<^bsub>\<alpha>\<^esub> \<sqdot> A \<sqdot> B) o = \<^bold>T\<close>
     by (simp add: bool_to_V_distinct)
   also have \<open>\<dots> \<longleftrightarrow> V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> V A \<alpha> \<bullet> V B \<alpha> = \<^bold>T\<close>
     using distrib_V_app A B by (metis Q_wff wffs_of_type_intros(3))
-  finally have \<open>V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> V A \<alpha> \<bullet> V B \<alpha> = \<^bold>T \<longleftrightarrow> V A \<alpha> = V B \<alpha>\<close>
-    ..
-  moreover have \<open>V A \<alpha> \<in> elts (D \<alpha>)\<close> \<open>V B \<alpha> \<in> elts (D \<alpha>)\<close>
-    using A B well_typed by blast+
-  ultimately show ?thesis
-    using domain_frame frame.identity_relation_def frame.one_element_function_def by fastforce
+  finally have \<open>V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> V A \<alpha> \<bullet> V B \<alpha> = \<^bold>T \<longleftrightarrow> V A \<alpha> = V B \<alpha>\<close> ..
+  then show ?thesis
+    using A(2) B(2) assms(1,2) domain_frame frame.identity_relation_def frame.one_element_function_def by fastforce
+qed
+
+lemma Q_denotation_V_1:
+  assumes \<open>x \<in> elts (D \<alpha>)\<close>
+  shows "V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> x = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x"
+proof (rule fun_ext)
+  show \<open>V Q\<^bsub>\<alpha>\<^esub> (\<alpha> \<rightarrow> \<alpha> \<rightarrow> o) \<bullet> x \<in> elts (VPi (D \<alpha>) (\<lambda>_. D o))\<close>
+    using assms by (simp add: VPi_I)
+next
+  show \<open>(q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x \<in> elts (VPi (D \<alpha>) (\<lambda>_. D o))\<close>
+    using assms  by (metis VPi_D domain_frame frame.identity_relation_is_domain_respecting)
+next
+  show \<open>\<And>y. y \<in> elts (D \<alpha>) \<Longrightarrow> V Q\<^bsub>\<alpha>\<^esub> (\<alpha> \<rightarrow> \<alpha> \<rightarrow> o) \<bullet> x \<bullet> y = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x \<bullet> y\<close>
+    using Q_denotation_V_2 assms .
 qed
 
 (* Q is identity relation*)
 lemma Q_denotation_V: "V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) = q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>"
-  sorry
+proof (rule fun_ext)
+  show \<open>V Q\<^bsub>\<alpha>\<^esub> (\<alpha> \<rightarrow> \<alpha> \<rightarrow> o) \<in> elts (VPi (D \<alpha>) (\<lambda>_. VPi (D \<alpha>) (\<lambda>_. D o)))\<close>
+    by (simp add: VPi_I)
+next
+  show \<open>q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup> \<in> elts (VPi (D \<alpha>) (\<lambda>_. VPi (D \<alpha>) (\<lambda>_. D o)))\<close>
+    using domain_frame frame.identity_relation_is_domain_respecting by blast
+next
+  show \<open>\<And>x. x \<in> elts (D \<alpha>) \<Longrightarrow> V Q\<^bsub>\<alpha>\<^esub> (\<alpha> \<rightarrow> \<alpha> \<rightarrow> o) \<bullet> x = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x\<close>
+    using Q_denotation_V_1 .
+qed
 
 lemma Q_denotation_J: "J (Q_constant_of_type \<alpha>) = q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>"
   using Q_denotation_V by auto
