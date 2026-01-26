@@ -123,8 +123,8 @@ lemma ineq_matchI [intro]: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<r
 
 subsection \<open>Delta\<close>
 
-fun \<delta> :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> where
-  CDelta: \<open>\<delta> C c =
+fun delta :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> where
+  CDelta: \<open>delta C c =
     (if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B)) then 
        case THE (\<alpha>, \<beta>, A, B). ineq_match C (\<alpha>, \<beta>, A, B) of
          (\<alpha>, \<beta>, A, B) \<Rightarrow> [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
@@ -132,7 +132,7 @@ fun \<delta> :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> wh
 
 lemma ineq_match_delta [simp]:
   assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>ineq_match C (\<alpha>, \<beta>, A, B)\<close>
-  shows \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+  shows \<open>delta C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
     unfolding CDelta using assms THE_ineq_match by auto
 
 section \<open>Operations\<close>
@@ -251,12 +251,12 @@ interpretation B: Beta map_con cons_form is_param beta_class
 interpretation G: Gamma map_con map_con cons_form is_param gamma_class
   by unfold_locales (elim gamma_class.cases, auto simp: gamma_class.simps)
 
-interpretation D: Delta map_con cons_form is_param \<delta>
+interpretation D: Delta map_con cons_form is_param delta
 proof
   fix p x f
   assume \<open>is_param x\<close> \<open>P.is_subst f\<close>
-  then show \<open>\<delta> (map_con f p) (f x) = map (map_con f) (\<delta> p x)\<close>
-  proof (induct p x rule: \<delta>.induct)
+  then show \<open>delta (map_con f p) (f x) = map (map_con f) (delta p x)\<close>
+  proof (induct p x rule: delta.induct)
     case (1 C c)
     then have c: \<open>\<not> is_logical_name (f c)\<close>
       unfolding P.is_subst_def by (auto simp: is_param_def)
@@ -266,15 +266,15 @@ proof
       case True
       then obtain \<alpha> \<beta> A B where C: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by fast
-      then have *: \<open>\<delta> C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+      then have *: \<open>delta C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         using True MCS.CDelta ineq_match_delta by blast
-      then have *: \<open>map (map_con f) (\<delta> C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+      then have *: \<open>map (map_con f) (delta C c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         using 1 c by (auto simp: is_param_def)
       have \<open>ineq_match (map_con f C) (\<alpha>, \<beta>, map_con f A, map_con f B)\<close>
         using C map_con_ineq_match by blast
       moreover have \<open>map_con f C \<in> wffs\<^bsub>o\<^esub>\<close>
         using True wff_map_con by blast
-      ultimately have \<open>\<delta> (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+      ultimately have \<open>delta (map_con f C) (f c) = [ \<sim>\<^sup>\<Q> (map_con f A \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> map_con f B \<sqdot> \<lbrace>f c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
         unfolding MCS.CDelta using ineq_match_delta by auto
       then show ?thesis
         using * by simp
@@ -374,7 +374,7 @@ lemma cIneq:
 proof -
   have \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> wffs\<^bsub>o\<^esub> \<and> ineq_match (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)) (\<alpha>, \<beta>, A, B)\<close>
     using assms(1-2) by blast
-  then have \<open>\<delta> (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)) c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close> for c
+  then have \<open>delta (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)) c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close> for c
     using ineq_match_delta by fast
   then show ?thesis
     using delta assms(3) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
@@ -925,7 +925,7 @@ interpretation premodel D J
 subsection \<open>M is general model\<close>
 
 definition fun_E :: "(var \<Rightarrow> V) \<Rightarrow> (var \<Rightarrow> form)" where
-  "fun_E \<phi> = (\<lambda>(x,\<delta>). (SOME A. \<phi> (x,\<delta>) = V A \<delta> \<and> A \<in> wffs\<^bsub>\<delta>\<^esub>))" 
+  "fun_E \<phi> \<equiv> \<lambda>(x,\<delta>). (SOME A. \<phi> (x,\<delta>) = V A \<delta> \<and> A \<in> wffs\<^bsub>\<delta>\<^esub>)"
   (* Andrews asks for "the first formula such that". But I think SOME formula is sufficient. *)
 
 definition map_E :: "var set \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> (var \<rightharpoonup> form)" where
@@ -963,7 +963,7 @@ proof (induction)
   have None: "\<And>g. (map_filter (\<lambda>a. False) (\<lambda>a. Some (g a))) = (\<lambda>a. None)"
     by (simp add: Finite_Map.map_filter_def)
   from empty show ?case
-    unfolding map_restrict_set_def
+    unfolding map_restrict_set_def None
     apply auto
     unfolding None
     by (metis empty_iff fmdom'_empty fmempty_def)
@@ -1042,19 +1042,45 @@ lemma g:
   using \<theta>\<^sub>E_is_substitution[OF \<phi>] A
   by (metis C\<phi>_def V\<phi>_def someI_ex substitution_preserves_typing type_of_def well_typed wff_has_unique_type)
 
+lemma assignment_some_wff:
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close>
+  obtains E where
+    \<open>(SOME A. \<phi> (x, \<alpha>) = V A \<alpha> \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub>) = E\<close>
+    \<open>E \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>\<phi> (x,\<alpha>) = V E \<alpha>\<close>
+proof -
+  have \<open>\<exists>A. \<phi> (x, \<alpha>) = V A \<alpha> \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+    using assms unfolding is_assignment_def by (metis V_for_elts)
+  then show ?thesis
+    using that by (metis (mono_tags, lifting) someI_ex)
+qed
+
+lemma finite_dom_map_E: \<open>finite xs \<Longrightarrow> finite (dom (map_E xs \<phi>))\<close>
+  unfolding map_E_def fun_E_def
+  by (metis (no_types, lifting) Finite_Map.map_filter_def map_restrict_set_def domIff rev_finite_subset subsetI)
+
 (* For any variable *)
 lemma denotation_function_a: 
   assumes \<phi>: \<open>\<phi> \<leadsto> D\<close>
   shows "V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)"
 proof -
-  obtain C where C: \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>\<phi> (x,\<alpha>) = V C \<alpha>\<close>
-    by (metis V_for_elts assms is_assignment_def)
-  then have \<open>is_substitution (\<theta>\<^sub>E \<phi> C)\<close>
-    using assms \<theta>\<^sub>E_is_substitution by simp
-  then show ?thesis
-    unfolding V\<phi>_def C\<phi>_def \<theta>\<^sub>E_def subst_E_def map_E_def map_restrict_set_def fun_E_def
-    apply auto
-    sorry
+  obtain E where E: \<open>(SOME A. \<phi> (x, \<alpha>) = V A \<alpha> \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub>) = E\<close>
+    \<open>E \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>\<phi> (x,\<alpha>) = V E \<alpha>\<close>
+    using assms assignment_some_wff by blast
+
+  let ?mf = \<open>map_E (free_vars (x\<^bsub>\<alpha>\<^esub>)) \<phi>\<close>
+
+  have \<open>?mf (x, \<alpha>) = Some E\<close>
+    unfolding map_E_def fun_E_def map_restrict_set_def Finite_Map.map_filter_def using E(1) by simp
+  moreover have \<open>finite (dom ?mf)\<close>
+    using finite_dom_map_E by simp
+  ultimately have \<open>Abs_fmap ?mf $$ (x, \<alpha>) = Some E\<close>
+    by (simp add: Abs_fmap_inverse)
+  then have \<open>C\<phi> (x\<^bsub>\<alpha>\<^esub>) \<phi> = E\<close>
+    unfolding C\<phi>_def \<theta>\<^sub>E_def subst_E_def by simp
+  moreover have \<open>V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = V (C\<phi> (x\<^bsub>\<alpha>\<^esub>) \<phi>) \<alpha>\<close>
+    unfolding V\<phi>_def by (metis someI_ex type_of_def wff_has_unique_type wffs_of_type_intros(1))
+  ultimately show ?thesis
+    using E(3) by simp
 qed
 
 (* For any primitive constant *)
