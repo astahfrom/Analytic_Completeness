@@ -1058,6 +1058,14 @@ lemma finite_dom_map_E: \<open>finite xs \<Longrightarrow> finite (dom (map_E xs
   unfolding map_E_def fun_E_def
   by (metis (no_types, lifting) Finite_Map.map_filter_def map_restrict_set_def domIff rev_finite_subset subsetI)
 
+lemma finite_dom_map_E_free_vars:
+  fixes C :: form
+  shows \<open>finite (dom (map_E (free_vars C) \<phi>))\<close>
+  using finite_dom_map_E free_vars_form_finiteness by simp
+
+lemma \<theta>\<^sub>E_lookup: \<open>\<theta>\<^sub>E \<phi> C $$ x = map_E (free_vars C) \<phi> x\<close>
+  by (simp add: Abs_fmap_inverse \<theta>\<^sub>E_def finite_dom_map_E_free_vars subst_E_def)
+
 (* For any variable *)
 lemma denotation_function_a: 
   assumes \<phi>: \<open>\<phi> \<leadsto> D\<close>
@@ -1071,29 +1079,75 @@ proof -
 
   have \<open>?mf (x, \<alpha>) = Some E\<close>
     unfolding map_E_def fun_E_def map_restrict_set_def Finite_Map.map_filter_def using E(1) by simp
-  moreover have \<open>finite (dom ?mf)\<close>
-    using finite_dom_map_E by simp
-  ultimately have \<open>Abs_fmap ?mf $$ (x, \<alpha>) = Some E\<close>
-    by (simp add: Abs_fmap_inverse)
   then have \<open>C\<phi> (x\<^bsub>\<alpha>\<^esub>) \<phi> = E\<close>
-    unfolding C\<phi>_def \<theta>\<^sub>E_def subst_E_def by simp
+    unfolding C\<phi>_def using \<theta>\<^sub>E_lookup by simp
   moreover have \<open>V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = V (C\<phi> (x\<^bsub>\<alpha>\<^esub>) \<phi>) \<alpha>\<close>
-    unfolding V\<phi>_def by (metis someI_ex type_of_def wff_has_unique_type wffs_of_type_intros(1))
+    unfolding V\<phi>_def type_of_def by (metis someI_ex wff_has_unique_type wffs_of_type_intros(1))
   ultimately show ?thesis
     using E(3) by simp
 qed
 
 (* For any primitive constant *)
-lemma denotation_function_b: "\<phi> \<leadsto> D \<Longrightarrow> V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = J (c, \<alpha>)"
-  sorry
+lemma denotation_function_b: "V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = J (c, \<alpha>)"
+proof -
+
+  let ?mf = \<open>map_E (free_vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)) \<phi>\<close>
+
+  have \<open>?mf (c, \<alpha>) = None\<close>
+    unfolding map_E_def fun_E_def map_restrict_set_def Finite_Map.map_filter_def by simp
+  then have \<open>C\<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<phi> = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
+    using \<theta>\<^sub>E_lookup unfolding C\<phi>_def by simp
+  moreover have \<open>V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = V (C\<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<phi>) \<alpha>\<close>
+    unfolding V\<phi>_def type_of_def
+    by (metis wff_has_unique_type wffs_of_type_intros(2) someI_ex)
+  ultimately show ?thesis
+    by simp
+qed
+
+lemma substitute_cong:
+  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<forall>x \<in> free_vars A. F $$ x = G $$ x \<Longrightarrow> \<^bold>S F A = \<^bold>S G A\<close>
+proof (induct A arbitrary: F G rule: wffs_of_type_induct)
+  case (abs_is_wff \<beta> A \<alpha> x)
+  then show ?case
+    apply auto
+    by (metis Diff_iff fmdom'_notD singletonD)
+qed simp_all
+
+lemma \<theta>\<^sub>E_mono: \<open>x \<in> free_vars A \<Longrightarrow> free_vars A \<subseteq> free_vars B \<Longrightarrow> \<theta>\<^sub>E \<phi> B $$ x = \<theta>\<^sub>E \<phi> A $$ x\<close>
+  unfolding \<theta>\<^sub>E_lookup Finite_Map.map_filter_def map_E_def map_restrict_set_def by auto
 
 (* Application *)
 lemma denotation_function_c: 
-  "\<phi> \<leadsto> D \<Longrightarrow> A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (A \<sqdot> B) = V\<phi> \<phi> A \<bullet> V\<phi> \<phi> B"
-  sorry
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub>\<close> and B: \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
+  shows \<open>V\<phi> \<phi> (A \<sqdot> B) = V\<phi> \<phi> A \<bullet> V\<phi> \<phi> B\<close>
+proof -
+  have \<open>C\<phi> (A \<sqdot> B) \<phi> = (\<^bold>S (\<theta>\<^sub>E \<phi> (A \<sqdot> B)) A) \<sqdot> (\<^bold>S (\<theta>\<^sub>E \<phi> (A \<sqdot> B)) B)\<close>
+    unfolding C\<phi>_def by simp
+  also have \<open>\<dots> = (\<^bold>S (\<theta>\<^sub>E \<phi> A) A) \<sqdot> (\<^bold>S (\<theta>\<^sub>E \<phi> B) B)\<close>
+    using substitute_cong \<theta>\<^sub>E_mono A B
+    by (simp add: Finite_Map.map_filter_def \<theta>\<^sub>E_lookup map_E_def map_restrict_set_def)
+  also have \<open>\<dots> = (C\<phi> A \<phi>) \<sqdot> (C\<phi> B \<phi>)\<close>
+    unfolding C\<phi>_def by simp
+      (* Andrews does not justify this step, even though it requires an induction. *)
+  finally have \<open>C\<phi> (A \<sqdot> B) \<phi> = (C\<phi> A \<phi>) \<sqdot> (C\<phi> B \<phi>)\<close> .
+
+  moreover have \<open>V\<phi> \<phi> (A \<sqdot> B) = V (C\<phi> (A \<sqdot> B) \<phi>) \<alpha>\<close>
+    using A B unfolding V\<phi>_def 
+    by (metis someI_ex type_of_def wff_has_unique_type wffs_of_type_intros(3))
+
+  ultimately have \<open>V\<phi> \<phi> (A \<sqdot> B) = V ((C\<phi> A \<phi>) \<sqdot> (C\<phi> B \<phi>)) \<alpha>\<close>
+    by simp
+  moreover have \<open>C\<phi> A \<phi> \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub>\<close> \<open>C\<phi> B \<phi> \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
+    using A B C\<phi>_def \<phi> \<theta>\<^sub>E_is_substitution substitution_preserves_typing by auto
+  ultimately have \<open>V\<phi> \<phi> (A \<sqdot> B) = V (C\<phi> A \<phi>) (\<beta> \<rightarrow> \<alpha>) \<bullet> V (C\<phi> B \<phi>) \<beta>\<close>
+    using A B distrib_V_app by metis
+  then show ?thesis
+    unfolding V\<phi>_def by (metis A B someI_ex type_of_def wff_has_unique_type)
+qed
 
 (* Abstraction *)
 lemma denotation_function_d: 
+  (* We might need an analogue of 5207 for this one *)
   "\<phi> \<leadsto> D \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z\<^bold>:D \<alpha> \<^bold>. V\<phi> (\<phi>((x, \<alpha>) := z)) B)"
   sorry
 
