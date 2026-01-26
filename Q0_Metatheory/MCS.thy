@@ -916,7 +916,7 @@ lemma \<iota>_denotation_J: "frame.is_unique_member_selector D (J iota_constant)
 
 
 (* M constitutes an interpretation (premodel) *)
-interpretation premodel D J
+sublocale premodel D J
   apply unfold_locales
   using function_domain domain_nonemptiness Q_denotation_J \<iota>_denotation_J 
     non_logical_constant_denotation_J apply auto
@@ -1164,7 +1164,7 @@ lemma denotation_function: "is_wff_denotation_function V\<phi>"
   using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d 
   by auto
 
-interpretation general_model D J V\<phi>
+sublocale M: general_model D J V\<phi>
   apply unfold_locales using denotation_function by auto
 
 lemma empty_subst_E: \<open>free_vars C = {} \<Longrightarrow> subst_E (free_vars C) \<phi> = {$$}\<close>
@@ -1189,34 +1189,36 @@ proof -
 qed
 
 lemma canon_model_for: "is_model_for (D,J,V\<phi>) {A \<in> H. A \<in> wffs\<^bsub>o\<^esub> \<and> free_vars A = {}}"
-  using sat_closed_formulas by blast
+  using sat_closed_formulas by blast+
+
+lemmas is_general_model = M.general_model_axioms
 
 end
 
-section \<open>Uhh\<close>
+section \<open>Model Existence\<close>
 
-theorem extension_lemma:
+find_theorems \<open>general_model\<close>
+
+theorem model_existence:
   fixes S :: \<open>form set\<close>
-  assumes \<open>P.prop\<^sub>E Kinds C\<close>
-    and \<open>S \<in> C\<close>
-    and \<open>P.enough_new S\<close>
-    and \<open>T\<^bsub>o\<^esub> \<in> S\<close>
-    and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-  shows \<open>(A \<in> (mk_mcs C S) \<or> \<sim>\<^sup>\<Q> A \<in> (mk_mcs C S)) \<and> extensionally_complete_membership (mk_mcs C S)\<close>
+  assumes cprop: \<open>P.prop\<^sub>E Kinds C\<close>
+    and S: \<open>S \<in> C\<close> \<open>P.enough_new S\<close>
+    and top: \<open>T\<^bsub>o\<^esub> \<in> S\<close>
+    and A: \<open>A \<in> S\<close> \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars A = {}\<close>
+  shows \<open>\<exists>D J V\<phi>. general_model D J V\<phi> \<and> (D, J, V\<phi>) \<Turnstile> A\<close>
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
     show \<open>P.prop\<^sub>H Kinds (mk_mcs C S)\<close>
-      using mk_mcs_Hintikka[OF assms(1-3)] Hintikka.hintikka by blast
+      using mk_mcs_Hintikka[OF cprop S] Hintikka.hintikka by blast
   next
     show \<open>T\<^bsub>o\<^esub> \<in> mk_mcs C S\<close>
-      using assms(4) Extend_subset by blast
+      using top Extend_subset by blast
   qed
-  moreover have \<open>T\<^bsub>o\<^esub> \<in> mk_mcs C S\<close>
-    using assms(4) Extend_subset by blast
+  moreover have \<open>A \<in> {A \<in> mk_mcs C S. A \<in> wffs\<^bsub>o\<^esub> \<and> free_vars A = {}}\<close>
+    using A S Extend_subset by blast
   ultimately show ?thesis
-    using MyHintikka.complete MyHintikka.extensionally_complete_membership assms(5)
-    by blast
+    using MyHintikka.canon_model_for MyHintikka.is_general_model by meson
 qed
 
 section \<open>Derivational Consistency\<close>
@@ -1546,7 +1548,5 @@ proof
     then show ?thesis sorry
   qed
 qed
-
-
 
 end
