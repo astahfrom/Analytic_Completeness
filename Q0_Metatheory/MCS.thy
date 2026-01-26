@@ -1075,9 +1075,7 @@ proof -
     \<open>E \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>\<phi> (x,\<alpha>) = V E \<alpha>\<close>
     using assms assignment_some_wff by blast
 
-  let ?mf = \<open>map_E (free_vars (x\<^bsub>\<alpha>\<^esub>)) \<phi>\<close>
-
-  have \<open>?mf (x, \<alpha>) = Some E\<close>
+  have \<open>map_E (free_vars (x\<^bsub>\<alpha>\<^esub>)) \<phi> (x, \<alpha>) = Some E\<close>
     unfolding map_E_def fun_E_def map_restrict_set_def Finite_Map.map_filter_def using E(1) by simp
   then have \<open>C\<phi> (x\<^bsub>\<alpha>\<^esub>) \<phi> = E\<close>
     unfolding C\<phi>_def using \<theta>\<^sub>E_lookup by simp
@@ -1090,10 +1088,7 @@ qed
 (* For any primitive constant *)
 lemma denotation_function_b: "V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = J (c, \<alpha>)"
 proof -
-
-  let ?mf = \<open>map_E (free_vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)) \<phi>\<close>
-
-  have \<open>?mf (c, \<alpha>) = None\<close>
+  have \<open>map_E (free_vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)) \<phi> (c, \<alpha>) = None\<close>
     unfolding map_E_def fun_E_def map_restrict_set_def Finite_Map.map_filter_def by simp
   then have \<open>C\<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<phi> = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
     using \<theta>\<^sub>E_lookup unfolding C\<phi>_def by simp
@@ -1145,11 +1140,24 @@ proof -
     unfolding V\<phi>_def by (metis A B someI_ex type_of_def wff_has_unique_type)
 qed
 
+lemma c5207:
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<beta>\<^esub>"
+    and "is_free_for A (x, \<alpha>) B"
+  shows "(\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<^bold>S {(x, \<alpha>) \<Zinj> A} B \<in> H"
+  using assms sorry
+
 (* Abstraction *)
 lemma denotation_function_d: 
-  (* We might need an analogue of 5207 for this one *)
-  "\<phi> \<leadsto> D \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z\<^bold>:D \<alpha> \<^bold>. V\<phi> (\<phi>((x, \<alpha>) := z)) B)"
-  sorry
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and B: \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
+  shows \<open>V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z\<^bold>:D \<alpha> \<^bold>. V\<phi> (\<phi>((x, \<alpha>) := z)) B)\<close>
+proof -
+  have \<open>V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = V (C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi>) (\<alpha> \<rightarrow> \<beta>)\<close>
+    using B unfolding V\<phi>_def 
+    by (metis someI_ex type_of_def wff_has_unique_type wffs_of_type_intros(4))
+
+  show ?thesis
+    sorry
+qed
 
 lemma denotation_function: "is_wff_denotation_function V\<phi>"
   unfolding is_wff_denotation_function_def
@@ -1158,9 +1166,6 @@ lemma denotation_function: "is_wff_denotation_function V\<phi>"
 
 interpretation general_model D J V\<phi>
   apply unfold_locales using denotation_function by auto
-
-lemma canon_frugal: "frugal_model D J V\<phi>"
-  oops
 
 lemma canon_model_for: "is_model_for (D,J,V\<phi>) H"
   sorry
@@ -1377,6 +1382,31 @@ proof-
     by fastforce+
 qed
 
+lemma axiom_5_wff:
+  assumes A: \<open>A \<in> wffs\<^bsub>i\<^esub>\<close>
+  shows \<open>\<turnstile> \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A\<close>
+proof -
+  let ?v = \<open>{(Suc 0, i) \<Zinj> A}\<close>
+  let ?B = \<open>\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> Suc 0\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> Suc 0\<^bsub>i\<^esub>\<close>
+
+  have 1: \<open>is_substitution ?v\<close>
+    using A unfolding is_substitution_def by simp
+  have \<open>is_free_for A (Suc 0, i) ?B\<close>
+    by (metis Q_constant_of_type_def Q_def iota_constant_def iota_def is_free_for_in_con is_free_for_in_equality
+        is_free_for_in_var is_free_for_to_app)
+  then have 2: \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set) \<and> is_free_for (?v $$! v) v ?B\<close>
+    by auto
+  have 3: \<open>?v \<noteq> {$$}\<close>
+    by simp
+
+  have \<open>\<turnstile> ?B\<close>
+    using axiom_5 axiom_is_derivable_from_no_hyps by blast
+  then have \<open>\<turnstile> \<^bold>S ?v ?B\<close>
+    using Sub 1 2 3 by blast
+  then show \<open>\<turnstile> \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A\<close>
+    by simp
+qed
+
 interpretation DA: Weak_Derivational_Alpha map_con cons_form \<open>\<lambda>_. True\<close> alpha_class "is_consistent_set \<circ> lset"
 proof(standard)
   fix Hs 
@@ -1407,7 +1437,10 @@ proof(standard)
     case (CCong A \<alpha> B C \<beta>)
     then show ?thesis
       using consistent by force
-
+  next
+    case (CIota A)
+    then show ?thesis
+      using consistent by force
   qed
   moreover have \<open>finite (lset qs \<union> lset Hs)\<close>
     by simp
@@ -1454,6 +1487,12 @@ proof(standard)
   next
     case (CCong A \<alpha> B C \<beta>)
     then show ?thesis sorry
+  next
+    case (CIota A)
+    then show ?thesis
+      using axiom_5_wff
+      by (metis derivability_implies_hyp_derivability empty_iff empty_set le_sup_iff list.set_finite set_ConsD
+          well_formed)
   qed
   have \<open>(is_consistent_set (lset qs \<union> lset Hs))\<close>
     by (metis \<open>\<forall>F\<in>lset qs. lset Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> lset Hs)\<close> well_formed
