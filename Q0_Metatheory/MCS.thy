@@ -1167,9 +1167,29 @@ lemma denotation_function: "is_wff_denotation_function V\<phi>"
 interpretation general_model D J V\<phi>
   apply unfold_locales using denotation_function by auto
 
-lemma canon_model_for: "is_model_for (D,J,V\<phi>) H"
-  sorry
+lemma empty_subst_E: \<open>free_vars C = {} \<Longrightarrow> subst_E (free_vars C) \<phi> = {$$}\<close>
+  unfolding map_E_def subst_E_def
+  by (metis emptyE finite.emptyI fmap_ext fmdom'_empty fmdom'_map_restrict_set fmdom'_notD)
 
+lemma empty_C\<phi>: \<open>free_vars A = {} \<Longrightarrow> C\<phi> A \<phi> = A\<close>
+  unfolding C\<phi>_def \<theta>\<^sub>E_def using empty_subst_E empty_substitution_neutrality by metis
+
+lemma sat_closed_formulas:
+  assumes A: \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars A = {}\<close> and H: \<open>A \<in> H\<close>
+  shows \<open>V\<phi> \<phi> A = \<^bold>T\<close>
+proof -
+  have \<open>V\<phi> \<phi> A = V (C\<phi> A \<phi>) o\<close>
+    using A by (metis V\<phi>_def someI_ex type_of_def wff_has_unique_type)
+  moreover have \<open>V (C\<phi> A \<phi>) o = \<^bold>T \<longleftrightarrow> C\<phi> A \<phi> \<in> H\<close>
+    by (simp add: bool_to_V_distinct)
+  moreover have \<open>C\<phi> A \<phi> \<in> H\<close>
+    using H A empty_C\<phi> by simp
+  ultimately show ?thesis
+    by simp
+qed
+
+lemma canon_model_for: "is_model_for (D,J,V\<phi>) {A \<in> H. A \<in> wffs\<^bsub>o\<^esub> \<and> free_vars A = {}}"
+  using sat_closed_formulas by blast
 
 end
 
