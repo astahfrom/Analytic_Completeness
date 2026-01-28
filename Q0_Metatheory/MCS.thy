@@ -767,7 +767,7 @@ proof -
     by (metis (full_types, lifting) HOL.ext ZFC_Cardinals.beta someI_ex)
 qed
 
-lemma V_for_elts: \<open>x \<in> elts (D \<alpha>) \<Longrightarrow> \<exists>A. is_closed_wff_of_type A \<alpha> \<and> V A \<alpha> = x\<close>
+lemma wff_for_elts: \<open>x \<in> elts (D \<alpha>) \<Longrightarrow> \<exists>A. is_closed_wff_of_type A \<alpha> \<and> V A \<alpha> = x\<close>
   using one_gamma by (smt (verit, best) all_not_in_conv elts_of_set mem_Collect_eq)
 
 lemma Q_denotation_V_2:
@@ -775,7 +775,7 @@ lemma Q_denotation_V_2:
   shows "V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> x \<bullet> y = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x \<bullet> y"
 proof -
   obtain A B where A: "is_closed_wff_of_type A \<alpha>" \<open>V A \<alpha> = x\<close> and B: "is_closed_wff_of_type B \<alpha>" \<open>V B \<alpha> = y\<close>
-    using V_for_elts assms by meson
+    using wff_for_elts assms by meson
 
   have Q: 
     \<open>is_closed_wff_of_type (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o)\<close>
@@ -830,7 +830,7 @@ proof safe
   fix x
   assume *: \<open>x \<in> elts (D i)\<close>
   then obtain A where A: \<open>is_closed_wff_of_type A i\<close> \<open>V A i = x\<close>
-    by (meson V_for_elts)
+    by (meson wff_for_elts)
   then have \<open>\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A \<in> H\<close>
     using cIota by blast
   moreover have \<open>is_closed_wff_of_type \<iota> ((i \<rightarrow> o) \<rightarrow> i)\<close>
@@ -936,7 +936,7 @@ proof safe
   assume a: "(x, \<beta>) \<in> fmdom' (\<theta>\<^sub>E \<phi> C)"
 
   have *: "\<exists>A. \<phi> (x,\<beta>) = V A \<beta> \<and> is_closed_wff_of_type A \<beta>"
-    using assms by (metis V_for_elts frame.is_assignment_def frame_axioms)
+    using assms by (metis wff_for_elts frame.is_assignment_def frame_axioms)
 
   have fc: "finite (free_vars C)"
     by (simp add: free_vars_form_finiteness)
@@ -977,7 +977,7 @@ lemma assignment_some_wff:
     \<open>is_closed_wff_of_type E \<alpha>\<close> \<open>\<phi> (x,\<alpha>) = V E \<alpha>\<close>
 proof -
   have \<open>\<exists>A. \<phi> (x, \<alpha>) = V A \<alpha> \<and> is_closed_wff_of_type A \<alpha>\<close>
-    using assms unfolding is_assignment_def by (metis V_for_elts)
+    using assms unfolding is_assignment_def by (metis wff_for_elts)
   then show ?thesis
     using that by (metis (mono_tags, lifting) someI_ex)
 qed
@@ -1180,32 +1180,74 @@ proof -
     unfolding V\<phi>_def by (metis A B someI_ex type_of_def wff_has_unique_type)
 qed
 
-lemma c5207:
-  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<beta>\<^esub>"
-    and "is_free_for A (x, \<alpha>) B"
-  shows "(\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B \<in> H"
-  using assms sorry
+lemma fmdom'_\<theta>\<^sub>E_lam: \<open>(x, \<alpha>) \<notin> fmdom' (\<theta>\<^sub>E \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B))\<close>
+  by (simp add: fmdom'_\<theta>\<^sub>E)
 
-lemma c5207':
-  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<beta>\<^esub>"
-    and "free_vars A = {}"
-  shows "\<turnstile> (substitute \<phi> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A)) =\<^bsub>\<beta>\<^esub> (substitute (\<phi>((x, \<alpha>) \<Zinj> A)) B)"
+lemma C\<phi>_id_cwff:
+  assumes \<open>is_closed_wff_of_type A \<alpha>\<close>
+  shows \<open>C\<phi> A \<phi> = A\<close>
   using assms
-proof (induct \<phi> arbitrary: A B)
-  case fmempty
-  then show ?case
-    using closed_is_free_for empty_substitution_neutrality prop_5207 by metis
-next
-  case (fmupd x C \<phi>)
-  then show ?case
-    sorry
-qed
+  unfolding C\<phi>_def is_closed_wff_of_type_def using empty_substitution_neutrality substitute_cong
+  by (metis empty_iff)
 
-lemma hmm:
-  assumes A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and B: \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
-  and free: \<open>is_free_for A (x, \<alpha>) B\<close>
-  shows \<open>V\<phi> \<phi> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) = V\<phi> (\<phi>((x, \<alpha>) := V A \<alpha>)) B\<close>
-  sorry
+lemma C\<phi>_lam: \<open>C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi> = \<lambda>x\<^bsub>\<alpha>\<^esub>. substitute (subst_E (free_vars B - {(x, \<alpha>)}) \<phi>) B\<close>
+  using fmdom'_\<theta>\<^sub>E_lam unfolding C\<phi>_def \<theta>\<^sub>E_def by (simp add: fmdom'_\<theta>\<^sub>E_lam)
+
+lemma substitute_id_disjoint: \<open>free_vars A \<inter> fmdom' \<phi> = {} \<Longrightarrow> substitute \<phi> A = A\<close>
+  by (induct \<phi> A rule: substitute.induct) auto
+
+corollary substitute_id_closed: \<open>free_vars A = {} \<Longrightarrow> substitute \<phi> A = A\<close>
+  using substitute_id_disjoint by simp
+
+lemma map_E_fun_upd:
+  assumes \<open>(x, \<alpha>) \<in> xs\<close> \<open>fun_E (\<phi>((x, \<alpha>) := A)) (x, \<alpha>) = E\<close>
+  shows \<open>map_E xs (\<phi>((x, \<alpha>) := A)) = ((map_E (xs - {(x, \<alpha>)}) \<phi>)((x, \<alpha>) \<mapsto> E))\<close>
+  using assms unfolding map_E_def map_restrict_set_def map_filter_def fun_E_def by auto
+
+lemma prop_5207_hmm:
+  assumes B: "B \<in> wffs\<^bsub>\<beta>\<^esub>" and E: "E \<in> wffs\<^bsub>\<alpha>\<^esub>" "free_vars E = {}" \<open>fun_E (\<phi>((x, \<alpha>) := V E \<alpha>)) (x, \<alpha>) = E\<close>
+    and \<phi>: \<open>\<phi> \<leadsto> D\<close>
+  shows "\<turnstile> C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi> \<sqdot> E =\<^bsub>\<beta>\<^esub> C\<phi> B (\<phi>((x, \<alpha>) := V E \<alpha>))"
+proof -
+  let ?v = \<open>subst_E (free_vars B - {(x, \<alpha>)}) \<phi>\<close>
+  let ?B = \<open>substitute ?v B\<close>
+
+  have v: \<open>is_substitution ?v\<close>
+    using \<phi> \<theta>\<^sub>E_is_substitution unfolding \<theta>\<^sub>E_def by (metis free_vars_form.simps(4))
+  
+  have \<open>substitute {(x, \<alpha>) \<Zinj> E} ?B = substitute ({(x, \<alpha>) \<Zinj> E} ++\<^sub>f fmmap (substitute {(x, \<alpha>) \<Zinj> E}) ?v) B\<close>
+  proof (rule substitution_consolidation)
+    show \<open>(x, \<alpha>) \<notin> fmdom' ?v\<close>
+      using \<theta>\<^sub>E_def fmdom'_\<theta>\<^sub>E_lam by auto
+  next
+    show \<open>\<forall>v'\<in>fmdom' ?v. is_free_for (?v $$! v') v' B\<close>
+      by (metis \<phi> closed_fmran'_subst_E closed_is_free_for exists_fv fmlookup_dom'_iff fmran'I free_vars_form_finiteness
+          option.sel)
+  qed
+  moreover have \<open>fmmap (substitute {(x, \<alpha>) \<Zinj> E}) ?v = ?v\<close>
+    using substitute_id_closed
+    by (meson Diff_subset closed_fmran'_subst_E \<phi> finite_subset fmap.map_ident_strong free_vars_form_finiteness)
+  moreover have \<open>{(x, \<alpha>) \<Zinj> E} ++\<^sub>f ?v = ?v((x, \<alpha>) \<Zinj> E)\<close>
+    by (metis \<theta>\<^sub>E_def fmadd_empty(2) fmadd_fmupd fmap_singleton_comm fmdom'_\<theta>\<^sub>E_lam fmdom'_notD
+        free_vars_form.simps(4))
+  ultimately have \<open>substitute {(x, \<alpha>) \<Zinj> E} ?B = substitute (?v((x, \<alpha>) \<Zinj> E)) B\<close>
+    by simp
+
+  moreover have \<open>\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. ?B) \<sqdot> E =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> E} ?B\<close>
+    using B E \<phi> prop_5207
+    by (metis \<theta>\<^sub>E_def \<theta>\<^sub>E_is_substitution closed_is_free_for exists_fv substitution_preserves_typing)
+  then have \<open>\<turnstile> C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi> \<sqdot> E =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> E} ?B\<close>
+    unfolding C\<phi>_lam .
+  ultimately have \<open>\<turnstile> C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi> \<sqdot> E =\<^bsub>\<beta>\<^esub> substitute (?v((x, \<alpha>) \<Zinj> E)) B\<close>
+    by simp
+
+  moreover have \<open>subst_E (free_vars B - {(x, \<alpha>)}) \<phi>((x, \<alpha>) \<Zinj> E) = subst_E (free_vars B) (\<phi>((x, \<alpha>) := V E \<alpha>))\<close>
+    using E unfolding subst_E_def map_E_def map_restrict_set_def map_filter_def fun_E_def
+    sorry
+
+  ultimately show ?thesis
+    using C\<phi>_def \<theta>\<^sub>E_def by force
+qed
 
 (* Abstraction *)
 lemma denotation_function_d: 
@@ -1220,7 +1262,14 @@ proof -
     fix y
     assume \<open>y \<in> elts (D \<alpha>)\<close>
     then obtain E where E: \<open>is_closed_wff_of_type E \<alpha>\<close> \<open>V E \<alpha> = y\<close>
-      using V_for_elts by blast
+      (*
+        Andrews defines fun_E to give him the "first" E that represents V E \<alpha>.
+        In his proof of 5501 (d), he assumes that his representative E of V E \<alpha> is also the "first".
+        So, I think we need the property below to make sure C\<phi> behaves.
+      *)
+      \<open>fun_E (\<phi>((x, \<alpha>) := V E \<alpha>)) (x, \<alpha>) = E\<close>
+      using wff_for_elts fun_E_def fun_upd_apply using \<phi> unfolding is_assignment_def
+      by (smt (verit, del_insts) fun_E_def fun_upd_apply mem_Collect_eq prod.case someI_ex)
 
     have \<open>is_closed_wff_of_type (C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi>) (\<alpha> \<rightarrow> \<beta>)\<close>
       using \<phi> B C\<phi>_closes_wff by blast
@@ -1228,7 +1277,9 @@ proof -
       using distrib_V_app E by metis
 
     moreover have \<open>V (C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi> \<sqdot> E) \<beta> = V (C\<phi> B (\<phi>((x, \<alpha>) := V E \<alpha>))) \<beta>\<close>
-      unfolding C\<phi>_def using hmm sorry
+      (* It may be beneficial to case on whether (x, \<alpha>) is free in B. *)
+      unfolding C\<phi>_def sorry
+
     ultimately have \<open>V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<bullet> y = V\<phi> (\<phi>((x, \<alpha>) := y)) B\<close>
       using B E * unfolding V\<phi>_def is_closed_wff_of_type_def
       by (metis someI_ex type_of_def wff_has_unique_type)
