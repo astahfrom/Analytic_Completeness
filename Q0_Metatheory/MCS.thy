@@ -84,7 +84,6 @@ inductive confl_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
   CConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<and>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ A, B ]\<close>
 | CImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A, \<sim>\<^sup>\<Q> B ]\<close>
-| CSym: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ B =\<^bsub>\<alpha>\<^esub> A ]\<close>
 | CTrans: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B, B =\<^bsub>\<alpha>\<^esub> C ] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>\<alpha>\<^esub> C ]\<close>
 | CCong: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B ]\<close>
 | CIota: \<open>A \<in> wffs\<^bsub>i\<^esub> \<Longrightarrow> [] \<leadsto>\<^sub>\<alpha> [ \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A ]\<close>
@@ -341,9 +340,6 @@ lemma cConP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs
 lemma cImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using alpha by (force intro: CImpN[of A B])
 
-lemma cSym: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H \<Longrightarrow> B =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
-  using alpha by (force intro: CSym[of A \<alpha> B])
-
 lemma cTrans: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H \<Longrightarrow> B =\<^bsub>\<alpha>\<^esub> C \<in> H \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> C \<in> H\<close>
   using alpha by (force intro: CTrans[of A \<alpha> B])
 
@@ -408,6 +404,11 @@ lemma cRefl: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<
 lemma cMP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<in> H \<Longrightarrow> A \<supset>\<^sup>\<Q> B \<in> H \<Longrightarrow> B \<in> H\<close>
   using cImpP consistent by blast
 
+lemma cSym: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H \<Longrightarrow> B =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
+  using cCong cIrr equal_parts unfolding Q_constant_of_type_def Q_def equality_of_type_def equivalence_def
+  by (meson wffs_of_type_intros(2,3))
+
+
 lemma extensionally_complete_membership: \<open>extensionally_complete_membership H\<close>
   unfolding extensionally_complete_membership_def
 proof (intro allI impI)
@@ -433,7 +434,6 @@ proof (intro allI impI)
       by (metis cImpN complete equality_wff free_vars_form.simps(2) imp_op_wff wffs_of_type_intros(2,3))
   qed
 qed
-
 
 section \<open>Let us have a little looksie\<close>
 
@@ -970,66 +970,6 @@ proof safe
     using \<theta>\<^sub>E_def by auto
 qed
 
-(* Sledgehammer seems to struggle with this notation. *)
-no_notation substitute (\<open>\<^bold>S _ _\<close> [51, 51])
-
-(* TODO *)
-lemma closed_fmdom'_subst_E:
-  assumes \<open>finite xs\<close> \<open>\<phi> \<leadsto> D\<close> \<open>A \<in> fmdom' (subst_E xs \<phi>)\<close>
-  shows \<open>free_vars A = {}\<close>
-  using assms
-proof (induct xs arbitrary: A rule: finite_induct)
-  case empty
-  then show ?case
-    unfolding map_E_def subst_E_def
-    by (metis empty_iff finite.emptyI fmdom'_map_restrict_set)
-next
-  case (insert x\<alpha> F)
-  then show ?case
-  proof (induct x\<alpha>)
-    case (Pair x \<alpha>)
-    then show ?case
-    proof (cases \<open>\<exists>A. \<phi> (x, \<alpha>) = V A \<alpha> \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> free_vars A = {}\<close>)
-      case True
-      then show ?thesis
-        using Pair
-        unfolding map_E_def subst_E_def map_restrict_set_def fun_E_def
-        apply auto
-        sorry
-    next
-      case False
-      then show ?thesis
-        using Pair
-        unfolding map_E_def subst_E_def map_restrict_set_def fun_E_def
-        apply auto
-        by (metis V_for_elts is_closed_wff_of_type_def)
-    qed
-  qed
-qed
-
-(* TODO: This needs proving even though it's "Clearly" to Andrews.
-   I assume we need to show that
-    (1) we leave no free variable unsubstituted and that
-    (2) we substitute closed formulas for each of them.
- *)
-lemma \<theta>\<^sub>E_closes_wff:
-  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-  shows \<open>is_closed_wff_of_type (substitute (\<theta>\<^sub>E \<phi> A) A) \<alpha>\<close>
-  using \<theta>\<^sub>E_is_substitution[OF \<phi>] A substitution_preserves_typing
-  unfolding is_closed_wff_of_type_def C\<phi>_def
-  sorry
-
-lemma C\<phi>_closes_wff:
-  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-  shows \<open>is_closed_wff_of_type (C\<phi> A \<phi>) \<alpha>\<close>
-  unfolding C\<phi>_def using assms \<theta>\<^sub>E_closes_wff by simp
-
-lemma g:
-  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-  shows \<open>V\<phi> \<phi> A \<in> elts (D \<alpha>)\<close>
-  unfolding V\<phi>_def using A C\<phi>_closes_wff
-  by (metis \<phi> someI_ex type_of_def well_typed wff_has_unique_type)
-
 lemma assignment_some_wff:
   assumes \<phi>: \<open>\<phi> \<leadsto> D\<close>
   obtains E where
@@ -1042,6 +982,9 @@ proof -
     using that by (metis (mono_tags, lifting) someI_ex)
 qed
 
+(* Sledgehammer seems to struggle with this notation. *)
+no_notation substitute (\<open>\<^bold>S _ _\<close> [51, 51])
+
 lemma finite_dom_map_E: \<open>finite xs \<Longrightarrow> finite (dom (map_E xs \<phi>))\<close>
   unfolding map_E_def fun_E_def
   by (metis (no_types, lifting) Finite_Map.map_filter_def map_restrict_set_def domIff rev_finite_subset subsetI)
@@ -1053,6 +996,127 @@ lemma finite_dom_map_E_free_vars:
 
 lemma \<theta>\<^sub>E_lookup: \<open>\<theta>\<^sub>E \<phi> C $$ x = map_E (free_vars C) \<phi> x\<close>
   by (simp add: Abs_fmap_inverse \<theta>\<^sub>E_def finite_dom_map_E_free_vars subst_E_def)
+
+lemma substitute_cong:
+  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<forall>x \<in> free_vars A. F $$ x = G $$ x \<Longrightarrow> substitute F A = substitute G A\<close>
+proof (induct A arbitrary: F G rule: wffs_of_type_induct)
+  case (abs_is_wff \<beta> A \<alpha> x)
+  then show ?case
+    apply auto
+    by (metis Diff_iff fmdom'_notD singletonD)
+qed simp_all
+
+lemma \<theta>\<^sub>E_mono: \<open>x \<in> free_vars A \<Longrightarrow> free_vars A \<subseteq> free_vars B \<Longrightarrow> \<theta>\<^sub>E \<phi> B $$ x = \<theta>\<^sub>E \<phi> A $$ x\<close>
+  unfolding \<theta>\<^sub>E_lookup Finite_Map.map_filter_def map_E_def map_restrict_set_def by auto
+
+lemma free_vars_substitute: \<open>free_vars (substitute \<phi> A) \<subseteq> (free_vars A - fmdom' \<phi>) \<union> \<Union>(free_vars ` fmran' \<phi>)\<close>
+proof (induct \<phi> A rule: substitute.induct)
+  case (1 \<theta> x \<alpha>)
+  then show ?case
+  proof (cases \<open>\<theta> $$ (x, \<alpha>)\<close>)
+    case None
+    then show ?thesis
+      using 1
+      by (simp add: fmdom'_notI)
+  next
+    case (Some a)
+    then show ?thesis
+      using 1 by (auto intro: fmran'I)
+  qed
+next
+  case (2 \<theta> c \<alpha>)
+  then show ?case
+    by simp
+next
+  case (3 \<theta> A B)
+  then show ?case
+    by auto
+next
+  case (4 \<theta> x \<alpha> A)
+  then show ?case
+  proof (cases \<open>(x, \<alpha>) \<in> fmdom' \<theta>\<close>)
+    case True
+    then show ?thesis
+      using 4
+        (* TODO: nasty *)
+      apply auto
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
+          in_mono insert_iff)
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
+          in_mono insert_iff)
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_notI fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
+          in_mono insertE insert_Diff prod.inject)
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmlookup_drop fmlookup_ran'_iff in_mono insertE insert_Diff
+          not_None_eq prod.inject)
+      done
+  next
+    case False
+    then show ?thesis
+      using 4 by auto
+  qed
+qed
+
+lemma subst_E_Some: 
+  assumes \<open>finite xs\<close> \<open>subst_E xs \<phi> $$ (x, \<alpha>) = Some A\<close>
+  shows \<open>A = fun_E \<phi> (x, \<alpha>)\<close>
+  using assms
+  by (metis (mono_tags, lifting) Abs_fmap_inverse Finite_Map.map_filter_def comp_apply finite_dom_map_E map_E_def
+      map_restrict_set_def mem_Collect_eq option.distinct(1) option.inject subst_E_def)
+
+lemma closed_fmran'_subst_E:
+  assumes \<open>A \<in> fmran' (subst_E xs \<phi>)\<close> \<open>finite xs\<close> \<open>\<phi> \<leadsto> D\<close>
+  shows \<open>free_vars A = {}\<close>
+  using assms(1)
+proof
+  fix x\<alpha>
+  assume *: \<open>subst_E xs \<phi> $$ x\<alpha> = Some A\<close>
+  moreover obtain x \<alpha> where \<open>x\<alpha> = (x, \<alpha>)\<close>
+    by fastforce
+  ultimately have \<open>A = (SOME A. \<phi> (x, \<alpha>) = V A \<alpha> \<and> is_closed_wff_of_type A \<alpha>)\<close>
+    using * assms(2) subst_E_Some unfolding fun_E_def by simp
+  then show ?thesis
+    using assignment_some_wff assms(3) by blast
+qed
+
+lemma dom_map_restrict_set: \<open>dom (map_restrict_set xs (Some \<circ> f)) = xs\<close>
+  unfolding map_restrict_set_def map_filter_def using domIff by fastforce
+
+lemma fmdom'_\<theta>\<^sub>E: \<open>fmdom' (\<theta>\<^sub>E \<phi> A) = free_vars A\<close>
+  using dom_map_restrict_set finite_dom_map_E_free_vars
+  unfolding \<theta>\<^sub>E_def map_E_def subst_E_def
+  by (metis Abs_fmap_inverse dom_fmlookup mem_Collect_eq )
+
+lemma C\<phi>_closes:
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close>
+  shows \<open>free_vars (C\<phi> A \<phi>) = {}\<close>
+proof -
+  have \<open>free_vars (C\<phi> A \<phi>) \<subseteq> (free_vars A - fmdom' (\<theta>\<^sub>E \<phi> A)) \<union> \<Union>(free_vars ` fmran' (\<theta>\<^sub>E \<phi> A))\<close>
+    unfolding C\<phi>_def using assms free_vars_substitute by meson
+  moreover have \<open>\<Union>(free_vars ` fmran' (\<theta>\<^sub>E \<phi> A)) = {}\<close>
+    unfolding \<theta>\<^sub>E_def using assms closed_fmran'_subst_E free_vars_form_finiteness by auto
+  moreover have \<open>fmdom' (\<theta>\<^sub>E \<phi> A) = free_vars A\<close>
+    using fmdom'_\<theta>\<^sub>E .
+  ultimately show ?thesis
+    by blast
+qed
+
+lemma C\<phi>_wff:
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  shows \<open>C\<phi> A \<phi> \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  unfolding C\<phi>_def
+  using \<phi> A substitution_preserves_typing \<theta>\<^sub>E_is_substitution by simp
+
+(* Andrews writes "Clearly C\<phi> A \<phi> is a cwff (of the same type)". Here it took a bit of work. *)
+lemma C\<phi>_closes_wff:
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  shows \<open>is_closed_wff_of_type (C\<phi> A \<phi>) \<alpha>\<close>
+  using assms C\<phi>_closes C\<phi>_wff by fast
+
+lemma g:
+  assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  shows \<open>V\<phi> \<phi> A \<in> elts (D \<alpha>)\<close>
+  unfolding V\<phi>_def using A C\<phi>_closes_wff
+  by (metis \<phi> someI_ex type_of_def well_typed wff_has_unique_type)
 
 (* For any variable *)
 lemma denotation_function_a: 
@@ -1086,18 +1150,6 @@ proof -
   ultimately show ?thesis
     by simp
 qed
-
-lemma substitute_cong:
-  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<forall>x \<in> free_vars A. F $$ x = G $$ x \<Longrightarrow> substitute F A = substitute G A\<close>
-proof (induct A arbitrary: F G rule: wffs_of_type_induct)
-  case (abs_is_wff \<beta> A \<alpha> x)
-  then show ?case
-    apply auto
-    by (metis Diff_iff fmdom'_notD singletonD)
-qed simp_all
-
-lemma \<theta>\<^sub>E_mono: \<open>x \<in> free_vars A \<Longrightarrow> free_vars A \<subseteq> free_vars B \<Longrightarrow> \<theta>\<^sub>E \<phi> B $$ x = \<theta>\<^sub>E \<phi> A $$ x\<close>
-  unfolding \<theta>\<^sub>E_lookup Finite_Map.map_filter_def map_E_def map_restrict_set_def by auto
 
 (* Application *)
 lemma denotation_function_c: 
@@ -1179,7 +1231,7 @@ proof -
       unfolding C\<phi>_def using hmm sorry
     ultimately have \<open>V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<bullet> y = V\<phi> (\<phi>((x, \<alpha>) := y)) B\<close>
       using B E * unfolding V\<phi>_def is_closed_wff_of_type_def
-      by (metis someI_ex type_of_def wff_has_unique_type)s
+      by (metis someI_ex type_of_def wff_has_unique_type)
   }
 
   then show ?thesis
@@ -1471,10 +1523,6 @@ proof(standard)
     then show ?thesis 
       using consistent by force
   next
-    case (CSym A \<alpha> B)
-    then show ?thesis
-      using consistent by force
-  next
     case (CTrans A \<alpha> B C)
     then show ?thesis
       using consistent
@@ -1525,9 +1573,6 @@ proof(standard)
     ultimately show ?thesis
       using local.CImpN(2) 
       by force
-  next
-    case (CSym A \<alpha> B)
-    then show ?thesis sorry
   next
     case (CTrans A \<alpha> B C)
     then show ?thesis sorry
