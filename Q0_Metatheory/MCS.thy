@@ -30,7 +30,7 @@ lemma "is_type VA \<Longrightarrow> \<exists>t. V_of_type t = VA "
 
 lemma "inj V_of_type"
   by (metis V_of_type_def embeddable_class.ex_inj someI_ex)
-  
+
 lemma "type_of_V (V_of_type t) = t"
   by (metis V_of_type_def embeddable_class.ex_inj type_of_V_def inv_f_f someI_ex)
 
@@ -52,7 +52,7 @@ lemma "is_form VA \<Longrightarrow> \<exists>A. V_of_form A = VA "
 
 lemma "inj V_of_form"
   by (metis V_of_form_def embeddable_class.ex_inj someI_ex)
-  
+
 lemma "form_of_V (V_of_form A) = A"
   by (metis V_of_form_def embeddable_class.ex_inj form_of_V_def inv_f_f someI_ex)
 
@@ -124,7 +124,7 @@ subsection \<open>Delta\<close>
 
 fun delta :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> where
   CDelta: \<open>delta C c =
-    (if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B)) then 
+    (if C \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match C (\<alpha>, \<beta>, A, B)) then
        case THE (\<alpha>, \<beta>, A, B). ineq_match C (\<alpha>, \<beta>, A, B) of
          (\<alpha>, \<beta>, A, B) \<Rightarrow> [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]
      else [])\<close>
@@ -430,7 +430,7 @@ proof (intro allI impI)
     then have \<open>(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<notin> H\<close>
       using consistent * equality_wff wffs_of_type_intros(2,3) by fastforce
     then show ?thesis
-      using * unfolding is_closed_wff_of_type_def 
+      using * unfolding is_closed_wff_of_type_def
       by (metis cImpN complete equality_wff free_vars_form.simps(2) imp_op_wff wffs_of_type_intros(2,3))
   qed
 qed
@@ -441,7 +441,7 @@ definition V_of_form_set :: "form set \<Rightarrow> V" where
   "V_of_form_set As = set (V_of_form ` As)"
 
 fun
-  D :: "type \<Rightarrow> V" and 
+  D :: "type \<Rightarrow> V" and
   V :: "form \<Rightarrow> type \<Rightarrow> V" and
   get_rep :: "V \<Rightarrow> type \<Rightarrow> form" where
   "D o = \<bool>"
@@ -539,10 +539,10 @@ lemma well_typed:
 fun unambiguous :: "type \<Rightarrow> bool" where
   "unambiguous i \<longleftrightarrow> True"
 | "unambiguous o \<longleftrightarrow> True"
-| "unambiguous (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> 
+| "unambiguous (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow>
      (\<forall>A B C. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
               is_closed_wff_of_type B \<beta> \<longrightarrow>
-              is_closed_wff_of_type C \<beta> \<longrightarrow> 
+              is_closed_wff_of_type C \<beta> \<longrightarrow>
               V B \<beta> = V C \<beta> \<longrightarrow>
               V (A \<sqdot> B) \<alpha> = V (A \<sqdot> C) \<alpha>)"
 
@@ -557,7 +557,7 @@ lemma fun_typed: (* We could make being funtyped part of being good and make thi
                     have the needed assumptions *)
   assumes "unambiguous (\<beta> \<rightarrow> \<alpha>)"
   shows "elts (D (\<beta> \<rightarrow> \<alpha>)) \<subseteq> elts ((D \<beta> \<longmapsto> D \<alpha>))"
-proof 
+proof
   fix f
   assume f: "f \<in> elts (D (\<beta> \<rightarrow> \<alpha>))"
   have sma: "small {\<^bold>\<lambda>VC\<beta>\<^bold>:D \<beta> \<^bold>. V (A \<sqdot> (SOME C. V C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>)) \<alpha> |A. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)}"
@@ -640,7 +640,7 @@ next
           using C by (simp add: well_typed)
         moreover have \<open>V (A \<sqdot> (SOME Ca. V Ca \<beta> = V C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha> = V (A \<sqdot> C) \<alpha>\<close>
           using A C una by (metis (mono_tags, lifting) unambiguous.simps(3) tfl_some)
-        ultimately have "(V A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>) = V (A \<sqdot> C) \<alpha>"  
+        ultimately have "(V A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (V C \<beta>) = V (A \<sqdot> C) \<alpha>"
           by simp
         moreover have \<open>is_closed_wff_of_type (B \<sqdot> C) \<alpha>\<close>
           using B C by auto
@@ -662,7 +662,7 @@ next
       next
         show "V B (\<beta> \<rightarrow> \<alpha>) \<in> elts (D \<beta> \<longmapsto> D \<alpha>)"
           using fun_typed well_typed B una by (metis subsetD)
-      next 
+      next
         fix VC\<beta>
         assume "VC\<beta> \<in> elts (D \<beta>)"
         then obtain C where "V C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>"
@@ -723,16 +723,16 @@ lemma two_gamma:
 
 subsection \<open>M is interpretation\<close>
 
-fun J :: "nat \<times> Syntax.type \<Rightarrow> V" where 
+fun J :: "nat \<times> Syntax.type \<Rightarrow> V" where
   "J (c,\<tau>) = V (FCon (c,\<tau>)) \<tau>"
 
 (* Mapping primitive constants into D\<^sub>\<alpha>*)
-lemma non_logical_constant_denotation_V: 
+lemma non_logical_constant_denotation_V:
   "\<not> is_logical_constant (c, \<alpha>) \<Longrightarrow> V (FCon (c, \<alpha>)) \<alpha> \<in> elts (D \<alpha>)"
   using well_typed by fastforce
   (* I did sledgehammer instead of looking at Andrews's proof *)
 
-lemma non_logical_constant_denotation_J: 
+lemma non_logical_constant_denotation_J:
   "\<not> is_logical_constant (c, \<alpha>) \<Longrightarrow> J (c, \<alpha>) \<in> elts (D \<alpha>)"
   using non_logical_constant_denotation_V unfolding J.simps by auto
 
@@ -758,12 +758,12 @@ proof -
 
   moreover have \<open>V B \<alpha> \<in> elts (D \<alpha>)\<close>
     using assms well_typed by fast+
-  
+
   moreover have \<open>\<forall>x \<in> elts (D \<alpha>). \<exists>C. V C \<alpha> = x \<and> is_closed_wff_of_type C \<alpha>\<close>
     using one_gamma by auto
 
   ultimately show ?thesis
-    unfolding V.simps get_rep.simps 
+    unfolding V.simps get_rep.simps
     by (metis (full_types, lifting) HOL.ext ZFC_Cardinals.beta someI_ex)
 qed
 
@@ -777,7 +777,7 @@ proof -
   obtain A B where A: "is_closed_wff_of_type A \<alpha>" \<open>V A \<alpha> = x\<close> and B: "is_closed_wff_of_type B \<alpha>" \<open>V B \<alpha> = y\<close>
     using wff_for_elts assms by meson
 
-  have Q: 
+  have Q:
     \<open>is_closed_wff_of_type (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o)\<close>
     \<open>is_closed_wff_of_type (Q\<^bsub>\<alpha>\<^esub> \<sqdot> A) (\<alpha>\<rightarrow>o)\<close>
     using A unfolding is_closed_wff_of_type_def by auto
@@ -841,7 +841,7 @@ proof safe
     using A by auto
   moreover have \<open>is_closed_wff_of_type (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A)) i\<close>
     using A by auto
-  ultimately show \<open>V \<iota> ((i \<rightarrow> o) \<rightarrow> i) \<bullet> {x}\<^bsub>i\<^esub>\<^bsup>D\<^esup> = x\<close> 
+  ultimately show \<open>V \<iota> ((i \<rightarrow> o) \<rightarrow> i) \<bullet> {x}\<^bsub>i\<^esub>\<^bsup>D\<^esup> = x\<close>
     using A * two_gamma
     by (metis distrib_V_app Q_denotation_V ZFC_Cardinals.beta domain_frame frame.identity_relation_def)
 qed
@@ -852,7 +852,7 @@ lemma \<iota>_denotation_J: "frame.is_unique_member_selector D (J iota_constant)
 (* M constitutes an interpretation (premodel) *)
 sublocale premodel D J
   apply unfold_locales
-  using function_domain domain_nonemptiness Q_denotation_J \<iota>_denotation_J 
+  using function_domain domain_nonemptiness Q_denotation_J \<iota>_denotation_J
     non_logical_constant_denotation_J apply auto
   done
 
@@ -883,9 +883,9 @@ lemma "A \<in> wffs\<^bsub>\<gamma>\<^esub> \<Longrightarrow> type_of A = \<gamm
 definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V" where
   "V\<phi> \<phi> C = V (C\<phi> C \<phi>) (type_of C)"
 
-(* 
-   The transpositive of this would also hold. 
-   We "ought" to prove that. 
+(*
+   The transpositive of this would also hold.
+   We "ought" to prove that.
 *)
 lemma fmdom'_map_restrict_set:
   assumes "finite xs"
@@ -1056,7 +1056,7 @@ next
   qed
 qed
 
-lemma subst_E_Some: 
+lemma subst_E_Some:
   assumes \<open>finite xs\<close> \<open>subst_E xs \<phi> $$ (x, \<alpha>) = Some A\<close>
   shows \<open>A = fun_E \<phi> (x, \<alpha>)\<close>
   using assms
@@ -1119,7 +1119,7 @@ lemma g:
   by (metis \<phi> someI_ex type_of_def well_typed wff_has_unique_type)
 
 (* For any variable *)
-lemma denotation_function_a: 
+lemma denotation_function_a:
   assumes \<phi>: \<open>\<phi> \<leadsto> D\<close>
   shows "V\<phi> \<phi> (x\<^bsub>\<alpha>\<^esub>) = \<phi> (x, \<alpha>)"
 proof -
@@ -1152,7 +1152,7 @@ proof -
 qed
 
 (* Application *)
-lemma denotation_function_c: 
+lemma denotation_function_c:
   assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and A: \<open>A \<in> wffs\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub>\<close> and B: \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
   shows \<open>V\<phi> \<phi> (A \<sqdot> B) = V\<phi> \<phi> A \<bullet> V\<phi> \<phi> B\<close>
 proof -
@@ -1214,7 +1214,7 @@ proof -
 
   have v: \<open>is_substitution ?v\<close>
     using \<phi> \<theta>\<^sub>E_is_substitution unfolding \<theta>\<^sub>E_def by (metis free_vars_form.simps(4))
-  
+
   have \<open>substitute {(x, \<alpha>) \<Zinj> E} ?B = substitute ({(x, \<alpha>) \<Zinj> E} ++\<^sub>f fmmap (substitute {(x, \<alpha>) \<Zinj> E}) ?v) B\<close>
   proof (rule substitution_consolidation)
     show \<open>(x, \<alpha>) \<notin> fmdom' ?v\<close>
@@ -1250,7 +1250,7 @@ proof -
 qed
 
 (* Abstraction *)
-lemma denotation_function_d: 
+lemma denotation_function_d:
   assumes \<phi>: \<open>\<phi> \<leadsto> D\<close> and B: \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
   shows \<open>V\<phi> \<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) = (\<^bold>\<lambda>z\<^bold>:D \<alpha> \<^bold>. V\<phi> (\<phi>((x, \<alpha>) := z)) B)\<close>
 proof -
@@ -1291,7 +1291,7 @@ qed
 
 lemma denotation_function: "is_wff_denotation_function V\<phi>"
   unfolding is_wff_denotation_function_def
-  using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d 
+  using g denotation_function_a denotation_function_b denotation_function_c denotation_function_d
   by auto
 
 sublocale M: general_model D J V\<phi>
@@ -1394,8 +1394,8 @@ proof
       then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
         by auto
       then show \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
-        by (metis H(1,2) equality_of_type_def 
-            equivalence_def hyp_prop_5200 
+        by (metis H(1,2) equality_of_type_def
+            equivalence_def hyp_prop_5200
             CIrr(3) neg_def prop_5201_1 prop_5201_2)
     qed
   qed
@@ -1417,7 +1417,7 @@ lemma pre_is_taut:
     and \<open>is_tautology (\<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> B))\<close>
     and \<open>is_tautology ((A \<supset>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B))\<close>
 proof-
-  have val_eq: 
+  have val_eq:
     \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A\<close>
     \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> B) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> B\<close>
     \<open>\<V>\<^sub>B \<phi> ((\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)) \<supset>\<^sup>\<Q> A) = ((\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<supset> \<V>\<^sub>B \<phi> B)) \<^bold>\<supset> \<V>\<^sub>B \<phi> A)\<close>
@@ -1491,7 +1491,7 @@ proof-
   obtain p r where \<open>(p, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
     and \<open>(r, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close> and \<open>p \<noteq> r\<close>
     using fresh_var_existence[of \<open>vars A \<union> vars B\<close>]
-    by (metis ID.set_finite UnCI finite_Un 
+    by (metis ID.set_finite UnCI finite_Un
         fresh_var_existence insert_iff vars_form_finiteness)
   let ?\<theta> = \<open>{(p, o) \<Zinj> A, (r,o) \<Zinj> B}\<close>
   have theta_is_pwff: \<open>is_pwff_substitution ?\<theta>\<close>
@@ -1586,13 +1586,13 @@ proof-
       [OF \<open>is_hyps {A}\<close> \<open>is_hyps {A}\<close>, where hs=\<open>[A]\<close>]
     \<open>is_tautologous (A \<supset>\<^sup>\<Q> B)\<close>
     unfolding obs
-    by (metis \<open>is_hyps {A}\<close> dv_hyp empty_set 
+    by (metis \<open>is_hyps {A}\<close> dv_hyp empty_set
         list.simps(15))
 qed
 
 lemma derive_rule:
   assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-  shows \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> A\<close> 
+  shows \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> A\<close>
     and \<open>{A \<and>\<^sup>\<Q> B} \<turnstile> B\<close>
     and \<open>{\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)} \<turnstile> A\<close>
     and \<open>{\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B)} \<turnstile> \<sim>\<^sup>\<Q> B\<close>
@@ -1642,9 +1642,9 @@ qed
 
 interpretation DA: Weak_Derivational_Alpha map_con cons_form \<open>\<lambda>_. True\<close> alpha_class "is_consistent_set \<circ> lset"
 proof(standard)
-  fix Hs 
+  fix Hs
     and ps qs :: \<open>form list\<close>
-  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close> 
+  assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
     and sub: \<open>lset ps \<subseteq> lset Hs\<close>
     and consistent: \<open>(is_consistent_set \<circ> lset) Hs\<close>
   hence well_formed: \<open>(lset qs \<union> lset Hs) \<subseteq> wffs\<^bsub>o\<^esub>\<close>
@@ -1654,7 +1654,7 @@ proof(standard)
       using consistent by force
   next
     case (CImpN B C)
-    then show ?thesis 
+    then show ?thesis
       using consistent by force
   next
     case (CTrans A \<alpha> B C)
@@ -1682,30 +1682,30 @@ proof(standard)
     have \<open>lset Hs \<turnstile> B\<close>
       apply (rule prop_5241[OF _ _ sub])
       using consistent
-      by simp (metis CConP(1) derive_rule(1)[OF CConP(3,4)] 
+      by simp (metis CConP(1) derive_rule(1)[OF CConP(3,4)]
           list.simps(15) set_empty2)
     moreover have \<open>lset Hs \<turnstile> C\<close>
       apply (rule prop_5241[OF _ _ sub])
       using consistent
-      by simp (metis CConP(1) derive_rule(2)[OF CConP(3,4)] 
+      by simp (metis CConP(1) derive_rule(2)[OF CConP(3,4)]
           list.simps(15) set_empty2)
     ultimately show ?thesis
-      using local.CConP(2) 
+      using local.CConP(2)
       by force
   next
     case (CImpN B C)
     have \<open>lset Hs \<turnstile> B\<close>
       apply (rule prop_5241[OF _ _ sub])
       using consistent
-      by simp (metis list.set(1) list.simps(15) 
+      by simp (metis list.set(1) list.simps(15)
           CImpN(1,3,4) derive_rule(3))
     moreover have \<open>lset Hs \<turnstile> \<sim>\<^sup>\<Q> C\<close>
       apply (rule prop_5241[OF _ _ sub])
       using consistent
-      by simp (metis list.set(1) list.simps(15) 
+      by simp (metis list.set(1) list.simps(15)
           CImpN(1,3,4) derive_rule(4))
     ultimately show ?thesis
-      using local.CImpN(2) 
+      using local.CImpN(2)
       by force
   next
     case (CTrans A \<alpha> B C)
@@ -1740,7 +1740,7 @@ lemma QnegD:
   by (meson assms(2) false_wff)
 
 lemma QconjI:
-  assumes \<open>is_hyps H\<close> 
+  assumes \<open>is_hyps H\<close>
     and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
     and \<open>H \<turnstile> A\<close> and \<open>H \<turnstile> B\<close>
   shows \<open>H \<turnstile> A \<and>\<^sup>\<Q> B\<close>
@@ -1749,7 +1749,7 @@ lemma QconjI:
   by metis
 
 lemma Q_consistent_disjF:
-  assumes \<open>is_hyps H\<close> 
+  assumes \<open>is_hyps H\<close>
     and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
     and \<open>H \<turnstile> A \<or>\<^sup>\<Q> B\<close> and \<open>is_consistent_set H\<close>
   shows \<open>\<not> H \<union> {A} \<turnstile> F\<^bsub>o\<^esub> \<or> \<not> H \<union> {B} \<turnstile> F\<^bsub>o\<^esub>\<close>
@@ -1758,15 +1758,15 @@ proof-
     hence \<open>H \<turnstile> A \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>\<close> and \<open>H \<turnstile> B \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>\<close>
       using assms(1)
       by (metis Deduction_Theorem)+
-    moreover have \<open>H \<turnstile> ((A \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A)\<close> 
+    moreover have \<open>H \<turnstile> ((A \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A)\<close>
       and \<open>H \<turnstile> (B \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B\<close>
       using tautologous_is_hyp_derivable[OF _ is_taut(6)] assms
       by blast+
     ultimately have \<open>H \<turnstile> \<sim>\<^sup>\<Q> A\<close> and \<open>H \<turnstile> \<sim>\<^sup>\<Q> B\<close>
-      using MP 
+      using MP
       by blast+
     hence \<open>H \<turnstile> \<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B\<close>
-      using QconjI assms(1-3) neg_wff 
+      using QconjI assms(1-3) neg_wff
       by blast
     moreover have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)\<close>
       using is_taut(8)[OF assms(2,3)] MP[OF assms(4)]
@@ -1786,7 +1786,7 @@ proof-
     by blast
 qed
 
-interpretation DB: Weak_Derivational_Beta map_con 
+interpretation DB: Weak_Derivational_Beta map_con
   cons_form \<open>\<lambda>_. True\<close> beta_class "is_consistent_set \<circ> lset"
 proof
   fix Hs and ps qs
@@ -1802,9 +1802,9 @@ proof
     hence hypsH: \<open>is_hyps (lset Hs)\<close>
       and hypsL: \<open>is_hyps (lset (\<sim>\<^sup>\<Q> A # Hs))\<close>
       and hypsR: \<open>is_hyps (lset (\<sim>\<^sup>\<Q> B # Hs))\<close>
-      using consistent 
+      using consistent
       by force+
-    moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close> 
+    moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close>
       and \<open>\<sim>\<^sup>\<Q> B \<in> wffs\<^bsub>o\<^esub>\<close>
       by (metis neg_wff CConN(3))
         (metis neg_wff CConN(4))
@@ -1827,9 +1827,9 @@ proof
     hence hypsH: \<open>is_hyps (lset Hs)\<close>
       and hypsL: \<open>is_hyps (lset (\<sim>\<^sup>\<Q> A # Hs))\<close>
       and hypsR: \<open>is_hyps (lset (B # Hs))\<close>
-      using consistent 
+      using consistent
       by force+
-    moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close> 
+    moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close>
       by (metis neg_wff CImpP(3))
     moreover have \<open>lset Hs \<turnstile> \<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B\<close>
       using  MP prop_5241[OF hypsH _ sub, unfolded CConN(1)]
