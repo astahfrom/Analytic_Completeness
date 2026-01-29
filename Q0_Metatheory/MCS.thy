@@ -129,6 +129,7 @@ section \<open>Consistency Property\<close>
 
 inductive confl_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
   CFalse: \<open>[ F\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ F\<^bsub>o\<^esub> ]\<close>
+| CTrue: \<open>[ \<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> ]\<close>
 | CNot: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> A ] \<leadsto>\<^sub>\<crossmark> [ A ]\<close>
 | CIrr: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow>  [ \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) ]\<close>
 
@@ -143,6 +144,7 @@ inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CImpP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<supset>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, B ]\<close>
+| CLEM: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [] \<leadsto>\<^sub>\<beta> [ A, \<sim>\<^sup>\<Q> A ]\<close>
 
 inductive gamma_class :: \<open>form list \<Rightarrow> (form set \<Rightarrow> _) \<times> (form \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
   CExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>C. [ A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C ])\<close>
@@ -168,7 +170,6 @@ lemma ineq_matchD [dest]: \<open>ineq_match C (\<alpha>, \<beta>, A, B) \<Longri
 
 lemma ineq_matchI [intro]: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<Longrightarrow> ineq_match C (\<alpha>, \<beta>, A, B)\<close>
   using ineq_match.intros by blast
-
 
 subsection \<open>Delta\<close>
 
@@ -364,8 +365,7 @@ proof
 qed simp
 
 locale MyHintikka = Hintikka map_con cons_form is_param Kinds H
-  for H :: \<open>form set\<close> +
-  assumes Top: \<open>T\<^bsub>o\<^esub> \<in> H\<close>
+  for H :: \<open>form set\<close>
 begin
 
 lemmas
@@ -385,6 +385,9 @@ theorem consistent: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<n
 lemma cFalse: \<open>F\<^bsub>o\<^esub> \<notin> H\<close>
   using confl by (force intro: CFalse)
 
+lemma cTrue: \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<notin> H\<close>
+  using confl by (force intro: CTrue)
+
 lemma cIrr: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) \<notin> H\<close>
   using confl by (force intro: CIrr[of A \<alpha>])
 
@@ -393,9 +396,6 @@ lemma cEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs
 
 lemma cEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B \<in> H \<and> B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A \<in> H\<close>
   using alpha by (force intro: CEqvN[of A B])
-
-lemma cImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
-  using alpha by (force intro: CImpN[of A B])
 
 lemma cTrans: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H \<Longrightarrow> B =\<^bsub>\<alpha>\<^esub> C \<in> H \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> C \<in> H\<close>
   using alpha by (force intro: CTrans[of A \<alpha> B])
@@ -409,8 +409,14 @@ lemma cIota: \<open>A \<in> wffs\<^bsub>i\<^esub> \<Longrightarrow> (\<iota> \<s
 lemma cSubst: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> free_vars A = {} \<Longrightarrow> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B \<in> H\<close>
   using alpha by (fastforce intro!: CSubst[of A \<alpha> B \<beta> x])
 
+lemma cImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
+  using alpha by (force intro: CImpN[of A B])
+
 lemma cImpP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<supset>\<^sup>\<Q> B \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> B \<in> H\<close>
   using beta by (fastforce intro!: CImpP[of A B])
+
+lemma complete: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H\<close>
+  using beta by (fastforce intro!: CLEM[of A])
 
 lemma cExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> H \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> (A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C) \<in> H\<close>
   using gamma by (force intro: CExt[of A \<alpha>])
@@ -427,40 +433,18 @@ proof -
     using delta assms(3) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
 qed
 
-lemma equal_parts:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close> \<open>A \<equiv>\<^sup>\<Q> B \<in> H\<close>
-  shows \<open>A \<in> H \<and> B \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
-  using assms by (metis cEqvP cImpP consistent)
-
-(*
-  This proof comes from:
-  On Reductions of Hintikka Sets for Higher-Order Logic
-  Alexander Steen, Christoph Benzmüller
-*)
-lemma complete:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-  shows \<open>A \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H\<close>
-proof -
-  have \<open>(Q\<^bsub>o\<^esub> \<sqdot> A =\<^bsub>o \<rightarrow> o\<^esub> Q\<^bsub>o\<^esub> \<sqdot> A) \<in> H\<close>
-    using cExt assms Top by fastforce
-  then have \<open>((A \<equiv>\<^sup>\<Q> A) =\<^bsub>o\<^esub> (A \<equiv>\<^sup>\<Q> A)) \<in> H\<close>
-    using assms cExt unfolding equivalence_def equality_of_type_def
-    by (meson Q_wff wffs_of_type_intros(3))
-  then show ?thesis
-    using assms by (metis cIrr equal_parts equality_wff equivalence_def)
-qed
-
-
 lemma cRefl: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
   by (metis cIrr complete equality_wff)
+
+lemma cSym: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H \<Longrightarrow> B =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
+  using cCong[of A] cIrr[of B] cTrans complete false_wff unfolding  equality_of_type_def equivalence_def
+  by (smt (verit, ccfv_SIG) Q_wff neg_def wffs_of_type_intros(3))
 
 lemma cMP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<in> H \<Longrightarrow> A \<supset>\<^sup>\<Q> B \<in> H \<Longrightarrow> B \<in> H\<close>
   using cImpP consistent by blast
 
-lemma cSym: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> A =\<^bsub>\<alpha>\<^esub> B \<in> H \<Longrightarrow> B =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
-  using cCong cIrr equal_parts unfolding Q_constant_of_type_def Q_def equality_of_type_def equivalence_def
-  by (meson wffs_of_type_intros(2,3))
-
+lemma cTop: \<open>T\<^bsub>o\<^esub> \<in> H\<close>
+  using cTrue complete by blast
 
 lemma extensionally_complete_membership: \<open>extensionally_complete_membership H\<close>
   unfolding extensionally_complete_membership_def
@@ -508,7 +492,7 @@ fun
 lemma one_o: "D o = set {V A o| A. is_closed_wff_of_type A o}"
 proof -
   have \<open>{bool_to_V True, bool_to_V False} \<subseteq> {V A o |A. is_closed_wff_of_type A o}\<close>
-    using Top cFalse true_wff by fastforce
+    using cFalse cTop false_wff true_wff by fastforce
   moreover have \<open>{bool_to_V True, bool_to_V False} \<supseteq> {V A o |A. is_closed_wff_of_type A o}\<close>
     by auto
   ultimately show ?thesis
@@ -522,9 +506,9 @@ lemma bool_to_V_distinct: \<open>bool_to_V False \<noteq> bool_to_V True\<close>
 lemma two_o:
   assumes "A \<in> wffs\<^bsub>o\<^esub>" "B \<in> wffs\<^bsub>o\<^esub>"
   shows \<open>V A o = V B o \<longleftrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H\<close>
-  using assms consistent complete cEqvN cMP cSym cTrans
-  by (metis V.simps(1) bool_to_V_distinct bottom_def 
-      equality_of_type_def equality_wff equivalence_def false_wff neg_def top_def)
+  using assms consistent cEqvN cImpP cSym cTrans complete bool_to_V_distinct
+  unfolding equivalence_def V.simps
+  by (metis bottom_def equality_of_type_def equality_wff false_wff neg_def top_def)
 
 lemma one_i: "D i = set {V A i| A. is_closed_wff_of_type A i}"
   by simp (* defined to hold *)
@@ -1135,7 +1119,7 @@ qed
 lemma denotation_function_b: "V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = J (c, \<alpha>)"
 proof -
   have \<open>map_E (free_vars (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)) \<phi> (c, \<alpha>) = None\<close>
-    unfolding map_E_def fun_E_def map_restrict_set_def Finite_Map.map_filter_def by simp
+    unfolding map_E_def fun_E_def map_restrict_set_def map_filter_def by simp
   then have \<open>C\<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<phi> = \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close>
     using \<theta>\<^sub>E_lookup unfolding C\<phi>_def by simp
   moreover have \<open>V\<phi> \<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = V (C\<phi> (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<phi>) \<alpha>\<close>
@@ -1154,7 +1138,7 @@ proof -
     unfolding C\<phi>_def by simp
   also have \<open>\<dots> = (substitute (\<theta>\<^sub>E \<phi> A) A) \<sqdot> (substitute (\<theta>\<^sub>E \<phi> B) B)\<close>
     using substitute_cong \<theta>\<^sub>E_lookup A B
-    by (simp add: Finite_Map.map_filter_def map_E_def map_restrict_set_def)
+    by (simp add: map_filter_def map_E_def map_restrict_set_def)
   also have \<open>\<dots> = (C\<phi> A \<phi>) \<sqdot> (C\<phi> B \<phi>)\<close>
     unfolding C\<phi>_def by simp
       (* Andrews does not justify this step, even though it requires an induction. *)
@@ -1344,22 +1328,15 @@ theorem model_existence:
   fixes S :: \<open>form set\<close>
   assumes cprop: \<open>P.prop\<^sub>E Kinds C\<close>
     and S: \<open>S \<in> C\<close> \<open>P.enough_new S\<close>
-    and top: \<open>T\<^bsub>o\<^esub> \<in> S\<close>
-    and A: \<open>A \<in> S\<close> \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars A = {}\<close>
-  shows \<open>\<exists>D J V\<phi>. general_model D J V\<phi> \<and> (D, J, V\<phi>) \<Turnstile> A\<close>
+  shows \<open>\<exists>M. is_general_model M \<and> (\<forall>A \<in> S. A \<in> wffs\<^bsub>o\<^esub> \<longrightarrow> free_vars A = {} \<longrightarrow> M \<Turnstile> A)\<close>
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
     show \<open>P.prop\<^sub>H Kinds (mk_mcs C S)\<close>
       using mk_mcs_Hintikka[OF cprop S] Hintikka.hintikka by blast
-  next
-    show \<open>T\<^bsub>o\<^esub> \<in> mk_mcs C S\<close>
-      using top Extend_subset by blast
   qed
-  moreover have \<open>A \<in> {A \<in> mk_mcs C S. A \<in> wffs\<^bsub>o\<^esub> \<and> free_vars A = {}}\<close>
-    using A S Extend_subset by blast
-  ultimately show ?thesis
-    using MyHintikka.canon_model_for MyHintikka.is_general_model by meson
+  then show ?thesis
+    using MyHintikka.canon_model_for MyHintikka.is_general_model Extend_subset by blast
 qed
 
 section \<open>Derivational Consistency\<close>
@@ -1367,42 +1344,53 @@ section \<open>Derivational Consistency\<close>
 definition is_consistent_set :: "form set \<Rightarrow> bool" where
   [iff]: "is_consistent_set \<G> \<longleftrightarrow> is_hyps \<G> \<and> \<not> is_inconsistent_set \<G>"
 
-interpretation DC: Derivational_Confl map_con cons_form is_param confl_class is_consistent_set
+interpretation DC: Weak_Derivational_Confl map_con cons_form is_param confl_class \<open>is_consistent_set o lset\<close>
 proof
   fix H ps qs q
-  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> and *: \<open>lset ps \<subseteq> H\<close> \<open>q \<in> lset qs\<close> \<open>q \<in> H\<close>
-  then show \<open>\<not> is_consistent_set H\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> and *: \<open>lset ps \<subseteq> lset H\<close> \<open>q \<in> lset qs\<close> \<open>q \<in> lset H\<close>
+  then show \<open>\<not> (is_consistent_set \<circ> lset) H\<close>
   proof cases
     case CFalse
-    then have \<open>F\<^bsub>o\<^esub> \<in> H\<close>
+    then have \<open>F\<^bsub>o\<^esub> \<in> lset H\<close>
       using * by simp
     then show ?thesis
-      using dv_hyp by blast
+      using dv_hyp by simp
+  next
+    case CTrue
+    then have \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<in> lset H\<close>
+      using * by simp
+    then show ?thesis
+      using dv_hyp prop_5219_2
+      by (metis comp_apply equality_of_type_def false_wff is_consistent_set_def is_inconsistent_set_def neg_def)
   next
     case (CNot A)
     then show ?thesis
     proof safe
-      assume H: \<open>H \<subseteq> wffs\<^bsub>o\<^esub>\<close> \<open>finite H\<close>
-      from CNot have \<open>\<sim>\<^sup>\<Q> A \<in> H\<close> \<open>A \<in> H\<close>
+      assume H: \<open>(is_consistent_set \<circ> lset) H\<close>
+      from CNot have \<open>\<sim>\<^sup>\<Q> A \<in> lset H\<close> \<open>A \<in> lset H\<close>
         using * by simp_all
-      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> A\<close> \<open>H \<turnstile> A\<close>
-        using dv_hyp H by blast+
-      then show \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
-        using H by (metis equality_of_type_def equivalence_def neg_def prop_5201_1 prop_5201_2)
+      then have \<open>lset H \<turnstile> \<sim>\<^sup>\<Q> A\<close> \<open>lset H \<turnstile> A\<close>
+        using dv_hyp H by auto
+      then have \<open>lset H \<turnstile> F\<^bsub>o\<^esub>\<close>
+        using H prop_5201_1 prop_5201_2
+        by (metis equality_of_type_def equivalence_def neg_def )
+      then show False
+        using H by simp
     qed
   next
     case (CIrr A \<alpha>)
     then show ?thesis
     proof safe
-      assume H: \<open>H \<subseteq> wffs\<^bsub>o\<^esub>\<close> \<open>finite H\<close>
-      with CIrr have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
-        by (metis "*"(1) dv_hyp insert_subset list.simps(15))
-      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
+      assume H: \<open>(is_consistent_set \<circ> lset) H\<close>
+      with CIrr have \<open>lset H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
+        using *(1) dv_hyp by auto
+      then have \<open>lset H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
         by auto
-      then show \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
-        by (metis H(1,2) equality_of_type_def
-            equivalence_def hyp_prop_5200
-            CIrr(3) neg_def prop_5201_1 prop_5201_2)
+      then have \<open>lset H \<turnstile> F\<^bsub>o\<^esub>\<close>
+        using H *(1) prop_5201_1 prop_5201_2 hyp_prop_5200
+        by (metis is_consistent_set_def equality_of_type_def comp_apply CIrr(3) neg_def equivalence_def)
+      then show False
+        using H by simp
     qed
   qed
 qed
@@ -1422,6 +1410,7 @@ lemma pre_is_taut:
     and \<open>is_tautology ((A \<or>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B))\<close>
     and \<open>is_tautology (\<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> B))\<close>
     and \<open>is_tautology ((A \<supset>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B))\<close>
+    and \<open>is_tautology (A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A)\<close>
 proof-
   have val_eq:
     \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A\<close>
@@ -1434,6 +1423,7 @@ proof-
     \<open>\<V>\<^sub>B \<phi> ((A \<or>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)) = ((\<V>\<^sub>B \<phi> A \<^bold>\<or> \<V>\<^sub>B \<phi> B)) \<^bold>\<supset> \<sim> (\<sim> \<V>\<^sub>B \<phi> A \<^bold>\<and> \<sim> \<V>\<^sub>B \<phi> B)\<close>
     \<open>\<V>\<^sub>B \<phi> (\<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)) = (\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B)) \<^bold>\<supset> (\<sim> \<V>\<^sub>B \<phi> A \<^bold>\<or> \<sim> \<V>\<^sub>B \<phi> B)\<close>
     \<open>\<V>\<^sub>B \<phi> ((A \<supset>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B)) = ((\<V>\<^sub>B \<phi> A \<^bold>\<supset> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> (\<sim> \<V>\<^sub>B \<phi> A \<^bold>\<or> \<V>\<^sub>B \<phi> B))\<close>
+    \<open>\<V>\<^sub>B \<phi> (A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A) = ((\<V>\<^sub>B \<phi> A) \<^bold>\<or> (\<sim> (\<V>\<^sub>B \<phi> A)))\<close>
     if \<open>is_tv_assignment \<phi>\<close> for \<phi>
     using assms that
     by (simp_all only: \<V>\<^sub>B_simps)
@@ -1479,6 +1469,10 @@ proof-
     using val_eq(10)
     unfolding is_tautology_def
     by (safe; (intro assms)?) force
+  show \<open>is_tautology (A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A)\<close>
+    using val_eq(11)
+    unfolding is_tautology_def
+    by (safe; (intro assms)?) force
 qed
 
 lemma is_taut:
@@ -1493,6 +1487,7 @@ lemma is_taut:
     and \<open>is_tautologous ((A \<or>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> B))\<close>
     and \<open>is_tautologous (\<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> B))\<close>
     and \<open>is_tautologous ((A \<supset>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B))\<close>
+    and \<open>is_tautologous (A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A)\<close>
 proof-
   obtain p r where \<open>(p, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
     and \<open>(r, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close> and \<open>p \<noteq> r\<close>
@@ -1514,6 +1509,7 @@ proof-
     \<open>is_tautology ((p\<^bsub>o\<^esub> \<or>\<^sup>\<Q> r\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> (\<sim>\<^sup>\<Q> p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<sim>\<^sup>\<Q> r\<^bsub>o\<^esub>))\<close>
     \<open>is_tautology (\<sim>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> p\<^bsub>o\<^esub> \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> r\<^bsub>o\<^esub>))\<close>
     \<open>is_tautology ((p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> r\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> p\<^bsub>o\<^esub> \<or>\<^sup>\<Q> r\<^bsub>o\<^esub>))\<close>
+    \<open>is_tautology (p\<^bsub>o\<^esub> \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
     by (intro pre_is_taut[of \<open>p\<^bsub>o\<^esub>\<close> \<open>r\<^bsub>o\<^esub>\<close>] pwffs.intros)+
   have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
     using \<open>p \<noteq> r\<close>
@@ -1574,6 +1570,12 @@ proof-
     by simp
   thus \<open>is_tautologous ((A \<supset>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (\<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B))\<close>
     using theta_is_pwff tauts(10)
+    by blast
+  have \<open>A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+    using \<open>p \<noteq> r\<close>
+    by simp
+  thus \<open>is_tautologous (A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A)\<close>
+    using theta_is_pwff tauts(11)
     by blast
 qed
 
@@ -1646,7 +1648,7 @@ proof -
     by simp
 qed
 
-interpretation DA: Weak_Derivational_Alpha map_con cons_form \<open>\<lambda>_. True\<close> alpha_class "is_consistent_set \<circ> lset"
+interpretation DA: Weak_Derivational_Alpha map_con cons_form is_param alpha_class "is_consistent_set \<circ> lset"
 proof(standard)
   fix Hs
     and ps qs :: \<open>form list\<close>
@@ -1741,6 +1743,12 @@ qed
 
 subsection \<open>Disjunctive Consistency\<close>
 
+lemma prop_LEM:
+  assumes \<open>is_hyps H\<close> \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+  shows \<open>H \<turnstile> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A\<close>
+  using assms
+  by (meson empty_subsetI finite.emptyI is_taut(11) tautologous_is_hyp_derivable)
+
 lemma QnegD:
   assumes \<open>is_hyps H\<close> and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
     and \<open>H \<turnstile> \<sim>\<^sup>\<Q> A\<close>
@@ -1797,7 +1805,7 @@ proof-
 qed
 
 interpretation DB: Weak_Derivational_Beta map_con
-  cons_form \<open>\<lambda>_. True\<close> beta_class "is_consistent_set \<circ> lset"
+  cons_form is_param beta_class "is_consistent_set \<circ> lset"
 proof
   fix Hs and ps qs
   assume beta: \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
@@ -1830,7 +1838,103 @@ proof
       unfolding is_consistent_set_def is_inconsistent_set_def
       comp_def CImpP(2)
       by simp
+  next
+    case (CLEM A)
+    hence hypsH: \<open>is_hyps (lset Hs)\<close>
+      and hypsL: \<open>is_hyps (lset (A # Hs))\<close>
+      and hypsR: \<open>is_hyps (lset (\<sim>\<^sup>\<Q> A # Hs))\<close>
+      using consistent
+      by force+
+    moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close>
+      by (metis neg_wff CLEM(3))
+    moreover have \<open>lset Hs \<turnstile> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A\<close>
+      using hypsH CLEM(3) prop_LEM by blast
+    ultimately have \<open>\<not> lset Hs \<union> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub> \<or> \<not> lset Hs \<union> {A} \<turnstile> F\<^bsub>o\<^esub>\<close>
+      by (metis Q_consistent_disjF comp_def consistent CLEM(3))
+    hence \<open>\<not> (lset (\<sim>\<^sup>\<Q> A # Hs) \<turnstile> F\<^bsub>o\<^esub>) \<or> \<not> (lset (A # Hs) \<turnstile> F\<^bsub>o\<^esub>)\<close>
+      by simp
+    then show \<open>\<exists>q\<in>lset qs. (is_consistent_set \<circ> lset) (q # Hs)\<close>
+      using consistent hypsL hypsR
+      unfolding is_consistent_set_def is_inconsistent_set_def
+        comp_def CLEM(2) by auto
   qed
+qed
+
+interpretation DG: Weak_Derivational_Gamma map_con map_con
+  cons_form is_param gamma_class "is_consistent_set \<circ> lset"
+proof
+  fix A ps F qs t
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>lset ps \<subseteq> lset A\<close> \<open>t \<in> F (lset A)\<close> \<open>(is_consistent_set \<circ> lset) A\<close>
+  then show \<open>(is_consistent_set \<circ> lset) (qs t @ A)\<close>
+  proof cases
+    case (CExt A \<alpha> \<beta> B)
+    then show ?thesis
+      sorry
+  qed
+qed
+
+interpretation DD: Weak_Derivational_Delta map_con
+  cons_form is_param delta "is_consistent_set \<circ> lset"
+proof
+  fix A p x
+  assume \<open>p \<in> lset A\<close> \<open>x \<notin> P.params (lset A)\<close> \<open>(is_consistent_set \<circ> lset) A\<close>
+  then show \<open>(is_consistent_set \<circ> lset) (delta p x @ A)\<close>
+  proof (induct p x rule: delta.induct)
+    case (1 C c)
+    then show ?case sorry
+  qed
+qed
+
+lemma infinite_params: \<open>infinite (Collect is_param)\<close>
+proof -
+  have \<open>Collect is_param = UNIV - {\<cc>\<^sub>Q, \<cc>\<^sub>\<iota>}\<close>
+    unfolding is_param_def by fast
+  then show ?thesis
+    by simp
+qed
+
+interpretation Weak_Derivational_Consistency map_con cons_form is_param Kinds \<open>is_consistent_set \<circ> lset\<close>
+proof
+  show \<open>infinite UNIV \<Longrightarrow> P.prop\<^sub>E Kinds {S. \<exists>A. lset A = S \<and> (is_consistent_set \<circ> lset) A}\<close>
+    using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] infinite_params
+    by blast
+qed
+
+
+section \<open>Completeness\<close>
+
+theorem completeness:
+  assumes mod: \<open>\<And>M. is_general_model M \<Longrightarrow> M \<Turnstile> A\<close>
+    and A: \<open>is_closed_wff_of_type A o\<close>
+  shows \<open>\<turnstile> A\<close>
+proof (rule ccontr)
+  assume \<open>\<not> \<turnstile> A\<close>
+  then have \<open>\<not> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close>
+    using A sorry
+  then have *: \<open>(is_consistent_set \<circ> lset) [\<sim>\<^sup>\<Q> A]\<close>
+    using A by auto
+
+  let ?S = \<open>{\<sim>\<^sup>\<Q> A}\<close>
+  let ?C = \<open>{S. \<exists>A. lset A = S \<and> (is_consistent_set \<circ> lset) A}\<close>
+
+  have \<open>P.prop\<^sub>E Kinds ?C\<close>
+    using Consistency by blast
+  moreover have \<open>P.enough_new ?S\<close>
+    unfolding P.enough_new_def using infinite_params
+      (* We need to show that we have countably many forms. Maybe the countable datatype package will do it? *)
+    sorry
+  moreover have \<open>?S \<in> ?C\<close>
+    using * by (metis (mono_tags, lifting) list.set(1) list.simps(15) mem_Collect_eq)
+  moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars (\<sim>\<^sup>\<Q> A) = {}\<close>
+    using A by auto
+  ultimately obtain M where M: \<open>is_general_model M\<close> \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close>
+    using model_existence[of ?C ?S] by auto
+  then have \<open>\<not> M \<Turnstile> A\<close>
+    sorry (* Is that not a thing? I guess we need to look at how Andrews does it? *)
+  moreover have \<open>M \<Turnstile> A\<close>
+    using mod[OF M(1)] by fast
+  ultimately show False
+    ..
 qed
 
 end
