@@ -67,6 +67,64 @@ definition extensionally_complete_membership :: "form set \<Rightarrow> bool" wh
                (\<exists>C. is_closed_wff_of_type C \<beta> \<and>
                     (((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)))\<close>
 
+section \<open>Lemmas\<close>
+
+
+lemma substitute_cong:
+  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<forall>x \<in> free_vars A. F $$ x = G $$ x \<Longrightarrow> substitute F A = substitute G A\<close>
+proof (induct A arbitrary: F G rule: wffs_of_type_induct)
+  case (abs_is_wff \<beta> A \<alpha> x)
+  then show ?case
+    apply auto
+    by (metis Diff_iff fmdom'_notD singletonD)
+qed simp_all
+
+lemma free_vars_substitute: \<open>free_vars (substitute \<phi> A) \<subseteq> (free_vars A - fmdom' \<phi>) \<union> \<Union>(free_vars ` fmran' \<phi>)\<close>
+proof (induct \<phi> A rule: substitute.induct)
+  case (1 \<theta> x \<alpha>)
+  then show ?case
+  proof (cases \<open>\<theta> $$ (x, \<alpha>)\<close>)
+    case None
+    then show ?thesis
+      using 1
+      by (simp add: fmdom'_notI)
+  next
+    case (Some a)
+    then show ?thesis
+      using 1 by (auto intro: fmran'I)
+  qed
+next
+  case (2 \<theta> c \<alpha>)
+  then show ?case
+    by simp
+next
+  case (3 \<theta> A B)
+  then show ?case
+    by auto
+next
+  case (4 \<theta> x \<alpha> A)
+  then show ?case
+  proof (cases \<open>(x, \<alpha>) \<in> fmdom' \<theta>\<close>)
+    case True
+    then show ?thesis
+      using 4
+        (* TODO: nasty *)
+      apply auto
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
+          in_mono insert_iff)
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
+          in_mono insert_iff)
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_notI fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
+          in_mono insertE insert_Diff prod.inject)
+      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmlookup_drop fmlookup_ran'_iff in_mono insertE insert_Diff
+          not_None_eq prod.inject)
+      done
+  next
+    case False
+    then show ?thesis
+      using 4 by auto
+  qed
+qed
 
 section \<open>Consistency Property\<close>
 
@@ -87,6 +145,7 @@ inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 | CTrans: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B, B =\<^bsub>\<alpha>\<^esub> C ] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>\<alpha>\<^esub> C ]\<close>
 | CCong: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B ]\<close>
 | CIota: \<open>A \<in> wffs\<^bsub>i\<^esub> \<Longrightarrow> [] \<leadsto>\<^sub>\<alpha> [ \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A ]\<close>
+| CSubst: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> free_vars A = {} \<Longrightarrow> [] \<leadsto>\<^sub>\<alpha> [ (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B ]\<close>
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
   CConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, \<sim>\<^sup>\<Q> B ]\<close>
@@ -194,6 +253,12 @@ lemma finite_cons_form [simp]: \<open>finite (cons_form A)\<close>
 
 lemma map_con_ineq_match [intro]: \<open>ineq_match C (\<alpha>, \<beta>, A, B) \<Longrightarrow> ineq_match (map_con f C) (\<alpha>, \<beta>, map_con f A, map_con f B)\<close>
   by (auto elim: ineq_match.cases simp: ineq_match.simps)
+
+lemma free_vars_map_con [simp]: \<open>free_vars (map_con f A) = free_vars A\<close>
+  by (induct A) (auto split: if_splits)
+
+lemma map_con_substitute [simp]: \<open>map_con f (substitute {(x, \<alpha>) \<Zinj> A} B) = substitute {(x, \<alpha>) \<Zinj> map_con f A} (map_con f B)\<close>
+  using singleton_substitution_simps by (induct B) auto
 
 subsection \<open>Parameter Substitution Inversion\<close>
 
@@ -348,6 +413,9 @@ lemma cCong: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<i
 
 lemma cIota: \<open>A \<in> wffs\<^bsub>i\<^esub> \<Longrightarrow> (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A) \<in> H\<close>
   using alpha by (force intro: CIota[of A])
+
+lemma cSubst: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> free_vars A = {} \<Longrightarrow> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B \<in> H\<close>
+  using alpha by (fastforce intro!: CSubst[of A \<alpha> B \<beta> x])
 
 lemma cConN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<and>\<^sup>\<Q> B) \<in> H \<Longrightarrow> \<sim>\<^sup>\<Q> A \<in> H \<or> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using beta by (force intro: CConN[of A B])
@@ -997,64 +1065,8 @@ lemma finite_dom_map_E_free_vars:
 lemma \<theta>\<^sub>E_lookup: \<open>\<theta>\<^sub>E \<phi> C $$ x = map_E (free_vars C) \<phi> x\<close>
   by (simp add: Abs_fmap_inverse \<theta>\<^sub>E_def finite_dom_map_E_free_vars subst_E_def)
 
-lemma substitute_cong:
-  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<forall>x \<in> free_vars A. F $$ x = G $$ x \<Longrightarrow> substitute F A = substitute G A\<close>
-proof (induct A arbitrary: F G rule: wffs_of_type_induct)
-  case (abs_is_wff \<beta> A \<alpha> x)
-  then show ?case
-    apply auto
-    by (metis Diff_iff fmdom'_notD singletonD)
-qed simp_all
-
 lemma \<theta>\<^sub>E_mono: \<open>x \<in> free_vars A \<Longrightarrow> free_vars A \<subseteq> free_vars B \<Longrightarrow> \<theta>\<^sub>E \<phi> B $$ x = \<theta>\<^sub>E \<phi> A $$ x\<close>
   unfolding \<theta>\<^sub>E_lookup Finite_Map.map_filter_def map_E_def map_restrict_set_def by auto
-
-lemma free_vars_substitute: \<open>free_vars (substitute \<phi> A) \<subseteq> (free_vars A - fmdom' \<phi>) \<union> \<Union>(free_vars ` fmran' \<phi>)\<close>
-proof (induct \<phi> A rule: substitute.induct)
-  case (1 \<theta> x \<alpha>)
-  then show ?case
-  proof (cases \<open>\<theta> $$ (x, \<alpha>)\<close>)
-    case None
-    then show ?thesis
-      using 1
-      by (simp add: fmdom'_notI)
-  next
-    case (Some a)
-    then show ?thesis
-      using 1 by (auto intro: fmran'I)
-  qed
-next
-  case (2 \<theta> c \<alpha>)
-  then show ?case
-    by simp
-next
-  case (3 \<theta> A B)
-  then show ?case
-    by auto
-next
-  case (4 \<theta> x \<alpha> A)
-  then show ?case
-  proof (cases \<open>(x, \<alpha>) \<in> fmdom' \<theta>\<close>)
-    case True
-    then show ?thesis
-      using 4
-        (* TODO: nasty *)
-      apply auto
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
-          in_mono insert_iff)
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
-          in_mono insert_iff)
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_notI fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
-          in_mono insertE insert_Diff prod.inject)
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmlookup_drop fmlookup_ran'_iff in_mono insertE insert_Diff
-          not_None_eq prod.inject)
-      done
-  next
-    case False
-    then show ?thesis
-      using 4 by auto
-  qed
-qed
 
 lemma subst_E_Some:
   assumes \<open>finite xs\<close> \<open>subst_E xs \<phi> $$ (x, \<alpha>) = Some A\<close>
@@ -1224,10 +1236,6 @@ proof (rule substitute_cong)
   qed
 qed
 
-lemma cSubst: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> is_free_for A (x, \<alpha>) B \<Longrightarrow> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B \<in> H\<close>
-  (* justified by prop_5207, but it seems the \<open>free_for\<close> condition is tricky to put in the consistency property? *)
-  sorry
-
 lemma cSubst_C\<phi>:
   assumes B: "B \<in> wffs\<^bsub>\<beta>\<^esub>" and E: "E \<in> wffs\<^bsub>\<alpha>\<^esub>" "free_vars E = {}" \<open>fun_E (\<phi>((x, \<alpha>) := V E \<alpha>)) (x, \<alpha>) = E\<close>
     and \<phi>: \<open>\<phi> \<leadsto> D\<close>
@@ -1259,7 +1267,7 @@ proof -
 
   moreover have \<open>(\<lambda>x\<^bsub>\<alpha>\<^esub>. ?B) \<sqdot> E =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> E} ?B \<in> H\<close>
     using B E \<phi> cSubst
-    by (metis \<theta>\<^sub>E_def \<theta>\<^sub>E_is_substitution closed_is_free_for exists_fv substitution_preserves_typing)
+    by (metis \<theta>\<^sub>E_def \<theta>\<^sub>E_is_substitution exists_fv substitution_preserves_typing)
   then have \<open>C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi> \<sqdot> E =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> E} ?B \<in> H\<close>
     unfolding C\<phi>_lam .
   ultimately have \<open>C\<phi> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<phi> \<sqdot> E =\<^bsub>\<beta>\<^esub> substitute (?v((x, \<alpha>) \<Zinj> E)) B \<in> H\<close>
@@ -1693,6 +1701,9 @@ proof(standard)
     case (CIota A)
     then show ?thesis
       using consistent by force
+  next
+    case (CSubst A \<alpha> B \<beta> x)
+    then show ?thesis sorry
   qed
   moreover have \<open>finite (lset qs \<union> lset Hs)\<close>
     by simp
@@ -1717,6 +1728,9 @@ proof(standard)
       by force
   next
     case (CImpN B C)
+      (* why not this?
+      by (metis derive_rule(3,4) empty_iff empty_set le_sup_iff list.set_finite list.simps(15) prop_5241 set_ConsD sub
+          well_formed) *)
     have \<open>lset Hs \<turnstile> B\<close>
       apply (rule prop_5241[OF _ _ sub])
       using consistent
@@ -1742,6 +1756,12 @@ proof(standard)
       using axiom_5_wff
       by (metis derivability_implies_hyp_derivability empty_iff empty_set le_sup_iff list.set_finite set_ConsD
           well_formed)
+  next
+    case (CSubst A \<alpha> B \<beta> x)
+    then show ?thesis
+      using prop_5207
+      by (metis closed_is_free_for derivability_implies_hyp_derivability empty_iff empty_set le_sup_iff list.set_finite
+          set_ConsD well_formed)
   qed
   have \<open>is_consistent_set (lset qs \<union> lset Hs)\<close>
     by (metis \<open>\<forall>F\<in>lset qs. lset Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> lset Hs)\<close> well_formed
