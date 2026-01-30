@@ -1930,7 +1930,10 @@ proof (rule ccontr)
   ultimately obtain M where M: \<open>is_general_model M\<close> \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close>
     using model_existence[of ?C ?S] by auto
   then have \<open>\<not> M \<Turnstile> A\<close>
-    sorry (* Is that not a thing? I guess we need to look at how Andrews does it? *)
+    sorry (* Is that not a thing? I guess we need to look at how Andrews does it?
+    IDEA: even if it's not a thing in general, it's certainly a thing for our model,
+      so we can just expose this property in the model existence theorem.
+  *)
   moreover have \<open>M \<Turnstile> A\<close>
     using mod[OF M(1)] by fast
   ultimately show False
