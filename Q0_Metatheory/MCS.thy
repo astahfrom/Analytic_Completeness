@@ -1998,68 +1998,135 @@ proof
   qed
 qed
 
-lemma 
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-  shows \<open>\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A =\<^bsub>\<alpha> \<rightarrow> \<alpha>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (A =\<^bsub>\<alpha>\<^esub> B)\<close>
-  using prop_5238[of \<open>[(x, \<alpha>)]\<close>, OF _ assms]
-  by simp
+lemma positions_eta_vars:
+  \<open>positions (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>) 
+  = {[], [\<guillemotleft>, \<guillemotright>], [\<guillemotleft>, \<guillemotleft>], [\<guillemotleft>], [\<guillemotright>], [\<guillemotright>, \<guillemotleft>, \<guillemotright>], [\<guillemotright>, \<guillemotleft>, \<guillemotleft>], [\<guillemotright>, \<guillemotleft>]}\<close>
+  by auto
 
-lemma 
-  assumes \<open>is_hyps H\<close> and \<open>H \<turnstile> \<sim>\<^sup>\<Q> (f =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> g)\<close>
-  shows \<open>H \<turnstile> \<exists>x\<^bsub>\<alpha>\<^esub>. \<sim>\<^sup>\<Q> (f \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-  apply(rule prop_5242)
-  prefer 2
-     apply (metis assms(2) equality_wff neg_wff
-      hyp_derivable_form_is_wffso wffs_from_neg
-      wffs_of_type_intros(1,3) wffs_from_equality(1,2))
-    prefer 2 apply (rule prop_5215)
-      apply (rule Elementary_Logic.Gen)
-       apply (rule QnegI[OF assms(1)])
-        apply (metis equality_wff wffs_of_type_intros(1) 
-      wffs_from_equality(1) wffs_from_equality(2) wffs_of_type_intros(3) 
-      hyp_derivable_form_is_wffso wffs_from_neg assms(2))
-  using QnegD[OF assms(1) _ assms(2)] prop_5238
-  oops
+lemma prefix_eta_vars: 
+  \<open>prefix p [\<guillemotleft>, \<guillemotleft>] \<Longrightarrow> p = [\<guillemotleft>, \<guillemotleft>] \<or> p = [\<guillemotleft>] \<or> p = []\<close>
+  \<open>prefix p [\<guillemotright>] \<Longrightarrow> p = [\<guillemotright>] \<or> p = []\<close>
+  unfolding prefix_def
+  by (auto simp: Cons_eq_append_conv)
 
+lemma free_for_eta_vars: \<open>(x, \<alpha>) \<notin> free_vars A \<Longrightarrow> 
+  is_free_for A (f, \<alpha> \<rightarrow> \<beta>) (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+  unfolding is_free_for_def in_scope_of_abs_def positions_eta_vars
+  using prefix_eta_vars vars_is_free_and_bound_vars
+  by (safe; (clarsimp split: option.split form.split elim!: subform_at.elims)?)
+    auto
+
+lemma eta_conv:
+  shows \<open>\<turnstile> f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+    and \<open>\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close>
+    and \<open>F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<Longrightarrow> (x, \<alpha>) \<notin> free_vars F \<Longrightarrow> \<turnstile> F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. F \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+    and \<open>F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<Longrightarrow> (x, \<alpha>) \<notin> free_vars F \<Longrightarrow> \<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. F \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> F\<close>
+proof-
+  have obs1: \<open>is_free_for (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>) (\<ff>, \<alpha> \<rightarrow> \<beta>) (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. \<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))\<close>
+    if \<open>\<ff> \<noteq> f\<close> for y::nat
+    apply (rule absent_var_is_free_for)
+    using that by simp
+  have obs2: \<open>(\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. \<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>)) \<in> wffs\<^bsub>o\<^esub>\<close> for y::nat
+    by blast
+  have obs3: \<open>\<turnstile> \<forall>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. \<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>)) \<supset>\<^sup>\<Q>
+   \<^bold>S {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. \<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))\<close> 
+    if \<open>\<ff> \<noteq> f\<close> for y::nat
+    using prop_5226[OF _ obs2 obs1] that 
+    by blast
+  have obs4: \<open>\<^bold>S {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. \<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))
+    = (f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))\<close> for y::nat
+    by simp
+  have \<open>\<turnstile> \<forall>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. \<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>)) \<supset>\<^sup>\<Q>
+    (f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))\<close> 
+    if \<open>\<ff> \<noteq> f\<close> for y::nat
+    using obs3[unfolded obs4] that
+    by blast
+  moreover have \<open>\<turnstile> \<forall>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. \<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))\<close> 
+    for y::nat
+    using Gen[OF prop_5205, of \<ff> \<open>\<alpha>\<rightarrow>\<beta>\<close> \<alpha> \<beta> y]
+    by simp
+  ultimately show result1: \<open>\<turnstile> f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+    using MP prop_5205 
+    by blast
+  thus \<open>\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close>
+    using prop_5201_2
+    by blast
+  have allf: \<open>\<turnstile> \<forall>f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+    using Gen[OF result1, of f \<open>\<alpha> \<rightarrow> \<beta>\<close>]
+    by simp
+  moreover have \<open>f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> \<in> wffs\<^bsub>o\<^esub>\<close>
+    by blast
+  ultimately have \<open> \<turnstile> (\<forall>f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))) \<supset>\<^sup>\<Q>
+   (\<^bold>S {(f, \<alpha>\<rightarrow>\<beta>) \<Zinj> F} (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)))\<close>
+    if \<open>F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close> and \<open>(x, \<alpha>) \<notin> free_vars F\<close>
+    using that prop_5226[OF _ _ free_for_eta_vars[of x \<alpha> F f \<beta>]]
+    by blast
+  thus \<open> \<turnstile> F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. F \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+    if \<open>F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close> and \<open>(x, \<alpha>) \<notin> free_vars F\<close>
+    using that MP[OF allf]
+    by fastforce (* ~5 secs*)
+  thus \<open> \<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. F \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> F\<close>
+    if \<open>F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close> and \<open>(x, \<alpha>) \<notin> free_vars F\<close>
+    using prop_5201_2 that
+    by blast
+qed
 
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
 proof
-  fix As p x
+  fix As p c
   assume \<open>p \<in> lset As\<close> 
-    and \<open>x \<notin> P.params (lset As)\<close> 
+    and \<open>c \<notin> P.params (lset As)\<close> 
     and consistent: \<open>(is_consistent_set \<circ> lset) As\<close>
-  hence \<open>\<not> (p \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)))
-    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p x @ As)\<close>
+  hence neg_case: \<open>\<not> (p \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)))
+    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p c @ As)\<close>
     by (simp only: CDelta)
       fastforce
-  moreover have \<open>p \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B))
-    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p x @ As)\<close>
-    using \<open>p \<in> lset As\<close> 
-  proof (induct p x rule: delta.induct)
-    case (1 C c)
-    obtain A B \<alpha> \<beta> 
-      where C_def: \<open>ineq_match C (\<alpha>, \<beta>, A, B)\<close>
-        and delta_eq: \<open>delta C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        and C_eq: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
-      using ineq_match_delta[OF 1(1)] "1.prems"(2) ineq_matchD
+  moreover have pos_case: \<open>p \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B))
+    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p c @ As)\<close>
+  proof-
+    assume hyp1: \<open>p \<in> wffs\<^bsub>o\<^esub>\<close>
+      and hyp2: \<open>\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)\<close>
+    then obtain A B \<alpha> \<beta>
+      where C_def: \<open>ineq_match p (\<alpha>, \<beta>, A, B)\<close>
+        and delta_eq: \<open>delta p c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        and C_eq: \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+      using ineq_match_delta[OF hyp1] ineq_matchD
       by blast
-    have \<open>lset As \<turnstile> C\<close>
-      using prop_5241 "1.prems"(3) dv_hyp consistent 
+    have fact1: \<open>is_hyps (lset (delta p c @ As))\<close>
+      unfolding delta_eq
+      using hyp1 C_eq consistent 
+        wffs_from_equality[of A "\<alpha> \<rightarrow> \<beta>" B] 
+        wffs_from_neg[of "A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B"] 
       by auto
-    have \<open>is_hyps (lset (delta C c @ As))\<close>
-      by (smt (verit) "1.prems"(1) C_eq append_Cons comp_apply 
-          consistent delta_eq equality_wff is_consistent_set_def
-          list.set_finite neg_wff self_append_conv2 set_ConsD 
-          subset_iff wffs_from_equality(1,2) wffs_from_neg
-          wffs_of_type_intros(2,3))
-    hence \<open>\<exists>d. lset As \<turnstile> \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>d\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>d\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
-      using C_eq sorry
-    then show ?case
-      using prop_5241
-      sorry
+    have fact2: \<open>lset As \<turnstile> p\<close>
+      using prop_5241 \<open>p \<in> lset As\<close> dv_hyp consistent 
+      by auto
+    have \<open>\<not> lset (delta p c @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
+    proof(unfold delta_eq, rule notI)
+      assume \<open>lset ([\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)] @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
+      (* As \<union> {delta p c}  \<turnstile> F\<^bsub>o\<^esub>
+      \<Longrightarrow> As \<turnstile> delta p c \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>
+      \<Longrightarrow> As \<turnstile> T\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> delta p c
+      \<Longrightarrow> As \<turnstile> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)
+      notice c \<notin> P.params (lset As)
+      therefore As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>) for fresh x
+      \<Longrightarrow> As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>)) (by generalisation)
+      \<Longrightarrow> As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) (by RR and Axiom 3)
+      \<Longrightarrow> As \<turnstile> F\<^bsub>o\<^esub> (because As \<turnstile> p)
+      \<Longrightarrow> False
+      *)
+      thus \<open>False\<close>
+        using fact2[unfolded C_eq]
+        using prop_5241 rule_P Deduction_Theorem rule_RR
+        sorry
+    qed
+    thus ?thesis
+      using fact1
+      unfolding comp_def
+      by blast 
   qed
-  ultimately show \<open>(is_consistent_set \<circ> lset) (delta p x @ As)\<close>
+  ultimately show \<open>(is_consistent_set \<circ> lset) (delta p c @ As)\<close>
     by blast
 qed
 
