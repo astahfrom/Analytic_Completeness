@@ -1415,6 +1415,7 @@ lemma pre_is_taut:
     and \<open>is_tautology ((A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> A))\<close>
     and \<open>is_tautology (\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B))\<close>
     and \<open>is_tautology (\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A))\<close>
+    and \<open>is_tautology (\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q>A \<supset>\<^sup>\<Q> A)\<close>
 proof-
   have val_eq:
     \<open>\<V>\<^sub>B \<phi> (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A) = (\<V>\<^sub>B \<phi> A \<^bold>\<and> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> \<V>\<^sub>B \<phi> A\<close>
@@ -1432,6 +1433,7 @@ proof-
     \<open>\<V>\<^sub>B \<phi> ((A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> A)) = ((\<V>\<^sub>B \<phi> A \<^bold>\<equiv> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> (\<V>\<^sub>B \<phi> B \<^bold>\<supset> \<V>\<^sub>B \<phi> A))\<close>
     \<open>\<V>\<^sub>B \<phi> (\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B)) = (\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<equiv> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> (\<V>\<^sub>B \<phi> A \<^bold>\<supset> \<sim> \<V>\<^sub>B \<phi> B))\<close>
     \<open>\<V>\<^sub>B \<phi> (\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A)) = (\<sim> (\<V>\<^sub>B \<phi> A \<^bold>\<equiv> \<V>\<^sub>B \<phi> B) \<^bold>\<supset> (\<V>\<^sub>B \<phi> B \<^bold>\<supset> \<sim> \<V>\<^sub>B \<phi> A))\<close>
+    \<open>\<V>\<^sub>B \<phi> (\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> A \<supset>\<^sup>\<Q> A) = (\<sim>\<sim> \<V>\<^sub>B \<phi> A \<^bold>\<supset> \<V>\<^sub>B \<phi> A)\<close>
     if \<open>is_tv_assignment \<phi>\<close> for \<phi>
     using assms that
     by (simp_all only: \<V>\<^sub>B_simps)
@@ -1497,6 +1499,10 @@ proof-
     using val_eq(15)
     unfolding is_tautology_def
     by (safe; (intro assms)?) force
+  show \<open>is_tautology (\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> A \<supset>\<^sup>\<Q> A)\<close>
+    using val_eq(16)
+    unfolding is_tautology_def
+    by (safe; (intro assms)?) force
 qed
 
 lemma is_taut:
@@ -1516,6 +1522,7 @@ lemma is_taut:
     and \<open>is_tautologous ((A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> A))\<close>
     and \<open>is_tautologous (\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B))\<close>
     and \<open>is_tautologous (\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A))\<close>
+    and \<open>is_tautologous (\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> A \<supset>\<^sup>\<Q> A)\<close>
 proof-
   obtain p r where \<open>(p, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close>
     and \<open>(r, o) \<notin> vars (A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A)\<close> and \<open>p \<noteq> r\<close>
@@ -1542,6 +1549,7 @@ proof-
     \<open>is_tautology ((p\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> r\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> (r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>))\<close>
     \<open>is_tautology (\<sim>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> r\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> r\<^bsub>o\<^esub>))\<close>
     \<open>is_tautology (\<sim>\<^sup>\<Q> (p\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> r\<^bsub>o\<^esub>) \<supset>\<^sup>\<Q> (r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> p\<^bsub>o\<^esub>))\<close>
+    \<open>is_tautology (\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
     by (intro pre_is_taut[of \<open>p\<^bsub>o\<^esub>\<close> \<open>r\<^bsub>o\<^esub>\<close>] pwffs.intros)+
   have \<open>A \<and>\<^sup>\<Q> B \<supset>\<^sup>\<Q> A = \<^bold>S ?\<theta> (p\<^bsub>o\<^esub> \<and>\<^sup>\<Q> r\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
     using \<open>p \<noteq> r\<close>
@@ -1632,6 +1640,12 @@ proof-
     by simp
   thus \<open>is_tautologous (\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<supset>\<^sup>\<Q> (B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A))\<close>
     using theta_is_pwff tauts(15)
+    by blast
+  have \<open>\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> A \<supset>\<^sup>\<Q> A = \<^bold>S ?\<theta> (\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> p\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> p\<^bsub>o\<^esub>)\<close>
+    using \<open>p \<noteq> r\<close>
+    by simp
+  thus \<open>is_tautologous (\<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> A \<supset>\<^sup>\<Q> A)\<close>
+    using theta_is_pwff tauts(16)
     by blast
 qed
 
@@ -1837,6 +1851,14 @@ lemma QnegD:
     tautologous_is_hyp_derivable[OF assms(1)]
   by (meson assms(2) false_wff)
 
+lemma QnegI:
+  assumes \<open>is_hyps H\<close> and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> 
+    and \<open>H \<union> {A} \<turnstile> F\<^bsub>o\<^esub>\<close>
+  shows \<open>H \<turnstile> \<sim>\<^sup>\<Q> A\<close>
+  using is_taut(6)[of A \<open>F\<^bsub>o\<^esub>\<close>]
+    tautologous_is_hyp_derivable[OF assms(1)]
+  by (meson Deduction_Theorem assms(1,2,3) false_wff prop_5224)
+
 lemma QconjI:
   assumes \<open>is_hyps H\<close>
     and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
@@ -1943,26 +1965,102 @@ qed
 interpretation DG: Weak_Derivational_Gamma map_con map_con
   cons_form is_param gamma_class "is_consistent_set \<circ> lset"
 proof
-  fix A ps F qs t
-  assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> \<open>lset ps \<subseteq> lset A\<close> \<open>t \<in> F (lset A)\<close> \<open>(is_consistent_set \<circ> lset) A\<close>
-  then show \<open>(is_consistent_set \<circ> lset) (qs t @ A)\<close>
+  fix As ps F qs t
+  assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> 
+    and sub: \<open>lset ps \<subseteq> lset As\<close> and \<open>t \<in> F (lset As)\<close> 
+    and consistent: \<open>(is_consistent_set \<circ> lset) As\<close>
+  then show \<open>(is_consistent_set \<circ> lset) (qs t @ As)\<close>
   proof cases
-    case (CExt A' \<alpha> \<beta> B)
-    then show ?thesis
-      sorry
+    case (CExt A \<alpha> \<beta> B)
+    hence \<open>is_hyps (lset (qs t @ As))\<close>
+      using consistent \<open>t \<in> F (lset As)\<close> CExt(2,4,5) 
+      by auto
+    moreover have \<open>\<not> lset (qs t @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
+    proof
+      assume hyp: \<open>lset (qs t @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
+      have \<open>lset As \<turnstile> A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B\<close>
+        using prop_5241 sub dv_hyp 
+          CExt(1) consistent by auto
+      hence \<open>lset As \<turnstile> A \<sqdot> t =\<^bsub>\<beta>\<^esub> B \<sqdot> t\<close>
+        using prop_5201_5[of \<open>lset As\<close> A \<alpha> \<beta> B t]
+          \<open>t \<in> F (lset As)\<close> CExt(2) 
+        by fastforce
+      hence \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close>
+        by (metis Deduction_Theorem List.finite_set 
+            Un_commute hyp list.set(1) list.simps(15)
+            local.CExt(3) prop_5224 set_append)
+      thus \<open>False\<close>
+        using consistent
+        by fastforce
+    qed
+    ultimately show ?thesis
+      by simp
   qed
 qed
+
+lemma 
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  shows \<open>\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. A =\<^bsub>\<alpha> \<rightarrow> \<alpha>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (A =\<^bsub>\<alpha>\<^esub> B)\<close>
+  using prop_5238[of \<open>[(x, \<alpha>)]\<close>, OF _ assms]
+  by simp
+
+lemma 
+  assumes \<open>is_hyps H\<close> and \<open>H \<turnstile> \<sim>\<^sup>\<Q> (f =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> g)\<close>
+  shows \<open>H \<turnstile> \<exists>x\<^bsub>\<alpha>\<^esub>. \<sim>\<^sup>\<Q> (f \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+  apply(rule prop_5242)
+  prefer 2
+     apply (metis assms(2) equality_wff neg_wff
+      hyp_derivable_form_is_wffso wffs_from_neg
+      wffs_of_type_intros(1,3) wffs_from_equality(1,2))
+    prefer 2 apply (rule prop_5215)
+      apply (rule Elementary_Logic.Gen)
+       apply (rule QnegI[OF assms(1)])
+        apply (metis equality_wff wffs_of_type_intros(1) 
+      wffs_from_equality(1) wffs_from_equality(2) wffs_of_type_intros(3) 
+      hyp_derivable_form_is_wffso wffs_from_neg assms(2))
+  using QnegD[OF assms(1) _ assms(2)] prop_5238
+  oops
+
 
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
 proof
-  fix A p x
-  assume \<open>p \<in> lset A\<close> \<open>x \<notin> P.params (lset A)\<close> \<open>(is_consistent_set \<circ> lset) A\<close>
-  then show \<open>(is_consistent_set \<circ> lset) (delta p x @ A)\<close>
+  fix As p x
+  assume \<open>p \<in> lset As\<close> 
+    and \<open>x \<notin> P.params (lset As)\<close> 
+    and consistent: \<open>(is_consistent_set \<circ> lset) As\<close>
+  hence \<open>\<not> (p \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)))
+    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p x @ As)\<close>
+    by (simp only: CDelta)
+      fastforce
+  moreover have \<open>p \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B))
+    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p x @ As)\<close>
+    using \<open>p \<in> lset As\<close> 
   proof (induct p x rule: delta.induct)
     case (1 C c)
-    then show ?case sorry
+    obtain A B \<alpha> \<beta> 
+      where C_def: \<open>ineq_match C (\<alpha>, \<beta>, A, B)\<close>
+        and delta_eq: \<open>delta C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
+        and C_eq: \<open>C = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+      using ineq_match_delta[OF 1(1)] "1.prems"(2) ineq_matchD
+      by blast
+    have \<open>lset As \<turnstile> C\<close>
+      using prop_5241 "1.prems"(3) dv_hyp consistent 
+      by auto
+    have \<open>is_hyps (lset (delta C c @ As))\<close>
+      by (smt (verit) "1.prems"(1) C_eq append_Cons comp_apply 
+          consistent delta_eq equality_wff is_consistent_set_def
+          list.set_finite neg_wff self_append_conv2 set_ConsD 
+          subset_iff wffs_from_equality(1,2) wffs_from_neg
+          wffs_of_type_intros(2,3))
+    hence \<open>\<exists>d. lset As \<turnstile> \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>d\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>d\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+      using C_eq sorry
+    then show ?case
+      using prop_5241
+      sorry
   qed
+  ultimately show \<open>(is_consistent_set \<circ> lset) (delta p x @ As)\<close>
+    by blast
 qed
 
 lemma infinite_params: \<open>infinite (Collect is_param)\<close>
@@ -1989,8 +2087,23 @@ theorem completeness:
   shows \<open>\<turnstile> A\<close>
 proof (rule ccontr)
   assume \<open>\<not> \<turnstile> A\<close>
-  then have \<open>\<not> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close>
-    using A sorry
+  have \<open>\<not> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close>
+  proof
+    assume \<open>{\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close>
+    hence \<open>\<turnstile> \<sim>\<^sup>\<Q> A \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>\<close>
+      by (metis Deduction_Theorem finite.emptyI sup_bot_left)
+    hence \<open>\<turnstile> \<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> A\<close>
+      by (metis QnegI \<open>{\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close> hyp_derivable_form_is_wffso 
+          is_derivable_from_hyps.cases sup_bot_left
+          wffs_from_imp_op(1))
+    hence \<open>\<turnstile> A\<close>
+      by (meson bot.extremum finite.emptyI wffs_from_neg
+          hyp_derivable_form_is_wffso is_taut(16) 
+          prop_5224 tautologous_is_hyp_derivable)
+    thus False
+      using \<open>\<not> \<turnstile> A\<close>
+      by blast
+  qed
   then have *: \<open>(is_consistent_set \<circ> lset) [\<sim>\<^sup>\<Q> A]\<close>
     using A by auto
 
