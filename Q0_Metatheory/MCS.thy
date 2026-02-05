@@ -1320,6 +1320,26 @@ lemma canon_model_for: "is_model_for (D,J,V\<phi>) {A \<in> H. A \<in> wffs\<^bs
 
 lemmas is_general_model = M.general_model_axioms
 
+lemma V\<phi>_consistent:
+  assumes A: \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars A = {}\<close>
+  shows \<open>\<not> (V\<phi> \<phi> A = \<^bold>T \<and> V\<phi> \<phi> (\<sim>\<^sup>\<Q> A) = \<^bold>T)\<close>
+proof -
+  have \<open>V\<phi> \<phi> A = V A o\<close>
+    using A empty_C\<phi> by (metis V\<phi>_def someI_ex type_of_def wff_has_unique_type)
+  moreover have \<open>V\<phi> \<phi> (\<sim>\<^sup>\<Q> A) = V (\<sim>\<^sup>\<Q> A) o\<close>
+    using A empty_C\<phi>
+    by (metis V\<phi>_def type_of_def neg_wff someI_ex neg_fv diff_types_implies_diff_wffs)
+  ultimately show ?thesis
+    by (metis V.simps(1) A(1) bool_to_V_distinct bottom_def consistent top_def)
+qed
+
+lemma model_consistent:
+  assumes A: \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars A = {}\<close>
+  shows \<open>\<not> ((D,J,V\<phi>) \<Turnstile> A \<and> (D,J,V\<phi>) \<Turnstile> \<sim>\<^sup>\<Q> A)\<close>
+  using V\<phi>_consistent[OF assms]
+  by (metis (mono_tags, lifting) J.simps well_typed free_vars_form.simps(2)
+      is_assignment_def is_closed_wff_of_type_def old.prod.case wffs_of_type_intros(2))
+
 end
 
 section \<open>Model Existence\<close>
@@ -1328,7 +1348,9 @@ theorem model_existence:
   fixes S :: \<open>form set\<close>
   assumes cprop: \<open>P.prop\<^sub>E Kinds C\<close>
     and S: \<open>S \<in> C\<close> \<open>P.enough_new S\<close>
-  shows \<open>\<exists>M. is_general_model M \<and> (\<forall>A \<in> S. A \<in> wffs\<^bsub>o\<^esub> \<longrightarrow> free_vars A = {} \<longrightarrow> M \<Turnstile> A)\<close>
+  shows \<open>\<exists>M. is_general_model M \<and>
+    (\<forall>A \<in> S. A \<in> wffs\<^bsub>o\<^esub> \<longrightarrow> free_vars A = {} \<longrightarrow> M \<Turnstile> A) \<and>
+    (\<forall>A. A \<in> wffs\<^bsub>o\<^esub> \<longrightarrow> free_vars A = {} \<longrightarrow> \<not> (M \<Turnstile> A \<and> M \<Turnstile> \<sim>\<^sup>\<Q> A))\<close>
 proof -
   have *: \<open>MyHintikka (mk_mcs C S)\<close>
   proof
@@ -1336,7 +1358,8 @@ proof -
       using mk_mcs_Hintikka[OF cprop S] Hintikka.hintikka by blast
   qed
   then show ?thesis
-    using MyHintikka.canon_model_for MyHintikka.is_general_model Extend_subset by blast
+    using MyHintikka.canon_model_for[OF *] MyHintikka.is_general_model[OF *] MyHintikka.model_consistent[OF *]
+      Extend_subset by blast
 qed
 
 section \<open>Derivational Consistency\<close>
@@ -1344,7 +1367,7 @@ section \<open>Derivational Consistency\<close>
 definition is_consistent_set :: "form set \<Rightarrow> bool" where
   [iff]: "is_consistent_set \<G> \<longleftrightarrow> is_hyps \<G> \<and> \<not> is_inconsistent_set \<G>"
 
-interpretation DC: Weak_Derivational_Confl map_con cons_form is_param confl_class \<open>is_consistent_set o lset\<close>
+interpretation DC: Weak_Derivational_Confl map_con cons_form is_param confl_class \<open>is_consistent_set \<circ> lset\<close>
 proof
   fix H ps qs q
   assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> and *: \<open>lset ps \<subseteq> lset H\<close> \<open>q \<in> lset qs\<close> \<open>q \<in> lset H\<close>
@@ -2176,28 +2199,26 @@ proof (rule ccontr)
   let ?S = \<open>{\<sim>\<^sup>\<Q> A}\<close>
   let ?C = \<open>{S. \<exists>A. lset A = S \<and> (is_consistent_set \<circ> lset) A}\<close>
 
-  have \<open>P.prop\<^sub>E Kinds ?C\<close>
+  have p: \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>inj (to_nat :: form \<Rightarrow> nat)\<close>
+ 
+  have \<open>inj (to_nat :: form \<Rightarrow> nat)\<close>
     using inj_to_nat by blast
-  then have \<open>P.enough_new ?S\<close>
+  then have new: \<open>P.enough_new ?S\<close>
     using P.enough_new_countable infinite_params P.finite_params_fm
     by (metis finite.emptyI finite_Diff2 finite_UN_I finite_insert)
-  moreover have \<open>?S \<in> ?C\<close>
+
+  have s: \<open>?S \<in> ?C\<close>
     using * by (metis (mono_tags, lifting) list.set(1) list.simps(15) mem_Collect_eq)
-  moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars (\<sim>\<^sup>\<Q> A) = {}\<close>
+ 
+  have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars (\<sim>\<^sup>\<Q> A) = {}\<close>
     using A by auto
-  ultimately obtain M where M: \<open>is_general_model M\<close> \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close>
-    using model_existence[of ?C ?S] by auto
-  then have \<open>\<not> M \<Turnstile> A\<close>
-    sorry (* Is that not a thing? I guess we need to look at how Andrews does it?
-    IDEA: even if it's not a thing in general, it's certainly a thing for our model,
-      so we can just expose this property in the model existence theorem.
-  *)
+  then obtain M where M: \<open>is_general_model M\<close> \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close> \<open>\<not> M \<Turnstile> A\<close>
+    using model_existence[OF p s new] by (metis neg_fv singletonI wffs_from_neg)
   moreover have \<open>M \<Turnstile> A\<close>
     using mod[OF M(1)] by fast
   ultimately show False
-    ..
+    by meson
 qed
 
 end
