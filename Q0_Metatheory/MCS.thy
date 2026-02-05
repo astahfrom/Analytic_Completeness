@@ -2145,7 +2145,6 @@ proof
     by blast
 qed
 
-
 section \<open>Completeness\<close>
 
 theorem completeness:
@@ -2179,10 +2178,11 @@ proof (rule ccontr)
 
   have \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
-  moreover have \<open>P.enough_new ?S\<close>
-    unfolding P.enough_new_def using infinite_params
-      (* We need to show that we have countably many forms. Maybe the countable datatype package will do it? *)
-    sorry
+  moreover have \<open>inj (to_nat :: form \<Rightarrow> nat)\<close>
+    using inj_to_nat by blast
+  then have \<open>P.enough_new ?S\<close>
+    using P.enough_new_countable infinite_params P.finite_params_fm
+    by (metis finite.emptyI finite_Diff2 finite_UN_I finite_insert)
   moreover have \<open>?S \<in> ?C\<close>
     using * by (metis (mono_tags, lifting) list.set(1) list.simps(15) mem_Collect_eq)
   moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars (\<sim>\<^sup>\<Q> A) = {}\<close>
