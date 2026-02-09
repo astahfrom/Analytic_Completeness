@@ -1866,6 +1866,15 @@ lemma prop_LEM:
   using assms
   by (meson empty_subsetI finite.emptyI is_taut(11) tautologous_is_hyp_derivable)
 
+lemma Qdouble_negE:
+  assumes \<open>is_hyps H\<close> 
+    and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+    and \<open>H \<turnstile> \<sim>\<^sup>\<Q> \<sim>\<^sup>\<Q> A\<close>
+  shows \<open>H \<turnstile> A\<close>
+  using assms MP[OF assms(3)]
+    tautologous_is_hyp_derivable[OF _ MCS.is_taut(16)]
+  by blast
+
 lemma QnegD:
   assumes \<open>is_hyps H\<close> and \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
     and \<open>H \<turnstile> \<sim>\<^sup>\<Q> A\<close>
@@ -2094,6 +2103,54 @@ proof-
     by blast
 qed
 
+fun const_subst :: "nat \<times> nat \<times> Syntax.type \<Rightarrow> form \<Rightarrow> form"
+  where "const_subst (c, x, \<alpha>) (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
+  | "const_subst (c, x, \<alpha>) (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d \<and> \<alpha> = \<beta> then (x\<^bsub>\<alpha>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
+  | "const_subst (c, x, \<alpha>) (A \<sqdot> B) = (const_subst (c, x, \<alpha>) A) \<sqdot> (const_subst (c, x, \<alpha>) B)"
+  | "const_subst (c, x, \<alpha>) (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (if x = y \<and> \<alpha> = \<beta> then (\<lambda>y\<^bsub>\<beta>\<^esub>. A) else (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst (c, x, \<alpha>) A))"
+
+lemma fresh_var_form: 
+  \<open>\<exists>x. x \<notin> vars A\<close> for A::form
+proof (induct A)
+  case (FVar v)
+  then obtain x \<alpha> where \<open>v = (x, \<alpha>)\<close>
+    by fastforce
+  hence \<open>(Suc x, \<alpha>) \<notin> vars (FVar v)\<close>
+    by fastforce
+  then show ?case
+    by blast
+next
+  case (FCon c)
+  then obtain d \<alpha> where \<open>c = (d, \<alpha>)\<close>
+    by fastforce
+  hence \<open>(0, \<alpha>) \<notin> vars (FCon c)\<close>
+    by fastforce
+  then show ?case
+    by blast
+qed (meson fresh_var_existence vars_form_finiteness)+
+
+lemma fresh_free_var_for: \<open>\<exists>x. is_free_for A x B\<close>
+  using fresh_var_form is_free_for_absent_var
+  by blast
+
+lemma 
+  assumes \<open>\<Gamma> \<turnstile> A\<close> 
+    and \<open>c \<notin> P.params \<Gamma>\<close> and \<open>(x, \<alpha>) \<notin> vars \<Gamma>\<close>
+  shows \<open>{const_subst (c, x, \<alpha>) F | F. F \<in> \<Gamma>} \<turnstile> const_subst (c, x, \<alpha>) A\<close>
+  (* find_theorems name: is_derivable_from_hyps name: induct
+  thm Proof_System.is_derivable_from_hyps.induct *)
+  using assms(1)
+proof(induction rule: Proof_System.is_derivable_from_hyps.induct)
+  case (dv_hyp A)
+  then show ?case sorry
+next
+  case (dv_thm A)
+  then show ?case sorry
+next
+  case (dv_rule_R' C E p D)
+  then show ?case sorry
+qed
+
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
 proof
@@ -2128,10 +2185,14 @@ proof
     have \<open>\<not> lset (delta p c @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
     proof(unfold delta_eq, rule notI)
       assume \<open>lset ([\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)] @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
-      (* As \<union> {delta p c}  \<turnstile> F\<^bsub>o\<^esub>
-      \<Longrightarrow> As \<turnstile> delta p c \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>
-      \<Longrightarrow> As \<turnstile> T\<^bsub>o\<^esub> \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> delta p c
-      \<Longrightarrow> As \<turnstile> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)
+        (is \<open>lset ([\<sim>\<^sup>\<Q> ?form] @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>)
+      hence \<open>lset As \<turnstile> ?form\<close>
+        using QnegI delta_eq fact1 Qdouble_negE
+        by (metis Un_insert_right append_Cons append_Nil equality_of_type_def 
+            fact2 is_derivable_from_hyps.cases list.set_intros(1) list.simps(15)
+            neg_def subset_iff sup_bot.right_neutral wffs_from_equality(2))
+
+      (* from As \<turnstile> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)
       notice c \<notin> P.params (lset As)
       therefore As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>) for fresh x
       \<Longrightarrow> As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>)) (by generalisation)
