@@ -187,7 +187,13 @@ lemma ineq_match_delta [simp]:
 
 section \<open>Operations\<close>
 
-abbreviation \<open>is_logical_name c \<equiv> c = \<cc>\<^sub>Q \<or> c = \<cc>\<^sub>\<iota>\<close>
+definition \<open>logical_names \<equiv> {\<cc>\<^sub>Q, \<cc>\<^sub>\<iota>}\<close>
+abbreviation \<open>is_logical_name c \<equiv> c \<in> logical_names\<close>
+
+lemma logical_name_simps[simp]:
+  shows \<open>is_logical_name \<cc>\<^sub>Q\<close>
+  and \<open>is_logical_name \<cc>\<^sub>\<iota>\<close>
+  by (simp_all add: logical_names_def)
 
 definition \<open>is_param c \<equiv> \<not> is_logical_name c\<close>
 
@@ -202,6 +208,21 @@ fun cons_form :: "form \<Rightarrow> nat set" where
 | "cons_form (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = (if is_logical_name c then {} else {c})"
 | "cons_form (A \<sqdot> B) = cons_form A \<union> cons_form B"
 | "cons_form (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = cons_form A"
+
+fun Qconsts :: "form \<Rightarrow> nat set" where
+  "Qconsts (x\<^bsub>\<alpha>\<^esub>) = {}"
+| "Qconsts (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {c}"
+| "Qconsts (A \<sqdot> B) = Qconsts A \<union> Qconsts B"
+| "Qconsts (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = Qconsts A"
+
+lemma c_in_cons_form_iff:
+  \<open>c \<in> cons_form A \<longleftrightarrow> c \<in> Qconsts A \<and> \<not> is_logical_name c\<close>
+  by (induct A; clarsimp)
+    auto
+
+lemma cons_form_eq: \<open>cons_form A = Qconsts A - logical_names\<close>
+  using c_in_cons_form_iff
+  by blast
 
 section \<open>Lemmas\<close>
 
@@ -2103,11 +2124,11 @@ proof-
     by blast
 qed
 
-fun const_subst :: "nat \<times> nat \<times> Syntax.type \<Rightarrow> form \<Rightarrow> form"
-  where "const_subst (c, x, \<alpha>) (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
-  | "const_subst (c, x, \<alpha>) (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d \<and> \<alpha> = \<beta> then (x\<^bsub>\<alpha>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
-  | "const_subst (c, x, \<alpha>) (A \<sqdot> B) = (const_subst (c, x, \<alpha>) A) \<sqdot> (const_subst (c, x, \<alpha>) B)"
-  | "const_subst (c, x, \<alpha>) (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (if x = y \<and> \<alpha> = \<beta> then (\<lambda>y\<^bsub>\<beta>\<^esub>. A) else (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst (c, x, \<alpha>) A))"
+fun const_subst :: "nat \<times> nat \<Rightarrow> form \<Rightarrow> form"
+  where "const_subst (c, x) (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
+  | "const_subst (c, x) (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d then (x\<^bsub>\<beta>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
+  | "const_subst (c, x) (A \<sqdot> B) = (const_subst (c, x) A) \<sqdot> (const_subst (c, x) B)"
+  | "const_subst (c, x) (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst (c, x) A)"
 
 lemma fresh_var_form: 
   \<open>\<exists>x. x \<notin> vars A\<close> for A::form
@@ -2133,23 +2154,55 @@ lemma fresh_free_var_for: \<open>\<exists>x. is_free_for A x B\<close>
   using fresh_var_form is_free_for_absent_var
   by blast
 
+lemma is_wff_of_type_const_subst:
+  \<open>is_wff_of_type \<alpha> A \<Longrightarrow> (x,\<tau>) \<notin> vars A 
+  \<Longrightarrow> is_wff_of_type \<alpha> (const_subst (c, x) A)\<close>
+  apply (induct \<open>(c, x)\<close> A arbitrary: \<alpha> rule: const_subst.induct)
+     apply simp
+  apply simp
+  apply (metis is_wff_of_type_wffs_of_type_eq wff_has_unique_type wffs_of_type_simps)
+   apply clarsimp
+  apply (metis form.distinct(11,3,7) form.inject(3) is_wff_of_type.simps)
+  apply clarsimp
+  by (metis abs_is_wff form.distinct(11,5,9) form.inject(4) is_wff_of_type.cases)
+
+lemma const_subst_in_wffs: 
+  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> (x,\<tau>) \<notin> vars A \<Longrightarrow> (const_subst (c, x) A) \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  using is_wff_of_type_const_subst is_wff_of_type_wffs_of_type_eq 
+  by force
+
+lemma is_hyps_const_subst: \<open>is_hyps \<Gamma> \<Longrightarrow> (x, \<alpha>) \<notin> vars \<Gamma> 
+  \<Longrightarrow> is_hyps {const_subst (c, x) F | F. F \<in> \<Gamma>}\<close>
+  unfolding subset_eq
+  using finite_imageI
+  by (auto intro!: const_subst_in_wffs)
+
+lemma idemp_const_subst: \<open>c \<notin> cons_form F \<Longrightarrow> \<not> is_logical_name c
+  \<Longrightarrow> const_subst (c, x) F = F\<close>
+  by (induction \<open>(c, x)\<close> F rule: const_subst.induct)
+    auto
+
+lemma const_subst_laws: 
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A \<and>\<^sup>\<Q> B) = const_subst (c, x) A \<and>\<^sup>\<Q> const_subst (c, x) B\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A \<supset>\<^sup>\<Q> B) = const_subst (c, x) A \<supset>\<^sup>\<Q>  const_subst (c, x) B\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A \<equiv>\<^sup>\<Q> B) = const_subst (c, x) A \<equiv>\<^sup>\<Q> const_subst (c, x) B\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (T\<^bsub>o\<^esub>) = T\<^bsub>o\<^esub>\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (F\<^bsub>o\<^esub>) = F\<^bsub>o\<^esub>\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (\<forall>z\<^bsub>\<alpha>\<^esub>. A) = (\<forall>z\<^bsub>\<alpha>\<^esub>. const_subst (c, x) A)\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A =\<^bsub>\<alpha>\<^esub> B) = (const_subst (c, x) A =\<^bsub>\<alpha>\<^esub> const_subst (c, x) B)\<close>
+  by (simp_all add: logical_names_def)
+
+lemma cons_form_non_lnames: \<open>c \<in> logical_names \<Longrightarrow> c \<notin> cons_form A\<close>
+  by (induction A)
+    (auto split: if_splits)
+
 lemma 
-  assumes \<open>\<Gamma> \<turnstile> A\<close> 
-    and \<open>c \<notin> P.params \<Gamma>\<close> and \<open>(x, \<alpha>) \<notin> vars \<Gamma>\<close>
-  shows \<open>{const_subst (c, x, \<alpha>) F | F. F \<in> \<Gamma>} \<turnstile> const_subst (c, x, \<alpha>) A\<close>
-  (* find_theorems name: is_derivable_from_hyps name: induct
-  thm Proof_System.is_derivable_from_hyps.induct *)
-  using assms(1)
-proof(induction rule: Proof_System.is_derivable_from_hyps.induct)
-  case (dv_hyp A)
-  then show ?case sorry
-next
-  case (dv_thm A)
-  then show ?case sorry
-next
-  case (dv_rule_R' C E p D)
-  then show ?case sorry
-qed
+  assumes \<open>c \<notin> cons_form A\<close>
+    and \<open>\<not> is_logical_name c\<close> 
+    and \<open>A \<in> axioms\<close>
+  shows \<open>(const_subst (c, x) A) \<in> axioms\<close>
+  using idemp_const_subst[OF assms(1,2)] assms(3)
+  by simp
 
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
@@ -2191,14 +2244,18 @@ proof
         by (metis Un_insert_right append_Cons append_Nil equality_of_type_def 
             fact2 is_derivable_from_hyps.cases list.set_intros(1) list.simps(15)
             neg_def subset_iff sup_bot.right_neutral wffs_from_equality(2))
-
-      (* from As \<turnstile> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)
+      have \<open>(\<forall>A\<in>(lset As). c \<notin> Qconsts A) \<or> is_logical_name c\<close>
+        using \<open>c \<notin> P.params (lset As)\<close> c_in_cons_form_iff
+        by auto
+          (* from As \<turnstile> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)
       notice c \<notin> P.params (lset As)
-      therefore As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>) for fresh x
+      \<Longrightarrow> c \<notin> Qconsts (lset As) \<or> is_logical_name c
+      if c \<notin> Qconsts (lset As), then As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>) for fresh x
       \<Longrightarrow> As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>)) (by generalisation)
       \<Longrightarrow> As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) (by RR and Axiom 3)
       \<Longrightarrow> As \<turnstile> F\<^bsub>o\<^esub> (because As \<turnstile> p)
       \<Longrightarrow> False
+\<bottom>
       *)
       thus \<open>False\<close>
         using fact2[unfolded C_eq]
@@ -2217,7 +2274,8 @@ qed
 lemma infinite_params: \<open>infinite (Collect is_param)\<close>
 proof -
   have \<open>Collect is_param = UNIV - {\<cc>\<^sub>Q, \<cc>\<^sub>\<iota>}\<close>
-    unfolding is_param_def by fast
+    unfolding is_param_def logical_names_def
+    by fast
   then show ?thesis
     by simp
 qed
