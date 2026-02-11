@@ -2209,7 +2209,7 @@ interpretation DD: Weak_Derivational_Delta map_con
 proof
   fix As p c
   assume \<open>p \<in> lset As\<close> 
-    and \<open>c \<notin> P.params (lset As)\<close> 
+    and \<open>is_param c\<close> \<open>c \<notin> P.params (lset As)\<close> 
     and consistent: \<open>(is_consistent_set \<circ> lset) As\<close>
   hence neg_case: \<open>\<not> (p \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)))
     \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p c @ As)\<close>
@@ -2247,6 +2247,8 @@ proof
       have \<open>(\<forall>A\<in>(lset As). c \<notin> Qconsts A) \<or> is_logical_name c\<close>
         using \<open>c \<notin> P.params (lset As)\<close> c_in_cons_form_iff
         by auto
+      then have \<open>(\<forall>A\<in>(lset As). c \<notin> Qconsts A)\<close>
+        using \<open>is_param c\<close> unfolding is_param_def by meson
           (* from As \<turnstile> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)
       notice c \<notin> P.params (lset As)
       \<Longrightarrow> c \<notin> Qconsts (lset As) \<or> is_logical_name c

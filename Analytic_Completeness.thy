@@ -1680,7 +1680,7 @@ locale Derivational_Delta = Delta map_fm params_fm is_param \<delta>
     is_param :: \<open>'x \<Rightarrow> bool\<close> and
     \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
   fixes consistent :: \<open>'fm set \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes consistent: \<open>\<And>S p x. p \<in> S \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (\<delta> p x) \<union> S\<close>
+  assumes consistent: \<open>\<And>S p x. p \<in> S \<Longrightarrow> is_param x \<Longrightarrow> x \<notin> params S \<Longrightarrow> \<turnstile> S \<Longrightarrow> \<turnstile> set (\<delta> p x) \<union> S\<close>
 
 sublocale Derivational_Delta \<subseteq> Derivational_Kind map_fm params_fm is_param kind consistent
 proof
@@ -1707,7 +1707,7 @@ locale Weak_Derivational_Delta = Delta map_fm params_fm is_param \<delta>
     is_param :: \<open>'x \<Rightarrow> bool\<close> and
     \<delta> :: \<open>'fm \<Rightarrow> 'x \<Rightarrow> 'fm list\<close> +
   fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
-  assumes consistent: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> \<delta> p x @ A\<close>
+  assumes consistent: \<open>\<And>A p x. p \<in> set A \<Longrightarrow> is_param x \<Longrightarrow> x \<notin> params (set A) \<Longrightarrow> \<turnstile> A \<Longrightarrow> \<turnstile> \<delta> p x @ A\<close>
 
 sublocale Weak_Derivational_Delta \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
 proof
