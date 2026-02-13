@@ -2204,6 +2204,37 @@ lemma const_subst_axiom:
   using idemp_const_subst[OF assms(1,2)] assms(3)
   by simp
 
+(* Generalized axioms -- surely they hold*)
+lemma axiom_1_gen: 
+  "is_derivable (g\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> g\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>o\<^esub>. g\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> x\<^bsub>o\<^esub>)"
+  sorry
+
+lemma axiom_2_gen:
+  "is_derivable ((x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<alpha>\<^esub> y\<^bsub>\<alpha>\<^esub>) \<supset>\<^sup>\<Q> (h\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> \<equiv>\<^sup>\<Q> h\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))"
+  sorry
+
+lemma axiom_3_gen:
+  "is_derivable ((f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> g\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
+  sorry
+
+lemma axiom_5_gen:
+  "is_derivable (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> y\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> y\<^bsub>i\<^esub>)"
+  by (metis axiom_5_wff derivability_from_no_hyps_theoremhood_equivalence theorem_is_derivable_form wffs_of_type_intros(1))
+
+lemma const_subst_axiom2: 
+  assumes \<open>\<not> is_logical_name c\<close> 
+    and \<open>A \<in> axioms\<close>
+  shows \<open>is_derivable (const_subst (c, x) A)\<close>
+
+  (* This must be possible to do.
+     The case where c \<notin> cons_form A is essentially const_subst_axiom.
+     Let us consider the case where c \<in> cons_form A.
+     Surely we can use some proof rules in some way to get a derived version of the axiom where
+     the ``arbitrarily chosen'' constants are replaced with a variable?
+     
+  *)
+  sorry
+
 (* TODO AND WARNING:
    ON THIS AND THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
 lemma is_derivable_const_subst:
@@ -2214,6 +2245,7 @@ lemma is_derivable_const_subst:
 proof (induction)
   case (dv_axiom A)
   have "c \<notin> cons_form A" (* Should we assume this? Seems reasonable? *)
+                         (* Actually, no I think we should avoid it. *)
     sorry
   from this dv_axiom have "(const_subst (c, x) A) \<in> axioms"
     using const_subst_axiom
