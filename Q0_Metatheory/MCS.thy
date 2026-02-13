@@ -2196,13 +2196,126 @@ lemma cons_form_non_lnames: \<open>c \<in> logical_names \<Longrightarrow> c \<n
   by (induction A)
     (auto split: if_splits)
 
-lemma 
+lemma const_subst_axiom:
   assumes \<open>c \<notin> cons_form A\<close>
     and \<open>\<not> is_logical_name c\<close> 
     and \<open>A \<in> axioms\<close>
   shows \<open>(const_subst (c, x) A) \<in> axioms\<close>
   using idemp_const_subst[OF assms(1,2)] assms(3)
   by simp
+
+(* TODO AND WARNING:
+   ON THIS AND THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
+lemma is_derivable_const_subst:
+  assumes "is_derivable A"
+  assumes "c \<notin> logical_names"
+  shows "is_derivable (const_subst (c, x) A)"
+  using assms
+proof (induction)
+  case (dv_axiom A)
+  have "c \<notin> cons_form A" (* Should we assume this? Seems reasonable? *)
+    sorry
+  from this dv_axiom have "(const_subst (c, x) A) \<in> axioms"
+    using const_subst_axiom
+    by auto
+  then show ?case
+    using is_derivable.dv_axiom by blast
+next
+  case (dv_rule_R C E p D)
+  let ?C = "const_subst (c, x) C"
+  let ?D = "const_subst (c, x) D"
+  let ?E = "const_subst (c, x) E"
+
+  have "is_rule_R_app p ?D ?C ?E"
+    using dv_rule_R(3,6)
+    sorry
+  show ?case
+    using \<open>is_rule_R_app p (const_subst (c, x) D) (const_subst (c, x) C) (const_subst (c, x) E)\<close> dv_rule_R.IH(1,2) dv_rule_R.prems is_derivable.dv_rule_R by blast
+qed
+
+lemma is_theorem_const_subst:
+  assumes "is_theorem A"
+  assumes "c \<notin> logical_names"
+  shows "is_theorem (const_subst (c, x) A)"
+  by (metis assms(1,2) is_derivable_const_subst theoremhood_derivability_equivalence)
+
+lemma is_rule_R'_app_const_subst:
+  assumes "C' = (const_subst (c, x) C)"
+  assumes "D' = (const_subst (c, x) D)"
+  assumes "E' = (const_subst (c, x) E)"
+  assumes "is_rule_R'_app As p D C E"
+  assumes "is_hyps As"
+  assumes "c \<notin> logical_names"
+  assumes "c \<notin> P.params As"
+  shows "is_rule_R'_app As p D' C' E'"
+proof -
+  from assms have "is_rule_R_app p D C E"
+    using assms by blast
+  then have "is_rule_R_app p D' C' E'" 
+    unfolding is_rule_R_app_def sorry
+  from assms have "rule_R'_side_condition As p D C E"
+    using assms by blast
+  then have "rule_R'_side_condition As p D' C' E'" 
+    unfolding rule_R'_side_condition_def sorry
+  show ?thesis
+    using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
+qed
+
+lemma is_derivable_from_hyps_const_subst:
+  assumes "As \<turnstile> F"
+  assumes "\<not> is_logical_name c"
+  assumes "c \<notin> P.params As"
+  shows "As \<turnstile> const_subst (c,x) F"
+  using assms
+proof(induction)
+  case (dv_hyp A)
+  then have "c \<notin> cons_form A"
+    by blast
+  from this dv_hyp have "const_subst (c, x) A = A"
+    using idemp_const_subst by presburger
+  have "const_subst (c, x) A \<in> As"
+    using \<open>const_subst (c, x) A = A\<close> dv_hyp.hyps(1) by auto
+  have "is_hyps As"
+    by (simp add: dv_hyp.hyps(2))
+  have "c \<notin> P.params As"
+    using dv_hyp.prems by blast
+  show ?case
+    by (meson \<open>const_subst (c, x) A \<in> As\<close> dv_hyp.hyps(2) is_derivable_from_hyps.simps)
+next
+  case (dv_thm A)
+  then show ?case
+    using is_theorem_const_subst by (meson is_derivable_from_hyps.simps)
+next
+  case (dv_rule_R' C E p D)
+  let ?C = "const_subst (c, x) C"
+  let ?D = "const_subst (c, x) D"
+  let ?E = "const_subst (c, x) E"
+
+  have "As \<turnstile> ?C"
+    using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) by blast
+  have "As \<turnstile> ?E"
+    using dv_rule_R'.IH(2) dv_rule_R'.prems(1,2) by blast
+  have "is_rule_R'_app As p ?D ?C ?E"
+    using dv_rule_R'(1,2,3,4,7,8)
+    using is_rule_R'_app_const_subst by presburger
+  then show ?case
+    by (meson \<open>As \<turnstile> const_subst (c, x) C\<close> \<open>As \<turnstile> const_subst (c, x) E\<close> dv_rule_R'.hyps(4)
+        is_derivable_from_hyps.dv_rule_R')
+qed
+
+
+
+
+(* A Javerian take on const_subst  *)
+inductive
+  is_replacement_at :: "form \<Rightarrow> form \<Rightarrow> form \<Rightarrow> form \<Rightarrow> bool"
+  (\<open>(4_\<lparr>_ \<leftarrow> _\<rparr> \<rhd> _)\<close> [1000, 0, 0, 0] 900)
+where
+  fm_found: "A\<lparr>F \<leftarrow> C\<rparr> \<rhd> C'" if "A = F" and "C = C'"
+| replace__app: "(G \<sqdot> H)\<lparr>F \<leftarrow> C\<rparr> \<rhd> (G' \<sqdot> H')" if "G\<lparr>F \<leftarrow> C\<rparr> \<rhd> G'" and "H\<lparr>F \<leftarrow> C\<rparr> \<rhd> H'" and "G \<sqdot> H \<noteq> F" (* The last condition is be optional, right? But maybe nice? *)
+| replace_abs: "(\<lambda>x\<^bsub>\<gamma>\<^esub>. E)\<lparr>F \<leftarrow> C\<rparr> \<rhd> (\<lambda>x\<^bsub>\<gamma>\<^esub>. E')" if "p \<in> positions E" and "E\<lparr>F \<leftarrow> C\<rparr> \<rhd> E'" and "(\<lambda>x\<^bsub>\<gamma>\<^esub>. E) \<noteq> F"  (* The last condition is be optional, right? But maybe nice? *)
+
+
 
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
