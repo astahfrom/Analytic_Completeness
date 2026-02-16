@@ -2204,35 +2204,65 @@ lemma const_subst_axiom:
   using idemp_const_subst[OF assms(1,2)] assms(3)
   by simp
 
-(* Generalized axioms -- surely they hold*)
-lemma axiom_1_gen: 
-  "is_derivable (g\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> g\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>o\<^esub>. g\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> x\<^bsub>o\<^esub>)"
+lemma axiom_1_const_subst:
+  "const_subst (c, x) (\<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub>) \<in> axioms"
   sorry
 
-lemma axiom_2_gen:
-  "is_derivable ((x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<alpha>\<^esub> y\<^bsub>\<alpha>\<^esub>) \<supset>\<^sup>\<Q> (h\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> \<equiv>\<^sup>\<Q> h\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> y\<^bsub>\<alpha>\<^esub>))"
+lemma axiom_2_const_subst:
+  "const_subst (c, x) ((\<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<alpha>\<^esub> \<yy>\<^bsub>\<alpha>\<^esub>) \<supset>\<^sup>\<Q> (\<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> \<equiv>\<^sup>\<Q> \<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<yy>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
+  sorry
+lemma axiom_3_const_subst:
+  "const_subst (c, x) ((\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
   sorry
 
-lemma axiom_3_gen:
-  "is_derivable ((f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> g\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
+lemma axiom_4_1_con_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close> 
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  shows "const_subst (c, x) ((\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> axioms"
+  sorry
+lemma axiom_4_1_var_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close> 
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  assumes "y\<^bsub>\<beta>\<^esub> \<noteq> x\<^bsub>\<alpha>\<^esub>"
+  shows "const_subst (c, x) ((\<lambda>x\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub>) \<in> axioms" 
   sorry
 
-lemma axiom_5_gen:
-  "is_derivable (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> y\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> y\<^bsub>i\<^esub>)"
-  by (metis axiom_5_wff derivability_from_no_hyps_theoremhood_equivalence theorem_is_derivable_form wffs_of_type_intros(1))
+lemma axiom_4_2_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close> 
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. x\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A \<in> axioms"
+  sorry
 
-lemma const_subst_axiom2: 
+lemma axiom_4_3_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close> 
+  assumes  "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  assumes "B \<in> wffs\<^bsub>\<gamma>\<rightarrow>\<beta>\<^esub>" 
+  assumes "C \<in> wffs\<^bsub>\<gamma>\<^esub>"
+  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. B \<sqdot> C) \<sqdot> A =\<^bsub>\<beta>\<^esub> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) \<sqdot> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. C) \<sqdot> A) \<in> axioms"
+  sorry
+
+lemma axiom_4_4_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close> 
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>" and "(y, \<gamma>) \<notin> {(x, \<alpha>)} \<union> vars A"
+  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) \<in> axioms"
+  sorry
+
+lemma axiom_4_5_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close> 
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>"
+  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<in> axioms"
+  sorry
+
+lemma axiom_5_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close> 
+  shows "const_subst (c, x) \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub> \<in> axioms"
+  sorry
+
+lemma const_subst_axiom2:
   assumes \<open>\<not> is_logical_name c\<close> 
     and \<open>A \<in> axioms\<close>
-  shows \<open>is_derivable (const_subst (c, x) A)\<close>
-
-  (* This must be possible to do.
-     The case where c \<notin> cons_form A is essentially const_subst_axiom.
-     Let us consider the case where c \<in> cons_form A.
-     Surely we can use some proof rules in some way to get a derived version of the axiom where
-     the ``arbitrarily chosen'' constants are replaced with a variable?
-     
-  *)
+  shows \<open>(const_subst (c, x) A) \<in> axioms\<close>
+  using assms unfolding axioms.simps
   sorry
 
 (* TODO AND WARNING:
