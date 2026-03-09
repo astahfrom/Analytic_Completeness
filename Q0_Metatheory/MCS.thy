@@ -2444,13 +2444,19 @@ next
   let ?C = "const_subst (c, x) \<tau> C"
   let ?D = "const_subst (c, x) \<tau> D"
   let ?E = "const_subst (c, x) \<tau> E"
-
+  have "is_derivable (const_subst (c, x) \<tau> C)"
+    using dv_rule_R
+    sorry
+  moreover
+  have "is_derivable (const_subst (c, x) \<tau> E)"
+    sorry
+  moreover
   have "is_rule_R_app p ?D ?C ?E"
     using dv_rule_R(3,6)
     sorry
+  ultimately
   show ?case
-    using \<open>is_rule_R_app p (const_subst (c, x) \<tau> D) (const_subst (c, x) \<tau> C) (const_subst (c, x) \<tau> E)\<close> dv_rule_R.IH(1,2) dv_rule_R.prems is_derivable.dv_rule_R
-    sorry
+    using is_derivable.dv_rule_R[of ?C ?E p ?D] by auto
 qed
 
 lemma is_theorem_const_subst:
