@@ -2555,7 +2555,7 @@ qed
   
 definition "vars\<^sub>p (\<S>::form list) = vars (List.set \<S>)"
 
-lemma is_theorem_const_subst:
+lemma is_proof_const_subst:
   assumes "is_proof \<S>"
   assumes "c \<notin> logical_names"
   assumes "\<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
