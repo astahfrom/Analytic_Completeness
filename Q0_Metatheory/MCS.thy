@@ -2124,17 +2124,18 @@ proof-
     by blast
 qed
 
+(*
 fun const_subst :: "nat \<times> nat \<Rightarrow> form \<Rightarrow> form"
   where "const_subst (c, x) (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
   | "const_subst (c, x) (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d then (x\<^bsub>\<beta>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
   | "const_subst (c, x) (A \<sqdot> B) = (const_subst (c, x) A) \<sqdot> (const_subst (c, x) B)"
-  | "const_subst (c, x) (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst (c, x) A)"
+  | "const_subst (c, x) (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst (c, x) A)" *)
 
-fun const_subst2 :: "nat \<times> nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form"
-  where "const_subst2 (c, x) \<alpha> (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
-  | "const_subst2 (c, x) \<alpha> (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d \<and> \<alpha> = \<beta> then (x\<^bsub>\<beta>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
-  | "const_subst2 (c, x) \<alpha> (A \<sqdot> B) = (const_subst2 (c, x) \<alpha> A) \<sqdot> (const_subst2 (c, x) \<alpha> B)"
-  | "const_subst2 (c, x) \<alpha> (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst2 (c, x) \<alpha> A)"
+fun const_subst :: "nat \<times> nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form"
+  where "const_subst (c, x) \<alpha> (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
+  | "const_subst (c, x) \<alpha> (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d \<and> \<alpha> = \<beta> then (x\<^bsub>\<beta>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
+  | "const_subst (c, x) \<alpha> (A \<sqdot> B) = (const_subst (c, x) \<alpha> A) \<sqdot> (const_subst (c, x) \<alpha> B)"
+  | "const_subst (c, x) \<alpha> (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst (c, x) \<alpha> A)"
 
 lemma fresh_var_form: 
   \<open>\<exists>x. x \<notin> vars A\<close> for A::form
@@ -2162,8 +2163,8 @@ lemma fresh_free_var_for: \<open>\<exists>x. is_free_for A x B\<close>
 
 lemma is_wff_of_type_const_subst:
   \<open>is_wff_of_type \<alpha> A \<Longrightarrow> (x,\<tau>) \<notin> vars A 
-  \<Longrightarrow> is_wff_of_type \<alpha> (const_subst (c, x) A)\<close>
-  apply (induct \<open>(c, x)\<close> A arbitrary: \<alpha> rule: const_subst.induct)
+  \<Longrightarrow> is_wff_of_type \<alpha> (const_subst (c, x) \<tau> A)\<close>
+  apply (induct \<open>(c, x)\<close> \<tau> A arbitrary: \<alpha> rule: const_subst.induct)
      apply simp
   apply simp
   apply (metis is_wff_of_type_wffs_of_type_eq wff_has_unique_type wffs_of_type_simps)
@@ -2173,29 +2174,29 @@ lemma is_wff_of_type_const_subst:
   by (metis abs_is_wff form.distinct(11,5,9) form.inject(4) is_wff_of_type.cases)
 
 lemma const_subst_in_wffs: 
-  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> (x,\<tau>) \<notin> vars A \<Longrightarrow> (const_subst (c, x) A) \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> (x,\<tau>) \<notin> vars A \<Longrightarrow> (const_subst (c, x) \<tau> A) \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
   using is_wff_of_type_const_subst is_wff_of_type_wffs_of_type_eq 
   by force
 
 lemma is_hyps_const_subst: \<open>is_hyps \<Gamma> \<Longrightarrow> (x, \<alpha>) \<notin> vars \<Gamma> 
-  \<Longrightarrow> is_hyps {const_subst (c, x) F | F. F \<in> \<Gamma>}\<close>
+  \<Longrightarrow> is_hyps {const_subst (c, x) \<alpha> F | F. F \<in> \<Gamma>}\<close>
   unfolding subset_eq
   using finite_imageI
   by (auto intro!: const_subst_in_wffs)
 
 lemma idemp_const_subst: \<open>c \<notin> cons_form F \<Longrightarrow> \<not> is_logical_name c
-  \<Longrightarrow> const_subst (c, x) F = F\<close>
-  by (induction \<open>(c, x)\<close> F rule: const_subst.induct)
+  \<Longrightarrow> const_subst (c, x) \<alpha> F = F\<close>
+  by (induction \<open>(c, x)\<close> \<alpha> F rule: const_subst.induct)
     auto
 
 lemma const_subst_laws: 
-  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A \<and>\<^sup>\<Q> B) = const_subst (c, x) A \<and>\<^sup>\<Q> const_subst (c, x) B\<close>
-  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A \<supset>\<^sup>\<Q> B) = const_subst (c, x) A \<supset>\<^sup>\<Q>  const_subst (c, x) B\<close>
-  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A \<equiv>\<^sup>\<Q> B) = const_subst (c, x) A \<equiv>\<^sup>\<Q> const_subst (c, x) B\<close>
-  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (T\<^bsub>o\<^esub>) = T\<^bsub>o\<^esub>\<close>
-  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (F\<^bsub>o\<^esub>) = F\<^bsub>o\<^esub>\<close>
-  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (\<forall>z\<^bsub>\<alpha>\<^esub>. A) = (\<forall>z\<^bsub>\<alpha>\<^esub>. const_subst (c, x) A)\<close>
-  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) (A =\<^bsub>\<alpha>\<^esub> B) = (const_subst (c, x) A =\<^bsub>\<alpha>\<^esub> const_subst (c, x) B)\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (A \<and>\<^sup>\<Q> B) = const_subst (c, x) \<tau> A \<and>\<^sup>\<Q> const_subst (c, x) \<tau> B\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (A \<supset>\<^sup>\<Q> B) = const_subst (c, x) \<tau> A \<supset>\<^sup>\<Q>  const_subst (c, x) \<tau> B\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (A \<equiv>\<^sup>\<Q> B) = const_subst (c, x) \<tau> A \<equiv>\<^sup>\<Q> const_subst (c, x) \<tau> B\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (T\<^bsub>o\<^esub>) = T\<^bsub>o\<^esub>\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (F\<^bsub>o\<^esub>) = F\<^bsub>o\<^esub>\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (\<forall>z\<^bsub>\<alpha>\<^esub>. A) = (\<forall>z\<^bsub>\<alpha>\<^esub>. const_subst (c, x) \<tau> A)\<close>
+  \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (A =\<^bsub>\<alpha>\<^esub> B) = (const_subst (c, x) \<tau> A =\<^bsub>\<alpha>\<^esub> const_subst (c, x) \<tau> B)\<close>
   by (simp_all add: logical_names_def)
 
 lemma cons_form_non_lnames: \<open>c \<in> logical_names \<Longrightarrow> c \<notin> cons_form A\<close>
@@ -2206,7 +2207,7 @@ lemma const_subst_axiom:
   assumes \<open>c \<notin> cons_form A\<close>
     and \<open>\<not> is_logical_name c\<close> 
     and \<open>A \<in> axioms\<close>
-  shows \<open>(const_subst (c, x) A) \<in> axioms\<close>
+  shows \<open>(const_subst (c, x) \<alpha> A) \<in> axioms\<close>
   using idemp_const_subst[OF assms(1,2)] assms(3)
   by simp
 
@@ -2222,25 +2223,25 @@ abbreviation \<cc>\<^sub>\<iota> where "\<cc>\<^sub>\<iota> \<equiv> Suc \<cc>\<
 
 lemma axiom_1_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
-  shows "const_subst (c, x) (\<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub>) \<in> axioms"
+  shows "const_subst (c, x) \<tau> (\<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub>) \<in> axioms"
   apply(simp only: const_subst_laws[OF assms] const_subst.simps)
   using axioms.axiom_1 by blast
 
 lemma axiom_2_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
-  shows "const_subst (c, x) ((\<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<alpha>\<^esub> \<yy>\<^bsub>\<alpha>\<^esub>) \<supset>\<^sup>\<Q> (\<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> \<equiv>\<^sup>\<Q> \<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<yy>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
+  shows "const_subst (c, x) \<tau> ((\<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<alpha>\<^esub> \<yy>\<^bsub>\<alpha>\<^esub>) \<supset>\<^sup>\<Q> (\<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> \<equiv>\<^sup>\<Q> \<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<yy>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
   apply(simp only: const_subst_laws[OF assms] const_subst.simps)
   using axioms.axiom_2 by blast
 
 lemma axiom_3_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
-  shows  "const_subst (c, x) ((\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
+  shows  "const_subst (c, x) \<tau> ((\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
   apply(simp only: const_subst_laws[OF assms] const_subst.simps)
   using axioms.axiom_3 by blast
 
 lemma xmas_elf:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  shows "const_subst (c, x) A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  shows "const_subst (c, x) \<tau> A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   using assms
 proof (induction)
   case (var_is_wff \<alpha> y)
@@ -2265,18 +2266,22 @@ lemma axiom_4_1_con_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   assumes "x \<noteq> y"
-  shows "const_subst (c, x) ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> axioms"
+  shows "const_subst (c, x) \<tau> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> axioms"
   apply(simp only: const_subst_laws[OF assms(1)] const_subst.simps)
-  using axioms.axiom_4_1_var[of "const_subst (c, x) A" \<alpha> x \<beta> y]
-  apply (subgoal_tac "const_subst (c, x) A \<in> wffs\<^bsub>\<alpha>\<^esub>")
+  using axioms.axiom_4_1_var[of "const_subst (c, x) \<tau> A" \<alpha> x \<beta> y]
+  apply (subgoal_tac "const_subst (c, x) \<tau> A \<in> wffs\<^bsub>\<alpha>\<^esub>")
   subgoal
     using assms(3) apply auto
-    apply (cases "c=d")
+    apply (cases "c=d \<and> \<tau>=\<beta>")
     subgoal
       apply auto
       done
     subgoal
       using axioms.axiom_4_1_con apply auto
+      done
+    subgoal
+      using axioms.axiom_4_1_con 
+      apply auto
       done
     done
   subgoal
@@ -2288,14 +2293,14 @@ lemma axiom_4_1_var_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   assumes "y\<^bsub>\<beta>\<^esub> \<noteq> z\<^bsub>\<alpha>\<^esub>"
-  shows "const_subst (c, x) ((\<lambda>z\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub>) \<in> axioms"
+  shows "const_subst (c, x) \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub>) \<in> axioms"
   using assms(1,2,3) axioms.axiom_4_1_var xmas_elf by auto
 
 lemma axiom_4_2_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   assumes "\<forall>t. (x, t) \<notin> vars ((\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>)"
-  shows "const_subst (c, x) ((\<lambda>z\<^bsub>\<alpha>\<^esub>. x\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A) \<in> axioms"
+  shows "const_subst (c, x) \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. x\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A) \<in> axioms"
   oops
  
 
@@ -2304,12 +2309,14 @@ lemma axiom_4_3_const_subst:
   assumes  "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   assumes "B \<in> wffs\<^bsub>\<gamma>\<rightarrow>\<beta>\<^esub>" 
   assumes "C \<in> wffs\<^bsub>\<gamma>\<^esub>"
-  shows "const_subst (c, x) ((\<lambda>y\<^bsub>\<alpha>\<^esub>. B \<sqdot> C) \<sqdot> A =\<^bsub>\<beta>\<^esub> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) \<sqdot> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. C) \<sqdot> A)) \<in> axioms"
-  by (smt (verit) assms(1,2,3,4) axioms.simps const_subst.simps(3,4) const_subst_laws(7) xmas_elf)
+  shows "const_subst (c, x) \<tau> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. B \<sqdot> C) \<sqdot> A =\<^bsub>\<beta>\<^esub> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) \<sqdot> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. C) \<sqdot> A)) \<in> axioms"
+  apply(simp only: const_subst_laws[OF assms(1)] const_subst.simps)
+  by (smt (verit) assms(2,3,4) axioms.simps xmas_elf)
+
 
 lemma x_mas_elf2:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  shows "(y, \<gamma>) \<in> vars (const_subst (c, x) A) \<Longrightarrow> y = x \<or> (y, \<gamma>) \<in> vars A"
+  shows "(y, \<gamma>) \<in> vars (const_subst (c, x) \<tau> A) \<Longrightarrow> y = x \<or> (y, \<gamma>) \<in> vars A"
   using assms proof (induction)
   case (var_is_wff \<alpha> x)
   then show ?case
@@ -2332,25 +2339,25 @@ lemma axiom_4_4_const_subst:
   assumes \<open>\<not> is_logical_name c\<close>
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>" and "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars A"
   assumes "\<forall>t. (x,t) \<notin> vars ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A))"
-  shows "const_subst (c, x) ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A)) \<in> axioms"
+  shows "const_subst (c, x)  \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A)) \<in> axioms"
 proof -
-  have A: "const_subst (c, x) A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  have A: "const_subst (c, x) \<tau> A \<in> wffs\<^bsub>\<alpha>\<^esub>"
     by (simp add: assms(2) xmas_elf)
-  have B: "const_subst (c, x) B \<in> wffs\<^bsub>\<delta>\<^esub> "
+  have B: "const_subst (c, x) \<tau> B \<in> wffs\<^bsub>\<delta>\<^esub> "
     by (simp add: assms(3) xmas_elf)
  
   have "(y, \<gamma>) \<notin> {(z, \<alpha>)}"
     using assms(4) by auto
   moreover
-  have "(y, \<gamma>) \<notin> vars (const_subst (c, x) A)"
+  have "(y, \<gamma>) \<notin> vars (const_subst (c, x) \<tau> A)"
     using assms(4) x_mas_elf2[OF assms(2), of y \<gamma> c x]
     using assms(5) by auto
   ultimately
-  have C: "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars (const_subst (c, x) A)"
+  have C: "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars (const_subst (c, x) \<tau> A)"
     by simp
   show ?thesis
   apply(simp only: const_subst_laws[OF assms(1)] const_subst.simps)
-    using axioms.axiom_4_4[of "const_subst (c, x) A" \<alpha> "const_subst (c, x) B" \<delta> y \<gamma> z]
+    using axioms.axiom_4_4[of "const_subst (c, x) \<tau> A" \<alpha> "const_subst (c, x) \<tau> B" \<delta> y \<gamma> z]
     using A B C
     by simp
 qed
@@ -2359,19 +2366,20 @@ lemma axiom_4_5_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>"
   assumes "\<forall>t. (x,t) \<notin> vars ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. B))"
-  shows "const_subst (c, x) ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. B)) \<in> axioms"
+  shows "const_subst (c, x) \<tau> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. B)) \<in> axioms"
   using assms(1,2,3) axioms.axiom_4_5 const_subst.simps(3,4) const_subst_laws(7) xmas_elf by presburger
   
 lemma axiom_5_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
-  shows "const_subst (c, x) \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub> \<in> axioms"
-  by (metis assms axioms.axiom_5 const_subst.simps(2) iota_constant_def iota_def logical_name_simps(2))
+  shows "const_subst (c, x) \<tau> (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub>) \<in> axioms"
+  by (metis Q_constant_of_type_def Q_def assms axioms.axiom_5 cons_form.simps(1,2,3) const_subst_axiom empty_iff equality_of_type_def
+      iota_constant_def iota_def logical_name_simps(1,2) sup_bot.right_neutral)
 
 lemma const_subst_axiom2:
   assumes \<open>\<not> is_logical_name c\<close> 
     and \<open>\<forall>t. (x,t) \<notin> vars A\<close>
     and \<open>A \<in> axioms\<close>
-  shows \<open>(const_subst (c, x) A) \<in> axioms\<close>
+  shows \<open>(const_subst (c, x) \<tau> A) \<in> axioms\<close>
   using assms(3,1,2)
 proof (induction)
   case axiom_1
@@ -2418,45 +2426,44 @@ next
 qed
 
 (* TODO AND WARNING:
-   ON THIS AND THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
-lemma is_derivable_const_subst:
+   ON SOME OF THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
+
+lemma is_derivable_const_subst: (* I guess I really need to do the replacement on the proof.  *)
   assumes "is_derivable A"
   assumes "c \<notin> logical_names"
-  shows "is_derivable (const_subst (c, x) A)"
+  assumes "\<forall>t. (x, t) \<notin> vars A" (* This is "x IS FRESH" *)
+  shows "is_derivable (const_subst (c, x) \<tau> A)"
   using assms
 proof (induction)
   case (dv_axiom A)
-  have "c \<notin> cons_form A" (* Should we assume this? Seems reasonable? *)
-                         (* Actually, no I think we should avoid it. *)
-    sorry
-  from this dv_axiom have "(const_subst (c, x) A) \<in> axioms"
-    using const_subst_axiom
-    by auto
-  then show ?case
-    using is_derivable.dv_axiom by blast
+  show ?case
+    using is_derivable.dv_axiom
+    by (simp add: const_subst_axiom2 dv_axiom.hyps dv_axiom.prems(1,2)) 
 next
   case (dv_rule_R C E p D)
-  let ?C = "const_subst (c, x) C"
-  let ?D = "const_subst (c, x) D"
-  let ?E = "const_subst (c, x) E"
+  let ?C = "const_subst (c, x) \<tau> C"
+  let ?D = "const_subst (c, x) \<tau> D"
+  let ?E = "const_subst (c, x) \<tau> E"
 
   have "is_rule_R_app p ?D ?C ?E"
     using dv_rule_R(3,6)
     sorry
   show ?case
-    using \<open>is_rule_R_app p (const_subst (c, x) D) (const_subst (c, x) C) (const_subst (c, x) E)\<close> dv_rule_R.IH(1,2) dv_rule_R.prems is_derivable.dv_rule_R by blast
+    using \<open>is_rule_R_app p (const_subst (c, x) \<tau> D) (const_subst (c, x) \<tau> C) (const_subst (c, x) \<tau> E)\<close> dv_rule_R.IH(1,2) dv_rule_R.prems is_derivable.dv_rule_R
+    sorry
 qed
 
 lemma is_theorem_const_subst:
   assumes "is_theorem A"
   assumes "c \<notin> logical_names"
-  shows "is_theorem (const_subst (c, x) A)"
-  by (metis assms(1,2) is_derivable_const_subst theoremhood_derivability_equivalence)
+  assumes "\<forall>t. (x, t) \<notin> vars A"
+  shows "is_theorem (const_subst (c, x) \<tau> A)"
+  by (metis assms is_derivable_const_subst theoremhood_derivability_equivalence)
 
 lemma is_rule_R'_app_const_subst:
-  assumes "C' = (const_subst (c, x) C)"
-  assumes "D' = (const_subst (c, x) D)"
-  assumes "E' = (const_subst (c, x) E)"
+  assumes "C' = (const_subst (c, x) \<tau> C)"
+  assumes "D' = (const_subst (c, x) \<tau> D)"
+  assumes "E' = (const_subst (c, x) \<tau> E)"
   assumes "is_rule_R'_app As p D C E"
   assumes "is_hyps As"
   assumes "c \<notin> logical_names"
@@ -2479,31 +2486,31 @@ lemma is_derivable_from_hyps_const_subst:
   assumes "As \<turnstile> F"
   assumes "\<not> is_logical_name c"
   assumes "c \<notin> P.params As"
-  shows "As \<turnstile> const_subst (c,x) F"
+  shows "As \<turnstile> const_subst (c,x) \<tau> F"
   using assms
 proof(induction)
   case (dv_hyp A)
   then have "c \<notin> cons_form A"
     by blast
-  from this dv_hyp have "const_subst (c, x) A = A"
+  from this dv_hyp have "const_subst (c, x) \<tau> A = A"
     using idemp_const_subst by presburger
-  have "const_subst (c, x) A \<in> As"
-    using \<open>const_subst (c, x) A = A\<close> dv_hyp.hyps(1) by auto
+  have "const_subst (c, x) \<tau> A \<in> As"
+    using \<open>const_subst (c, x) \<tau> A = A\<close> dv_hyp.hyps(1) by auto
   have "is_hyps As"
     by (simp add: dv_hyp.hyps(2))
   have "c \<notin> P.params As"
     using dv_hyp.prems by blast
   show ?case
-    by (meson \<open>const_subst (c, x) A \<in> As\<close> dv_hyp.hyps(2) is_derivable_from_hyps.simps)
+    by (meson \<open>const_subst (c, x) \<tau> A \<in> As\<close> dv_hyp.hyps(2) is_derivable_from_hyps.simps)
 next
   case (dv_thm A)
   then show ?case
-    using is_theorem_const_subst by (meson is_derivable_from_hyps.simps)
+    using is_theorem_const_subst using is_derivable_from_hyps.simps sorry
 next
   case (dv_rule_R' C E p D)
-  let ?C = "const_subst (c, x) C"
-  let ?D = "const_subst (c, x) D"
-  let ?E = "const_subst (c, x) E"
+  let ?C = "const_subst (c, x) \<tau> C"
+  let ?D = "const_subst (c, x) \<tau> D"
+  let ?E = "const_subst (c, x) \<tau> E"
 
   have "As \<turnstile> ?C"
     using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) by blast
@@ -2513,14 +2520,14 @@ next
     using dv_rule_R'(1,2,3,4,7,8)
     using is_rule_R'_app_const_subst by presburger
   then show ?case
-    by (meson \<open>As \<turnstile> const_subst (c, x) C\<close> \<open>As \<turnstile> const_subst (c, x) E\<close> dv_rule_R'.hyps(4)
-        is_derivable_from_hyps.dv_rule_R')
+    using \<open>As \<turnstile> const_subst (c, x) \<tau> C\<close> \<open>As \<turnstile> const_subst (c, x) \<tau> E\<close> dv_rule_R'.hyps(4)
+        is_derivable_from_hyps.dv_rule_R' by meson
 qed
 
 
 
 
-(* A Javerian take on const_subst  *)
+(* A Javierian take on const_subst  *)
 inductive
   is_replacement_at :: "form \<Rightarrow> form \<Rightarrow> form \<Rightarrow> form \<Rightarrow> bool"
   (\<open>(4_\<lparr>_ \<leftarrow> _\<rparr> \<rhd> _)\<close> [1000, 0, 0, 0] 900)
