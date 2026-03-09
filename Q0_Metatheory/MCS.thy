@@ -2425,6 +2425,104 @@ next
     using axiom_5_const_subst by force
 qed
 
+definition const_subst_proof where 
+  "const_subst_proof cx \<tau> S = map (const_subst cx \<tau>) S"
+
+lemma is_proof_induct [consumes 1, case_names p_nil p_axiom p_rule_R]:
+  assumes "is_proof S"
+  assumes p_nil: "P []"
+  assumes p_axiom: "(\<And>A S. A \<in> axioms \<Longrightarrow> is_proof S \<Longrightarrow> P S \<Longrightarrow> P (S @ [A]))"
+  assumes p_rule_R: "(\<And>S S' E S'' C p D. is_proof S \<Longrightarrow> P S \<Longrightarrow> prefix (S' @ [E]) S \<Longrightarrow> prefix (S'' @ [C]) S \<Longrightarrow> is_rule_R_app p D C E \<Longrightarrow> P (S @ [D]))"
+  shows "P S"
+  sorry
+
+lemma
+  in_vars_append: "xt \<in> vars (S @ S') \<longleftrightarrow> x \<in> (vars S) \<or> x \<in> (vars S')"
+  sorry
+
+lemma
+  in_vars_append_singleton: "xt \<in> vars (S @ [A]) \<longleftrightarrow> x \<in> (vars S) \<or> x \<in> (vars A)"
+  sorry
+
+lemma is_proof_R_intro: (* I think Javier proved something like this. *)
+  assumes "is_rule_R_app p D C E"
+  assumes "is_proof S"
+  assumes "prefix (S' @ [E]) S"
+  assumes "prefix (S'' @ [C]) S"
+  shows "is_proof (S @ [D])"
+  sorry
+  
+
+lemma is_theorem_const_subst:
+  assumes "is_proof \<S>"
+  assumes "c \<notin> logical_names"
+  assumes "\<forall>t. (x, t) \<notin> vars \<S>"
+  shows "is_proof (const_subst_proof (c,x) \<tau> \<S>)"
+using assms proof (induction rule: is_proof_induct)
+  case p_nil
+  then show ?case
+    by (simp add: const_subst_proof_def)
+next
+  case (p_axiom A S)
+  have "\<forall>t. (x, t) \<notin> vars S"
+    using in_vars_append p_axiom.prems(2) by blast
+  have "is_proof (const_subst_proof (c,x) \<tau> S)"
+    using \<open>\<forall>t. (x, t) \<notin> vars S\<close> p_axiom.IH p_axiom.prems(1) by blast
+  have " \<forall>t. (x, t) \<notin> vars A"
+    using p_axiom
+    by (metis in_vars_append_singleton)
+  have "const_subst (c,x) \<tau> A \<in> axioms"
+    using const_subst_axiom2
+    using \<open>\<forall>t. (x, t) \<notin> vars A\<close> p_axiom.hyps(1) p_axiom.prems(1) by auto
+  have "is_proof ((const_subst_proof (c,x) \<tau> S) @ [const_subst (c,x) \<tau> A])"
+    by (metis \<open>const_subst (c,x) \<tau> A \<in> axioms\<close> \<open>is_proof (const_subst_proof (c,x) \<tau> S)\<close> axiom_appended_to_proof_is_proof)
+  then show ?case
+    using p_axiom
+    using const_subst_proof_def by auto
+next
+  case (p_rule_R S S' E S'' C p D)
+  let ?C = "const_subst (c, x) \<tau> C"
+  let ?D = "const_subst (c, x) \<tau> D"
+  let ?E = "const_subst (c, x) \<tau> E"
+
+  let ?S = "const_subst_proof (c, x) \<tau> S"
+  let ?SD = "const_subst_proof (c, x) \<tau> (S @ [D])"
+  let ?S' = "const_subst_proof (c, x) \<tau> S'"
+  let ?S'E = "const_subst_proof (c, x) \<tau> (S' @ [E])"
+  let ?S'' = "const_subst_proof (c, x) \<tau> S''"
+  let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
+
+  have "is_proof ?S"
+    using in_vars_append p_rule_R.IH p_rule_R.prems(1,2) by blast
+
+  have "prefix ?S''C ?S"
+    by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(3))
+  have "prefix ?S'E ?S"
+    by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(2))
+  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [const_subst (c, x) \<tau> E]) (const_subst_proof (c, x) \<tau> S)"
+    using \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by fastforce
+
+  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [const_subst (c, x) \<tau> C]) (const_subst_proof (c, x) \<tau> S)"
+    using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by force
+
+  have "is_proof ?S''C"
+    by (metis \<open>is_proof (const_subst_proof (c, x) \<tau> S)\<close>
+        \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> prefixE
+        proof_prefix_is_proof) 
+
+  
+  have "is_proof ?S'E"
+    by (metis \<open>is_proof (const_subst_proof (c, x) \<tau> S)\<close>
+        \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> prefixE
+        proof_prefix_is_proof)
+  
+  have "is_rule_R_app p ?D ?C ?E"
+    sorry
+  
+  show ?case
+    using is_proof_R_intro[OF \<open>is_rule_R_app p ?D ?C ?E\<close> \<open>is_proof ?S\<close>, of ?S' ?S'', OF P1 P2]
+    by (simp add: const_subst_proof_def)
+qed
 (* TODO AND WARNING:
    ON SOME OF THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
 
