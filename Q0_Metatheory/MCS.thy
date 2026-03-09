@@ -2436,14 +2436,6 @@ lemma is_proof_induct [consumes 1, case_names p_nil p_axiom p_rule_R]:
   shows "P S"
   sorry
 
-lemma
-  in_vars_append: "xt \<in> vars (S @ S') \<longleftrightarrow> x \<in> (vars S) \<or> x \<in> (vars S')"
-  sorry
-
-lemma
-  in_vars_append_singleton: "xt \<in> vars (S @ [A]) \<longleftrightarrow> x \<in> (vars S) \<or> x \<in> (vars A)"
-  sorry
-
 lemma is_proof_R_intro: (* I think Javier proved something like this. *)
   assumes "is_rule_R_app p D C E"
   assumes "is_proof S"
@@ -2452,11 +2444,12 @@ lemma is_proof_R_intro: (* I think Javier proved something like this. *)
   shows "is_proof (S @ [D])"
   sorry
   
+definition "vars\<^sub>p (\<S>::form list) = vars (List.set \<S>)"
 
 lemma is_theorem_const_subst:
   assumes "is_proof \<S>"
   assumes "c \<notin> logical_names"
-  assumes "\<forall>t. (x, t) \<notin> vars \<S>"
+  assumes "\<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
   shows "is_proof (const_subst_proof (c,x) \<tau> \<S>)"
 using assms proof (induction rule: is_proof_induct)
   case p_nil
@@ -2464,13 +2457,13 @@ using assms proof (induction rule: is_proof_induct)
     by (simp add: const_subst_proof_def)
 next
   case (p_axiom A S)
-  have "\<forall>t. (x, t) \<notin> vars S"
-    using in_vars_append p_axiom.prems(2) by blast
+  have "\<forall>t. (x, t) \<notin> vars\<^sub>p S"
+    using p_axiom.prems(2) unfolding vars\<^sub>p_def by auto
   have "is_proof (const_subst_proof (c,x) \<tau> S)"
-    using \<open>\<forall>t. (x, t) \<notin> vars S\<close> p_axiom.IH p_axiom.prems(1) by blast
+    using \<open>\<forall>t. (x, t) \<notin> vars\<^sub>p S\<close> p_axiom.IH p_axiom.prems(1) by blast
   have " \<forall>t. (x, t) \<notin> vars A"
-    using p_axiom
-    by (metis in_vars_append_singleton)
+    using p_axiom unfolding vars\<^sub>p_def
+    by auto
   have "const_subst (c,x) \<tau> A \<in> axioms"
     using const_subst_axiom2
     using \<open>\<forall>t. (x, t) \<notin> vars A\<close> p_axiom.hyps(1) p_axiom.prems(1) by auto
@@ -2493,7 +2486,7 @@ next
   let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
 
   have "is_proof ?S"
-    using in_vars_append p_rule_R.IH p_rule_R.prems(1,2) by blast
+    using p_rule_R.IH p_rule_R.prems(1,2) vars\<^sub>p_def by auto
 
   have "prefix ?S''C ?S"
     by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(3))
