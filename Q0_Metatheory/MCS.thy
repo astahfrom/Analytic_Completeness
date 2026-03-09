@@ -2435,14 +2435,94 @@ lemma is_rule_R_app_const_subst:
 definition const_subst_proof where 
   "const_subst_proof cx \<tau> S = map (const_subst cx \<tau>) S"
 
-
+thm theorem_is_derivable_form (* The proof is adapted from the proof of theorem_is_derivable_form *)
 lemma is_proof_induct [consumes 1, case_names p_nil p_axiom p_rule_R]:
   assumes "is_proof S"
   assumes p_nil: "P []"
   assumes p_axiom: "(\<And>A S. A \<in> axioms \<Longrightarrow> is_proof S \<Longrightarrow> P S \<Longrightarrow> P (S @ [A]))"
   assumes p_rule_R: "(\<And>S S' E S'' C p D. is_proof S \<Longrightarrow> P S \<Longrightarrow> prefix (S' @ [E]) S \<Longrightarrow> prefix (S'' @ [C]) S \<Longrightarrow> is_rule_R_app p D C E \<Longrightarrow> P (S @ [D]))"
   shows "P S"
-  sorry
+proof (cases "S = []")
+  case True
+  then show ?thesis using assms by auto
+next
+  case False
+  from False assms show ?thesis  proof (induction "length S" arbitrary: S rule: less_induct)
+    case less
+    let ?i' = "length S - 1"
+    define A where "A = last S"
+    then have "last S = A"
+      by auto
+    from \<open>S \<noteq> []\<close> and \<open>last S = A\<close> have "S ! ?i' = A"
+      by (simp add: last_conv_nth)
+    from \<open>is_proof S\<close> and \<open>S \<noteq> []\<close> and \<open>last S = A\<close> have "is_proof_step S ?i'"
+      using added_suffix_proof_preservation[where \<S>' = "[]"] by simp
+    then consider
+      (axiom) "S ! ?i' \<in> axioms"
+    | (rule_R) "\<exists>p j k. {j, k} \<subseteq> {0..<?i'} \<and> is_rule_R_app p (S ! ?i') (S ! j) (S ! k)"
+      by fastforce
+    then show ?case
+    proof cases
+      case axiom
+      with \<open>S ! ?i' = A\<close> have "P (butlast S @ [A])"
+        using less(5)[of A "butlast S"]
+        using append_butlast_last_id diff_less gr0I length_0_conv length_butlast less.hyps less.prems(1,2)
+            less_numeral_extra(1) p_axiom p_nil p_rule_R proof_but_last_is_proof
+        by (metis (no_types, lifting))
+      then show ?thesis using \<open>S ! ?i' = A\<close>
+        by (simp add: A_def less.prems(1))
+    next
+      case rule_R
+      then obtain p and j and k
+        where "{j, k} \<subseteq> {0..<?i'}" and "is_rule_R_app p (S ! ?i') (S ! j) (S ! k)"
+        by force
+      let ?\<S>\<^sub>j = "take (Suc j) S"
+      let ?\<S>\<^sub>k = "take (Suc k) S"
+      obtain \<S>\<^sub>j' and \<S>\<^sub>k' where "S = ?\<S>\<^sub>j @ \<S>\<^sub>j'" and "S = ?\<S>\<^sub>k @ \<S>\<^sub>k'"
+        by (metis append_take_drop_id)
+      with \<open>is_proof S\<close> have "is_proof (?\<S>\<^sub>j @ \<S>\<^sub>j')" and "is_proof (?\<S>\<^sub>k @ \<S>\<^sub>k')"
+        by (simp_all only:)
+      moreover
+      from \<open>S = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> and \<open>S = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> and \<open>last S = A\<close> and \<open>{j, k} \<subseteq> {0..<length S - 1}\<close>
+      have "last \<S>\<^sub>j' = A" and "last \<S>\<^sub>k' = A"
+        using length_Cons and less_le_not_le and take_Suc and take_tl and append.right_neutral
+        by (metis atLeastLessThan_iff diff_Suc_1 insert_subset last_appendR take_all_iff)+
+      moreover from \<open>S \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
+        by simp_all
+      ultimately have "is_proof_of ?\<S>\<^sub>j (last ?\<S>\<^sub>j)" and "is_proof_of ?\<S>\<^sub>k (last ?\<S>\<^sub>k)"
+        using proof_prefix_is_proof_of_last [where \<S> = ?\<S>\<^sub>j and \<S>' = \<S>\<^sub>j']
+        and proof_prefix_is_proof_of_last [where \<S> = ?\<S>\<^sub>k and \<S>' = \<S>\<^sub>k']
+        by fastforce+
+      moreover from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
+      have "length ?\<S>\<^sub>j < length S" and "length ?\<S>\<^sub>k < length S"
+        using \<open>{j, k} \<subseteq> {0..<length S - 1}\<close> by force+
+      moreover from calculation(3,4) have "last ?\<S>\<^sub>j = S ! j" and "last ?\<S>\<^sub>k = S ! k"
+        by (metis Suc_lessD last_snoc linorder_not_le nat_neq_iff take_Suc_conv_app_nth take_all_iff)+
+      moreover
+      have "is_proof (butlast S)"
+        by (metis append_butlast_last_id less.prems(1,2) proof_prefix_is_proof)
+      moreover
+      have "P (butlast S)"
+        by (smt (verit, ccfv_SIG) calculation(7) diff_less length_butlast length_greater_0_conv less.hyps less.prems(1)
+            less_numeral_extra(1) p_axiom p_nil p_rule_R)
+      moreover 
+      have "prefix ((take k S) @ [S ! k]) (butlast S)"
+        using calculation(4) less.prems(1) by (metis append_butlast_last_id  dual_order.irrefl le_SucI not_le_imp_less prefix_snoc
+            take_Suc_conv_app_nth take_all_iff take_is_prefix)
+      moreover
+      have "\<exists>S''. prefix (S'' @ [S ! j]) (butlast S)"
+        by (metis \<open>take (Suc j) S \<noteq> []\<close> append_butlast_last_id calculation(3,5) less.prems(1)
+            less_not_refl prefix_snoc take_is_prefix)
+      ultimately have "P (butlast S @ [S ! (length S - 1)])"
+        using \<open>is_rule_R_app p (S ! ?i') (S ! j) (S ! k)\<close> and \<open>S ! ?i' = A\<close>
+        using less(6)[of "butlast S" _ " (S ! k)" _ "(S ! j)" p " (S ! (length S - 1))"]
+        apply auto
+        done
+      then show ?thesis
+        using A_def \<open>S ! (length S - 1) = A\<close> less.prems(1) by auto
+    qed
+  qed
+qed
 
 lemma is_proof_R_intro:
   assumes "is_rule_R_app p D C E"
