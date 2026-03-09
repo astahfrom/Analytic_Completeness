@@ -2425,6 +2425,13 @@ next
     using axiom_5_const_subst by force
 qed
 
+lemma is_rule_R_app_const_subst:
+  assumes "c \<notin> logical_names"
+  assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "is_rule_R_app p D C E"
+  shows "is_rule_R_app p (const_subst (c, x) \<tau> D) (const_subst (c, x) \<tau> C) (const_subst (c, x) \<tau> E)"
+  sorry
+
 definition const_subst_proof where 
   "const_subst_proof cx \<tau> S = map (const_subst cx \<tau>) S"
 
@@ -2508,10 +2515,35 @@ next
     by (metis \<open>is_proof (const_subst_proof (c, x) \<tau> S)\<close>
         \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> prefixE
         proof_prefix_is_proof)
-  
+
+  have varsD: "\<forall>t. (x, t) \<notin> vars D"
+    using p_rule_R unfolding vars\<^sub>p_def apply auto
+    done    
+
+  have varsS: "\<forall>t. (x, t) \<notin> vars\<^sub>p (S @ [D])"
+    by (simp add: p_rule_R.prems(2))
+
+  have "vars C \<subseteq> vars\<^sub>p S"
+    unfolding vars\<^sub>p_def apply auto
+    by (metis append.assoc append_Cons in_set_conv_decomp p_rule_R.hyps(3) prefixE)
+  then have varsC: "\<forall>t. (x, t) \<notin> vars C"
+    using varsS unfolding vars\<^sub>p_def by auto
+
+  have "vars E \<subseteq> vars\<^sub>p S"
+    unfolding vars\<^sub>p_def apply auto
+    by (metis UnCI in_mono list.set_intros(1) p_rule_R.hyps(2) set_append set_mono_prefix)
+  then have varsE: "\<forall>t. (x, t) \<notin> vars E"
+      using varsS unfolding vars\<^sub>p_def by auto
+
+  have varsDCE: "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
+    by (simp add: varsC varsD varsE)
+
   have "is_rule_R_app p ?D ?C ?E"
-    sorry
-  
+    using p_rule_R
+    using is_rule_R_app_const_subst[OF p_rule_R(6) varsDCE  p_rule_R(4)]
+    apply auto
+    done
+
   show ?case
     using is_proof_R_intro[OF \<open>is_rule_R_app p ?D ?C ?E\<close> \<open>is_proof ?S\<close>, of ?S' ?S'', OF P1 P2]
     by (simp add: const_subst_proof_def)
