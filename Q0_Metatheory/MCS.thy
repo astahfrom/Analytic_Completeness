@@ -2435,6 +2435,7 @@ lemma is_rule_R_app_const_subst:
 definition const_subst_proof where 
   "const_subst_proof cx \<tau> S = map (const_subst cx \<tau>) S"
 
+
 lemma is_proof_induct [consumes 1, case_names p_nil p_axiom p_rule_R]:
   assumes "is_proof S"
   assumes p_nil: "P []"
@@ -2443,13 +2444,34 @@ lemma is_proof_induct [consumes 1, case_names p_nil p_axiom p_rule_R]:
   shows "P S"
   sorry
 
-lemma is_proof_R_intro: (* I think Javier proved something like this. *)
+lemma is_proof_R_intro:
   assumes "is_rule_R_app p D C E"
   assumes "is_proof S"
   assumes "prefix (S' @ [E]) S"
   assumes "prefix (S'' @ [C]) S"
   shows "is_proof (S @ [D])"
-  sorry
+proof -
+  define ic :: nat where "ic = length S''"
+  define ie :: nat where "ie = length S'"
+
+  have "is_proof S"
+    using assms(2) by auto
+    
+  have "ic < length S"
+    by (metis assms(4) ic_def length_append_singleton less_eq_Suc_le prefix_length_le)
+  have "S ! ic = C"
+    using assms(4) ic_def prefixE by fastforce
+  have "ie < length S"
+    using assms(3) ie_def prefix_length_le by fastforce
+  have "S ! ie = E"
+    by (smt (verit, del_insts) append.assoc append_Cons assms(3) ie_def nth_append_length prefix_def)
+  have "is_rule_R_app p D C E"
+    using assms(1) by auto
+
+  show ?thesis
+    using rule_R_app_appended_to_proof_is_proof[of S ic C ie E p D]
+    using \<open>S ! ic = C\<close> \<open>S ! ie = E\<close> \<open>ic < length S\<close> \<open>ie < length S\<close> assms(1,2) by linarith
+qed
   
 definition "vars\<^sub>p (\<S>::form list) = vars (List.set \<S>)"
 
