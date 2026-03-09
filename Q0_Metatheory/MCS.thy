@@ -2130,6 +2130,12 @@ fun const_subst :: "nat \<times> nat \<Rightarrow> form \<Rightarrow> form"
   | "const_subst (c, x) (A \<sqdot> B) = (const_subst (c, x) A) \<sqdot> (const_subst (c, x) B)"
   | "const_subst (c, x) (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst (c, x) A)"
 
+fun const_subst2 :: "nat \<times> nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form"
+  where "const_subst2 (c, x) \<alpha> (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
+  | "const_subst2 (c, x) \<alpha> (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d \<and> \<alpha> = \<beta> then (x\<^bsub>\<beta>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
+  | "const_subst2 (c, x) \<alpha> (A \<sqdot> B) = (const_subst2 (c, x) \<alpha> A) \<sqdot> (const_subst2 (c, x) \<alpha> B)"
+  | "const_subst2 (c, x) \<alpha> (\<lambda>y\<^bsub>\<beta>\<^esub>. A) = (\<lambda>y\<^bsub>\<beta>\<^esub>. const_subst2 (c, x) \<alpha> A)"
+
 lemma fresh_var_form: 
   \<open>\<exists>x. x \<notin> vars A\<close> for A::form
 proof (induct A)
@@ -2204,66 +2210,212 @@ lemma const_subst_axiom:
   using idemp_const_subst[OF assms(1,2)] assms(3)
   by simp
 
+abbreviation \<xx> where "\<xx> \<equiv> 0"
+abbreviation \<yy> where "\<yy> \<equiv> Suc \<xx>"
+abbreviation \<zz> where "\<zz> \<equiv> Suc \<yy>"
+abbreviation \<ff> where "\<ff> \<equiv> Suc \<zz>"
+abbreviation \<gg> where "\<gg> \<equiv> Suc \<ff>"
+abbreviation \<hh> where "\<hh> \<equiv> Suc \<gg>"
+abbreviation \<cc> where "\<cc> \<equiv> Suc \<hh>"
+abbreviation \<cc>\<^sub>Q where "\<cc>\<^sub>Q \<equiv> Suc \<cc>"
+abbreviation \<cc>\<^sub>\<iota> where "\<cc>\<^sub>\<iota> \<equiv> Suc \<cc>\<^sub>Q"
+
 lemma axiom_1_const_subst:
-  "const_subst (c, x) (\<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub>) \<in> axioms"
-  sorry
+  assumes \<open>\<not> is_logical_name c\<close> 
+  shows "const_subst (c, x) (\<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> T\<^bsub>o\<^esub> \<and>\<^sup>\<Q> \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> F\<^bsub>o\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>o\<^esub>. \<gg>\<^bsub>o\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>o\<^esub>) \<in> axioms"
+  apply(simp only: const_subst_laws[OF assms] const_subst.simps)
+  using axioms.axiom_1 by blast
 
 lemma axiom_2_const_subst:
-  "const_subst (c, x) ((\<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<alpha>\<^esub> \<yy>\<^bsub>\<alpha>\<^esub>) \<supset>\<^sup>\<Q> (\<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> \<equiv>\<^sup>\<Q> \<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<yy>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
-  sorry
+  assumes \<open>\<not> is_logical_name c\<close> 
+  shows "const_subst (c, x) ((\<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<alpha>\<^esub> \<yy>\<^bsub>\<alpha>\<^esub>) \<supset>\<^sup>\<Q> (\<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> \<equiv>\<^sup>\<Q> \<hh>\<^bsub>\<alpha>\<rightarrow>o\<^esub> \<sqdot> \<yy>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
+  apply(simp only: const_subst_laws[OF assms] const_subst.simps)
+  using axioms.axiom_2 by blast
+
 lemma axiom_3_const_subst:
-  "const_subst (c, x) ((\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
-  sorry
+  assumes \<open>\<not> is_logical_name c\<close> 
+  shows  "const_subst (c, x) ((\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) \<in> axioms"
+  apply(simp only: const_subst_laws[OF assms] const_subst.simps)
+  using axioms.axiom_3 by blast
+
+lemma xmas_elf:
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  shows "const_subst (c, x) A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  using assms
+proof (induction)
+  case (var_is_wff \<alpha> y)
+  then show ?case
+    by (simp add: wffs_of_type_intros(1))
+next
+  case (con_is_wff \<alpha> c)
+  then show ?case
+    by (simp add: wffs_of_type_intros(1,2))
+next
+  case (app_is_wff \<alpha> \<beta> A B)
+  then show ?case
+    by (simp add: wffs_of_type_intros(3))
+next
+  case (abs_is_wff \<beta> A \<alpha> x)
+  then show ?case
+    by (simp add: wffs_of_type_intros(4))
+qed
+
 
 lemma axiom_4_1_con_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  shows "const_subst (c, x) ((\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> axioms"
-  sorry
+  assumes "x \<noteq> y"
+  shows "const_subst (c, x) ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> axioms"
+  apply(simp only: const_subst_laws[OF assms(1)] const_subst.simps)
+  using axioms.axiom_4_1_var[of "const_subst (c, x) A" \<alpha> x \<beta> y]
+  apply (subgoal_tac "const_subst (c, x) A \<in> wffs\<^bsub>\<alpha>\<^esub>")
+  subgoal
+    using assms(3) apply auto
+    apply (cases "c=d")
+    subgoal
+      apply auto
+      done
+    subgoal
+      using axioms.axiom_4_1_con apply auto
+      done
+    done
+  subgoal
+    apply (simp add: assms(2) xmas_elf)
+    done
+  done
+
 lemma axiom_4_1_var_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  assumes "y\<^bsub>\<beta>\<^esub> \<noteq> x\<^bsub>\<alpha>\<^esub>"
-  shows "const_subst (c, x) ((\<lambda>x\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub>) \<in> axioms" 
-  sorry
+  assumes "y\<^bsub>\<beta>\<^esub> \<noteq> z\<^bsub>\<alpha>\<^esub>"
+  shows "const_subst (c, x) ((\<lambda>z\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub>) \<in> axioms"
+  using assms(1,2,3) axioms.axiom_4_1_var xmas_elf by auto
 
 lemma axiom_4_2_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. x\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A \<in> axioms"
-  sorry
+  assumes "\<forall>t. (x, t) \<notin> vars ((\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>)"
+  shows "const_subst (c, x) ((\<lambda>z\<^bsub>\<alpha>\<^esub>. x\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A) \<in> axioms"
+  oops
+ 
 
 lemma axiom_4_3_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes  "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   assumes "B \<in> wffs\<^bsub>\<gamma>\<rightarrow>\<beta>\<^esub>" 
   assumes "C \<in> wffs\<^bsub>\<gamma>\<^esub>"
-  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. B \<sqdot> C) \<sqdot> A =\<^bsub>\<beta>\<^esub> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) \<sqdot> ((\<lambda>x\<^bsub>\<alpha>\<^esub>. C) \<sqdot> A) \<in> axioms"
-  sorry
+  shows "const_subst (c, x) ((\<lambda>y\<^bsub>\<alpha>\<^esub>. B \<sqdot> C) \<sqdot> A =\<^bsub>\<beta>\<^esub> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) \<sqdot> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. C) \<sqdot> A)) \<in> axioms"
+  by (smt (verit) assms(1,2,3,4) axioms.simps const_subst.simps(3,4) const_subst_laws(7) xmas_elf)
+
+lemma x_mas_elf2:
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  shows "(y, \<gamma>) \<in> vars (const_subst (c, x) A) \<Longrightarrow> y = x \<or> (y, \<gamma>) \<in> vars A"
+  using assms proof (induction)
+  case (var_is_wff \<alpha> x)
+  then show ?case
+    by simp
+next
+  case (con_is_wff \<alpha> c)
+  then show ?case
+    by (metis const_subst.simps(2) singletonD vars_form.simps(1))
+next
+  case (app_is_wff \<alpha> \<beta> A B)
+  then show ?case
+    by auto
+next
+  case (abs_is_wff \<beta> A \<alpha> x)
+  then show ?case
+    by auto
+qed
 
 lemma axiom_4_4_const_subst:
-  assumes \<open>\<not> is_logical_name c\<close> 
-  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>" and "(y, \<gamma>) \<notin> {(x, \<alpha>)} \<union> vars A"
-  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A) \<in> axioms"
-  sorry
+  assumes \<open>\<not> is_logical_name c\<close>
+  assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>" and "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars A"
+  assumes "\<forall>t. (x,t) \<notin> vars ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A))"
+  shows "const_subst (c, x) ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A)) \<in> axioms"
+proof -
+  have A: "const_subst (c, x) A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+    by (simp add: assms(2) xmas_elf)
+  have B: "const_subst (c, x) B \<in> wffs\<^bsub>\<delta>\<^esub> "
+    by (simp add: assms(3) xmas_elf)
+ 
+  have "(y, \<gamma>) \<notin> {(z, \<alpha>)}"
+    using assms(4) by auto
+  moreover
+  have "(y, \<gamma>) \<notin> vars (const_subst (c, x) A)"
+    using assms(4) x_mas_elf2[OF assms(2), of y \<gamma> c x]
+    using assms(5) by auto
+  ultimately
+  have C: "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars (const_subst (c, x) A)"
+    by simp
+  show ?thesis
+  apply(simp only: const_subst_laws[OF assms(1)] const_subst.simps)
+    using axioms.axiom_4_4[of "const_subst (c, x) A" \<alpha> "const_subst (c, x) B" \<delta> y \<gamma> z]
+    using A B C
+    by simp
+qed
 
 lemma axiom_4_5_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>"
-  shows "const_subst (c, x) (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<in> axioms"
-  sorry
-
+  assumes "\<forall>t. (x,t) \<notin> vars ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. B))"
+  shows "const_subst (c, x) ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. B)) \<in> axioms"
+  using assms(1,2,3) axioms.axiom_4_5 const_subst.simps(3,4) const_subst_laws(7) xmas_elf by presburger
+  
 lemma axiom_5_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   shows "const_subst (c, x) \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub> \<in> axioms"
-  sorry
+  by (metis assms axioms.axiom_5 const_subst.simps(2) iota_constant_def iota_def logical_name_simps(2))
 
 lemma const_subst_axiom2:
   assumes \<open>\<not> is_logical_name c\<close> 
+    and \<open>\<forall>t. (x,t) \<notin> vars A\<close>
     and \<open>A \<in> axioms\<close>
   shows \<open>(const_subst (c, x) A) \<in> axioms\<close>
-  using assms unfolding axioms.simps
-  sorry
+  using assms(3,1,2)
+proof (induction)
+  case axiom_1
+  then show ?case
+    using axiom_1_const_subst by auto
+next
+  case (axiom_2 \<alpha>)
+  then show ?case
+    using axiom_2_const_subst by blast
+next
+  case (axiom_3 \<alpha> \<beta>)
+  then show ?case
+    using axiom_3_const_subst by blast
+next
+  case (axiom_4_1_con A \<alpha> z d \<beta>)
+  then show ?case
+    using axiom_4_1_con_const_subst[OF axiom_4_1_con(2,1), of ]
+    by (metis UnCI equality_of_type_def insert_iff vars_form.simps(3,4))
+next
+  case (axiom_4_1_var A \<alpha> y \<beta> z)
+  then show ?case
+    using axiom_4_1_var_const_subst[of c A \<alpha> y \<beta> z, OF axiom_4_1_var(3,1,2)]
+    by auto
+next
+  case (axiom_4_2 A \<alpha> z)
+  then show ?case
+    using axioms.axiom_4_2 xmas_elf by force
+next
+  case (axiom_4_3 A \<alpha> B \<gamma> \<beta> C x)
+  then show ?case
+    using axiom_4_3_const_subst by auto
+next
+  case (axiom_4_4 A \<alpha> B \<delta> y \<gamma> x)
+  then show ?case
+    using axiom_4_4_const_subst by blast
+next
+  case (axiom_4_5 A \<alpha> B \<delta> x)
+  then show ?case
+    using axioms.axiom_4_5 const_subst.simps(3,4) const_subst_laws(7) xmas_elf by presburger
+next
+  case axiom_5
+  then show ?case
+    using axiom_5_const_subst by force
+qed
 
 (* TODO AND WARNING:
    ON THIS AND THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
