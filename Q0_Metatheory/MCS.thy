@@ -3017,14 +3017,23 @@ lemma nice1234:
 proof -
   have "\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<in> axioms"
     sorry
-  then have "\<turnstile> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))"
-    using Gen[of "{}" ]
+  then have A: "\<turnstile> \<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)"
     sorry
-  then have "\<turnstile> \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))"
+  have C: "\<turnstile> \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))"
+    using Gen[of "{}" _ MCS.\<gg> "\<alpha> \<rightarrow> \<beta>" , OF A]
+    apply auto
+    done
+  have "\<turnstile> \<forall>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))"
+    using Gen[of "{}" _ MCS.\<ff> "\<alpha> \<rightarrow> \<beta>" , OF C] by auto
+
+  have "\<turnstile> \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (F \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))"
     sorry
-  then have "\<turnstile> \<forall>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))"
-    using Gen[of "{}"]
+
+  have "\<turnstile> F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> G \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (F \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> G \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)"
     sorry
+
+
+
   then have "\<turnstile> F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> G \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (F \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> G \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
     
     sorry
