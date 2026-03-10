@@ -2424,14 +2424,139 @@ next
   then show ?case
     using axiom_5_const_subst by force
 qed
+typ position
+lemma position_xmas:
+  assumes "A \<preceq>\<^bsub>p\<^esub> C"
+  shows "const_subst (c, x) \<tau> A \<preceq>\<^bsub>p\<^esub> const_subst (c, x) \<tau> C"
+using assms proof (induction p arbitrary: A C)
+  case Nil
+  then show ?case
+    by auto
+next
+  case (Cons a p)
+  then show ?case
+  proof (cases a)
+    case Left
+    then show ?thesis
+    proof (cases A)
+      case (FVar x1)
+      then show ?thesis
+        by (smt (verit) Cons.IH Cons.prems Left const_subst.simps(3,4) is_subform_at.elims(2) 
+            is_subform_at.simps(2,4) list.discI list.inject)
+    next
+      case (FCon x2)
+      then show ?thesis
+        by (smt (verit) Cons.IH Cons.prems Left const_subst.simps(3,4) direction.distinct(1) is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI list.inject)
+    next
+      case (FApp x31 x32)
+      then show ?thesis
+        by (smt (verit, del_insts) Cons.IH Cons.prems Left const_subst.simps(3,4) is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI) 
+    next
+      case (FAbs x41 x42)
+      then show ?thesis
+        by (smt (verit, del_insts) Cons.IH Cons.prems Left const_subst.simps(3,4) is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI)
+    qed
+  next
+    case Right
+    then show ?thesis
+    proof (cases A)
+      case (FVar x1)
+      then show ?thesis
+        by (smt (verit, best) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(2) is_subform_at.simps(3) list.discI list.inject)
+    next
+      case (FCon x2)
+      then show ?thesis
+        by (smt (verit, del_insts) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(2) is_subform_at.simps(3) list.discI list.inject)
+    next
+      case (FApp x31 x32)
+      then show ?thesis
+        by (smt (verit) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(1) is_subform_at.simps(3) list.inject)
+    next
+      case (FAbs x41 x42)
+      then show ?thesis
+        by (smt (verit) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(1) is_subform_at.simps(3) list.discI list.inject)
+    qed
+  qed
+qed
+
+lemma position_xmas2:
+  assumes "C\<lblot>p \<leftarrow> B\<rblot> \<rhd> D"
+  shows "(const_subst (c, x) \<tau> C)\<lblot>p \<leftarrow> const_subst (c, x) \<tau> B\<rblot> \<rhd> const_subst (c, x) \<tau> D"
+  using assms proof (induction)
+  case (pos_found p C C' A)
+  then show ?case
+    by blast
+next
+  case (replace_left_app p G C G' H)
+  then show ?case
+    by (simp add: is_replacement_at.replace_left_app is_replacement_at_implies_in_positions)
+next
+  case (replace_right_app p H C H' G)
+  then show ?case
+    by (simp add: is_replacement_at.replace_right_app is_replacement_at_implies_in_positions)
+next
+  case (replace_abs p E C E' x \<gamma>)
+  then show ?case
+    by (simp add: is_replacement_at.replace_abs is_replacement_at_implies_in_positions)
+qed
 
 lemma is_rule_R_app_const_subst:
   assumes "c \<notin> logical_names"
   assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
   assumes "is_rule_R_app p D C E"
   shows "is_rule_R_app p (const_subst (c, x) \<tau> D) (const_subst (c, x) \<tau> C) (const_subst (c, x) \<tau> E)"
-  sorry
+proof -
+  let ?D = "const_subst (c, x) \<tau> D"
+  let ?C = "const_subst (c, x) \<tau> C"
+  let ?E = "const_subst (c, x) \<tau> E" 
 
+  from assms(3) have "\<exists>\<alpha> A B. E = A =\<^bsub>\<alpha>\<^esub> B \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> A \<preceq>\<^bsub>p\<^esub> C \<and> D \<in> wffs\<^bsub>o\<^esub> \<and> C\<lblot>p \<leftarrow> B\<rblot> \<rhd> D"
+    unfolding is_rule_R_app_def by auto
+  then obtain \<alpha> A B where 
+    "E = A =\<^bsub>\<alpha>\<^esub> B"
+    "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+    "B \<in> wffs\<^bsub>\<alpha>\<^esub>"
+    "A \<preceq>\<^bsub>p\<^esub> C"
+    "D \<in> wffs\<^bsub>o\<^esub>"
+    "C\<lblot>p \<leftarrow> B\<rblot> \<rhd> D"
+    by auto
+
+  let ?A = "const_subst (c, x) \<tau> A"
+  let ?B = "const_subst (c, x) \<tau> B"
+
+  have 
+    "?E = ?A =\<^bsub>\<alpha>\<^esub> ?B"
+    using \<open>E = A =\<^bsub>\<alpha>\<^esub> B\<close> assms(1) const_subst_laws(7) by blast
+  moreover
+  have 
+    "?A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+    by (simp add: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> xmas_elf)
+  moreover
+  have
+    "?B \<in> wffs\<^bsub>\<alpha>\<^esub>"
+    by (simp add: \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> xmas_elf)
+  moreover
+  have
+    "?A \<preceq>\<^bsub>p\<^esub> ?C"
+    using \<open>A \<preceq>\<^bsub>p\<^esub> C\<close>
+    using position_xmas by auto
+  moreover
+  have
+    "?D \<in> wffs\<^bsub>o\<^esub>"
+    by (simp add: \<open>D \<in> wffs\<^bsub>o\<^esub>\<close> xmas_elf)
+  moreover
+  have
+    "?C\<lblot>p \<leftarrow> ?B\<rblot> \<rhd> ?D"
+    using \<open>C\<lblot>p \<leftarrow> B\<rblot> \<rhd> D\<close>
+    using position_xmas2 by auto
+  ultimately
+  have "(\<exists>\<alpha> A B.
+      ?E = A =\<^bsub>\<alpha>\<^esub> B \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> A \<preceq>\<^bsub>p\<^esub> ?C \<and> ?D \<in> wffs\<^bsub>o\<^esub> \<and> ?C\<lblot>p \<leftarrow> B\<rblot> \<rhd> ?D)"
+    by auto
+  then show ?thesis
+    using is_rule_R_app_def[of p ?D ?C ?E] by auto
+qed
+  
 definition const_subst_proof where 
   "const_subst_proof cx \<tau> S = map (const_subst cx \<tau>) S"
 
@@ -2611,7 +2736,6 @@ next
     by (metis \<open>is_proof (const_subst_proof (c, x) \<tau> S)\<close>
         \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> prefixE
         proof_prefix_is_proof) 
-
   
   have "is_proof ?S'E"
     by (metis \<open>is_proof (const_subst_proof (c, x) \<tau> S)\<close>
@@ -2619,8 +2743,7 @@ next
         proof_prefix_is_proof)
 
   have varsD: "\<forall>t. (x, t) \<notin> vars D"
-    using p_rule_R unfolding vars\<^sub>p_def apply auto
-    done    
+    using p_rule_R unfolding vars\<^sub>p_def by auto
 
   have varsS: "\<forall>t. (x, t) \<notin> vars\<^sub>p (S @ [D])"
     by (simp add: p_rule_R.prems(2))
@@ -2643,8 +2766,7 @@ next
   have "is_rule_R_app p ?D ?C ?E"
     using p_rule_R
     using is_rule_R_app_const_subst[OF p_rule_R(6) varsDCE  p_rule_R(4)]
-    apply auto
-    done
+    by auto
 
   show ?case
     using is_proof_R_intro[OF \<open>is_rule_R_app p ?D ?C ?E\<close> \<open>is_proof ?S\<close>, of ?S' ?S'', OF P1 P2]
@@ -2653,43 +2775,102 @@ qed
 (* TODO AND WARNING:
    ON SOME OF THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
 
-lemma is_derivable_const_subst: (* I guess I really need to do the replacement on the proof.  *)
-  assumes "is_derivable A"
+lemma is_proof_of_const_subst:
+  assumes "is_proof_of \<S> A"
   assumes "c \<notin> logical_names"
-  assumes "\<forall>t. (x, t) \<notin> vars A" (* This is "x IS FRESH" *)
-  shows "is_derivable (const_subst (c, x) \<tau> A)"
-  using assms
-proof (induction)
-  case (dv_axiom A)
-  show ?case
-    using is_derivable.dv_axiom
-    by (simp add: const_subst_axiom2 dv_axiom.hyps dv_axiom.prems(1,2)) 
-next
-  case (dv_rule_R C E p D)
-  let ?C = "const_subst (c, x) \<tau> C"
-  let ?D = "const_subst (c, x) \<tau> D"
-  let ?E = "const_subst (c, x) \<tau> E"
-  have "is_derivable (const_subst (c, x) \<tau> C)"
-    using dv_rule_R
-    sorry
-  moreover
-  have "is_derivable (const_subst (c, x) \<tau> E)"
-    sorry
-  moreover
-  have "is_rule_R_app p ?D ?C ?E"
-    using dv_rule_R(3,6)
-    sorry
-  ultimately
-  show ?case
-    using is_derivable.dv_rule_R[of ?C ?E p ?D] by auto
+  assumes "\<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
+  shows "is_proof_of (const_subst_proof (c,x) \<tau> \<S>) (const_subst (c,x) \<tau> A)"
+proof -
+  let ?\<S> = "const_subst_proof (c,x) \<tau> \<S>"
+  let ?A = "const_subst (c,x) \<tau> A"
+
+  from assms(1) have
+    "\<S> \<noteq> []"
+    "is_proof \<S>"
+    "last \<S> = A"
+    unfolding is_proof_of_def by auto
+
+  have "?\<S> \<noteq> []"
+    by (simp add: \<open>\<S> \<noteq> []\<close> const_subst_proof_def)
+  have "is_proof ?\<S>"
+    using is_proof_const_subst[OF \<open>is_proof \<S>\<close> assms(2) assms(3)] by auto
+  have "last ?\<S> = ?A"
+    by (simp add: \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close> const_subst_proof_def last_map)
+
+  show ?thesis
+    using \<open>const_subst_proof (c, x) \<tau> \<S> \<noteq> []\<close> \<open>is_proof (const_subst_proof (c, x) \<tau> \<S>)\<close>
+      \<open>last (const_subst_proof (c, x) \<tau> \<S>) = const_subst (c, x) \<tau> A\<close> by blast
 qed
+
+lemma finite_vars\<^sub>p: "finite (vars\<^sub>p \<S>)"
+proof (induction \<S>)
+  case Nil
+  then show ?case
+    unfolding vars\<^sub>p_def by auto
+next
+  case (Cons a \<S>)
+  then show ?case
+    unfolding vars\<^sub>p_def
+    apply auto
+    using vars_form_finiteness by auto
+qed
+
+lemma finite_vars\<^sub>p_fst: "finite (fst ` (vars\<^sub>p \<S>))"
+  by (simp add: finite_vars\<^sub>p)
+
+lemma "\<exists>x. x \<notin>(fst ` (vars\<^sub>p \<S>))"
+  by (meson dual_order.refl finite_vars\<^sub>p_fst infinite_nat_iff_unbounded_le)
+
+lemma avoider:
+  shows "\<exists>x. \<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
+  by (metis ex_new_if_finite finite_vars\<^sub>p_fst fst_eqD image_iff infinite_UNIV_nat)
 
 lemma is_theorem_const_subst:
   assumes "is_theorem A"
   assumes "c \<notin> logical_names"
-  assumes "\<forall>t. (x, t) \<notin> vars A"
-  shows "is_theorem (const_subst (c, x) \<tau> A)"
-  by (metis assms is_derivable_const_subst theoremhood_derivability_equivalence)
+  shows "\<exists>x. (\<forall>t. (x, t) \<notin> vars A) \<and> is_theorem (const_subst (c, x) \<tau> A)"        
+proof -
+  from assms(1) obtain \<S> where pSA: "is_proof_of \<S> A"
+    unfolding is_theorem_def by auto
+
+  then have "\<S> \<noteq> []"
+    "is_proof \<S>"
+    "last \<S> = A"
+    unfolding is_proof_of_def by auto
+
+  obtain x where avoid_S: "\<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
+    using avoider by auto
+
+  then have avoid_A: "\<forall>t. (x, t) \<notin> vars A"
+    apply auto
+    subgoal for t
+      apply (erule allE[of _ t])
+      using \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close>
+      apply auto
+      unfolding vars\<^sub>p_def
+      apply auto
+      done
+    done
+
+  let ?A = "const_subst (c, x) \<tau> A"
+  let ?\<S> = "const_subst_proof (c, x) \<tau> \<S>"
+
+  have "is_proof_of ?\<S> ?A"
+    using is_proof_of_const_subst[OF pSA assms(2) avoid_S]
+    by auto
+
+  then have "is_theorem ?A"
+    unfolding is_theorem_def by auto
+
+  show "?thesis"
+    unfolding is_theorem_def using \<open>\<forall>t. (x, t) \<notin> vars A\<close> \<open>is_theorem ?A\<close> by blast
+qed
+
+lemma is_derivable_const_subst: (* I guess I really need to do the replacement on the proof.  *)
+  assumes "is_derivable A"
+  assumes "c \<notin> logical_names"
+  shows "\<exists>x. (\<forall>t. (x, t) \<notin> vars A) \<and> is_derivable (const_subst (c, x) \<tau> A)"
+  by (meson assms(1,2) is_theorem_const_subst theoremhood_derivability_equivalence) (* I am here saying "there is a fresh x". Good enough? Or it needs to be for any fresh x? *)
 
 lemma is_rule_R'_app_const_subst:
   assumes "C' = (const_subst (c, x) \<tau> C)"
@@ -2698,13 +2879,15 @@ lemma is_rule_R'_app_const_subst:
   assumes "is_rule_R'_app As p D C E"
   assumes "is_hyps As"
   assumes "c \<notin> logical_names"
-  assumes "c \<notin> P.params As"
+  assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
   shows "is_rule_R'_app As p D' C' E'"
 proof -
   from assms have "is_rule_R_app p D C E"
     using assms by blast
   then have "is_rule_R_app p D' C' E'" 
-    unfolding is_rule_R_app_def sorry
+    unfolding is_rule_R_app_def
+    using is_rule_R_app_const_subst
+    using assms(1,2,3,6,7) by blast
   from assms have "rule_R'_side_condition As p D C E"
     using assms by blast
   then have "rule_R'_side_condition As p D' C' E'" 
@@ -2717,6 +2900,7 @@ lemma is_derivable_from_hyps_const_subst:
   assumes "As \<turnstile> F"
   assumes "\<not> is_logical_name c"
   assumes "c \<notin> P.params As"
+  assumes "finite As"
   shows "As \<turnstile> const_subst (c,x) \<tau> F"
   using assms
 proof(induction)
@@ -2744,12 +2928,12 @@ next
   let ?E = "const_subst (c, x) \<tau> E"
 
   have "As \<turnstile> ?C"
-    using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) by blast
+    using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) sorry
   have "As \<turnstile> ?E"
-    using dv_rule_R'.IH(2) dv_rule_R'.prems(1,2) by blast
+    using dv_rule_R'.IH(2) dv_rule_R'.prems(1,2) sorry
   have "is_rule_R'_app As p ?D ?C ?E"
     using dv_rule_R'(1,2,3,4,7,8)
-    using is_rule_R'_app_const_subst by presburger
+    using is_rule_R'_app_const_subst sorry
   then show ?case
     using \<open>As \<turnstile> const_subst (c, x) \<tau> C\<close> \<open>As \<turnstile> const_subst (c, x) \<tau> E\<close> dv_rule_R'.hyps(4)
         is_derivable_from_hyps.dv_rule_R' by meson
@@ -2824,10 +3008,24 @@ proof
       \<Longrightarrow> False
 \<bottom>
       *)
-      thus \<open>False\<close>
-        using fact2[unfolded C_eq]
-        using prop_5241 rule_P Deduction_Theorem rule_RR
+
+      obtain x where
+        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+        \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
+        using is_derivable_from_hyps_const_subst[of "lset As" "(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)" c _ \<alpha>]
         sorry
+
+      have "lset As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
+        sorry
+
+      have \<open>lset As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close> (* by RR and Axiom 3 *)
+        sorry
+      then have \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close> (* because As \<turnstile> p *)
+        using fact2[unfolded C_eq]
+        sorry
+      thus \<open>False\<close>
+        using consistent unfolding comp_def is_consistent_set_def is_inconsistent_set_def
+        by auto
     qed
     thus ?thesis
       using fact1
