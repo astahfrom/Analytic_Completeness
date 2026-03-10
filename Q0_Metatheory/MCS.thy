@@ -3035,7 +3035,7 @@ proof
         sorry
       then have a: "const_subst (c, x) \<alpha> A = A"
         sorry
-      from cAB "c \<notin> Qconsts B"
+      from cAB have "c \<notin> Qconsts B"
         sorry
       then have b: "const_subst (c, x) \<alpha> B = B"
         sorry
