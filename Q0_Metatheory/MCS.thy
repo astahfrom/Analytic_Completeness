@@ -2951,7 +2951,29 @@ where
 | replace__app: "(G \<sqdot> H)\<lparr>F \<leftarrow> C\<rparr> \<rhd> (G' \<sqdot> H')" if "G\<lparr>F \<leftarrow> C\<rparr> \<rhd> G'" and "H\<lparr>F \<leftarrow> C\<rparr> \<rhd> H'" and "G \<sqdot> H \<noteq> F" (* The last condition is be optional, right? But maybe nice? *)
 | replace_abs: "(\<lambda>x\<^bsub>\<gamma>\<^esub>. E)\<lparr>F \<leftarrow> C\<rparr> \<rhd> (\<lambda>x\<^bsub>\<gamma>\<^esub>. E')" if "p \<in> positions E" and "E\<lparr>F \<leftarrow> C\<rparr> \<rhd> E'" and "(\<lambda>x\<^bsub>\<gamma>\<^esub>. E) \<noteq> F"  (* The last condition is be optional, right? But maybe nice? *)
 
-
+lemma Qconsts_const_subst:
+  assumes "c \<notin> Qconsts A"
+  shows "const_subst (c, x) \<alpha> A = A"
+using assms proof (induction A)
+  case (FVar y)
+  then show ?case
+    apply (cases y)
+    apply (metis const_subst.simps(1) surj_pair)
+    apply simp
+    by simp
+next
+  case (FCon y)
+  then show ?case
+    by (smt (verit, best) Qconsts.elims const_subst.simps(1,2) form.distinct(7,9) singleton_iff)
+next
+  case (FApp A1 A2)
+  then show ?case
+    by auto
+next
+  case (FAbs x1a A)
+  then show ?case
+    by (metis Qconsts.simps(4) const_subst.simps(4) old.prod.exhaust)
+qed
 
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
@@ -3022,23 +3044,22 @@ proof
         \<open>(x,\<alpha>) \<notin> vars B\<close>
         using is_derivable_from_hyps_const_subst[of "lset As" "(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)" c _ \<alpha>]
         sorry
-      find_theorems c 
-      find_theorems P.params 
+ 
       have "c \<notin> Qconsts p"
         using  \<open>c \<notin> P.params (lset As)\<close>  \<open>p \<in> lset As\<close>
-        sorry
+        using \<open>\<forall>A\<in>lset As. c \<notin> Qconsts A\<close> by blast
       then have cAB: "c \<notin> Qconsts (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B))"
         using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
-        sorry
+        by auto
 
       from cAB have "c \<notin> Qconsts A"
-        sorry
+         by auto
       then have a: "const_subst (c, x) \<alpha> A = A"
-        sorry
+        by (simp add: Qconsts_const_subst)
       from cAB have "c \<notin> Qconsts B"
-        sorry
+        by auto
       then have b: "const_subst (c, x) \<alpha> B = B"
-        sorry
+        using Qconsts_const_subst by auto
 
       from x_p(1) have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
         apply (simp only: const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b)
@@ -3046,6 +3067,7 @@ proof
         done
 
       have "lset As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
+
         sorry
 
       have \<open>lset As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close> (* by RR and Axiom 3 *)
