@@ -3009,20 +3009,37 @@ proof
 \<bottom>
       *)
 
-      obtain x where
+      have logc: "\<not> is_logical_name c"
+        using \<open>is_param c\<close> is_param_def by auto
+
+      obtain x where x_p:
         \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
         \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
+        \<open>(x,\<alpha>) \<notin> vars A\<close>
+        \<open>(x,\<alpha>) \<notin> vars B\<close>
         using is_derivable_from_hyps_const_subst[of "lset As" "(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)" c _ \<alpha>]
         sorry
+
+      find_theorems const_subst "\<lambda>x t y. x =\<^bsub>t\<^esub>y "
+
+      have a: "const_subst (c, x) \<alpha> A = A"
+        sorry
+      have b: "const_subst (c, x) \<alpha> B = B"
+        sorry
+
+      from x_p(1) have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+        apply (simp only: const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b)
+        apply auto
+        done
 
       have "lset As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
         sorry
 
       have \<open>lset As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close> (* by RR and Axiom 3 *)
         sorry
-      then have \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close> (* because As \<turnstile> p *)
+      then have \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close>
         using fact2[unfolded C_eq]
-        sorry
+        by (metis QnegD hyp_derivable_form_is_wffso is_derivable_from_hyps.cases prop_5224)
       thus \<open>False\<close>
         using consistent unfolding comp_def is_consistent_set_def is_inconsistent_set_def
         by auto
