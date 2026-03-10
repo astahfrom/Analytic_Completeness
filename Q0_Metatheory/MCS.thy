@@ -3011,7 +3011,10 @@ proof
 
       have logc: "\<not> is_logical_name c"
         using \<open>is_param c\<close> is_param_def by auto
-
+      term P.params 
+      find_consts "form \<Rightarrow> nat set"
+      term Qconsts
+      
       obtain x where x_p:
         \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
         \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
@@ -3019,12 +3022,22 @@ proof
         \<open>(x,\<alpha>) \<notin> vars B\<close>
         using is_derivable_from_hyps_const_subst[of "lset As" "(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)" c _ \<alpha>]
         sorry
-
-      find_theorems const_subst "\<lambda>x t y. x =\<^bsub>t\<^esub>y "
-
-      have a: "const_subst (c, x) \<alpha> A = A"
+      find_theorems c 
+      find_theorems P.params 
+      have "c \<notin> Qconsts p"
+        using  \<open>c \<notin> P.params (lset As)\<close>  \<open>p \<in> lset As\<close>
         sorry
-      have b: "const_subst (c, x) \<alpha> B = B"
+      then have cAB: "c \<notin> Qconsts (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B))"
+        using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+        sorry
+
+      from cAB have "c \<notin> Qconsts A"
+        sorry
+      then have a: "const_subst (c, x) \<alpha> A = A"
+        sorry
+      from cAB "c \<notin> Qconsts B"
+        sorry
+      then have b: "const_subst (c, x) \<alpha> B = B"
         sorry
 
       from x_p(1) have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
