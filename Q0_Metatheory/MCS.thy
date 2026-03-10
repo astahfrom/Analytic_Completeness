@@ -2975,6 +2975,28 @@ next
     by (metis Qconsts.simps(4) const_subst.simps(4) old.prod.exhaust)
 qed
 
+term axioms
+
+lemma nice123:
+  assumes "As \<turnstile> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)"
+  shows "As \<turnstile> (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>)"
+proof -
+  have "(\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<in> axioms"
+    sorry
+  find_theorems name: RR
+  show "As \<turnstile> (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>)"
+    using rule_RR[of A alp B p C "\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"]
+    sorry
+qed
+
+lemma nice1234:
+  assumes "F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>"
+  assumes "G \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>"
+  assumes "As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. (F \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> G \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
+  shows "As \<turnstile> (F =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> G)"
+  using nice123
+  sorry
+
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
 proof
@@ -3061,17 +3083,18 @@ proof
       then have b: "const_subst (c, x) \<alpha> B = B"
         using Qconsts_const_subst by auto
 
+      have fx: "(x, \<alpha>) \<notin> free_vars (lset As)"
+        sorry
+
       from x_p(1) have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
         apply (simp only: const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b)
         apply auto
         done
-
-      have "lset As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
-
-        sorry
-
-      have \<open>lset As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close> (* by RR and Axiom 3 *)
-        sorry
+      then have "lset As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
+        using Gen[of "lset As" "(A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)" x \<alpha>]
+        using fx by auto
+      then have \<open>lset As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+        by (metis C_eq hyp1 nice1234 wffs_from_equality(1,2) wffs_from_neg) (* by RR and Axiom 3 *)
       then have \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close>
         using fact2[unfolded C_eq]
         by (metis QnegD hyp_derivable_form_is_wffso is_derivable_from_hyps.cases prop_5224)
