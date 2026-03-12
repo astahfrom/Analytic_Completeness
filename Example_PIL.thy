@@ -1,14 +1,22 @@
 (*
-  Title:  Example Completeness Proof for a Natural Deduction Calculus for Prior's Ideal Language
-  Author: Asta Halkjær From
+  File: Example_PIL.thy
+  Title: Example Completeness Proof for a Natural Deduction Calculus for Prior's Ideal Language
+  Author: Asta Halkjær Boserup, 2025-2026.
   Reference:
     Blackburn, P. R., Braüner, T., & Kofod, J. L. Prior's Ideal Language.
     Mathematical Structures in Computer Science.
 *)
 
+chapter \<open>Example: Prior's Ideal Logic\<close>
+
 theory Example_PIL imports
-  Analytic_Completeness
+  Abstract_Consistency_Property
+  "HOL-Number_Theory.Number_Theory"
 begin
+
+no_syntax
+  "_Pi" :: "pttrn \<Rightarrow> 'a set \<Rightarrow> 'b set \<Rightarrow> ('a \<Rightarrow> 'b) set"
+    (\<open>(\<open>indent=3 notation=\<open>binder \<Pi>\<in>\<close>\<close>\<Pi> _\<in>_./ _)\<close> 10)
 
 section \<open>Syntax\<close>
 
@@ -53,13 +61,13 @@ record ('x, 'w) model = \<open>'w gframe\<close> +
   \<V> :: \<open>'x \<Rightarrow> 'w set\<close>
   \<VV> :: \<open>nat \<Rightarrow> 'w set\<close>
 
-abbreviation \<open>Model W R Pi N e V f \<equiv> \<lparr>\<W> = W, \<R> = R, \<Pi> = Pi, \<N> = N, \<NN> = e, \<V> = V, \<VV> = f\<rparr>\<close>
+abbreviation \<open>Model W R PI N e V f \<equiv> \<lparr>\<W> = W, \<R> = R, \<Pi> = PI, \<N> = N, \<NN> = e, \<V> = V, \<VV> = f\<rparr>\<close>
 
 definition admissible :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> bool\<close> where
-  \<open>admissible M Pi \<equiv>
-    (\<forall>X \<in> Pi. \<W> M - X \<in> Pi) \<and>
-    (\<forall>X \<in> Pi. \<forall>Y \<in> Pi. X \<inter> Y \<in> Pi) \<and>
-    (\<forall>X \<in> Pi. {w \<in> \<W> M. \<forall>v \<in> \<R> M w. v \<in> X} \<in> Pi)\<close>
+  \<open>admissible M PI \<equiv>
+    (\<forall>X \<in> PI. \<W> M - X \<in> PI) \<and>
+    (\<forall>X \<in> PI. \<forall>Y \<in> PI. X \<inter> Y \<in> PI) \<and>
+    (\<forall>X \<in> PI. {w \<in> \<W> M. \<forall>v \<in> \<R> M w. v \<in> X} \<in> PI)\<close>
 
 definition wf_frame :: \<open>'w frame \<Rightarrow> bool\<close> where
   \<open>wf_frame M \<equiv> \<W> M \<noteq> {} \<and> \<R> M ` \<W> M \<subseteq> Pow (\<W> M)\<close>
@@ -327,16 +335,16 @@ lemma size_sub_nom [simp]: \<open>sz_fm (sub_nom s p) = sz_fm p\<close>
 
 lemma semantics_symbols_cong_nom:
   assumes \<open>\<forall>i \<in> symbols_fm p. N i = N' i\<close>
-  shows \<open>(Model W R Pi N e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R Pi N' e V f, w) \<Turnstile> p\<close>
+  shows \<open>(Model W R PI N e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R PI N' e V f, w) \<Turnstile> p\<close>
   using assms by (induct p arbitrary: e f w) (simp_all split: tm.splits)
 
 corollary semantics_symbols_other_nom [simp]:
   assumes \<open>i \<notin> symbols_fm p\<close>
-  shows \<open>(Model W R Pi (N(i := x)) e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R Pi N e V f, w) \<Turnstile> p\<close>
+  shows \<open>(Model W R PI (N(i := x)) e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R PI N e V f, w) \<Turnstile> p\<close>
   using assms by (simp add: semantics_symbols_cong_nom)
 
 lemma sub_nom_semantics [simp]:
-  \<open>(Model W R Pi N e V f, w) \<Turnstile> sub_nom s p \<longleftrightarrow> (Model W R Pi N (\<lambda>n. case_tm e N (s n)) V f, w) \<Turnstile> p\<close>
+  \<open>(Model W R PI N e V f, w) \<Turnstile> sub_nom s p \<longleftrightarrow> (Model W R PI N (\<lambda>n. case_tm e N (s n)) V f, w) \<Turnstile> p\<close>
   by (induct p arbitrary: e f s w) (simp_all split: tm.splits)
 
 lemma map_fm_sub_nom: \<open>map_fm f (sub_nom s p) = sub_nom (map_tm f o s) (map_fm f p)\<close>
@@ -349,17 +357,17 @@ subsubsection \<open>Propositions\<close>
 
 lemma semantics_symbols_cong_pro:
   \<open>\<forall>P \<in> symbols_fm p. V P = V' P \<Longrightarrow>
-  (Model W R Pi N e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R Pi N e V' f, w) \<Turnstile> p\<close>
+  (Model W R PI N e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R PI N e V' f, w) \<Turnstile> p\<close>
   by (induct p arbitrary: e f w) (simp_all split: tm.splits)
 
 corollary semantics_symbols_other_pro [simp]:
   assumes \<open>P \<notin> symbols_fm p\<close>
-  shows \<open>(Model W R Pi N e (V(P := x)) f, w) \<Turnstile> p \<longleftrightarrow> (Model W R Pi N e V f, w) \<Turnstile> p\<close>
+  shows \<open>(Model W R PI N e (V(P := x)) f, w) \<Turnstile> p \<longleftrightarrow> (Model W R PI N e V f, w) \<Turnstile> p\<close>
   using assms by (simp add: semantics_symbols_cong_pro)
 
 lemma semantics_symbols_lbd_cong_pro:
   \<open>\<forall>P \<in> symbols_lbd (i, p). V P = V' P \<Longrightarrow>
-  (Model W R Pi N e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R Pi N e V' f, w) \<Turnstile> p\<close>
+  (Model W R PI N e V f, w) \<Turnstile> p \<longleftrightarrow> (Model W R PI N e V' f, w) \<Turnstile> p\<close>
   by (simp add: semantics_symbols_cong_pro)
 
 lemma map_lift_fm_pro [simp]: \<open>map_fm f (lift_fm_pro m p) = lift_fm_pro m (map_fm f p)\<close>
@@ -402,28 +410,28 @@ qed
 lemma softqdf_add_env: \<open>softqdf q \<Longrightarrow> softqdf_sub (q \<then> \<^bold>\<cdot> o \<^bold>#)\<close>
   by (metis add_env.simps comp_apply not0_implies_Suc softqdf.simps(2))
 
-lemma wf_env_add_nom: \<open>wf_env (Model W R Pi N e V f) \<Longrightarrow> w \<in> W \<Longrightarrow>
-    wf_env (\<lparr>\<W> = W, \<R> = R, \<Pi> = Pi, \<N> = N, \<NN> = w \<then> e, \<V> = V, \<VV> = f\<rparr>)\<close>
+lemma wf_env_add_nom: \<open>wf_env (Model W R PI N e V f) \<Longrightarrow> w \<in> W \<Longrightarrow>
+    wf_env (\<lparr>\<W> = W, \<R> = R, \<Pi> = PI, \<N> = N, \<NN> = w \<then> e, \<V> = V, \<VV> = f\<rparr>)\<close>
   unfolding wf_env_def unfolds using range_add_env by meson
   
-lemma wf_model_add_nom: \<open>wf_model (Model W R Pi N e V f) \<Longrightarrow> w \<in> W \<Longrightarrow>
-    wf_model (\<lparr>\<W> = W, \<R> = R, \<Pi> = Pi, \<N> = N, \<NN> = w \<then> e, \<V> = V, \<VV> = f\<rparr>)\<close>
+lemma wf_model_add_nom: \<open>wf_model (Model W R PI N e V f) \<Longrightarrow> w \<in> W \<Longrightarrow>
+    wf_model (\<lparr>\<W> = W, \<R> = R, \<Pi> = PI, \<N> = N, \<NN> = w \<then> e, \<V> = V, \<VV> = f\<rparr>)\<close>
   using wf_env_add_nom unfolding wf_model_def wf_env_def wf_frame_def wf_gframe_def admissible_def unfolds by meson
 
-lemma wf_env_add_pro: \<open>wf_env (Model W R Pi N e V f) \<Longrightarrow> P \<in> Pi \<Longrightarrow>
-    wf_env (\<lparr>\<W> = W, \<R> = R, \<Pi> = Pi, \<N> = N, \<NN> = e, \<V> = V, \<VV> = P \<then> f\<rparr>)\<close>
+lemma wf_env_add_pro: \<open>wf_env (Model W R PI N e V f) \<Longrightarrow> P \<in> PI \<Longrightarrow>
+    wf_env (\<lparr>\<W> = W, \<R> = R, \<Pi> = PI, \<N> = N, \<NN> = e, \<V> = V, \<VV> = P \<then> f\<rparr>)\<close>
   unfolding wf_env_def unfolds using range_add_env by meson
 
 lemma wf_model_add_pro:
-  \<open>wf_model (Model W R Pi N e V f) \<Longrightarrow> P \<in> Pi \<Longrightarrow> wf_model (Model W R Pi N e V (P \<then> f))\<close>
+  \<open>wf_model (Model W R PI N e V f) \<Longrightarrow> P \<in> PI \<Longrightarrow> wf_model (Model W R PI N e V (P \<then> f))\<close>
   using wf_env_add_pro unfolding wf_model_def wf_env_def wf_frame_def wf_gframe_def admissible_def unfolds by meson
 
 lemma softqdf_lift_fm_nom_add_env [simp]:
-  \<open>softqdf p \<Longrightarrow> (Model W R Pi N (v \<then> e) V f, w) \<Turnstile> lift_fm_nom 0 p \<longleftrightarrow> (Model W R Pi N e V f, w) \<Turnstile> p\<close>
+  \<open>softqdf p \<Longrightarrow> (Model W R PI N (v \<then> e) V f, w) \<Turnstile> lift_fm_nom 0 p \<longleftrightarrow> (Model W R PI N e V f, w) \<Turnstile> p\<close>
   by (induct p arbitrary: e w) (simp_all split: tm.splits)
 
 lemma softqdf_lift_fm_pro_add_env [simp]:
-  \<open>softqdf p \<Longrightarrow> (Model W R Pi N e V (P \<then> f), w) \<Turnstile> lift_fm_pro 0 p \<longleftrightarrow> (Model W R Pi N e V f, w) \<Turnstile> p\<close>
+  \<open>softqdf p \<Longrightarrow> (Model W R PI N e V (P \<then> f), w) \<Turnstile> lift_fm_pro 0 p \<longleftrightarrow> (Model W R PI N e V f, w) \<Turnstile> p\<close>
   by (induct p arbitrary: e w) (simp_all split: tm.splits)
 
 subsection \<open>Sizes\<close>
@@ -561,8 +569,8 @@ definition with_worlds :: \<open>('x, 'w) model \<Rightarrow> (nat \<Rightarrow>
   \<open>with_worlds M s \<equiv> M\<lparr>\<VV> := worlds M o s\<rparr>\<close>
 
 lemma sub_pro_with_worlds:
-  assumes \<open>wf_model (Model W R Pi N e V f)\<close> \<open>w \<in> W\<close> \<open>softqdf_sub s\<close>
-  shows \<open>(Model W R Pi N e V f, w) \<Turnstile> sub_pro s p \<longleftrightarrow> (with_worlds (Model W R Pi N e V f) s, w) \<Turnstile> p\<close>
+  assumes \<open>wf_model (Model W R PI N e V f)\<close> \<open>w \<in> W\<close> \<open>softqdf_sub s\<close>
+  shows \<open>(Model W R PI N e V f, w) \<Turnstile> sub_pro s p \<longleftrightarrow> (with_worlds (Model W R PI N e V f) s, w) \<Turnstile> p\<close>
   using assms
 proof (induct p arbitrary: s e f w)
   case (Box p)
@@ -582,24 +590,24 @@ next
   case (Dwn p)
   let ?s = \<open>lift_fm_nom 0 o s\<close>
 
-  have \<open>wf_model (Model W R Pi N (w \<then> e) V f)\<close>
+  have \<open>wf_model (Model W R PI N (w \<then> e) V f)\<close>
     using Dwn by (simp add: wf_model_add_nom)
   moreover have \<open>softqdf_sub ?s\<close>
     using Dwn by simp
-  ultimately have \<open>(Model W R Pi N (w \<then> e) V f, w) \<Turnstile> sub_pro ?s p \<longleftrightarrow>
-      (with_worlds (Model W R Pi N (w \<then> e) V f) ?s, w) \<Turnstile> p\<close>
+  ultimately have \<open>(Model W R PI N (w \<then> e) V f, w) \<Turnstile> sub_pro ?s p \<longleftrightarrow>
+      (with_worlds (Model W R PI N (w \<then> e) V f) ?s, w) \<Turnstile> p\<close>
     using Dwn by fastforce
-  moreover have \<open>worlds (Model W R Pi N (w \<then> e) V f) o ?s = worlds (Model W R Pi N e V f) o s\<close>
+  moreover have \<open>worlds (Model W R PI N (w \<then> e) V f) o ?s = worlds (Model W R PI N e V f) o s\<close>
     unfolding worlds_def comp_def using Dwn(4) by simp
-  ultimately have *: \<open>(Model W R Pi N (w \<then> e) V f, w) \<Turnstile> sub_pro ?s p \<longleftrightarrow>
-      (Model W R Pi N (w \<then> e) V (worlds (Model W R Pi N e V f) \<circ> s), w) \<Turnstile> p\<close>
+  ultimately have *: \<open>(Model W R PI N (w \<then> e) V f, w) \<Turnstile> sub_pro ?s p \<longleftrightarrow>
+      (Model W R PI N (w \<then> e) V (worlds (Model W R PI N e V f) \<circ> s), w) \<Turnstile> p\<close>
     unfolding with_worlds_def by simp
 
-  moreover have \<open>(with_worlds (Model W R Pi N e V f) ?s, w) \<Turnstile> \<^bold>\<down> p \<longleftrightarrow>
-      (Model W R Pi N (w \<then> e) V (worlds (Model W R Pi N e V f) o ?s), w) \<Turnstile> p\<close>
+  moreover have \<open>(with_worlds (Model W R PI N e V f) ?s, w) \<Turnstile> \<^bold>\<down> p \<longleftrightarrow>
+      (Model W R PI N (w \<then> e) V (worlds (Model W R PI N e V f) o ?s), w) \<Turnstile> p\<close>
     unfolding with_worlds_def by simp
-  then have ** :\<open>(with_worlds (Model W R Pi N e V f) ?s, w) \<Turnstile> \<^bold>\<down> p \<longleftrightarrow>
-      (Model W R Pi N (w \<then> e) V (worlds (Model W R Pi N e V f) o ?s), w) \<Turnstile> p\<close>
+  then have ** :\<open>(with_worlds (Model W R PI N e V f) ?s, w) \<Turnstile> \<^bold>\<down> p \<longleftrightarrow>
+      (Model W R PI N (w \<then> e) V (worlds (Model W R PI N e V f) o ?s), w) \<Turnstile> p\<close>
     by metis
 
   ultimately show ?case
@@ -612,19 +620,19 @@ next
     using All(4) by (induct n) auto
   then have \<open>softqdf_sub ?s\<close>
     by blast
-  moreover have \<open>\<forall>P \<in> Pi. wf_model (Model W R Pi N e V (P \<then> f))\<close>
+  moreover have \<open>\<forall>P \<in> PI. wf_model (Model W R PI N e V (P \<then> f))\<close>
     using All(2) wf_model_add_pro by blast
-  ultimately have \<open>(\<forall>P \<in> Pi. (Model W R Pi N e V (P \<then> f), w) \<Turnstile> sub_pro ?s p) \<longleftrightarrow>
-    (\<forall>P \<in> Pi. (with_worlds (Model W R Pi N e V (P \<then> f)) ?s, w) \<Turnstile> p)\<close>
+  ultimately have \<open>(\<forall>P \<in> PI. (Model W R PI N e V (P \<then> f), w) \<Turnstile> sub_pro ?s p) \<longleftrightarrow>
+    (\<forall>P \<in> PI. (with_worlds (Model W R PI N e V (P \<then> f)) ?s, w) \<Turnstile> p)\<close>
     using All by blast
 
-  moreover have \<open>\<forall>P \<in> Pi. P \<subseteq> W\<close>
+  moreover have \<open>\<forall>P \<in> PI. P \<subseteq> W\<close>
     using All(2) unfolding wf_model_def wf_gframe_def unfolds by blast
-  then have \<open>P \<in> Pi \<Longrightarrow>
-    (worlds (Model W R Pi N e V (P \<then> f)) o ?s) n = (P \<then> worlds (Model W R Pi N e V f) o s) n\<close> for P n
+  then have \<open>P \<in> PI \<Longrightarrow>
+    (worlds (Model W R PI N e V (P \<then> f)) o ?s) n = (P \<then> worlds (Model W R PI N e V f) o s) n\<close> for P n
     unfolding worlds_def using All(4) by (induct n) auto
-  then have \<open>P \<in> Pi \<Longrightarrow>
-      (worlds (Model W R Pi N e V (P \<then> f)) o ?s) = (P \<then> worlds (Model W R Pi N e V f) o s)\<close> for P
+  then have \<open>P \<in> PI \<Longrightarrow>
+      (worlds (Model W R PI N e V (P \<then> f)) o ?s) = (P \<then> worlds (Model W R PI N e V f) o s)\<close> for P
     by blast
 
   ultimately show ?case
@@ -632,24 +640,24 @@ next
 qed (simp_all add: worlds_def with_worlds_def split: tm.splits)
 
 lemma worlds_id_sub:
- assumes \<open>wf_model (Model W R Pi N e V f)\<close>
- shows \<open>worlds (Model W R Pi N e V f) (\<^bold>\<cdot> (\<^bold># n)) = f n\<close>
+ assumes \<open>wf_model (Model W R PI N e V f)\<close>
+ shows \<open>worlds (Model W R PI N e V f) (\<^bold>\<cdot> (\<^bold># n)) = f n\<close>
   using wf_\<VV>'[OF assms] unfolding worlds_def unfolds by auto
 
 lemma worlds_inst_single_pro:
-  assumes \<open>wf_model (Model W R Pi N e V f)\<close>
-  shows \<open>worlds (Model W R Pi N e V f) o (q \<then> \<^bold>\<cdot> o \<^bold>#) = (worlds (Model W R Pi N e V f) q \<then> f)\<close>
+  assumes \<open>wf_model (Model W R PI N e V f)\<close>
+  shows \<open>worlds (Model W R PI N e V f) o (q \<then> \<^bold>\<cdot> o \<^bold>#) = (worlds (Model W R PI N e V f) q \<then> f)\<close>
   unfolding comp_def env worlds_id_sub[OF assms] ..
 
 corollary inst_single_worlds:
-  assumes \<open>wf_model (Model W R Pi N e V f)\<close> \<open>w \<in> W\<close> \<open>softqdf q\<close>
+  assumes \<open>wf_model (Model W R PI N e V f)\<close> \<open>w \<in> W\<close> \<open>softqdf q\<close>
   shows
-    \<open>(Model W R Pi N e V f, w) \<Turnstile> \<langle>q\<rangle>\<^sub>p p \<longleftrightarrow>
-     (Model W R Pi N e V (worlds (Model W R Pi N e V f) q \<then> f), w) \<Turnstile> p\<close>
+    \<open>(Model W R PI N e V f, w) \<Turnstile> \<langle>q\<rangle>\<^sub>p p \<longleftrightarrow>
+     (Model W R PI N e V (worlds (Model W R PI N e V f) q \<then> f), w) \<Turnstile> p\<close>
 proof -
   have
-    \<open>(Model W R Pi N e V f, w) \<Turnstile> \<langle>q\<rangle>\<^sub>p p \<longleftrightarrow>
-     (Model W R Pi N e V (worlds (Model W R Pi N e V f) o (q \<then> \<^bold>\<cdot> o \<^bold>#)), w) \<Turnstile> p\<close>
+    \<open>(Model W R PI N e V f, w) \<Turnstile> \<langle>q\<rangle>\<^sub>p p \<longleftrightarrow>
+     (Model W R PI N e V (worlds (Model W R PI N e V f) o (q \<then> \<^bold>\<cdot> o \<^bold>#)), w) \<Turnstile> p\<close>
     using sub_pro_with_worlds[OF assms(1-2)] assms(3) unfolding with_worlds_def
     by (metis model.update_convs(4) softqdf_add_env)
   then show ?thesis
@@ -787,15 +795,15 @@ lemma admissible_Pow: \<open>admissible F (Pow (\<W> F))\<close>
   unfolding admissible_def by blast
 
 definition admits :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> 'w set set \<Rightarrow> bool\<close> where
-  \<open>admits F B Pi \<equiv> Pi \<noteq> {} \<and> Pi \<subseteq> Pow (\<W> F) \<and> B \<subseteq> Pi \<and> admissible F Pi\<close>
+  \<open>admits F B PI \<equiv> PI \<noteq> {} \<and> PI \<subseteq> Pow (\<W> F) \<and> B \<subseteq> PI \<and> admissible F PI\<close>
 
 definition adm_\<delta> :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> 'w set set\<close> where
-  \<open>adm_\<delta> M Pi \<equiv>
-    { \<W> M - X | X. X \<in> Pi } \<union>
-    { X \<inter> Y | X Y. X \<in> Pi \<and> Y \<in> Pi } \<union>
-    { {w \<in> \<W> M. \<forall>v \<in> \<R> M w. v \<in> X} | X. X \<in> Pi }\<close>
+  \<open>adm_\<delta> M PI \<equiv>
+    { \<W> M - X | X. X \<in> PI } \<union>
+    { X \<inter> Y | X Y. X \<in> PI \<and> Y \<in> PI } \<union>
+    { {w \<in> \<W> M. \<forall>v \<in> \<R> M w. v \<in> X} | X. X \<in> PI }\<close>
 
-abbreviation \<open>grow F B \<equiv> \<lambda>Pi. B \<union> Pi \<union> adm_\<delta> F (B \<union> Pi)\<close>
+abbreviation \<open>grow F B \<equiv> \<lambda>PI. B \<union> PI \<union> adm_\<delta> F (B \<union> PI)\<close>
 
 definition admit :: \<open>'w frame \<Rightarrow> 'w set set \<Rightarrow> 'w set set\<close> where
   \<open>admit F B \<equiv> lfp (grow F B)\<close>
@@ -865,7 +873,7 @@ lemma wf_cannonical_gframe: \<open>wf_gframe (canonical_gframe S)\<close>
   unfolding wf_gframe_def unfolds using wf_canonical_frame admissible_admit(2) admit_B admit_admissible
   by (metis (mono_tags, lifting) frame.select_convs(1) range_val_ne subset_empty val_Pow)
 
-lemma admits_val: \<open>admits (canonical_frame S) (range (val S)) Pi \<Longrightarrow> val S P \<in> Pi\<close>
+lemma admits_val: \<open>admits (canonical_frame S) (range (val S)) PI \<Longrightarrow> val S P \<in> PI\<close>
   unfolding admits_def by blast 
 
 lemma admit_val: \<open>val S P \<in> admit (canonical_frame S) (range (val S))\<close>
@@ -1259,9 +1267,9 @@ inductive Calculus_Set :: \<open>'x lbd set \<Rightarrow> 'x lbd \<Rightarrow> b
 subsection \<open>Soundness\<close>
 
 theorem soundness:
-  assumes \<open>A \<tturnstile> (i, p)\<close> \<open>\<forall>(k, q) \<in> A. (Model W R Pi N e V f, case_tm e N k) \<Turnstile> q\<close>
-    \<open>wf_model (Model W R Pi N e V f)\<close>
-  shows \<open>(Model W R Pi N e V f, case_tm e N i) \<Turnstile> p\<close>
+  assumes \<open>A \<tturnstile> (i, p)\<close> \<open>\<forall>(k, q) \<in> A. (Model W R PI N e V f, case_tm e N k) \<Turnstile> q\<close>
+    \<open>wf_model (Model W R PI N e V f)\<close>
+  shows \<open>(Model W R PI N e V f, case_tm e N i) \<Turnstile> p\<close>
   using assms
 proof (induct A \<open>(i, p)\<close> arbitrary: i p N V pred: Calculus_Set)
   case (Ref A i)
@@ -1290,18 +1298,18 @@ next
       using BoxI(5) unfolding wf_model_def wf_gframe_def wf_frame_def unfolds by blast
  
     let ?N = \<open>N(k := v)\<close>
-    have \<open>\<forall>(i, p) \<in> A. (Model W R Pi ?N e V f, case_tm e ?N i) \<Turnstile> p\<close>
+    have \<open>\<forall>(i, p) \<in> A. (Model W R PI ?N e V f, case_tm e ?N i) \<Turnstile> p\<close>
       using BoxI by fastforce
-    moreover have \<open>(Model W R Pi ?N e V f, case_tm e ?N i) \<Turnstile> \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k))\<close>
+    moreover have \<open>(Model W R PI ?N e V f, case_tm e ?N i) \<Turnstile> \<^bold>\<diamond> (\<^bold>\<bullet> (\<^bold>\<circle> k))\<close>
       using v BoxI.hyps(3) by (simp split: tm.splits)
-    moreover have \<open>wf_model (Model W R Pi ?N e V f)\<close>
+    moreover have \<open>wf_model (Model W R PI ?N e V f)\<close>
       using BoxI.prems(2) \<open>v \<in> W\<close> unfolding wf_env_def wf_model_def unfolds by auto
-    ultimately have \<open>(Model W R Pi ?N e V f, ?N k) \<Turnstile> p\<close>
+    ultimately have \<open>(Model W R PI ?N e V f, ?N k) \<Turnstile> p\<close>
       using BoxI.hyps(2) by fastforce
   }
-  then have \<open>\<forall>v \<in> R (case_tm e N i). (Model W R Pi (N(k := v)) e V f, v) \<Turnstile> p\<close>
+  then have \<open>\<forall>v \<in> R (case_tm e N i). (Model W R PI (N(k := v)) e V f, v) \<Turnstile> p\<close>
     by simp
-  then have \<open>\<forall>v \<in> R (case_tm e N i). (Model W R Pi N e V f, v) \<Turnstile> p\<close>
+  then have \<open>\<forall>v \<in> R (case_tm e N i). (Model W R PI N e V f, v) \<Turnstile> p\<close>
     using BoxI.hyps(3) by simp
   then show ?case
     by simp
@@ -1315,16 +1323,16 @@ next
     fix v
     assume \<open>v \<in> W\<close>
     let ?N = \<open>N(k := v)\<close>
-    have \<open>\<forall>v. \<forall>(i, p) \<in> A. (Model W R Pi ?N e V f, case_tm e ?N i) \<Turnstile> p\<close>
+    have \<open>\<forall>v. \<forall>(i, p) \<in> A. (Model W R PI ?N e V f, case_tm e ?N i) \<Turnstile> p\<close>
       using GloI.prems(1) GloI.hyps(3) by fastforce
-    moreover have \<open>wf_model (Model W R Pi ?N e V f)\<close>
+    moreover have \<open>wf_model (Model W R PI ?N e V f)\<close>
       using GloI.prems(2)  \<open>v \<in> W\<close> unfolding wf_env_def wf_model_def unfolds by auto
-    ultimately have \<open>(Model W R Pi ?N e V f, ?N k) \<Turnstile> p\<close>
+    ultimately have \<open>(Model W R PI ?N e V f, ?N k) \<Turnstile> p\<close>
       using GloI.hyps(2) by fastforce
   }
-  then have \<open>\<forall>v \<in> W. (Model W R Pi (N(k := v)) e V f, v) \<Turnstile> p\<close>
+  then have \<open>\<forall>v \<in> W. (Model W R PI (N(k := v)) e V f, v) \<Turnstile> p\<close>
     by simp
-  then have \<open>\<forall>v \<in> W. (Model W R Pi N e V f, v) \<Turnstile> p\<close>
+  then have \<open>\<forall>v \<in> W. (Model W R PI N e V f, v) \<Turnstile> p\<close>
     using GloI.hyps(3) by simp
   then show ?case
     by simp
@@ -1337,30 +1345,30 @@ next
   case (AllI A i P p)
   {
     fix X
-    assume \<open>X \<in> Pi\<close>
+    assume \<open>X \<in> PI\<close>
     let ?V = \<open>V(P := X)\<close>
-    have \<open>\<forall>v. \<forall>(i, p) \<in> A. (Model W R Pi N e ?V f, case_tm e N i) \<Turnstile> p\<close>
+    have \<open>\<forall>v. \<forall>(i, p) \<in> A. (Model W R PI N e ?V f, case_tm e N i) \<Turnstile> p\<close>
       using AllI.prems(1) AllI.hyps(3) by fastforce
-    moreover have *: \<open>wf_model (Model W R Pi N e ?V f)\<close>
-      using AllI.prems(2) \<open>X \<in> Pi\<close> unfolding wf_env_def wf_model_def unfolds by auto
-    ultimately have \<open>(Model W R Pi N e ?V f, case_tm e N i) \<Turnstile> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p\<close>
+    moreover have *: \<open>wf_model (Model W R PI N e ?V f)\<close>
+      using AllI.prems(2) \<open>X \<in> PI\<close> unfolding wf_env_def wf_model_def unfolds by auto
+    ultimately have \<open>(Model W R PI N e ?V f, case_tm e N i) \<Turnstile> \<langle>\<^bold>\<cdot> (\<^bold>\<circle> P)\<rangle>\<^sub>p p\<close>
       using AllI.hyps(2) by fast
     moreover have \<open>case_tm e N i \<in> W\<close>
       using AllI.prems(2) unfolding wf_model_def wf_env_def unfolds by (auto split: tm.splits) 
-    ultimately have \<open>(Model W R Pi N e ?V (worlds (Model W R Pi N e ?V f) (\<^bold>\<cdot> (\<^bold>\<circle> P)) \<then> f), case_tm e N i) \<Turnstile> p\<close>
+    ultimately have \<open>(Model W R PI N e ?V (worlds (Model W R PI N e ?V f) (\<^bold>\<cdot> (\<^bold>\<circle> P)) \<then> f), case_tm e N i) \<Turnstile> p\<close>
       using inst_single_worlds * by fastforce
-    then have \<open>(Model W R Pi N e ?V ({ w \<in> W. w \<in> X } \<then> f), case_tm e N i) \<Turnstile> p\<close>
+    then have \<open>(Model W R PI N e ?V ({ w \<in> W. w \<in> X } \<then> f), case_tm e N i) \<Turnstile> p\<close>
       unfolding worlds_def by simp
     moreover have \<open>X \<in> Pow W\<close>
-      using AllI.prems(2) \<open>X \<in> Pi\<close> unfolding wf_model_def wf_gframe_def unfolds by auto
+      using AllI.prems(2) \<open>X \<in> PI\<close> unfolding wf_model_def wf_gframe_def unfolds by auto
     then have \<open>{ w \<in> W. w \<in> X } = X\<close>
       by blast
-    ultimately have \<open>(Model W R Pi N e ?V (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
+    ultimately have \<open>(Model W R PI N e ?V (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
       by simp
   }
-  then have \<open>\<forall>X \<in> Pi. (Model W R Pi N e (V(P := X)) (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
+  then have \<open>\<forall>X \<in> PI. (Model W R PI N e (V(P := X)) (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
     by simp
-  then have \<open>\<forall>X \<in> Pi. (Model W R Pi N e V (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
+  then have \<open>\<forall>X \<in> PI. (Model W R PI N e V (X \<then> f), case_tm e N i) \<Turnstile> p\<close>
     using AllI.hyps(3) by simp
   then show ?case
     by simp
@@ -1383,13 +1391,13 @@ corollary soundness':
     and \<open>wf_model M\<close> \<open>w \<in> \<W> M\<close>
   shows \<open>(M, w) \<Turnstile> p\<close>
 proof (cases M)
-  case (fields W R Pi N e V f)
+  case (fields W R PI N e V f)
   let ?N = \<open>N(i := w)\<close>
-  have \<open>wf_model (Model W R Pi ?N e V f)\<close>
+  have \<open>wf_model (Model W R PI ?N e V f)\<close>
     using fields assms(3-4) unfolding wf_env_def wf_model_def unfolds by auto
-  then have \<open>(Model W R Pi ?N e V f, case_tm e ?N (\<^bold>\<circle>i)) \<Turnstile> p\<close>
+  then have \<open>(Model W R PI ?N e V f, case_tm e ?N (\<^bold>\<circle>i)) \<Turnstile> p\<close>
     using assms(1) soundness by blast
-  then have \<open>(Model W R Pi ?N e V f, w) \<Turnstile> p\<close>
+  then have \<open>(Model W R PI ?N e V f, w) \<Turnstile> p\<close>
     by simp
   then show ?thesis
     using assms(2) fields by simp
@@ -1774,5 +1782,461 @@ theorem main:
   assumes \<open>i \<notin> symbols_fm p\<close> \<open>|UNIV :: 'x lbd set| \<le>o  |UNIV :: 'x set|\<close>
   shows \<open>[] \<turnstile> (\<^bold>\<circle>i, p) \<longleftrightarrow> (\<forall>(M :: ('x, 'x tm) model). \<forall>w \<in> \<W> M. wf_model M \<longrightarrow> (M, w) \<Turnstile> p)\<close>
   using assms strong_completeness_list[where A=\<open>{}\<close>] soundness_nil unfolding P.enough_new_def by fastforce
+
+section \<open>The Need for SQDFs\<close>
+
+subsection \<open>Finite Unions of Arithmetic Progressions\<close>
+
+subsubsection \<open>From Manuel Eberl's Furstenberg-Topology AFP entry\<close>
+
+definition arith_prog :: "int \<Rightarrow> nat \<Rightarrow> int set" where
+  "arith_prog a b = {x. [x = a] (mod int b)}"
+
+lemma arith_prog_0_right [simp]: "arith_prog a 0 = {a}"
+  by (simp add: arith_prog_def)
+
+lemma arith_prog_Suc_0_right [simp]: "arith_prog a (Suc 0) = UNIV"
+  by (auto simp: arith_prog_def)
+
+lemma in_arith_progI [intro]: "[x = a] (mod b) \<Longrightarrow> x \<in> arith_prog a b"
+  by (auto simp: arith_prog_def)
+
+lemma arith_prog_disjoint:
+  assumes "[a \<noteq> a'] (mod int b)" and "b > 0"
+  shows   "arith_prog a b \<inter> arith_prog a' b = {}"
+  using assms by (auto simp: arith_prog_def cong_def)
+
+lemma arith_prog_dvd_mono: "b dvd b' \<Longrightarrow> arith_prog a b' \<subseteq> arith_prog a b"
+  by (auto simp: arith_prog_def cong_dvd_modulus)
+
+lemma bij_betw_arith_prog:
+  assumes "b > 0"
+  shows   "bij_betw (\<lambda>n. a + int b * n) UNIV (arith_prog a b)"
+proof (rule bij_betwI[of _ _ _ "\<lambda>x. (x - a) div int b"], goal_cases)
+  case 1
+  thus ?case 
+    by (auto simp: arith_prog_def cong_add_lcancel_0 cong_mult_self_right mult_of_nat_commute)
+next
+  case 4
+  thus ?case
+    by (auto simp: arith_prog_def cong_iff_lin)
+qed (use \<open>b > 0\<close> in \<open>auto simp: arith_prog_def\<close>)
+
+lemma arith_prog_altdef: "arith_prog a b = range (\<lambda>n. a + int b * n)"
+proof (cases "b = 0")
+  case False
+  thus ?thesis
+    using bij_betw_arith_prog[of b] by (auto simp: bij_betw_def)
+qed auto
+
+lemma infinite_arith_prog: "b > 0 \<Longrightarrow> infinite (arith_prog a b)"
+  using bij_betw_finite[OF bij_betw_arith_prog[of b]] by simp
+
+(* from the lemma closed_arith_prog_fb *)
+lemma arith_prog_complement:
+  assumes \<open>b > 0\<close>
+  shows "-arith_prog a b = (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b)"
+proof -
+  have disjoint: "x \<notin> arith_prog a b" if "x \<in> arith_prog (a + int i) b" "i \<in> {1..<b}" for x i
+  proof -
+    have "[a \<noteq> a + int i] (mod int b)"
+    proof
+      assume "[a = a + int i] (mod int b)"
+      hence "[a + 0 = a + int i] (mod int b)" by simp
+      hence "[0 = int i] (mod int b)" by (subst (asm) cong_add_lcancel) auto
+      with that show False by (auto simp: cong_def)
+    qed
+    thus ?thesis using arith_prog_disjoint[of a "a + int i" b] \<open>b > 0\<close> that by auto
+  qed
+
+  have covering: "x \<in> arith_prog a b \<or> x \<in> (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b)" for x
+  proof -
+    define i where "i = nat ((x - a) mod (int b))"
+    have "[a + int i = a + (x - a) mod int b] (mod int b)"
+      unfolding i_def using \<open>b > 0\<close> by simp
+    also have "[a + (x - a) mod int b = a + (x - a)] (mod int b)"
+      by (intro cong_add) auto
+    finally have "[x = a + int i] (mod int b)"
+      by (simp add: cong_sym_eq)
+    hence "x \<in> arith_prog (a + int i) b"
+      using \<open>b > 0\<close> by (auto simp: arith_prog_def)
+    moreover have "i < b" using \<open>b > 0\<close> 
+      by (auto simp: i_def nat_less_iff)
+    ultimately show ?thesis using \<open>b > 0\<close>
+      by (cases "i = 0") auto
+  qed
+
+  from disjoint and covering show ?thesis
+    by blast
+qed
+
+(* from instance t2_space *)
+lemma arith_prog_distinguish:
+  assumes "x \<noteq> y"
+  shows "\<exists>a c b. b > 0 \<and> x \<in> arith_prog a b \<and> y \<in> arith_prog c b \<and> arith_prog a b \<inter> arith_prog c b = {}"
+proof -
+  define d where "d = nat \<bar>x - y\<bar> + 1"
+  from \<open>x \<noteq> y\<close> have "d > 0"
+    unfolding d_def by auto
+  define U where "U = arith_prog x d"
+  define V where "V = arith_prog y d"
+
+  have "U \<inter> V = {}" unfolding U_def V_def d_def
+  proof (use \<open>x \<noteq> y\<close> in transfer, rule arith_prog_disjoint)
+    fix x y :: int
+    assume "x \<noteq> y"
+    show "[x \<noteq> y] (mod int (nat \<bar>x - y\<bar> + 1))"
+    proof
+      assume "[x = y] (mod int (nat \<bar>x - y\<bar> + 1))"
+      hence "\<bar>x - y\<bar> + 1 dvd \<bar>x - y\<bar>"
+        by (auto simp: cong_iff_dvd_diff algebra_simps)
+      hence "\<bar>x - y\<bar> + 1 \<le> \<bar>x - y\<bar>"
+        by (rule zdvd_imp_le) (use \<open>x \<noteq> y\<close> in auto)
+      thus False by simp
+    qed
+  qed auto
+  moreover have "x \<in> U" "y \<in> V"
+    unfolding U_def V_def by (use \<open>d > 0\<close> in transfer, fastforce)+
+  ultimately show ?thesis
+    using U_def V_def \<open>0 < d\<close> by blast
+qed
+
+subsubsection \<open>Unions of Arithmetic Progressions\<close>
+
+lemma arith_prog_offset_in: \<open>k \<in> arith_prog a b \<Longrightarrow> arith_prog k b = arith_prog a b\<close>
+  unfolding arith_prog_def by (simp add: cong_def)
+
+lemma arith_prog_mod: \<open>arith_prog (a mod int b) b = arith_prog a b\<close>
+  unfolding arith_prog_def by auto                   
+
+lemma mod_bounds: \<open>b > 0 \<Longrightarrow> a mod int b \<ge> 0 \<and> a mod int b < b\<close>
+  by simp
+
+lemma mod_range: \<open>{a mod int b |a. b > 0} \<subseteq> {0..<int b}\<close>
+  using mod_bounds by auto
+
+lemma finite_mod_range: \<open>finite {a mod int b |a. b > 0}\<close>
+  using mod_range by (meson finite_atLeastLessThan_int finite_subset)
+
+definition arith :: \<open>nat set \<Rightarrow> int set \<Rightarrow> bool\<close> where
+  \<open>arith B U \<equiv> \<forall>a \<in> U. \<exists>b \<in> B. b > 0 \<and> arith_prog a b \<subseteq> U\<close>
+
+lemma arith_mono: \<open>arith B U \<Longrightarrow> B \<subseteq> C \<Longrightarrow> arith C U\<close>
+  unfolding arith_def by blast
+
+lemma arith_empty_steps: \<open>arith B U \<Longrightarrow> B = {} \<Longrightarrow> U = {}\<close>
+  unfolding arith_def by blast
+
+lemma arith_ne_steps: \<open>arith B U \<Longrightarrow> U \<noteq> {} \<Longrightarrow> B \<noteq> {}\<close>
+  using arith_empty_steps by blast
+
+lemma arith_decomp:
+  assumes \<open>arith B U\<close>
+  obtains abs where
+    \<open>finite B \<Longrightarrow> finite abs\<close>
+    \<open>\<And>a b. (a, b) \<in> abs \<Longrightarrow> b > 0 \<and> b \<in> B\<close>
+    \<open>U = (\<Union>(a, b) \<in> abs. arith_prog a b)\<close>
+proof -
+  have \<open>\<forall>a\<in>U. \<exists>b \<in> B. b > 0 \<and> arith_prog (a mod int b) b \<subseteq> U\<close>
+    using \<open>arith B U\<close> unfolding arith_def using arith_prog_mod by simp
+  then obtain f where f: \<open>\<forall>a \<in> U. \<exists>b \<in> B. f a = b \<and> b > 0 \<and> arith_prog (a mod int b) b \<subseteq> U\<close>
+    by metis
+
+  let ?abs = \<open>{(a mod int (f a), f a) |a. a \<in> U}\<close>
+
+  have abs: \<open>U = (\<Union>(a, b) \<in> ?abs. arith_prog a b)\<close>
+    using f by fastforce
+
+  have \<open>{a mod int (f a) |a. a \<in> U} \<subseteq> (\<Union>b \<in> B. {a mod int b |a. b > 0})\<close>
+    using f by blast
+  moreover have \<open>finite (\<Union>b \<in> B. {a mod int b |a. b > 0})\<close> if \<open>finite B\<close>
+    using that finite_mod_range by fast
+  ultimately have \<open>finite {a mod int (f a) |a. a \<in> U}\<close> if \<open>finite B\<close>
+    using that by (meson finite_subset)
+
+  moreover have \<open>?abs \<subseteq> {a mod int (f a) |a. a \<in> U} \<times> f ` U\<close>
+    by blast
+  moreover have fin_f: \<open>finite (f ` U)\<close> if \<open>finite B\<close>
+    using that f by (meson finite_subset image_subsetI)
+  ultimately have fin_abs: \<open>finite ?abs\<close> if \<open>finite B\<close>
+    using that fin_f by (meson finite_SigmaI finite_subset)
+
+  have pos: \<open>\<And>a b. (a, b) \<in> ?abs \<Longrightarrow> b > 0 \<and> b \<in> B\<close>
+    using f by blast
+
+  show ?thesis
+    using fin_abs pos abs that by meson
+qed
+
+lemma arith_UNIV: \<open>arith {1} UNIV\<close>
+  unfolding arith_def by blast
+
+lemma arith_empty: "arith B {}"
+  unfolding arith_def by blast
+
+lemma finite_case_prod_lcm: \<open>finite B \<Longrightarrow> finite C \<Longrightarrow> finite (case_prod lcm ` (B \<times> C))\<close>
+  by blast
+
+lemma arith_inter:
+  assumes U: \<open>arith B U\<close> and V: \<open>arith C V\<close>
+  shows \<open>arith (case_prod lcm ` (B \<times> C)) (U \<inter> V)\<close>
+  unfolding arith_def
+proof safe
+  fix a
+  assume a: \<open>a \<in> U\<close> \<open>a \<in> V\<close>
+  
+  from a U obtain b where b: \<open>b \<in> B\<close> \<open>b > 0\<close> \<open>arith_prog a b \<subseteq> U\<close>
+    unfolding arith_def by auto
+  from a V obtain c where c: \<open>c \<in> C\<close> \<open>c > 0\<close> \<open>arith_prog a c \<subseteq> V\<close>
+    unfolding arith_def by auto
+
+  with a b c U V have \<open>arith_prog a (lcm b c) \<subseteq> U \<inter> V\<close>
+    using arith_prog_dvd_mono[of b \<open>lcm b c\<close> a] arith_prog_dvd_mono[of c \<open>lcm b c\<close> a] by blast
+  moreover from b c have \<open>lcm b c > 0\<close>
+    using lcm_pos_nat by blast
+  ultimately show \<open>\<exists>b\<in>(\<lambda>(x, y). lcm x y) ` (B \<times> C). 0 < b \<and> arith_prog a b \<subseteq> U \<inter> V\<close>
+    using b c by blast
+qed
+
+lemma arith_Inter:
+  assumes \<open>finite X\<close> and X: \<open>\<forall>U \<in> X. arith B U\<close> \<open>X \<noteq> {}\<close>
+  shows \<open>\<exists>B'. (finite B \<longrightarrow> finite B') \<and> arith B' (\<Inter>X)\<close>
+  using assms
+proof (induct X rule: finite_induct)
+  case empty
+  then show ?case
+    by simp
+next
+  case (insert U X)
+  then show ?case
+    using arith_inter finite_case_prod_lcm
+    by (metis Inf_insert cInf_singleton insertCI)
+qed
+
+lemma arith_union:
+  assumes \<open>arith B U\<close> \<open>arith C V\<close>
+  shows \<open>arith (B \<union> C) (U \<union> V)\<close>
+  using assms unfolding arith_def by (metis Un_iff subset_trans sup_ge1 sup_ge2)
+
+lemma arith_ne_infinite:
+  assumes \<open>arith B U\<close> \<open>U \<noteq> {}\<close>
+  shows \<open>infinite U\<close>
+  using assms unfolding arith_def
+  by (meson equals0I infinite_arith_prog rev_finite_subset)
+
+lemma arith_prog_arith [intro]:
+  assumes \<open>b > 0\<close>
+  shows \<open>arith {b} (arith_prog a b)\<close>
+  unfolding arith_def using assms arith_prog_offset_in by blast
+
+lemma arith_prog_complement_arith [intro]:
+  assumes \<open>b > 0\<close>
+  shows \<open>arith {b} (- arith_prog a b)\<close>
+proof -
+  have "-arith_prog a b = (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b)"
+    using assms arith_prog_complement by blast
+  also from assms have "arith {b} \<dots>"
+    unfolding arith_def using arith_prog_offset_in by blast
+  finally show ?thesis .
+qed
+
+lemma arith_complement_arith [intro]:
+  assumes \<open>arith B U\<close> \<open>finite B\<close>
+  shows \<open>\<exists>B'. finite B' \<and> arith B' (- U)\<close>
+proof -
+  obtain abs where
+    abs: \<open>\<And>a b. (a, b) \<in> abs \<Longrightarrow> b > 0 \<and> b \<in> B\<close> \<open>finite abs\<close> and
+    U: \<open>U = (\<Union>(a, b) \<in> abs. arith_prog a b)\<close>
+    using assms arith_decomp by metis
+  then have *: \<open>\<And>a b. (a, b) \<in> abs \<Longrightarrow> - arith_prog a b = (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b)\<close>
+    using arith_prog_complement by simp
+
+  have \<open>- U = (\<Inter>(a, b) \<in> abs. - arith_prog a b)\<close>
+    using U by blast
+  also have \<open>\<dots> = (\<Inter>(a, b) \<in> abs. (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b))\<close>
+    using * by blast
+  finally have **: \<open>- U = (\<Inter>(a, b) \<in> abs. (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b))\<close> .
+
+  have \<open>\<And>a b. (a, b) \<in> abs \<Longrightarrow> arith {b} (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b)\<close>
+    using abs * by (metis arith_prog_complement_arith)
+  then have ***: \<open>\<And>a b. (a, b) \<in> abs \<Longrightarrow> arith B (\<Union>i\<in>{1..<b}. arith_prog (a + int i) b)\<close>
+    using arith_mono abs by fast
+
+  define X where X: \<open>X \<equiv> (\<lambda>(a, b). \<Union>i\<in>{1..<b}. arith_prog (a + int i) b) ` abs\<close>
+
+  from X have \<open>finite X\<close>
+    using abs(2) by simp
+  moreover have \<open>\<forall>U\<in>X. arith B U\<close>
+    using X *** by fast
+  ultimately have \<open>\<exists>B'. finite B' \<and> arith B' (\<Inter> X)\<close>
+    using arith_Inter[of X] \<open>finite B\<close> arith_UNIV by fastforce
+
+  moreover from X have \<open>- U = \<Inter>X\<close>
+    using ** by simp
+  ultimately show ?thesis
+    by simp
+qed
+
+lemma arith_distinguish:
+  assumes \<open>x \<noteq> y\<close>
+  shows \<open>\<exists>B U V. finite B \<and> arith B U \<and> arith B V \<and> x \<in> U \<and> y \<in> V \<and> U \<inter> V = {}\<close>
+proof -
+  obtain a b c where
+    b: \<open>0 < b\<close> and x: \<open>x \<in> arith_prog a b\<close> and y: \<open>y \<in> arith_prog c b\<close> and
+    *: \<open>arith_prog a b \<inter> arith_prog c b = {}\<close>
+    using assms arith_prog_distinguish by meson
+
+  let ?B = \<open>{b}\<close>
+  let ?U = \<open>arith_prog a b\<close>
+  let ?V = \<open>arith_prog c b\<close>
+  have \<open>finite ?B \<and> arith ?B ?U \<and> arith ?B ?V \<and> x \<in> ?U \<and> y \<in> ?V \<and> ?U \<inter> ?V = {}\<close>
+    using b x y *
+    by blast
+  then show ?thesis
+    by blast
+qed
+
+subsubsection \<open>Finite Unions of Arithmetic Progressions\<close>
+
+definition fin_arith :: \<open>int set \<Rightarrow> bool\<close> where
+  \<open>fin_arith U \<equiv> \<exists>B. finite B \<and> arith B U\<close>
+
+lemma fin_arith_UNIV [intro]: \<open>fin_arith UNIV\<close>
+  unfolding fin_arith_def using arith_UNIV by force
+
+lemma fin_arith_empty [intro]: \<open>fin_arith {}\<close>
+  unfolding fin_arith_def using arith_empty by blast
+
+lemma fin_arith_inter [intro]: \<open>fin_arith U \<Longrightarrow> fin_arith V \<Longrightarrow> fin_arith (U \<inter> V)\<close>
+  unfolding fin_arith_def using arith_inter finite_case_prod_lcm by metis
+
+lemma fin_arith_union [intro]: \<open>fin_arith U \<Longrightarrow> fin_arith V \<Longrightarrow> fin_arith (U \<union> V)\<close>
+  unfolding fin_arith_def using arith_union by blast
+
+lemma fin_arith_compl [intro]: \<open>fin_arith U \<Longrightarrow> fin_arith (- U)\<close>
+  unfolding fin_arith_def by blast
+
+lemma fin_arith_distinguish:
+  assumes \<open>x \<noteq> y\<close>
+  shows \<open>\<exists>U V. fin_arith U \<and> fin_arith V \<and> x \<in> U \<and> y \<in> V \<and> U \<inter> V = {}\<close>
+  using assms arith_distinguish unfolding fin_arith_def by meson
+
+subsubsection \<open>Singletons\<close>
+
+lemma arith_prog_singleton: \<open>\<Inter>{arith_prog a b |a b. b > 0 \<and> x \<in> arith_prog a b} = {x}\<close>
+proof
+  show \<open>\<Inter> {arith_prog a b |a b. 0 < b \<and> x \<in> arith_prog a b} \<subseteq> {x}\<close>
+    using arith_prog_distinguish by fast
+qed fast
+
+lemma fin_arith_Inter_singleton: \<open>\<Inter>{U |U. fin_arith U \<and> x \<in> U} = {x}\<close>
+proof -
+  have \<open>{arith_prog a b |a b. b > 0 \<and> x \<in> arith_prog a b} \<subseteq> {U |U b. arith {b} U \<and> x \<in> U}\<close>
+    using arith_prog_arith by blast
+  also have \<open>\<dots> \<subseteq> {U |U B. finite B \<and> arith B U \<and> x \<in> U}\<close>
+    by force
+  finally have \<open>{arith_prog a b |a b. b > 0 \<and> x \<in> arith_prog a b} \<subseteq> {U |U. fin_arith U \<and> x \<in> U}\<close>
+    unfolding fin_arith_def by auto
+  then have \<open>\<Inter>{U |U. fin_arith U \<and> x \<in> U} \<subseteq> \<Inter>{arith_prog a b |a b. b > 0 \<and> x \<in> arith_prog a b}\<close>
+    by blast
+  then show ?thesis
+    using arith_prog_singleton by auto
+qed
+
+lemma singleton_not_finarith: \<open>\<not> fin_arith {x}\<close>
+  unfolding fin_arith_def using arith_ne_infinite by blast
+
+subsection \<open>Counterexample\<close>
+
+definition Pss :: \<open>int set set\<close> where
+  \<open>Pss \<equiv> {U. fin_arith U}\<close>
+
+lemma Pss_empty: \<open>{} \<in> Pss\<close>
+  unfolding Pss_def by blast
+
+lemma Pss_UNIV: \<open>UNIV \<in> Pss\<close>
+  unfolding Pss_def by blast
+
+lemma Pss_union: \<open>X \<in> Pss \<Longrightarrow> Y \<in> Pss \<Longrightarrow> X \<union> Y \<in> Pss\<close>
+  unfolding Pss_def by blast
+
+lemma Pss_inter: \<open>X \<in> Pss \<Longrightarrow> Y \<in> Pss \<Longrightarrow> X \<inter> Y \<in> Pss\<close>
+  unfolding Pss_def by blast
+  
+lemma Pss_compl: \<open>X \<in> Pss \<Longrightarrow> - X \<in> Pss\<close>
+  unfolding Pss_def by blast
+
+definition my_gframe :: \<open>int gframe\<close> where
+  \<open>my_gframe \<equiv> \<lparr> \<W> = UNIV, \<R> = \<lambda>x. UNIV, \<Pi> = Pss \<rparr>\<close>
+
+lemma wf_frame_mygframe: \<open>wf_frame (frame.truncate my_gframe)\<close>
+  unfolding wf_frame_def unfolds my_gframe_def by blast  
+
+lemma admissible_mygframe: \<open>admissible (frame.truncate my_gframe) (\<Pi> my_gframe)\<close>
+  unfolding admissible_def unfolds my_gframe_def Pss_def
+  by (auto simp: Compl_eq_Diff_UNIV[symmetric])
+
+lemma wf_mygframe: \<open>wf_gframe my_gframe\<close>
+  using wf_frame_mygframe admissible_mygframe
+  unfolding wf_gframe_def unfolds my_gframe_def Pss_def by fast
+
+definition my_model :: \<open>(int, int) model\<close> where
+  \<open>my_model \<equiv> gframe.extend my_gframe \<lparr>\<N> = \<lambda>i. i, \<NN> = \<lambda>i. int i, \<V> = \<lambda>n. {}, \<VV> = \<lambda>n. {}\<rparr>\<close>
+
+lemma wf_mymodel: \<open>wf_model my_model\<close>
+  using wf_mygframe unfolding wf_model_def wf_env_def unfolds my_model_def my_gframe_def Pss_def
+  by blast
+
+abbreviation GloE :: \<open>'x fm \<Rightarrow> 'x fm\<close> (\<open>\<^bold>E\<close>) where
+  \<open>\<^bold>E p \<equiv> \<^bold>\<not> (\<^bold>A (\<^bold>\<not> p))\<close>
+
+text \<open>Nowhere-or-twice says that if formula p holds somewhere, then it holds in at least two distinct worlds.\<close>
+text \<open>(We ignore de Bruijn complications and only instantiate with closed formulas.)\<close>
+
+abbreviation \<open>nowhere_or_twice p \<equiv>
+  (\<^bold>\<diamond> p) \<^bold>\<longrightarrow>
+  (\<^bold>\<diamond> (\<^bold>\<down> (\<^bold>\<diamond> (\<^bold>\<down> (
+    (\<^bold>@ (\<^bold>#1) p) \<^bold>\<and>
+    (\<^bold>@ (\<^bold>#0) p) \<^bold>\<and>
+    \<^bold>\<not> (\<^bold>@ (\<^bold>#0) (\<^bold>\<bullet>(\<^bold>#1))))))))\<close>
+
+text \<open>Finite unions of arithmetic progressions are either empty or infinite.\<close>
+
+lemma fin_arith_nowhere_or_twice:
+  assumes \<open>fin_arith U\<close>
+  shows \<open>U = {} \<or> (\<exists>x y. x \<in> U \<and> y \<in> U \<and> x \<noteq> y)\<close>
+  using assms arith_ne_infinite unfolding fin_arith_def
+  by (metis infinite_int_iff_unbounded less_le_not_le)
+
+text \<open>So nowhere-or-twice holds for all admissible propositions.\<close>
+
+lemma nowhere_or_twice_admissible: \<open>(my_model, x) \<Turnstile> \<^bold>\<forall> (nowhere_or_twice (\<^bold>\<cdot>(\<^bold>#0)))\<close>
+  unfolding my_model_def my_gframe_def unfolds Pss_def
+  using fin_arith_nowhere_or_twice by simp
+
+text \<open>However, propositional quantification lets us form a singleton.\<close>
+
+abbreviation \<open>singleton x \<equiv> \<^bold>\<forall>( \<^bold>@(\<^bold>\<circle>x) (\<^bold>\<cdot>(\<^bold>#0)) \<^bold>\<longrightarrow> \<^bold>\<cdot>(\<^bold>#0) )\<close>
+
+lemma singleton: \<open>((my_model, x) \<Turnstile> singleton y) \<longleftrightarrow> x = y\<close>
+  unfolding my_model_def my_gframe_def unfolds Pss_def
+  using fin_arith_Inter_singleton by auto
+
+lemma fin_arith_distinguish':
+  \<open>\<forall>P. fin_arith P \<longrightarrow> y \<in> P \<longrightarrow> v \<in> P \<Longrightarrow> v \<noteq> w \<Longrightarrow> \<exists>P. y \<in> P \<and> fin_arith P \<and> w \<notin> P\<close>
+  by (metis disjoint_iff fin_arith_distinguish)
+
+text \<open>The singleton does not hold nowhere-or-twice.\<close>
+
+lemma not_nowhere_or_twice_singleton: \<open>\<not> (my_model, x) \<Turnstile> nowhere_or_twice (singleton y)\<close>
+  unfolding my_model_def my_gframe_def unfolds Pss_def
+  using fin_arith_distinguish' by auto
+
+text \<open>So we cannot always eliminate a quantifier with a non-quantifier-free formula.\<close>
+  
+theorem counter:
+  shows \<open>\<not> (my_model, x) \<Turnstile> \<^bold>\<forall> (nowhere_or_twice (\<^bold>\<cdot>(\<^bold>#0))) \<^bold>\<longrightarrow> nowhere_or_twice (singleton y)\<close>
+  using nowhere_or_twice_admissible not_nowhere_or_twice_singleton
+  by (meson semantics.simps(3,4))
 
 end

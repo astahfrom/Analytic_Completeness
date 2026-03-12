@@ -1,12 +1,16 @@
 (*
-  Author: Asta Halkjær From, 2025.
+  Author: Asta Halkjær Boserup, 2026.
 
   Inspiration:
-  - "FOL-Fitting", Stefan Berghofer.
+  - "A Unifying Principal in Quantification Theory", 1963, Raymond M. Smullyan.
+  - "First-Order Logic", 1968, Raymond M. Smullyan.
   - "First-Order Logic and Automated Theorem Proving", 1996, Melvin Fitting.
+  - "FOL-Fitting", Stefan Berghofer.
 *)
 
-theory Analytic_Completeness imports
+chapter \<open>Abstract Consistency Properties\<close>
+
+theory Abstract_Consistency_Property imports
   "HOL-Cardinals.Cardinal_Order_Relation"
 begin
 
@@ -171,7 +175,7 @@ lemma (in wo_rel) chain_union_closed:
 definition maximal :: \<open>'a set set \<Rightarrow> 'a set \<Rightarrow> bool\<close> where
   \<open>maximal C S \<longleftrightarrow> (\<forall>S' \<in> C. S \<subseteq> S' \<longrightarrow> S = S')\<close>
 
-section \<open>Locale\<close>
+section \<open>Consistency Properties\<close>
 
 locale Params =
   fixes map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close>
@@ -290,6 +294,8 @@ definition (in Params) prop\<^sub>H :: \<open>('x, 'fm) kind list \<Rightarrow> 
 theorem (in Params) sat\<^sub>H_Wits: \<open>sat\<^sub>E (Wits W) C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H (Wits W) S\<close>
   unfolding maximal_def by fast
 
+subsection \<open>Consistency Kinds\<close>
+
 locale Consistency_Kind = Params map_fm params_fm is_param
   for
     map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
@@ -300,8 +306,6 @@ locale Consistency_Kind = Params map_fm params_fm is_param
     and respects_alt: \<open>\<And>C. sat\<^sub>E K C \<Longrightarrow> subset_closed C \<Longrightarrow> sat\<^sub>A K (mk_alt_consistency C)\<close>
     and respects_fin: \<open>\<And>C. subset_closed C \<Longrightarrow> sat\<^sub>A K C \<Longrightarrow> sat\<^sub>A K (mk_finite_char C)\<close>
     and hintikka: \<open>\<And>C S. sat\<^sub>E K C \<Longrightarrow> S \<in> C \<Longrightarrow> maximal C S \<Longrightarrow> sat\<^sub>H K S\<close>
-
-subsection \<open>Consistency Property\<close>
 
 locale Consistency_Kinds = Params map_fm params_fm is_param
   for
@@ -1887,9 +1891,9 @@ proof
   then show \<open>sat\<^sub>E kind {A. enough_new A \<and> \<turnstile> A}\<close>
   proof safe
     fix S ps F qs
-    assume *: \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>enough_new S\<close>
-    then have \<open>|UNIV :: 'fm set| \<le>o |Collect is_param - params (F S)|\<close>
-      using * unfolding enough_new_def using params_subset[of ps F qs S] ordLeq_transitive
+    assume \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>enough_new S\<close>
+    then have \<open>enough_new (F S)\<close>
+      unfolding enough_new_def using params_subset[of ps F qs S] ordLeq_transitive
         card_of_mono1[of "Collect is_param - params S" "Collect is_param - params (F S)"]
       by blast
     then show \<open>enough_new (set qs \<union> F S)\<close>
@@ -1897,6 +1901,28 @@ proof
   qed (use consistent in blast)
 qed
 
-(* TODO: Weak for Modal requires that F works on lists rather than sets. *)
+locale Weak_Derivational_Modal = ModalH map_fm params_fm is_param classify
+  for
+    map_fm :: \<open>('x \<Rightarrow> 'x) \<Rightarrow> 'fm \<Rightarrow> 'fm\<close> and
+    params_fm :: \<open>'fm \<Rightarrow> 'x set\<close> and
+    is_param :: \<open>'x \<Rightarrow> bool\<close> and
+    classify :: \<open>'fm list \<Rightarrow> ('fm set \<Rightarrow> 'fm set) \<times> 'fm list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<box>\<close> 50) +
+  fixes consistent :: \<open>'fm list \<Rightarrow> bool\<close> (\<open>\<turnstile> _\<close> [51] 50)
+  assumes consistent: \<open>\<And>S ps F qs S'. set ps \<subseteq> set S \<Longrightarrow> ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> \<turnstile> S \<Longrightarrow> set S' = F (set S) \<Longrightarrow> \<turnstile> qs @ S'\<close>
+    and params_subset: \<open>\<And>ps F qs S. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> params (F S) \<subseteq> params S\<close>
+    and F_size: \<open>\<And>ps F qs S. ps \<leadsto>\<^sub>\<box> (F, qs) \<Longrightarrow> |F S| \<le>o |S|\<close>
+
+sublocale Weak_Derivational_Modal \<subseteq> Weak_Derivational_Kind map_fm params_fm is_param kind consistent
+proof
+  assume inf: \<open>infinite (Collect is_param :: 'x set)\<close>
+  show \<open>sat\<^sub>E kind {S. \<exists>A. set A = S \<and> \<turnstile> A}\<close>
+  proof safe
+    fix ps qs A F
+    assume \<open>set ps \<subseteq> set A\<close> \<open>ps \<leadsto>\<^sub>\<box> (F, qs)\<close> \<open>\<turnstile> A\<close>
+    then show \<open>\<exists>B. set B = set qs \<union> F (set A) \<and> \<turnstile> B\<close>
+      using consistent[of ps A F qs] F_size
+      by (metis card_of_ordLeq_infinite finite_list list.set_finite set_append)
+  qed
+qed
 
 end

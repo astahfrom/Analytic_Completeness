@@ -1,9 +1,14 @@
 (*
-  Author: Asta Halkjær From, 2025.
+  File: Example_Bounded_FOL.thy
+  Title: Completeness and Compactness Proofs for a First-Order Logic Calculus with a Restriction
+         on Universal Quantifier Elimination.
+  Author: Asta Halkjær Boserup, 2025-2026.
 *)
 
+chapter \<open>Example: First-Order Logic with Restricted Instantiation\<close>
+
 theory Example_Bounded_FOL imports
-  Analytic_Completeness
+  Abstract_Consistency_Property
 begin
 
 section \<open>Syntax\<close>

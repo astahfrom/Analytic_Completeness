@@ -1,12 +1,13 @@
 (*
   File:      Example_SOL.thy
   Author:    Anders Schlichtkrull
-  Author:    Asta Halkjær From
-
+  Author:    Asta Halkjær Boserup
 *)
 
+chapter \<open>Example: Second-Order Logic\<close>
+
 theory Example_SOL imports
-  Analytic_Completeness
+  Abstract_Consistency_Property
 begin
 
 section \<open>Syntax\<close>

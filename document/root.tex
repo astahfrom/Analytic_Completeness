@@ -1,4 +1,4 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper]{report}
 \usepackage[T1]{fontenc}
 \usepackage{isabelle,isabellesym}
 
@@ -39,9 +39,23 @@
 
 \begin{document}
 
-\title{analytic}
-\author{blinded}
+\title{Abstract Consistency Properties}
+\author{Asta Halkjær Boserup, Anders Schlichtkrull}
 \maketitle
+
+\abstract{
+  Smullyan and Fitting have used abstract consistency properties to great effect in unifying meta-theoretical results in logic.
+  In this work we use locales to mechanize abstract consistency properties without fixing a particular logic or syntax.
+  We prove the usual components of abstract consistency properties ---conjunctive, disjunctive, universal, and existential formulas based on Smullyan's uniform notation--- as special cases of our abstract development.
+  We follow Fitting's technique for closing a consistency property under limits and finding a maximal element.
+  We thus prove the existence of a maximal consistent set, a Hintikka set, for any notion of consistency expressible in the framework.
+  Users of the framework can define an abstract consistency property for their own syntax and logic, and prove model existence via our Hintikka sets.
+
+  We provide three example instantiations.
+  First, compactness and completeness for a first-order logic where we only instantiate universal quantifiers with already occurring terms.
+  Second, completeness over general models of a second-order logic.
+  Third, completeness of our own natural deduction system for Prior's Ideal Language, a recently developed hybrid logic with propositional quantification.
+}
 
 \tableofcontents
 
