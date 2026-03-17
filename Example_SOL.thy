@@ -2,9 +2,13 @@
   File:      Example_SOL.thy
   Author:    Anders Schlichtkrull
   Author:    Asta Halkjær Boserup
+
 *)
 
 chapter \<open>Example: Second-Order Logic\<close>
+
+text \<open>Generalizes \<^cite>\<open>"FOL-Axiomatic-AFP"\<close> and \<^cite>\<open>"From21-TYPES"\<close>
+      from first-order logic to second-order logic\<close>
 
 theory Example_SOL imports
   Abstract_Consistency_Property
