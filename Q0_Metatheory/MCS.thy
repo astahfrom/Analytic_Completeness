@@ -3105,6 +3105,17 @@ lemma brand_new_lemma2:
   using brand_new_lemma2'
   using assms by auto 
 
+lemma the_big_thing_to_prove:
+  assumes "P' = const_subst_proof (c, x) \<alpha> P"
+  assumes "Ts' = const_subst_proof (c, x) \<alpha> Ts"
+  assumes "form' = const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+  assumes "is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+  assumes "(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)"
+  assumes "(x, \<alpha>) \<notin> vars (lset As)"
+  assumes "(x, \<alpha>) \<notin> vars B"
+  shows "is_hyp_proof_of (lset As) Ts' P' form'"
+  sorry
+
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
 proof
