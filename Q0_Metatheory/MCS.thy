@@ -3073,6 +3073,27 @@ proof -
     using rule_RR sorry
 qed
 
+lemma brand_new_lemma:
+  assumes "A \<in> subforms B"
+  shows "vars A \<subseteq> vars B"
+using assms proof (induction B)
+  case (FVar x)
+  then show ?case
+    by (metis emptyE old.prod.exhaust subforms.simps(1))
+next
+  case (FCon x)
+  then show ?case
+    using subforms.elims by auto
+next
+  case (FApp B1 B2)
+  then show ?case
+    by auto
+next
+  case (FAbs x1a B)
+  then show ?case
+    by (metis Un_upper1 empty_iff form.distinct(11) insert_iff subforms.elims vars_form.simps(4))
+qed
+
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
 proof
@@ -3139,11 +3160,30 @@ proof
         using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by auto
       from \<open>lset As \<turnstile> ?form\<close> obtain Ts P where "is_hyp_proof_of (lset As) Ts P ?form" (* Ts are some theorems used in P *)
-        sorry
-      then obtain x where "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> undefined x \<alpha>"
-        (* HERE: undefined should be, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that. *)
-             (* Fine, but shoud I be afraid that c occurs in proofs of Ts? No, it is actually fine that it does that. *)
-        sorry
+        using hypothetical_derivability_proof_existence_equivalence by metis
+
+      define TP where "TP = (\<lambda>T. SOME P. is_proof_of P T)" (* Maybe not needed *)
+      define TsPs where "TsPs = map TP Ts" 
+
+      from \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> obtain x where "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars (lset As)"
+        apply (subgoal_tac "(\<exists>x. (x,\<alpha>) \<notin> (vars (lset As)) \<union> vars\<^sub>p P) \<and> finite (vars (lset As))")
+        subgoal
+          apply auto
+          done
+        subgoal
+          apply rule
+          subgoal
+            apply (metis finite_Un finite_vars\<^sub>p fresh_var_existence vars\<^sub>p_def)
+            done
+          subgoal
+            apply (metis finite_vars\<^sub>p vars\<^sub>p_def)
+            done
+          done
+        done (* \<and> undefined x \<alpha>" *)
+        (* Did Peter Andrews state  (x,\<alpha>) \<notin> vars (lset As) ? *)
+        (* HERE: undefined should be, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that.
+                 But I also feel like I do not need that actually! Hmm... *)
+             (* Fine, but should I be afraid that c occurs in proofs of Ts? No, it is actually fine that it does that. *)
       define P' where "P' = const_subst_proof (c, x) \<alpha> P"
       define Ts' where "Ts' = const_subst_proof (c, x) \<alpha> Ts"
       define form' where "form' = (const_subst (c, x) \<alpha> ?form)"
@@ -3151,33 +3191,52 @@ proof
       have "is_hyp_proof_of (lset As) Ts' P' form'"
         sorry
       then have "lset As \<turnstile> form'"
-        sorry
-(*
-      from \<open>lset As \<turnstile> ?form\<close> have
-        \<open>\<exists>x. lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<and>
-             (x,\<alpha>) \<notin> vars (lset As) \<and>
-             (x,\<alpha>) \<notin> vars A \<and>
-             (x,\<alpha>) \<notin> vars B\<close>
-        using is_derivable_from_hyps_const_subst[of "lset As" "(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)" c _ \<alpha>]
-        using logc
-        sorry
-*)
+        using hypothetical_derivability_proof_existence_equivalence by metis
 
-(*
-      then obtain x where x_p:
+      find_theorems is_hyp_proof_of "_\<turnstile>_"
+
+      have x_p_1:
         \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+         using \<open>lset As \<turnstile> form'\<close> form'_def by fastforce
+      have x_p_2:
         \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
+        using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
+      have x_p_3:
         \<open>(x,\<alpha>) \<notin> vars A\<close>
+      proof -
+        have "A \<in> subforms (last P)"
+          sorry
+        then have "vars A \<subseteq> vars (last P)"
+          using brand_new_lemma by simp
+        then have "vars A \<subseteq> vars\<^sub>p P"
+          unfolding vars\<^sub>p_def
+          apply auto
+          apply (rule bexI[of _ "last P"])
+          subgoal for x \<tau>
+            apply auto
+            done
+          subgoal for x \<tau>
+            apply (subgoal_tac "P \<noteq> []")
+            subgoal
+              using last_in_set apply blast
+              done
+            subgoal
+              using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
+              done
+            done
+          done
+        then show \<open>(x,\<alpha>) \<notin> vars A\<close>
+          using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
+      qed
+      have x_p_4:
         \<open>(x,\<alpha>) \<notin> vars B\<close>
-        by auto
-    *)   
-      have x_p:
-        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
-        \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
-        \<open>(x,\<alpha>) \<notin> vars A\<close>
-        \<open>(x,\<alpha>) \<notin> vars B\<close>
-        sorry
- 
+      proof -
+        have "vars B \<subseteq> vars\<^sub>p P"
+          sorry
+        then show \<open>(x,\<alpha>) \<notin> vars B\<close>
+          using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
+      qed
+
 
       from cAB have "c \<notin> Qconsts A"
          by auto
@@ -3189,9 +3248,9 @@ proof
         using Qconsts_const_subst by auto
 
       have fx: "(x, \<alpha>) \<notin> free_vars (lset As)"
-        by (metis dual_order.refl equalityI free_vars_in_all_vars_set insert_subset x_p(2))
+        by (metis dual_order.refl equalityI free_vars_in_all_vars_set insert_subset x_p_2)
 
-      from x_p(1) have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+      from x_p_1 have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
         apply (simp only: const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b)
         apply auto
         done
