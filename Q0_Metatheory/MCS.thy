@@ -3073,7 +3073,7 @@ proof -
     using rule_RR sorry
 qed
 
-lemma brand_new_lemma:
+lemma brand_new_lemma: (* not used for anything *)
   assumes "A \<in> subforms B"
   shows "vars A \<subseteq> vars B"
 using assms proof (induction B)
@@ -3093,6 +3093,17 @@ next
   then show ?case
     by (metis Un_upper1 empty_iff form.distinct(11) insert_iff subforms.elims vars_form.simps(4))
 qed
+
+lemma brand_new_lemma2':
+  assumes "A \<preceq>\<^bsub>p\<^esub> B"
+  shows "vars A \<subseteq> vars B"
+  using assms by (induction rule: is_subform_at.induct) auto
+
+lemma brand_new_lemma2:
+  assumes "A \<preceq> B"
+  shows "vars A \<subseteq> vars B"
+  using brand_new_lemma2'
+  using assms by auto 
 
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
@@ -3165,7 +3176,7 @@ proof
       define TP where "TP = (\<lambda>T. SOME P. is_proof_of P T)" (* Maybe not needed *)
       define TsPs where "TsPs = map TP Ts" 
 
-      from \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> obtain x where "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars (lset As)"
+      from \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> obtain x where x_pro: "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars (lset As)"
         apply (subgoal_tac "(\<exists>x. (x,\<alpha>) \<notin> (vars (lset As)) \<union> vars\<^sub>p P) \<and> finite (vars (lset As))")
         subgoal
           apply auto
@@ -3187,27 +3198,20 @@ proof
       define P' where "P' = const_subst_proof (c, x) \<alpha> P"
       define Ts' where "Ts' = const_subst_proof (c, x) \<alpha> Ts"
       define form' where "form' = (const_subst (c, x) \<alpha> ?form)"
-     
-      have "is_hyp_proof_of (lset As) Ts' P' form'"
-        sorry
-      then have "lset As \<turnstile> form'"
-        using hypothetical_derivability_proof_existence_equivalence by metis
 
-      find_theorems is_hyp_proof_of "_\<turnstile>_"
-
-      have x_p_1:
-        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
-         using \<open>lset As \<turnstile> form'\<close> form'_def by fastforce
       have x_p_2:
         \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
         using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
       have x_p_3:
         \<open>(x,\<alpha>) \<notin> vars A\<close>
       proof -
-        have "A \<in> subforms (last P)"
-          sorry
+        have "A \<preceq> ?form"
+          apply simp
+          by (meson is_subform_at.simps(1,2,3))
+        then have "A \<preceq> last P"
+          using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
         then have "vars A \<subseteq> vars (last P)"
-          using brand_new_lemma by simp
+          using brand_new_lemma2 by simp
         then have "vars A \<subseteq> vars\<^sub>p P"
           unfolding vars\<^sub>p_def
           apply auto
@@ -3231,12 +3235,50 @@ proof
       have x_p_4:
         \<open>(x,\<alpha>) \<notin> vars B\<close>
       proof -
-        have "vars B \<subseteq> vars\<^sub>p P"
-          sorry
+        have "B \<preceq> ?form"
+          apply simp
+          by (meson is_subform_at.simps(1,2,3))
+        then have "B \<preceq> last P"
+          using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
+        then have "vars B \<subseteq> vars (last P)"
+          using brand_new_lemma2 by simp
+        then have "vars B \<subseteq> vars\<^sub>p P"
+          unfolding vars\<^sub>p_def
+          apply auto
+          apply (rule bexI[of _ "last P"])
+          subgoal for x \<tau>
+            apply auto
+            done
+          subgoal for x \<tau>
+            apply (subgoal_tac "P \<noteq> []")
+            subgoal
+              using last_in_set apply blast
+              done
+            subgoal
+              using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
+              done
+            done
+          done
         then show \<open>(x,\<alpha>) \<notin> vars B\<close>
           using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
       qed
 
+      have "is_hyp_proof_of (lset As) Ts' P' form'"
+        using 
+          P'_def 
+          Ts'_def 
+          form'_def
+          \<open>is_hyp_proof_of (lset As) Ts P ?form\<close>
+          x_pro
+          x_p_2
+          x_p_4
+        sorry
+      then have "lset As \<turnstile> form'"
+        using hypothetical_derivability_proof_existence_equivalence by metis
+
+      then have x_p_1:
+        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+        using form'_def by fastforce
 
       from cAB have "c \<notin> Qconsts A"
          by auto
