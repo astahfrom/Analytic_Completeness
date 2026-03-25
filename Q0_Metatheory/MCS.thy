@@ -2872,6 +2872,8 @@ lemma is_derivable_const_subst: (* I guess I really need to do the replacement o
   shows "\<exists>x. (\<forall>t. (x, t) \<notin> vars A) \<and> is_derivable (const_subst (c, x) \<tau> A)"
   by (meson assms(1,2) is_theorem_const_subst theoremhood_derivability_equivalence) (* I am here saying "there is a fresh x". Good enough? Or it needs to be for any fresh x? *)
 
+find_theorems capture_exposed_vars_at
+
 lemma helpful:
   assumes "capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at p C As = {}"
   assumes "C' = const_subst (c, x) \<tau> C"
@@ -2879,7 +2881,31 @@ lemma helpful:
   assumes "E' = const_subst (c, x) \<tau> E"
   assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
   shows "capture_exposed_vars_at p C' E' \<inter> capture_exposed_vars_at p C' As = {}"
-  sorry
+  using assms 
+proof -
+  
+  show ?thesis
+    sorry
+qed
+(* Naive and wrong direction?: proof (induction p arbitrary: C' E' C E As)
+  case Nil
+  then show ?case
+    by simp
+next
+  case (Cons a p)
+  then show ?case
+  proof (cases "a#p \<in> positions C'")
+    case True
+    then show ?thesis
+      unfolding capture_exposed_vars_at_alt_def[OF True, of E']  capture_exposed_vars_at_alt_def[OF True, of As]
+      
+      sorry
+  next
+    case False
+    then show ?thesis
+      sorry
+  qed
+qed *)
 
 lemma is_rule_R'_app_const_subst:
   assumes "C' = (const_subst (c, x) \<tau> C)"
@@ -2889,6 +2915,7 @@ lemma is_rule_R'_app_const_subst:
   assumes "is_hyps As"
   assumes "c \<notin> logical_names"
   assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "c \<notin> P.params As"
   shows "is_rule_R'_app As p D' C' E'"
 proof -
   from assms have "is_rule_R_app p D C E"
@@ -2901,7 +2928,7 @@ proof -
     using assms by blast
   then have "rule_R'_side_condition As p D' C' E'" 
     unfolding rule_R'_side_condition_def
-    using assms(1,2,3,7) sorry
+    using assms(1,2,3,7,8) sorry
   show ?thesis
     using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
 qed
@@ -3104,24 +3131,53 @@ proof
 
       have logc: "\<not> is_logical_name c"
         using \<open>is_param c\<close> is_param_def by auto
-      term P.params 
-      find_consts "form \<Rightarrow> nat set"
-      term Qconsts
-      
-      obtain x where x_p:
-        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
-        \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
-        \<open>(x,\<alpha>) \<notin> vars A\<close>
-        \<open>(x,\<alpha>) \<notin> vars B\<close>
-        using is_derivable_from_hyps_const_subst[of "lset As" "(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)" c _ \<alpha>]
-        sorry
- 
+   
       have "c \<notin> Qconsts p"
         using  \<open>c \<notin> P.params (lset As)\<close>  \<open>p \<in> lset As\<close>
         using \<open>\<forall>A\<in>lset As. c \<notin> Qconsts A\<close> by blast
       then have cAB: "c \<notin> Qconsts (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B))"
         using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by auto
+      from \<open>lset As \<turnstile> ?form\<close> obtain Ts P where "is_hyp_proof_of (lset As) Ts P ?form" (* Ts are some theorems used in P *)
+        sorry
+      then obtain x where "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> undefined x \<alpha>"
+        (* HERE: undefined should be, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that. *)
+             (* Fine, but shoud I be afraid that c occurs in proofs of Ts? No, it is actually fine that it does that. *)
+        sorry
+      define P' where "P' = const_subst_proof (c, x) \<alpha> P"
+      define Ts' where "Ts' = const_subst_proof (c, x) \<alpha> Ts"
+      define form' where "form' = (const_subst (c, x) \<alpha> ?form)"
+     
+      have "is_hyp_proof_of (lset As) Ts' P' form'"
+        sorry
+      then have "lset As \<turnstile> form'"
+        sorry
+(*
+      from \<open>lset As \<turnstile> ?form\<close> have
+        \<open>\<exists>x. lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<and>
+             (x,\<alpha>) \<notin> vars (lset As) \<and>
+             (x,\<alpha>) \<notin> vars A \<and>
+             (x,\<alpha>) \<notin> vars B\<close>
+        using is_derivable_from_hyps_const_subst[of "lset As" "(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)" c _ \<alpha>]
+        using logc
+        sorry
+*)
+
+(*
+      then obtain x where x_p:
+        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+        \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
+        \<open>(x,\<alpha>) \<notin> vars A\<close>
+        \<open>(x,\<alpha>) \<notin> vars B\<close>
+        by auto
+    *)   
+      have x_p:
+        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+        \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
+        \<open>(x,\<alpha>) \<notin> vars A\<close>
+        \<open>(x,\<alpha>) \<notin> vars B\<close>
+        sorry
+ 
 
       from cAB have "c \<notin> Qconsts A"
          by auto
@@ -3133,7 +3189,7 @@ proof
         using Qconsts_const_subst by auto
 
       have fx: "(x, \<alpha>) \<notin> free_vars (lset As)"
-        sorry
+        by (metis dual_order.refl equalityI free_vars_in_all_vars_set insert_subset x_p(2))
 
       from x_p(1) have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
         apply (simp only: const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b)
