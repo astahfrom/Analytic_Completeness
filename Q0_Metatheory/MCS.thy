@@ -2881,38 +2881,164 @@ lemma is_derivable_const_subst: (* I guess I really need to do the replacement o
 
 find_theorems capture_exposed_vars_at
 
+lemma nice1:
+  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+  shows "free_vars (const_subst (c, x) \<tau> E) = free_vars E \<or> free_vars (const_subst (c, x) \<tau> E) = free_vars E \<union> {(x, \<tau>)}"
+  using assms
+proof (induction E)
+  case (FVar y)
+  then show ?case
+    by (metis const_subst.simps(1) surj_pair)
+next
+  case (FCon y)
+  then show ?case
+    by (metis Un_empty Un_insert_right const_subst.simps(2) form.distinct(1,7,9) free_vars_form.simps(1) vars_form.elims
+        vars_is_free_and_bound_vars)
+next
+  case (FApp E1 E2)
+  then show ?case
+    by (smt (verit) UnCI const_subst.simps(3) free_vars_form.simps(3) sup.idem sup_assoc sup_commute vars_form.simps(3))
+next
+  case (FAbs y1a E)
+  define y where "y = fst y1a"
+  define a where "a = snd y1a"
+  have ua: "y1a = (y,a)"
+    unfolding y_def a_def
+    by auto
+
+  have " (x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+    using FAbs.prems ua by fastforce
+  have "free_vars (const_subst (c, x) \<tau> E) = free_vars E \<or> free_vars (const_subst (c, x) \<tau> E) = free_vars E \<union> {(x, \<tau>)}"
+    using FAbs.IH \<open>(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E\<close> by linarith
+
+  show ?case
+    apply simp
+    unfolding ua
+    apply simp
+    using \<open>free_vars (const_subst (c, x) \<tau> E) = free_vars E \<or> free_vars (const_subst (c, x) \<tau> E) = free_vars E \<union> {(x, \<tau>)}\<close> by blast
+qed  
+
+find_theorems positions binders_at
+
+lemma nice2_helper:
+  assumes "p \<in> positions C"
+  shows "binders_at (const_subst (c, x) \<tau> C) p = binders_at C p"
+  using assms
+proof (induction rule: binders_at.induct)
+  case (1 A B p)
+  then show ?case
+    by auto   
+next
+  case (2 A B p)
+  then show ?case by auto
+next
+  case (3 x \<alpha> A p)
+  then show ?case by auto
+next
+  case (4 A)
+  then show ?case by auto
+next
+  case ("5_1" v va vb)
+  then show ?case
+    by (meson is_subform_at.simps(8) is_subform_at_existence) 
+next
+  case ("5_2" v va vb)
+  then show ?case
+    by (simp add: position_subform_existence_equivalence)
+next
+  case ("5_3" v va vc)
+  then show ?case
+    by (metis binders_at.simps(7) const_subst.simps(4) surj_pair)
+next
+  case ("5_4" v va)
+  then show ?case
+    by (meson is_subform_at.simps(8) is_subform_at_existence)
+next
+  case ("5_5" v va)
+  then show ?case
+    by (simp add: position_subform_existence_equivalence)
+next
+  case ("5_6" v vb va)
+  then show ?case
+    by (simp add: position_subform_existence_equivalence)
+qed
+
+lemma nice3: 
+  assumes "p \<in> positions C"
+  assumes "C' = const_subst (c, x) \<tau> C"
+  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+  shows "(x, \<tau>) \<notin> binders_at C p"
+  by (metis UnCI assms(1,3) is_bound_at_in_bound_vars vars_is_free_and_bound_vars)
+
+lemma nice4:
+  assumes "p \<in> positions C"
+  assumes "C' = const_subst (c, x) \<tau> C"
+  assumes "E' = const_subst (c, x) \<tau> E"
+  shows "binders_at C p = binders_at C' p"
+  by (simp add: assms(1,2) nice2_helper)
+
+lemma helpful':
+  assumes "p \<in> positions C"
+  assumes "C' = const_subst (c, x) \<tau> C"
+  assumes "E' = const_subst (c, x) \<tau> E"
+  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+  shows "capture_exposed_vars_at p C E = capture_exposed_vars_at p C' E'"
+proof -
+  have a: "p \<in> positions C'"
+    by (metis assms(1,2) is_replacement_at_existence is_replacement_at_implies_in_positions position_xmas2)
+
+  have "free_vars E' = free_vars E \<or> free_vars E' = free_vars E \<union> {(x, \<tau>)}"
+    using assms nice1 by metis
+  moreover
+  have "(x, \<tau>) \<notin> binders_at C' p"
+    using assms nice3 nice2_helper by metis
+  moreover
+  have "(x, \<tau>) \<notin> binders_at C p"
+    using assms nice3 by metis
+  moreover
+  have "binders_at C p = binders_at C' p"
+    using assms nice4 by metis
+  ultimately
+  show ?thesis
+    using capture_exposed_vars_at_alt_def[OF assms(1), of E]
+      capture_exposed_vars_at_alt_def[OF a, of E'] by auto
+qed
+
+lemma helpful'':
+  assumes "p \<in> positions C"
+  assumes "C' = const_subst (c, x) \<tau> C"
+  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+  shows "capture_exposed_vars_at p C As = capture_exposed_vars_at p C' As"
+proof -
+  have a: "p \<in> positions C'"
+    by (metis assms(1,2) is_replacement_at_existence is_replacement_at_implies_in_positions position_xmas2)
+
+  have "free_vars E = free_vars E \<or> free_vars E = free_vars E \<union> {(x, \<tau>)}"
+    using assms nice1 by metis
+  moreover
+  have "(x, \<tau>) \<notin> binders_at C' p"
+    using assms nice3 nice2_helper by metis
+  moreover
+  have "(x, \<tau>) \<notin> binders_at C p"
+    using assms nice3 by metis
+  moreover
+  have "binders_at C p = binders_at C' p"
+    using assms nice4 by metis
+  ultimately
+  show ?thesis
+    using capture_exposed_vars_at_alt_def[OF assms(1), of As]
+      capture_exposed_vars_at_alt_def[OF a, of As] by auto
+qed
+
 lemma helpful: (* TODO *)
+  assumes "p \<in> positions C"
   assumes "capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at p C As = {}"
   assumes "C' = const_subst (c, x) \<tau> C"
   assumes "D' = const_subst (c, x) \<tau> D"
   assumes "E' = const_subst (c, x) \<tau> E"
-  assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
   shows "capture_exposed_vars_at p C' E' \<inter> capture_exposed_vars_at p C' As = {}"
-  using assms 
-proof -
-  
-  show ?thesis
-    sorry  (* TODO *)
-qed
-(* Naive and wrong direction?: proof (induction p arbitrary: C' E' C E As)
-  case Nil
-  then show ?case
-    by simp
-next
-  case (Cons a p)
-  then show ?case
-  proof (cases "a#p \<in> positions C'")
-    case True
-    then show ?thesis
-      unfolding capture_exposed_vars_at_alt_def[OF True, of E']  capture_exposed_vars_at_alt_def[OF True, of As]
-      
-      sorry (* commented out *)
-  next
-    case False
-    then show ?thesis
-      sorry (* commented out *)
-  qed
-qed *)
+  using assms helpful'[OF assms(1,3,5,6)] helpful''[OF assms(1,3)]  by metis
 
 lemma is_rule_R'_app_const_subst:
   assumes "C' = (const_subst (c, x) \<tau> C)"
@@ -2936,8 +3062,8 @@ proof -
   then have "rule_R'_side_condition As p D' C' E'" 
     unfolding rule_R'_side_condition_def
     using assms(1,2,3,7,8)
-    using helpful    
-    sorry (* TODO *)
+    using helpful
+    by (metis \<open>is_rule_R_app p D C E\<close> is_replacement_at_implies_in_positions is_rule_R_app_def)
   show ?thesis
     using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
 qed thm is_rule_R_app_const_subst
