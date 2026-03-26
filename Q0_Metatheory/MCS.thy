@@ -2265,7 +2265,7 @@ qed
 lemma axiom_4_1_con_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  assumes "x \<noteq> y"
+  assumes "(x, \<tau>) \<noteq> (y, \<alpha>)"
   shows "const_subst (c, x) \<tau> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> axioms"
   apply(simp only: const_subst_laws[OF assms(1)] const_subst.simps)
   using axioms.axiom_4_1_var[of "const_subst (c, x) \<tau> A" \<alpha> x \<beta> y]
@@ -2282,6 +2282,12 @@ lemma axiom_4_1_con_const_subst:
     subgoal
       using axioms.axiom_4_1_con 
       apply auto
+      done
+    subgoal
+      using axioms.axiom_4_1_con apply auto
+      done
+    subgoal
+      using axioms.axiom_4_1_con apply auto
       done
     done
   subgoal
@@ -2316,8 +2322,10 @@ lemma axiom_4_3_const_subst:
 
 lemma x_mas_elf2:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
-  shows "(y, \<gamma>) \<in> vars (const_subst (c, x) \<tau> A) \<Longrightarrow> y = x \<or> (y, \<gamma>) \<in> vars A"
-  using assms proof (induction)
+  assumes "(y, \<gamma>) \<in> vars (const_subst (c, x) \<tau> A)"
+  shows "(y = x \<and> \<gamma> = \<tau>) \<or> (y, \<gamma>) \<in> vars A"
+  using assms 
+proof (induction)
   case (var_is_wff \<alpha> x)
   then show ?case
     by simp
@@ -2338,8 +2346,8 @@ qed
 lemma axiom_4_4_const_subst:
   assumes \<open>\<not> is_logical_name c\<close>
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>" and "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars A"
-  assumes "\<forall>t. (x,t) \<notin> vars ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A))"
-  shows "const_subst (c, x)  \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A)) \<in> axioms"
+  assumes "(x,\<tau>) \<notin> vars ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A))"
+  shows "const_subst (c, x) \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A)) \<in> axioms"
 proof -
   have A: "const_subst (c, x) \<tau> A \<in> wffs\<^bsub>\<alpha>\<^esub>"
     by (simp add: assms(2) xmas_elf)
@@ -2351,7 +2359,8 @@ proof -
   moreover
   have "(y, \<gamma>) \<notin> vars (const_subst (c, x) \<tau> A)"
     using assms(4) x_mas_elf2[OF assms(2), of y \<gamma> c x]
-    using assms(5) by auto
+    using assms(5)
+    by auto
   ultimately
   have C: "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars (const_subst (c, x) \<tau> A)"
     by simp
@@ -2377,7 +2386,7 @@ lemma axiom_5_const_subst:
 
 lemma const_subst_axiom2:
   assumes \<open>\<not> is_logical_name c\<close> 
-    and \<open>\<forall>t. (x,t) \<notin> vars A\<close>
+    and \<open>(x,\<tau>) \<notin> vars A\<close>
     and \<open>A \<in> axioms\<close>
   shows \<open>(const_subst (c, x) \<tau> A) \<in> axioms\<close>
   using assms(3,1,2)
@@ -2395,9 +2404,10 @@ next
     using axiom_3_const_subst by blast
 next
   case (axiom_4_1_con A \<alpha> z d \<beta>)
+  then have " (x, \<tau>) \<noteq> (z, \<alpha>)"
+    by auto
   then show ?case
-    using axiom_4_1_con_const_subst[OF axiom_4_1_con(2,1), of ]
-    by (metis UnCI equality_of_type_def insert_iff vars_form.simps(3,4))
+    using axiom_4_1_con_const_subst[OF axiom_4_1_con(2,1), of  x \<tau> z] by auto
 next
   case (axiom_4_1_var A \<alpha> y \<beta> z)
   then show ?case
@@ -2502,7 +2512,7 @@ qed
 
 lemma is_rule_R_app_const_subst:
   assumes "c \<notin> logical_names"
-  assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
   assumes "is_rule_R_app p D C E"
   shows "is_rule_R_app p (const_subst (c, x) \<tau> D) (const_subst (c, x) \<tau> C) (const_subst (c, x) \<tau> E)"
 proof -
@@ -2683,7 +2693,7 @@ definition "vars\<^sub>p (\<S>::form list) = vars (List.set \<S>)"
 lemma is_proof_const_subst:
   assumes "is_proof \<S>"
   assumes "c \<notin> logical_names"
-  assumes "\<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
+  assumes "(x, \<tau>) \<notin> vars\<^sub>p \<S>"
   shows "is_proof (const_subst_proof (c,x) \<tau> \<S>)"
 using assms proof (induction rule: is_proof_induct)
   case p_nil
@@ -2691,16 +2701,16 @@ using assms proof (induction rule: is_proof_induct)
     by (simp add: const_subst_proof_def)
 next
   case (p_axiom A S)
-  have "\<forall>t. (x, t) \<notin> vars\<^sub>p S"
+  have "(x, \<tau>) \<notin> vars\<^sub>p S"
     using p_axiom.prems(2) unfolding vars\<^sub>p_def by auto
   have "is_proof (const_subst_proof (c,x) \<tau> S)"
-    using \<open>\<forall>t. (x, t) \<notin> vars\<^sub>p S\<close> p_axiom.IH p_axiom.prems(1) by blast
-  have " \<forall>t. (x, t) \<notin> vars A"
+    using \<open>(x, \<tau>) \<notin> vars\<^sub>p S\<close> p_axiom.IH p_axiom.prems(1) by blast
+  have "(x, \<tau>) \<notin> vars A"
     using p_axiom unfolding vars\<^sub>p_def
     by auto
   have "const_subst (c,x) \<tau> A \<in> axioms"
     using const_subst_axiom2
-    using \<open>\<forall>t. (x, t) \<notin> vars A\<close> p_axiom.hyps(1) p_axiom.prems(1) by auto
+    using \<open>(x, \<tau>) \<notin> vars A\<close> p_axiom.hyps(1) p_axiom.prems(1) by auto
   have "is_proof ((const_subst_proof (c,x) \<tau> S) @ [const_subst (c,x) \<tau> A])"
     by (metis \<open>const_subst (c,x) \<tau> A \<in> axioms\<close> \<open>is_proof (const_subst_proof (c,x) \<tau> S)\<close> axiom_appended_to_proof_is_proof)
   then show ?case
@@ -2742,29 +2752,28 @@ next
         \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> prefixE
         proof_prefix_is_proof)
 
-  have varsD: "\<forall>t. (x, t) \<notin> vars D"
+  have varsD: "(x, \<tau>) \<notin> vars D"
     using p_rule_R unfolding vars\<^sub>p_def by auto
 
-  have varsS: "\<forall>t. (x, t) \<notin> vars\<^sub>p (S @ [D])"
+  have varsS: "(x, \<tau>) \<notin> vars\<^sub>p (S @ [D])"
     by (simp add: p_rule_R.prems(2))
 
   have "vars C \<subseteq> vars\<^sub>p S"
     unfolding vars\<^sub>p_def apply auto
     by (metis append.assoc append_Cons in_set_conv_decomp p_rule_R.hyps(3) prefixE)
-  then have varsC: "\<forall>t. (x, t) \<notin> vars C"
+  then have varsC: "(x, \<tau>) \<notin> vars C"
     using varsS unfolding vars\<^sub>p_def by auto
 
   have "vars E \<subseteq> vars\<^sub>p S"
     unfolding vars\<^sub>p_def apply auto
     by (metis UnCI in_mono list.set_intros(1) p_rule_R.hyps(2) set_append set_mono_prefix)
-  then have varsE: "\<forall>t. (x, t) \<notin> vars E"
+  then have varsE: "(x, \<tau>) \<notin> vars E"
       using varsS unfolding vars\<^sub>p_def by auto
 
-  have varsDCE: "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
+  have varsDCE: "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
     by (simp add: varsC varsD varsE)
 
   have "is_rule_R_app p ?D ?C ?E"
-    using p_rule_R
     using is_rule_R_app_const_subst[OF p_rule_R(6) varsDCE  p_rule_R(4)]
     by auto
 
@@ -2778,7 +2787,7 @@ qed
 lemma is_proof_of_const_subst:
   assumes "is_proof_of \<S> A"
   assumes "c \<notin> logical_names"
-  assumes "\<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
+  assumes "(x, \<tau>) \<notin> vars\<^sub>p \<S>"
   shows "is_proof_of (const_subst_proof (c,x) \<tau> \<S>) (const_subst (c,x) \<tau> A)"
 proof -
   let ?\<S> = "const_subst_proof (c,x) \<tau> \<S>"
@@ -2828,7 +2837,7 @@ lemma avoider:
 lemma is_theorem_const_subst:
   assumes "is_theorem A"
   assumes "c \<notin> logical_names"
-  shows "\<exists>x. (\<forall>t. (x, t) \<notin> vars A) \<and> is_theorem (const_subst (c, x) \<tau> A)"        
+  shows "\<exists>x. ((x, \<tau>) \<notin> vars A) \<and> is_theorem (const_subst (c, x) \<tau> A)"        
 proof -
   from assms(1) obtain \<S> where pSA: "is_proof_of \<S> A"
     unfolding is_theorem_def by auto
@@ -2838,19 +2847,17 @@ proof -
     "last \<S> = A"
     unfolding is_proof_of_def by auto
 
-  obtain x where avoid_S: "\<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
+  obtain x where avoid_S: "(x, \<tau>) \<notin> vars\<^sub>p \<S>"
     using avoider by auto
 
-  then have avoid_A: "\<forall>t. (x, t) \<notin> vars A"
+  then have avoid_A: "(x, \<tau>) \<notin> vars A"
     apply auto
-    subgoal for t
-      apply (erule allE[of _ t])
-      using \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close>
-      apply auto
-      unfolding vars\<^sub>p_def
-      apply auto
-      done
+    using \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close>
+    apply auto
+    unfolding vars\<^sub>p_def
+    apply auto
     done
+    
 
   let ?A = "const_subst (c, x) \<tau> A"
   let ?\<S> = "const_subst_proof (c, x) \<tau> \<S>"
@@ -2863,13 +2870,13 @@ proof -
     unfolding is_theorem_def by auto
 
   show "?thesis"
-    unfolding is_theorem_def using \<open>\<forall>t. (x, t) \<notin> vars A\<close> \<open>is_theorem ?A\<close> by blast
+    unfolding is_theorem_def using \<open>(x, \<tau>) \<notin> vars A\<close> \<open>is_theorem ?A\<close> by blast
 qed
 
 lemma is_derivable_const_subst: (* I guess I really need to do the replacement on the proof.  *)
   assumes "is_derivable A"
   assumes "c \<notin> logical_names"
-  shows "\<exists>x. (\<forall>t. (x, t) \<notin> vars A) \<and> is_derivable (const_subst (c, x) \<tau> A)"
+  shows "\<exists>x. ((x, \<tau>) \<notin> vars A) \<and> is_derivable (const_subst (c, x) \<tau> A)"
   by (meson assms(1,2) is_theorem_const_subst theoremhood_derivability_equivalence) (* I am here saying "there is a fresh x". Good enough? Or it needs to be for any fresh x? *)
 
 find_theorems capture_exposed_vars_at
@@ -2914,7 +2921,7 @@ lemma is_rule_R'_app_const_subst:
   assumes "is_rule_R'_app As p D C E"
   assumes "is_hyps As"
   assumes "c \<notin> logical_names"
-  assumes "\<forall>t. (x, t) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
   assumes "c \<notin> P.params As"
   shows "is_rule_R'_app As p D' C' E'"
 proof -
@@ -2931,7 +2938,7 @@ proof -
     using assms(1,2,3,7,8) sorry
   show ?thesis
     using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
-qed
+qed thm is_rule_R_app_const_subst
 
 lemma is_derivable_from_hyps_const_subst:
   assumes "As \<turnstile> F"
@@ -3105,15 +3112,133 @@ lemma brand_new_lemma2:
   using brand_new_lemma2'
   using assms by auto 
 
+lemma is_hyp_proof_induct [consumes 1, case_names hp_nil hp_rule_R']:
+  assumes "is_hyp_proof H S1 S2"
+  assumes hp_nil: "P S1 []"
+  assumes hp_rule_R': "(\<And>S S' E S'' C p D. is_hyp_proof H S1 S \<Longrightarrow> P S1 S \<Longrightarrow> prefix (S' @ [E]) S \<Longrightarrow> prefix (S'' @ [C]) S \<Longrightarrow> is_rule_R'_app H p D C E \<Longrightarrow> P S1 (S @ [D]))"
+  shows "P S1 S2"
+  sorry
+
+lemma is_hyp_proof_R'_intro:
+  assumes "is_rule_R'_app H p D C E"
+  assumes "is_hyp_proof H S1 S"
+  assumes "prefix (S' @ [E]) S"
+  assumes "prefix (S'' @ [C]) S"
+  shows "is_hyp_proof H S1 (S @ [D])"
+proof -
+  define ic :: nat where "ic = length S''"
+  define ie :: nat where "ie = length S'"
+
+  have "is_hyp_proof H S1 S"
+    using assms(2) by auto
+    
+  have "ic < length S"
+    by (metis assms(4) ic_def length_append_singleton less_eq_Suc_le prefix_length_le)
+  have "S ! ic = C"
+    using assms(4) ic_def prefixE by fastforce
+  have "ie < length S"
+    using assms(3) ie_def prefix_length_le by fastforce
+  have "S ! ie = E"
+    by (smt (verit, del_insts) append.assoc append_Cons assms(3) ie_def nth_append_length prefix_def)
+  have "is_rule_R'_app H p D C E"
+    using assms(1) by auto
+
+  show ?thesis find_theorems name: is_hyp_proof name: append
+    using   rule_R'_app_appended_to_hyp_proof_is_hyp_proof[of H S1 S ic C ie E p D]
+    using \<open>S ! ic = C\<close> \<open>S ! ie = E\<close> \<open>ic < length S\<close> \<open>ie < length S\<close> assms(1,2) by linarith
+qed
+
+lemma is_hyp_proof_const_subst:
+  assumes "is_hyp_proof (lset As) Ts P"
+  assumes "c \<notin> logical_names"
+  assumes "(x, \<tau>) \<notin> vars\<^sub>p P"
+  assumes "c \<notin> P.params (lset As)"
+  assumes "is_hyps (lset As)" (* <-- Ought that to be in the induction? *)
+  shows "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> P)"
+using assms proof (induction rule: is_hyp_proof_induct)
+  case hp_nil
+  then show ?case
+    by (simp add: const_subst_proof_def)
+next
+  case (hp_rule_R' S S' E S'' C p D)
+    let ?C = "const_subst (c, x) \<tau> C"
+  let ?D = "const_subst (c, x) \<tau> D"
+  let ?E = "const_subst (c, x) \<tau> E"
+
+  let ?S = "const_subst_proof (c, x) \<tau> S"
+  let ?SD = "const_subst_proof (c, x) \<tau> (S @ [D])"
+  let ?S' = "const_subst_proof (c, x) \<tau> S'"
+  let ?S'E = "const_subst_proof (c, x) \<tau> (S' @ [E])"
+  let ?S'' = "const_subst_proof (c, x) \<tau> S''"
+  let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
+  let ?Ts' = "const_subst_proof (c, x) \<tau> Ts"
+
+  have "is_hyp_proof (lset As) ?Ts' ?S"
+    using hp_rule_R'.IH hp_rule_R'.prems vars\<^sub>p_def by auto
+
+  have "prefix ?S''C ?S"
+    by (metis const_subst_proof_def map_mono_prefix hp_rule_R'.hyps(3))
+  have "prefix ?S'E ?S"
+    by (metis const_subst_proof_def map_mono_prefix hp_rule_R'.hyps(2))
+  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [const_subst (c, x) \<tau> E]) (const_subst_proof (c, x) \<tau> S)"
+    using \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by fastforce
+
+  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [const_subst (c, x) \<tau> C]) (const_subst_proof (c, x) \<tau> S)"
+    using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by force
+
+  have "is_hyp_proof (lset As) ?Ts' ?S''C"
+    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> S)\<close>
+        \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
+  
+  have "is_hyp_proof (lset As) ?Ts' ?S'E"
+    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> S)\<close>
+        \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
+
+  have varsD: "(x, \<tau>) \<notin> vars D"
+    using hp_rule_R' unfolding vars\<^sub>p_def by auto
+
+  have varsS: "(x, \<tau>) \<notin> vars\<^sub>p (S @ [D])"
+    by (simp add: hp_rule_R'.prems(2))
+
+  have "vars C \<subseteq> vars\<^sub>p S"
+    unfolding vars\<^sub>p_def apply auto
+    by (metis append.assoc append_Cons in_set_conv_decomp hp_rule_R'.hyps(3) prefixE)
+  then have varsC: "(x, \<tau>) \<notin> vars C"
+    using varsS unfolding vars\<^sub>p_def by auto
+
+  have "vars E \<subseteq> vars\<^sub>p S"
+    unfolding vars\<^sub>p_def apply auto
+    by (metis UnCI in_mono list.set_intros(1) hp_rule_R'.hyps(2) set_append set_mono_prefix)
+  then have varsE: "(x, \<tau>) \<notin> vars E"
+      using varsS unfolding vars\<^sub>p_def by auto
+
+  have varsDCE: "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+    by (simp add: varsC varsD varsE)
+
+  have "c \<notin> P.params (lset As)"
+    using hp_rule_R'.prems(3) by blast
+
+  have "is_rule_R'_app (lset As) p ?D ?C ?E"
+    using is_rule_R'_app_const_subst[of ?C, of c x \<tau> C ?D D ?E E "lset As" p, OF _ _ _ hp_rule_R'(4) _ hp_rule_R'(6) varsDCE ]
+    using \<open>is_hyps (lset As)\<close> hp_rule_R'.prems(3) by fastforce  
+
+  show ?case
+    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?S\<close>, of ?S' ?S'', OF P1 P2]
+    by (simp add: const_subst_proof_def)
+qed (* Similar to this one: *) thm is_proof_const_subst
+
 lemma the_big_thing_to_prove:
   assumes "P' = const_subst_proof (c, x) \<alpha> P"
   assumes "Ts' = const_subst_proof (c, x) \<alpha> Ts"
   assumes "form' = const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
   assumes "is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
-  assumes "(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)"
+  assumes "True"
   assumes "(x, \<alpha>) \<notin> vars (lset As)"
   assumes "(x, \<alpha>) \<notin> vars B"
   assumes "c \<notin> logical_names"
+  assumes "(x, \<alpha>) \<notin> vars\<^sub>p Ts"
+  assumes "(x, \<alpha>) \<notin> vars\<^sub>p P"
+  assumes "c \<notin> P.params (lset As)"
   shows "is_hyp_proof_of (lset As) Ts' P' form'"
 proof -
   from assms(4) have "is_hyps (lset As)"
@@ -3133,13 +3258,16 @@ proof -
   have "is_proof Ts'"
     using \<open>is_proof Ts\<close> unfolding assms(2)
     using is_proof_const_subst[of Ts c x \<alpha>]
-    using assms(8) 
-    sorry
+    using assms(8,9) by auto
   moreover
   have "P' \<noteq> []"
     by (simp add: \<open>P \<noteq> []\<close> assms(1) const_subst_proof_def)
   moreover
   have "is_hyp_proof (lset As) Ts' P'"
+    using \<open>is_hyp_proof (lset As) Ts P\<close> unfolding assms(1)
+    using assms(8,10)
+    using is_hyp_proof_const_subst[of As Ts P c x \<alpha>]
+   
     sorry
   moreover
   have "last P' = form'"
@@ -3221,8 +3349,8 @@ proof
       define TP where "TP = (\<lambda>T. SOME P. is_proof_of P T)" (* Maybe not needed *)
       define TsPs where "TsPs = map TP Ts" 
 
-      from \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> obtain x where x_pro: "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars (lset As)"
-        apply (subgoal_tac "(\<exists>x. (x,\<alpha>) \<notin> (vars (lset As)) \<union> vars\<^sub>p P) \<and> finite (vars (lset As))")
+      from \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> obtain x where x_pro: "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)"
+        apply (subgoal_tac "(\<exists>x. (x,\<alpha>) \<notin> (vars (lset As)) \<union> vars\<^sub>p P \<union> vars\<^sub>p Ts) \<and> finite (vars (lset As))")
         subgoal
           apply auto
           done
@@ -3235,7 +3363,7 @@ proof
             apply (metis finite_vars\<^sub>p vars\<^sub>p_def)
             done
           done
-        done (* \<and> undefined x \<alpha>" *)
+        done
         (* HERE: we could add, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that.
                  But I also feel like I do not need that actually! Hmm... No we need it. A proof of a wff from the hypotheses by definitions consists of TWO sequences. In this case Ts and Ps. *)
              (* Fine, but should I be afraid that c occurs in proofs of Ts? No, it is actually fine that it does that. *)
@@ -3245,7 +3373,7 @@ proof
 
       have x_p_2:
         \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
-        using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
+        using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)\<close> by blast
       have x_p_3:
         \<open>(x,\<alpha>) \<notin> vars A\<close>
       proof -
@@ -3274,7 +3402,7 @@ proof
             done
           done
         then show \<open>(x,\<alpha>) \<notin> vars A\<close>
-          using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
+          using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)\<close> by blast
       qed
       have x_p_4:
         \<open>(x,\<alpha>) \<notin> vars B\<close>
@@ -3304,9 +3432,10 @@ proof
             done
           done
         then show \<open>(x,\<alpha>) \<notin> vars B\<close>
-          using \<open>(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)\<close> by blast
+          using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)\<close> by blast
       qed
 
+      find_theorems c
       have "is_hyp_proof_of (lset As) Ts' P' form'"
         using 
           P'_def 
@@ -3316,6 +3445,8 @@ proof
           x_pro
           x_p_2
           x_p_4
+          \<open>c \<notin> P.params (lset As)\<close>
+          the_big_thing_to_prove
         sorry
       then have "lset As \<turnstile> form'"
         using hypothetical_derivability_proof_existence_equivalence by metis
