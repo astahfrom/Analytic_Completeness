@@ -2881,7 +2881,7 @@ lemma is_derivable_const_subst: (* I guess I really need to do the replacement o
 
 find_theorems capture_exposed_vars_at
 
-lemma helpful:
+lemma helpful: (* TODO *)
   assumes "capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at p C As = {}"
   assumes "C' = const_subst (c, x) \<tau> C"
   assumes "D' = const_subst (c, x) \<tau> D"
@@ -2892,7 +2892,7 @@ lemma helpful:
 proof -
   
   show ?thesis
-    sorry
+    sorry  (* TODO *)
 qed
 (* Naive and wrong direction?: proof (induction p arbitrary: C' E' C E As)
   case Nil
@@ -2906,11 +2906,11 @@ next
     then show ?thesis
       unfolding capture_exposed_vars_at_alt_def[OF True, of E']  capture_exposed_vars_at_alt_def[OF True, of As]
       
-      sorry
+      sorry (* commented out *)
   next
     case False
     then show ?thesis
-      sorry
+      sorry (* commented out *)
   qed
 qed *)
 
@@ -2935,12 +2935,14 @@ proof -
     using assms by blast
   then have "rule_R'_side_condition As p D' C' E'" 
     unfolding rule_R'_side_condition_def
-    using assms(1,2,3,7,8) sorry
+    using assms(1,2,3,7,8)
+    using helpful    
+    sorry (* TODO *)
   show ?thesis
     using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
 qed thm is_rule_R_app_const_subst
 
-lemma is_derivable_from_hyps_const_subst:
+lemma is_derivable_from_hyps_const_subst: (* Not used for anything *)
   assumes "As \<turnstile> F"
   assumes "\<not> is_logical_name c"
   assumes "c \<notin> P.params As"
@@ -2964,7 +2966,7 @@ proof(induction)
 next
   case (dv_thm A)
   then show ?case
-    using is_theorem_const_subst using is_derivable_from_hyps.simps sorry
+    using is_theorem_const_subst using is_derivable_from_hyps.simps sorry (* The present lemma is not used for anything *)
 next
   case (dv_rule_R' C E p D)
   let ?C = "const_subst (c, x) \<tau> C"
@@ -2972,12 +2974,12 @@ next
   let ?E = "const_subst (c, x) \<tau> E"
 
   have "As \<turnstile> ?C"
-    using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) sorry
+    using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) sorry (* The present lemma is not used for anything *)
   have "As \<turnstile> ?E"
-    using dv_rule_R'.IH(2) dv_rule_R'.prems(1,2) sorry
+    using dv_rule_R'.IH(2) dv_rule_R'.prems(1,2) sorry (* The present lemma is not used for anything *)
   have "is_rule_R'_app As p ?D ?C ?E"
     using dv_rule_R'(1,2,3,4,7,8)
-    using is_rule_R'_app_const_subst sorry
+    using is_rule_R'_app_const_subst sorry (* The present lemma is not used for anything *)
   then show ?case
     using \<open>As \<turnstile> const_subst (c, x) \<tau> C\<close> \<open>As \<turnstile> const_subst (c, x) \<tau> E\<close> dv_rule_R'.hyps(4)
         is_derivable_from_hyps.dv_rule_R' by meson
@@ -3060,12 +3062,12 @@ lemma nice1234:
   shows "As \<turnstile> (F =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> G)"
 proof -
   have "\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<in> axioms"
-    sorry
+    sorry  (* TODO *)
   then have A: "\<turnstile> \<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)"
-    sorry
+    sorry  (* TODO *)
   then have A': "\<turnstile> \<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
     (* alpha conversion *)
-    sorry
+    sorry  (* TODO *)
   have C: "\<turnstile> \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
     using Gen[of "{}" _ MCS.\<gg> "\<alpha> \<rightarrow> \<beta>" , OF A']
     apply auto
@@ -3073,11 +3075,11 @@ proof -
   have "\<turnstile> \<forall>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
     using Gen[of "{}" _ MCS.\<ff> "\<alpha> \<rightarrow> \<beta>" , OF C] by auto
   have "\<turnstile> \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (F \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
-    sorry
+    sorry  (* TODO *)
   then have "\<turnstile> F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> G \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (F \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> G \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
-    sorry
+    sorry  (* TODO *)
   show "As \<turnstile> F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> G"
-    using rule_RR sorry
+    using rule_RR sorry (* TODO *)
 qed
 
 lemma brand_new_lemma: (* not used for anything *)
@@ -3231,7 +3233,8 @@ next
           and less(1)[OF \<open>length ?\<S>\<^sub>j < length \<S>\<^sub>2\<close>] and less(1)[OF \<open>length ?\<S>\<^sub>k < length \<S>\<^sub>2\<close>]
           \<open>is_hyps \<H>\<close> and \<open>\<S>\<^sub>2 ! ?i' = A\<close>  \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>
         using assms(7)[OF _ _  \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>, of _ "butlast \<S>\<^sub>2"]
-        sorry
+        by (metis append_butlast_last_id assms(4) diff_less hyp_proof_prefix_is_hyp_proof 
+            length_butlast length_greater_0_conv less.hyps less.prems(2,3,4) zero_less_one)
       then show ?thesis
         by (metis append_butlast_last_id last_conv_nth less.prems(3))
     qed
@@ -3265,7 +3268,7 @@ next
       (in_H) "S2 ! ?i' \<in> H" 
     | (in_S1) "S2 ! ?i' \<in> lset S1"
     | (rule_R') "(\<exists>p j k. {j, k} \<subseteq> {0..<?i'} \<and> is_rule_R'_app H p (S2 ! ?i') (S2 ! j) (S2 ! k))"
-      sorry
+      sorry (* commented out *)
     then show ?case
     proof cases
       case in_H
@@ -3273,10 +3276,10 @@ next
        (* using less(5)[of A "butlast S2"]
         using append_butlast_last_id diff_less gr0I length_0_conv length_butlast less.hyps less.prems(1,2)
             less_numeral_extra(1) p_axiom p_nil p_rule_R proof_but_last_is_proof
-        by (metis (no_types, lifting)) *) sorry *)
+        by (metis (no_types, lifting)) *) sorry *) (* commented out *)
       then show ?thesis using \<open>S2 ! ?i' = A\<close>
         using less
-        sorry
+        sorry (* commented out*)
     next
       case rule_R'
       have "is_hyps H"
@@ -3587,8 +3590,7 @@ proof -
     using \<open>is_hyp_proof (lset As) Ts P\<close> unfolding assms(1)
     using assms(8,10)
     using is_hyp_proof_const_subst[of As Ts P c x \<alpha>]
-   
-    sorry
+    using \<open>is_proof Ts\<close> assms(11,2) calculation(1) by presburger
   moreover
   have "last P' = form'"
     by (simp add: \<open>P \<noteq> []\<close> \<open>last P = A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close> assms(1,3) const_subst_proof_def last_map)
@@ -3757,17 +3759,13 @@ proof
 
       find_theorems c
       have "is_hyp_proof_of (lset As) Ts' P' form'"
-        using 
-          P'_def 
-          Ts'_def 
-          form'_def
-          \<open>is_hyp_proof_of (lset As) Ts P ?form\<close>
+        using
           x_pro
           x_p_2
           x_p_4
-          \<open>c \<notin> P.params (lset As)\<close>
-          the_big_thing_to_prove
-        sorry
+          \<open>c \<notin> logical_names\<close>
+          the_big_thing_to_prove[OF P'_def Ts'_def form'_def \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> _ _ _ _ _ _ \<open>c \<notin> P.params (lset As)\<close>]
+        by metis
       then have "lset As \<turnstile> form'"
         using hypothetical_derivability_proof_existence_equivalence by metis
 
