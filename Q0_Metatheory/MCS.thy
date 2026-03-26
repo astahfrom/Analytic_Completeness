@@ -3112,12 +3112,224 @@ lemma brand_new_lemma2:
   using brand_new_lemma2'
   using assms by auto 
 
-lemma is_hyp_proof_induct [consumes 1, case_names hp_nil hp_rule_R']:
+
+
+thm is_proof_induct
+thm theorem_is_derivable_form hyp_proof_existence_implies_hyp_derivability
+find_theorems is_derivable_from_hyps is_hyp_proof 
+
+inductive is_hyp_proofa where
+  "is_proof S1 \<Longrightarrow> A \<in> H \<Longrightarrow> is_hyp_proofa H S1 S2 \<Longrightarrow> is_hyp_proofa H S1 (S2@[A])"
+| "is_proof S1 \<Longrightarrow> A \<in> (lset S1) \<Longrightarrow> is_hyp_proofa H S1 S2 \<Longrightarrow> is_hyp_proofa H S1 (S2@[A])"
+| "is_proof S1 \<Longrightarrow> prefix (S' @ [E]) S2 \<Longrightarrow> prefix (S'' @ [C]) S2 \<Longrightarrow> is_rule_R'_app H p D C E \<Longrightarrow> is_hyp_proofa H S1 (S2@[D])"
+
+thm is_hyp_proofa.induct[of H S1 S2 P]
+
+lemma is_hyp_proof_induct_THE_REAL_ONE [consumes 3, case_names hp_nil hp_hyp hp_seq hp_rule_R']: (* Which parameters should P have actully?  *)
+  assumes "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2"
+  assumes "is_proof \<S>\<^sub>1"
+  assumes "is_hyps \<H>"
+  assumes "P []"
+  assumes "\<And>A \<S>\<^sub>2. \<lbrakk>A \<in> \<H>; is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2; P \<S>\<^sub>2\<rbrakk> \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
+  assumes "\<And>A \<S>\<^sub>2. \<lbrakk>A \<in> lset \<S>\<^sub>1; is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2; P \<S>\<^sub>2\<rbrakk> \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
+  assumes "\<And>S' E \<S>\<^sub>2 S'' C p D. \<lbrakk>prefix (S' @ [E]) \<S>\<^sub>2; prefix (S'' @ [C]) \<S>\<^sub>2; is_rule_R'_app \<H> p D C E; is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2; P \<S>\<^sub>2\<rbrakk> \<Longrightarrow> P (\<S>\<^sub>2 @ [D])"
+  shows "P \<S>\<^sub>2"
+proof (cases "\<S>\<^sub>2 = []") (* This proof is adapted from hyp_proof_existence_implies_hyp_derivability *)
+  case True
+  then show ?thesis using assms by auto
+next
+  case False
+  then have "is_hyps \<H>" and "is_proof \<S>\<^sub>1" and "\<S>\<^sub>2 \<noteq> []" and "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2"
+    using assms by auto
+  then show ?thesis
+  proof (induction "length \<S>\<^sub>2" arbitrary: \<S>\<^sub>2 rule: less_induct)
+    case less
+    let ?i' = "length \<S>\<^sub>2 - 1"
+    define A where \<open>A = last \<S>\<^sub>2\<close>
+    from \<open>\<S>\<^sub>2 \<noteq> []\<close> and \<open>A = last \<S>\<^sub>2\<close> have "\<S>\<^sub>2 ! ?i' = A"
+      by (simp add: last_conv_nth)
+    from \<open>is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2\<close> and \<open>\<S>\<^sub>2 \<noteq> []\<close> have "is_hyp_proof_step \<H> \<S>\<^sub>1 \<S>\<^sub>2 ?i'"
+      by simp
+    then consider
+      (hyp) "\<S>\<^sub>2 ! ?i' \<in> \<H>"
+      | (seq) "\<S>\<^sub>2 ! ?i' \<in> lset \<S>\<^sub>1"
+      | (rule_R') "\<exists>p j k. {j, k} \<subseteq> {0..<?i'} \<and> is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)"
+      by force
+    then show ?case
+    proof cases
+      case hyp
+      then have "A \<in> \<H>"
+        using \<open>A = last \<S>\<^sub>2\<close> \<open>\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1) = A\<close> by argo
+      moreover
+      have "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
+        by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof less.prems(3,4))
+      moreover
+      have "P (butlast \<S>\<^sub>2)"
+        by (metis assms(4) calculation(2) diff_less length_butlast length_greater_0_conv less.hyps less.prems(1,2,3) zero_less_one)
+      ultimately
+      show ?thesis
+        using assms(5)[of A "butlast \<S>\<^sub>2"] \<open>\<S>\<^sub>2 ! ?i' = A\<close> \<open>is_hyps \<H>\<close>
+        by (metis A_def append_butlast_last_id less.prems(3))
+    next
+      case seq
+      from \<open>\<S>\<^sub>2 ! ?i' \<in> lset \<S>\<^sub>1\<close> and \<open>\<S>\<^sub>2 ! ?i' = A\<close>
+      obtain j where "\<S>\<^sub>1 ! j = A" and "\<S>\<^sub>1 \<noteq> []" and "j < length \<S>\<^sub>1"
+        by (metis empty_iff in_set_conv_nth list.set(1))
+      with \<open>is_proof \<S>\<^sub>1\<close> have "is_proof (take (Suc j) \<S>\<^sub>1)" and "take (Suc j) \<S>\<^sub>1 \<noteq> []"
+        using proof_prefix_is_proof[where \<S>\<^sub>1 = "take (Suc j) \<S>\<^sub>1" and \<S>\<^sub>2 = "drop (Suc j) \<S>\<^sub>1"]
+        by simp_all
+      moreover from \<open>\<S>\<^sub>1 ! j = A\<close> and \<open>j < length \<S>\<^sub>1\<close> have "last (take (Suc j) \<S>\<^sub>1) = A"
+        by (simp add: take_Suc_conv_app_nth)
+      ultimately have "is_proof_of (take (Suc j) \<S>\<^sub>1) A"
+        by fastforce
+      then have "is_theorem A"
+        using is_theorem_def by blast
+      with \<open>is_hyps \<H>\<close> show ?thesis
+        using assms(6)[of A]
+        by (metis A_def \<open>\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1) = A\<close> append_butlast_last_id assms(4) 
+            diff_less hyp_proof_prefix_is_hyp_proof length_butlast length_greater_0_conv
+            less.hyps less.prems(2,4) seq zero_less_one)
+    next
+      case rule_R'
+      then obtain p and j and k
+        where "{j, k} \<subseteq> {0..<?i'}" and "is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)"
+        by force
+      let ?\<S>\<^sub>j = "take (Suc j) \<S>\<^sub>2" and ?\<S>\<^sub>k = "take (Suc k) \<S>\<^sub>2"
+      obtain \<S>\<^sub>j' and \<S>\<^sub>k' where "\<S>\<^sub>2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'" and "\<S>\<^sub>2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'"
+        by (metis append_take_drop_id)
+      then have "is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>j @ \<S>\<^sub>j')" and "is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>k @ \<S>\<^sub>k')"
+        by (simp_all only: \<open>is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2\<close>)
+      moreover from \<open>\<S>\<^sub>2 \<noteq> []\<close> and \<open>\<S>\<^sub>2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> and \<open>\<S>\<^sub>2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> and \<open>A = last \<S>\<^sub>2\<close>
+      have "last \<S>\<^sub>j' = A" and "last \<S>\<^sub>k' = A"
+        using \<open>{j, k} \<subseteq> {0..<length \<S>\<^sub>2 - 1}\<close> and take_tl and less_le_not_le and append.right_neutral
+        by (metis atLeastLessThan_iff insert_subset last_appendR length_tl take_all_iff)+
+      moreover from \<open>\<S>\<^sub>2 \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
+        by simp_all
+      ultimately have "is_hyp_proof_of \<H> \<S>\<^sub>1 ?\<S>\<^sub>j (last ?\<S>\<^sub>j)" and "is_hyp_proof_of \<H> \<S>\<^sub>1 ?\<S>\<^sub>k (last ?\<S>\<^sub>k)"
+        using hyp_proof_prefix_is_hyp_proof_of_last
+          [OF \<open>is_hyps \<H>\<close> \<open>is_proof \<S>\<^sub>1\<close> \<open>is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>j @ \<S>\<^sub>j')\<close> \<open>?\<S>\<^sub>j \<noteq> []\<close>]
+          and hyp_proof_prefix_is_hyp_proof_of_last
+          [OF \<open>is_hyps \<H>\<close> \<open>is_proof \<S>\<^sub>1\<close> \<open>is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>k @ \<S>\<^sub>k')\<close> \<open>?\<S>\<^sub>k \<noteq> []\<close>]
+        by fastforce+
+      moreover from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
+      have "length ?\<S>\<^sub>j < length \<S>\<^sub>2" and "length ?\<S>\<^sub>k < length \<S>\<^sub>2"
+        using \<open>{j, k} \<subseteq> {0..<length \<S>\<^sub>2 - 1}\<close> by force+
+      moreover from calculation(3,4) have "last ?\<S>\<^sub>j = \<S>\<^sub>2 ! j" and "last ?\<S>\<^sub>k = \<S>\<^sub>2 ! k"
+        by (metis Suc_lessD last_snoc linorder_not_le nat_neq_iff take_Suc_conv_app_nth take_all_iff)+
+      moreover
+      have "\<exists>S'. prefix (S' @ [\<S>\<^sub>2 ! k]) (butlast \<S>\<^sub>2)"
+        by (metis \<open>\<S>\<^sub>2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> \<open>?\<S>\<^sub>k \<noteq> []\<close> 
+            append_butlast_last_id calculation(4,6) less.prems(3) order_less_irrefl prefixI
+            prefix_snoc)
+      moreover
+      have "\<exists>S''. prefix (S'' @ [\<S>\<^sub>2 ! j]) (butlast \<S>\<^sub>2)"
+        by (metis \<open>\<S>\<^sub>2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> \<open>?\<S>\<^sub>j \<noteq> []\<close> append_butlast_last_id 
+            calculation(3,5) less.prems(3) order_less_irrefl prefixI prefix_snoc)
+      ultimately
+      have "P (butlast \<S>\<^sub>2 @ [\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1)])"
+        using \<open>is_hyps \<H>\<close>
+          and less(1)[OF \<open>length ?\<S>\<^sub>j < length \<S>\<^sub>2\<close>] and less(1)[OF \<open>length ?\<S>\<^sub>k < length \<S>\<^sub>2\<close>]
+          \<open>is_hyps \<H>\<close> and \<open>\<S>\<^sub>2 ! ?i' = A\<close>  \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>
+        using assms(7)[OF _ _  \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>, of _ "butlast \<S>\<^sub>2"]
+        sorry
+      then show ?thesis
+        by (metis append_butlast_last_id last_conv_nth less.prems(3))
+    qed
+  qed
+qed
+
+(*
+lemma is_hyp_proof_induct [consumes 3, case_names hp_nil hp_rule_R']:
   assumes "is_hyp_proof H S1 S2"
+  assumes "is_hyps H"
+  assumes "is_proof S1"
   assumes hp_nil: "P S1 []"
   assumes hp_rule_R': "(\<And>S S' E S'' C p D. is_hyp_proof H S1 S \<Longrightarrow> P S1 S \<Longrightarrow> prefix (S' @ [E]) S \<Longrightarrow> prefix (S'' @ [C]) S \<Longrightarrow> is_rule_R'_app H p D C E \<Longrightarrow> P S1 (S @ [D]))"
   shows "P S1 S2"
-  sorry
+proof (cases "S2 = []")
+  case True
+  then show ?thesis using assms by auto
+next
+  case False
+  from False assms show ?thesis  proof (induction "length S2" arbitrary: S2 rule: less_induct)
+    case less
+    let ?i' = "length S2 - 1"
+    define A where "A = last S2"
+    then have "last S2 = A"
+      by auto
+    from \<open>S2 \<noteq> []\<close> and \<open>last S2 = A\<close> have "S2 ! ?i' = A"
+      by (simp add: last_conv_nth)
+    from (* \<open>is_proof S2\<close> and *) \<open>S2 \<noteq> []\<close> and \<open>last S2 = A\<close> have "is_hyp_proof_step H S1 S2 ?i'"
+      using less.prems(2) by auto
+    then consider
+      (in_H) "S2 ! ?i' \<in> H" 
+    | (in_S1) "S2 ! ?i' \<in> lset S1"
+    | (rule_R') "(\<exists>p j k. {j, k} \<subseteq> {0..<?i'} \<and> is_rule_R'_app H p (S2 ! ?i') (S2 ! j) (S2 ! k))"
+      sorry
+    then show ?case
+    proof cases
+      case in_H
+      (* with \<open>S2 ! ?i' = A\<close> have "P S1 (butlast S2 @ [A])"
+       (* using less(5)[of A "butlast S2"]
+        using append_butlast_last_id diff_less gr0I length_0_conv length_butlast less.hyps less.prems(1,2)
+            less_numeral_extra(1) p_axiom p_nil p_rule_R proof_but_last_is_proof
+        by (metis (no_types, lifting)) *) sorry *)
+      then show ?thesis using \<open>S2 ! ?i' = A\<close>
+        using less
+        sorry
+    next
+      case rule_R'
+      have "is_hyps H"
+        using less.prems(3) by blast
+      have "is_proof S1"
+        using less.prems(4) by blast
+      from rule_R' obtain p and j and k
+        where "{j, k} \<subseteq> {0..<?i'}" and "is_rule_R'_app H p (S2 ! ?i') (S2 ! j) (S2 ! k)"
+        by force
+      let ?\<S>\<^sub>j = "take (Suc j) S2"
+      let ?\<S>\<^sub>k = "take (Suc k) S2"
+      obtain \<S>\<^sub>j' and \<S>\<^sub>k' where "S2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'" and "S2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'"
+        by (metis append_take_drop_id)
+      with \<open>is_hyp_proof H S1 S2\<close> have "is_hyp_proof H S1 (?\<S>\<^sub>j @ \<S>\<^sub>j')" and "is_hyp_proof H S1 (?\<S>\<^sub>k @ \<S>\<^sub>k')"
+        by (simp_all only:)
+      moreover
+      from \<open>S2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> and \<open>S2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> and \<open>last S2 = A\<close> and \<open>{j, k} \<subseteq> {0..<length S2 - 1}\<close>
+      have "last \<S>\<^sub>j' = A" and "last \<S>\<^sub>k' = A"
+        using length_Cons and less_le_not_le and take_Suc and take_tl and append.right_neutral
+        by (metis atLeastLessThan_iff diff_Suc_1 insert_subset last_appendR take_all_iff)+
+      moreover from \<open>S2 \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
+        by simp_all
+      ultimately have "is_hyp_proof_of H S1 ?\<S>\<^sub>j (last ?\<S>\<^sub>j)" and "is_hyp_proof_of H S1 ?\<S>\<^sub>k (last ?\<S>\<^sub>k)"
+         apply (meson \<open>is_hyps H\<close> \<open>is_proof S1\<close> hyp_proof_prefix_is_hyp_proof_of_last)+
+        done
+      moreover from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
+      have "length ?\<S>\<^sub>j < length S2" and "length ?\<S>\<^sub>k < length S2"
+        using \<open>{j, k} \<subseteq> {0..<length S2 - 1}\<close> by force+
+      moreover from calculation(3,4) have "last ?\<S>\<^sub>j = S2 ! j" and "last ?\<S>\<^sub>k = S2 ! k"
+        by (metis Suc_lessD last_snoc linorder_not_le nat_neq_iff take_Suc_conv_app_nth take_all_iff)+
+      moreover
+      have "is_hyp_proof H S1 (butlast S2)"
+        by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof less.prems(1,2))
+      moreover
+      have "P S1 (butlast S2)"
+        by (smt (verit, best) One_nat_def calculation(7) diff_Suc_less hp_nil hp_rule_R' length_butlast length_greater_0_conv less.hyps less.prems(1,3,4))
+      moreover 
+      have "prefix ((take k S2) @ [S2 ! k]) (butlast S2)"
+        using calculation(4) less.prems(1) by (metis append_butlast_last_id  dual_order.irrefl le_SucI not_le_imp_less prefix_snoc
+            take_Suc_conv_app_nth take_all_iff take_is_prefix)
+      moreover
+      have "\<exists>S''. prefix (S'' @ [S2 ! j]) (butlast S2)"
+        by (metis \<open>take (Suc j) S2 \<noteq> []\<close> append_butlast_last_id calculation(3,5) less.prems(1)
+            less_not_refl prefix_snoc take_is_prefix)
+      ultimately have "P S1 (butlast S2 @ [S2 ! (length S2 - 1)])"
+        using \<open>is_rule_R'_app H p (S2 ! ?i') (S2 ! j) (S2 ! k)\<close> and \<open>S2 ! ?i' = A\<close>
+        by (meson hp_rule_R')
+      then show ?thesis
+        using A_def \<open>S2 ! (length S2 - 1) = A\<close> less.prems(1) by auto
+    qed
+  qed
+qed
+*)
 
 lemma is_hyp_proof_R'_intro:
   assumes "is_rule_R'_app H p D C E"
@@ -3147,7 +3359,115 @@ proof -
     using   rule_R'_app_appended_to_hyp_proof_is_hyp_proof[of H S1 S ic C ie E p D]
     using \<open>S ! ic = C\<close> \<open>S ! ie = E\<close> \<open>ic < length S\<close> \<open>ie < length S\<close> assms(1,2) by linarith
 qed
+thm is_hyp_proof_induct_THE_REAL_ONE
 
+lemma is_hyp_proof_const_subst:
+  assumes "is_hyp_proof (lset As) Ts P"
+  assumes "is_proof Ts"
+  assumes "is_hyps (lset As)"
+  assumes "c \<notin> logical_names"
+  assumes "(x, \<tau>) \<notin> vars\<^sub>p P"
+  assumes "c \<notin> P.params (lset As)"
+  shows "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> P)"
+using assms proof (induction rule: is_hyp_proof_induct_THE_REAL_ONE)
+  case hp_nil
+  then show ?case
+    by (simp add: const_subst_proof_def)
+next
+  case (hp_hyp A \<S>\<^sub>2)
+  from this(5) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
+    unfolding vars\<^sub>p_def by auto
+  from this hp_hyp have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
+    by auto
+  then have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2 @ [const_subst (c, x) \<tau> A])"
+    using hyp_appended_to_hyp_proof_is_hyp_proof[of "lset As" "(const_subst_proof (c, x) \<tau> Ts)" "(const_subst_proof (c, x) \<tau> \<S>\<^sub>2)" "const_subst (c, x) \<tau> A"]
+    by (metis UN_I hp_hyp.hyps(1) hp_hyp.prems(1,3) idemp_const_subst)
+  then show ?case
+    by (simp add: const_subst_proof_def)
+next
+  case (hp_seq A \<S>\<^sub>2)
+  from this(5) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
+    unfolding vars\<^sub>p_def by auto
+  from this hp_seq have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
+    by auto
+  then have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2 @ [const_subst (c, x) \<tau> A])"
+    using thm_appended_to_hyp_proof_is_hyp_proof[of "lset As" "(const_subst_proof (c, x) \<tau> Ts)" "(const_subst_proof (c, x) \<tau> \<S>\<^sub>2)" "const_subst (c, x) \<tau> A"]
+    by (metis const_subst_proof_def hp_seq.hyps(1) image_eqI list.set_map)
+  then show ?case
+    by (simp add: const_subst_proof_def)
+next
+  case (hp_rule_R' S' E \<S>\<^sub>2 S'' C p D)
+  let ?C = "const_subst (c, x) \<tau> C"
+  let ?D = "const_subst (c, x) \<tau> D"
+  let ?E = "const_subst (c, x) \<tau> E"
+
+  let ?S = "const_subst_proof (c, x) \<tau> \<S>\<^sub>2"
+  let ?SD = "const_subst_proof (c, x) \<tau> (\<S>\<^sub>2 @ [D])"
+  let ?S' = "const_subst_proof (c, x) \<tau> S'"
+  let ?S'E = "const_subst_proof (c, x) \<tau> (S' @ [E])"
+  let ?S'' = "const_subst_proof (c, x) \<tau> S''"
+  let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
+  let ?Ts' = "const_subst_proof (c, x) \<tau> Ts"
+
+  have "is_hyp_proof (lset As) ?Ts' ?S"
+    using hp_rule_R'.IH hp_rule_R'.prems vars\<^sub>p_def by auto
+
+  have "prefix ?S''C ?S"
+    by (metis const_subst_proof_def hp_rule_R'.hyps(2) map_mono_prefix)
+
+  have "prefix ?S'E ?S"
+    by (metis const_subst_proof_def hp_rule_R'.hyps(1) map_mono_prefix)
+
+  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [const_subst (c, x) \<tau> E]) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
+    using \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> const_subst_proof_def by fastforce
+
+  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [const_subst (c, x) \<tau> C]) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
+    using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> const_subst_proof_def by force
+
+  have "is_hyp_proof (lset As) ?Ts' ?S''C"
+    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
+        \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
+  
+  have "is_hyp_proof (lset As) ?Ts' ?S'E"
+    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
+        \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
+
+  have varsD: "(x, \<tau>) \<notin> vars D"
+    using hp_rule_R' unfolding vars\<^sub>p_def by auto
+
+  have varsS: "(x, \<tau>) \<notin> vars\<^sub>p (\<S>\<^sub>2 @ [D])"
+    using hp_rule_R'.prems(2) by auto
+
+  have "vars C \<subseteq> vars\<^sub>p \<S>\<^sub>2"
+    unfolding vars\<^sub>p_def apply auto
+    by (metis append.assoc append_Cons hp_rule_R'.hyps(2) in_set_conv_decomp prefix_def)
+  then have varsC: "(x, \<tau>) \<notin> vars C"
+    using varsS unfolding vars\<^sub>p_def by auto
+
+  have "vars E \<subseteq> vars\<^sub>p \<S>\<^sub>2"
+    unfolding vars\<^sub>p_def apply auto
+    by (metis append.assoc append_Cons hp_rule_R'.hyps(1) in_set_conv_decomp prefix_def)
+    
+  then have varsE: "(x, \<tau>) \<notin> vars E"
+      using varsS unfolding vars\<^sub>p_def by auto
+
+  have varsDCE: "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+    by (simp add: varsC varsD varsE)
+
+  have "c \<notin> P.params (lset As)"
+    using hp_rule_R'.prems(3) by blast
+
+  have "is_rule_R'_app (lset As) p ?D ?C ?E"
+    using is_rule_R'_app_const_subst hp_rule_R'(4) _ hp_rule_R'(6) varsDCE
+    using \<open>is_hyps (lset As)\<close> hp_rule_R'.prems(3)
+    by (metis hp_rule_R'.hyps(3))
+
+  show ?case
+    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?S\<close>, of ?S' ?S'', OF P1 P2]
+    by (simp add: const_subst_proof_def)
+qed
+
+(*
 lemma is_hyp_proof_const_subst:
   assumes "is_hyp_proof (lset As) Ts P"
   assumes "c \<notin> logical_names"
@@ -3225,7 +3545,7 @@ next
   show ?case
     using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?S\<close>, of ?S' ?S'', OF P1 P2]
     by (simp add: const_subst_proof_def)
-qed (* Similar to this one: *) thm is_proof_const_subst
+qed (* Similar to this one: *) thm is_proof_const_subst *)
 
 lemma the_big_thing_to_prove:
   assumes "P' = const_subst_proof (c, x) \<alpha> P"
