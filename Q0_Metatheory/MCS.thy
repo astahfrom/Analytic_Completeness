@@ -3236,8 +3236,7 @@ proof
             done
           done
         done (* \<and> undefined x \<alpha>" *)
-        (* Did Peter Andrews state  (x,\<alpha>) \<notin> vars (lset As) ? Yes. *)
-        (* HERE: undefined should be, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that.
+        (* HERE: we could add, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that.
                  But I also feel like I do not need that actually! Hmm... *)
              (* Fine, but should I be afraid that c occurs in proofs of Ts? No, it is actually fine that it does that. *)
       define P' where "P' = const_subst_proof (c, x) \<alpha> P"
