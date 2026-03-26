@@ -3237,7 +3237,7 @@ proof
           done
         done (* \<and> undefined x \<alpha>" *)
         (* HERE: we could add, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that.
-                 But I also feel like I do not need that actually! Hmm... *)
+                 But I also feel like I do not need that actually! Hmm... No we need it. A proof of a wff from the hypotheses by definitions consists of TWO sequences. In this case Ts and Ps. *)
              (* Fine, but should I be afraid that c occurs in proofs of Ts? No, it is actually fine that it does that. *)
       define P' where "P' = const_subst_proof (c, x) \<alpha> P"
       define Ts' where "Ts' = const_subst_proof (c, x) \<alpha> Ts"
