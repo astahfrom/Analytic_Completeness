@@ -3113,8 +3113,42 @@ lemma the_big_thing_to_prove:
   assumes "(x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars (lset As)"
   assumes "(x, \<alpha>) \<notin> vars (lset As)"
   assumes "(x, \<alpha>) \<notin> vars B"
+  assumes "c \<notin> logical_names"
   shows "is_hyp_proof_of (lset As) Ts' P' form'"
-  sorry
+proof -
+  from assms(4) have "is_hyps (lset As)"
+    unfolding is_hyp_proof_of_def by auto
+  from assms(4) have "is_proof Ts"
+    unfolding is_hyp_proof_of_def by auto
+  from assms(4) have "P \<noteq> [] "
+    unfolding is_hyp_proof_of_def by auto
+  from assms(4) have "is_hyp_proof (lset As) Ts P"
+    unfolding is_hyp_proof_of_def by auto
+  from assms(4) have "last P = A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
+    unfolding is_hyp_proof_of_def by auto
+
+  have "is_hyps (lset As)"
+    by (simp add: \<open>is_hyps (lset As)\<close>)
+  moreover
+  have "is_proof Ts'"
+    using \<open>is_proof Ts\<close> unfolding assms(2)
+    using is_proof_const_subst[of Ts c x \<alpha>]
+    using assms(8) 
+    sorry
+  moreover
+  have "P' \<noteq> []"
+    by (simp add: \<open>P \<noteq> []\<close> assms(1) const_subst_proof_def)
+  moreover
+  have "is_hyp_proof (lset As) Ts' P'"
+    sorry
+  moreover
+  have "last P' = form'"
+    by (simp add: \<open>P \<noteq> []\<close> \<open>last P = A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close> assms(1,3) const_subst_proof_def last_map)
+  ultimately
+  show ?thesis
+    unfolding is_hyp_proof_of_def by auto
+qed
+  
 
 interpretation DD: Weak_Derivational_Delta map_con
   cons_form is_param delta "is_consistent_set \<circ> lset"
@@ -3202,7 +3236,7 @@ proof
             done
           done
         done (* \<and> undefined x \<alpha>" *)
-        (* Did Peter Andrews state  (x,\<alpha>) \<notin> vars (lset As) ? *)
+        (* Did Peter Andrews state  (x,\<alpha>) \<notin> vars (lset As) ? Yes. *)
         (* HERE: undefined should be, I suppose, a definition stating that x is also not used in proofs of Ts. I feel like we need that.
                  But I also feel like I do not need that actually! Hmm... *)
              (* Fine, but should I be afraid that c occurs in proofs of Ts? No, it is actually fine that it does that. *)
