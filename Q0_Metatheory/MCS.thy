@@ -3295,37 +3295,207 @@ proof -
         rule_R by blast
   qed
 qed
- 
-lemma axiom_3\<^sub>v_is_free_for_exi:
-   "\<exists>f g. is_free_for F (f, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x \<alpha> \<beta>) \<and>
-          is_free_for F (g, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x  \<alpha> \<beta>) \<and>
-          is_free_for F (x, \<alpha>) (axiom_3\<^sub>v f g x \<alpha> \<beta>) \<and>
-          is_free_for G (f, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x \<alpha> \<beta>) \<and>
-          is_free_for G (g, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x \<alpha> \<beta>) \<and>
-          is_free_for G (x, \<alpha>) (axiom_3\<^sub>v f g x \<alpha> \<beta>) \<and>
-          f \<noteq> g \<and>
-          f \<noteq> x \<and>
-          g \<noteq> x"
-  sorry
+
+lemma is_free_for_axiom_3_f:
+  assumes "F \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"
+  assumes "(x, \<alpha>) \<notin> vars F" (* Could be free_vars *)
+  shows "is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)" 
+proof -
+  show ?thesis
+    unfolding axiom_3\<^sub>v_def
+    apply (rule is_free_for_in_equivalence)
+    subgoal
+      apply (rule is_free_for_in_equality)
+      subgoal
+        apply (rule is_free_for_in_var)
+        done
+      subgoal
+        apply (rule is_free_for_in_var)
+        done
+      done
+    apply (rule is_free_for_in_forall)
+    subgoal
+      apply (rule is_free_for_in_equality)
+      subgoal
+        apply (rule is_free_for_to_app)
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        done
+      subgoal
+        apply (rule is_free_for_to_app)
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        done
+      done
+    subgoal
+      using assms
+      apply (simp add: vars_is_free_and_bound_vars) 
+      done
+    done
+qed
+
+lemma is_free_for_axiom_3_g:
+  assumes "G \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"
+  assumes "(x, \<alpha>) \<notin> vars G" (* Could be free_vars *)
+  shows "is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+proof -
+  show ?thesis
+    unfolding axiom_3\<^sub>v_def
+    apply (rule is_free_for_in_equivalence)
+    subgoal
+      apply (rule is_free_for_in_equality)
+      subgoal
+        apply (rule is_free_for_in_var)
+        done
+      subgoal
+        apply (rule is_free_for_in_var)
+        done
+      done
+    apply (rule is_free_for_in_forall)
+    subgoal
+      apply (rule is_free_for_in_equality)
+      subgoal
+        apply (rule is_free_for_to_app)
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        done
+      subgoal
+        apply (rule is_free_for_to_app)
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        subgoal
+          apply (rule is_free_for_in_var)
+          done
+        done
+      done
+    subgoal
+      using assms
+      apply (simp add: vars_is_free_and_bound_vars) 
+      done
+    done
+qed
 
 
-lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_is_S_axiom_3\<^sub>v: (* Most assumptions are not used *)
+lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_is_S_axiom_3\<^sub>v:
   assumes "f \<noteq> g"
-  assumes "f \<noteq> x"
-  assumes "g \<noteq> x"
-  assumes "is_free_for F (f, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x \<alpha> \<beta>)"
-  assumes "is_free_for F (g, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x  \<alpha> \<beta>)"
-  assumes "is_free_for F (x, \<alpha>) (axiom_3\<^sub>v f g x \<alpha> \<beta>)"
-  assumes "is_free_for G (f, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x \<alpha> \<beta>)"
-  assumes "is_free_for G (g, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v f g x \<alpha> \<beta>)"
-  assumes "is_free_for G (x, \<alpha>) (axiom_3\<^sub>v f g x \<alpha> \<beta>)"
   shows "\<^bold>S {(f, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (g, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}(axiom_3\<^sub>v f g x \<alpha> \<beta>) = axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>"
   unfolding axiom_3\<^sub>v_def axiom_3\<^sub>w\<^sub>f\<^sub>f_def
   using assms
   by auto
 
+lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem:
+  assumes Fwff: "F \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"
+  assumes Gwff: "G \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"
+  assumes "(x, \<alpha>) \<notin> vars F"
+  assumes "(x, \<alpha>) \<notin> vars G"
+  shows "\<turnstile> axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>"
+proof -
+
+  have ax3v: "\<turnstile> axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>"
+    using axiom_3\<^sub>v_theorem by auto
+
+  have fgx_1:
+    "is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+    using Fwff assms(3) is_free_for_axiom_3_f by presburger
+  have fgx_5:
+    "is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+    using Gwff assms(4) is_free_for_axiom_3_g by presburger
+
+  have fgx_2:
+    "True"
+    by auto
+  have fgx_3:
+    "True" (* <-- I do not think this is necessarily true, and I do not think we need it. *)
+    by auto
+  have fgx_4:
+    "True"
+    by auto
+  have fgx_6:
+    "True"
+    by auto
+  have fgx_7:
+    "\<ff> \<noteq> \<gg>"
+    by blast
+  have fgx_8:
+    "True" (* <-- I do not think this is necessarily true, and I do not think we need it. *)
+    by auto
+  have fgx_9:
+    "True" (* <-- I do not think this is necessarily true, and I do not think we need it. *)
+    by auto
+
+  note fgx = fgx_1 fgx_2 fgx_3 fgx_4 fgx_5 fgx_6 fgx_7 fgx_8 fgx_9
 
 
+  have is_sub: "is_substitution {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}"
+    using Gwff Fwff by auto
+  {
+    fix v
+    assume "v \<in> fmdom' {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}"
+    then have a: "v \<in> {(\<ff>, \<alpha> \<rightarrow> \<beta>),(\<gg>, \<alpha> \<rightarrow> \<beta>)}"
+      by auto
+
+    have v_notin: "var_name v \<notin> free_var_names ({} :: form set)"
+      by auto
+
+    thm fresh_free_var_for
+
+    have "is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+      using fgx(1) by fastforce
+
+    then have free_F: "is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! (\<ff>, \<alpha> \<rightarrow> \<beta>)) (\<ff>, \<alpha> \<rightarrow> \<beta>)
+          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+      using fgx
+      by auto
+
+    have "is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>)
+          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+      using fgx(5) by blast
+    then have free_G: "is_free_for ({(\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! (\<gg>,  \<alpha> \<rightarrow> \<beta>)) (\<gg>, \<alpha> \<rightarrow> \<beta>)
+          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+      using fgx
+      by auto
+
+    have free_v: "is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! v) v
+          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+      using a free_F free_G fgx by auto
+
+    have "var_name v \<notin> free_var_names ({}:: form set) \<and>
+         is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! v) v
+           (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+      
+        using v_notin free_v by metis
+  }
+  then have p: "\<forall>v\<in>fmdom' {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}.
+      var_name v \<notin> free_var_names ({}:: form set) \<and>
+      is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! v) v
+       (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+    by metis
+
+  have notempt: "{(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} \<noteq> {$$}"
+    by auto
+
+  have "\<turnstile> \<^bold>S {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}(axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
+   using Sub[OF ax3v is_sub p notempt] .
+  then have "\<turnstile> axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>"
+    by (metis axiom_3\<^sub>w\<^sub>f\<^sub>f_is_S_axiom_3\<^sub>v fgx(1,2,3,4,5,6,7,8,9))
+  then show ?thesis
+    .
+qed
+
+(* 
 lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem:
   assumes Fwff: "F \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"
   assumes Gwff: "G \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"
@@ -3403,41 +3573,45 @@ proof -
     by (metis axiom_3\<^sub>w\<^sub>f\<^sub>f_is_S_axiom_3\<^sub>v fgx(1,2,3,4,5,6,7,8,9))
   then show ?thesis
     .
-qed
+qed *)
 
 lemma nice1234:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>"
   assumes "B \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>"
   assumes "S \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
+  assumes "(x, \<alpha>) \<notin> vars A"
+  assumes "(x, \<alpha>) \<notin> vars B"
   shows "S \<turnstile> (A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)"
 proof -
-
-  thm rule_RR
-  
+  have ax: "\<turnstile> axiom_3\<^sub>w\<^sub>f\<^sub>f A B x \<alpha> \<beta>"
+    using axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem[of A \<alpha> \<beta> B x] using assms by auto
 
   show "S \<turnstile> (A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)"
-    sorry
-  
-  (* have "\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<in> axioms"
-    sorry  (* TODO *)
-  then have A: "\<turnstile> \<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)"
-    sorry  (* TODO *)
-  then have A': "\<turnstile> \<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
-    (* alpha conversion *)
-    sorry  (* TODO *)
-  have C: "\<turnstile> \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
-    using Gen[of "{}" _ MCS.\<gg> "\<alpha> \<rightarrow> \<beta>" , OF A']
-    apply auto
+    apply (rule rule_RR[where D="A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B", 
+      where \<H> = S, 
+      where C="\<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)",
+      where \<alpha>=o,
+      where B="(A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)",
+      where A="\<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)",
+      where p="[]"
+] )
+    subgoal 
+      using ax unfolding axiom_3\<^sub>w\<^sub>f\<^sub>f_def equivalence_def apply auto
+      done
+    subgoal
+      apply auto
+      done
+    subgoal
+      apply auto
+      done
+    subgoal
+      apply auto
+      done
+    subgoal
+      using assms
+      apply auto
+      done
     done
-  have "\<turnstile> \<forall>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
-    using Gen[of "{}" _ MCS.\<ff> "\<alpha> \<rightarrow> \<beta>" , OF C] by auto
-  have "\<turnstile> \<forall>\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>. (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))"
-    sorry  (* TODO *)
-  then have "\<turnstile> A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
-    sorry  (* TODO *)
-  show "S \<turnstile> A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B"
-    using rule_RR sorry (* TODO *)
-*)
 qed
 
 lemma brand_new_lemma: (* not used for anything *)
@@ -3598,99 +3772,6 @@ next
     qed
   qed
 qed
-
-(*
-lemma is_hyp_proof_induct [consumes 3, case_names hp_nil hp_rule_R']:
-  assumes "is_hyp_proof H S1 S2"
-  assumes "is_hyps H"
-  assumes "is_proof S1"
-  assumes hp_nil: "P S1 []"
-  assumes hp_rule_R': "(\<And>S S' E S'' C p D. is_hyp_proof H S1 S \<Longrightarrow> P S1 S \<Longrightarrow> prefix (S' @ [E]) S \<Longrightarrow> prefix (S'' @ [C]) S \<Longrightarrow> is_rule_R'_app H p D C E \<Longrightarrow> P S1 (S @ [D]))"
-  shows "P S1 S2"
-proof (cases "S2 = []")
-  case True
-  then show ?thesis using assms by auto
-next
-  case False
-  from False assms show ?thesis  proof (induction "length S2" arbitrary: S2 rule: less_induct)
-    case less
-    let ?i' = "length S2 - 1"
-    define A where "A = last S2"
-    then have "last S2 = A"
-      by auto
-    from \<open>S2 \<noteq> []\<close> and \<open>last S2 = A\<close> have "S2 ! ?i' = A"
-      by (simp add: last_conv_nth)
-    from (* \<open>is_proof S2\<close> and *) \<open>S2 \<noteq> []\<close> and \<open>last S2 = A\<close> have "is_hyp_proof_step H S1 S2 ?i'"
-      using less.prems(2) by auto
-    then consider
-      (in_H) "S2 ! ?i' \<in> H" 
-    | (in_S1) "S2 ! ?i' \<in> lset S1"
-    | (rule_R') "(\<exists>p j k. {j, k} \<subseteq> {0..<?i'} \<and> is_rule_R'_app H p (S2 ! ?i') (S2 ! j) (S2 ! k))"
-      sorry (* commented out *)
-    then show ?case
-    proof cases
-      case in_H
-      (* with \<open>S2 ! ?i' = A\<close> have "P S1 (butlast S2 @ [A])"
-       (* using less(5)[of A "butlast S2"]
-        using append_butlast_last_id diff_less gr0I length_0_conv length_butlast less.hyps less.prems(1,2)
-            less_numeral_extra(1) p_axiom p_nil p_rule_R proof_but_last_is_proof
-        by (metis (no_types, lifting)) *) sorry *) (* commented out *)
-      then show ?thesis using \<open>S2 ! ?i' = A\<close>
-        using less
-        sorry (* commented out*)
-    next
-      case rule_R'
-      have "is_hyps H"
-        using less.prems(3) by blast
-      have "is_proof S1"
-        using less.prems(4) by blast
-      from rule_R' obtain p and j and k
-        where "{j, k} \<subseteq> {0..<?i'}" and "is_rule_R'_app H p (S2 ! ?i') (S2 ! j) (S2 ! k)"
-        by force
-      let ?\<S>\<^sub>j = "take (Suc j) S2"
-      let ?\<S>\<^sub>k = "take (Suc k) S2"
-      obtain \<S>\<^sub>j' and \<S>\<^sub>k' where "S2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'" and "S2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'"
-        by (metis append_take_drop_id)
-      with \<open>is_hyp_proof H S1 S2\<close> have "is_hyp_proof H S1 (?\<S>\<^sub>j @ \<S>\<^sub>j')" and "is_hyp_proof H S1 (?\<S>\<^sub>k @ \<S>\<^sub>k')"
-        by (simp_all only:)
-      moreover
-      from \<open>S2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> and \<open>S2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> and \<open>last S2 = A\<close> and \<open>{j, k} \<subseteq> {0..<length S2 - 1}\<close>
-      have "last \<S>\<^sub>j' = A" and "last \<S>\<^sub>k' = A"
-        using length_Cons and less_le_not_le and take_Suc and take_tl and append.right_neutral
-        by (metis atLeastLessThan_iff diff_Suc_1 insert_subset last_appendR take_all_iff)+
-      moreover from \<open>S2 \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
-        by simp_all
-      ultimately have "is_hyp_proof_of H S1 ?\<S>\<^sub>j (last ?\<S>\<^sub>j)" and "is_hyp_proof_of H S1 ?\<S>\<^sub>k (last ?\<S>\<^sub>k)"
-         apply (meson \<open>is_hyps H\<close> \<open>is_proof S1\<close> hyp_proof_prefix_is_hyp_proof_of_last)+
-        done
-      moreover from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
-      have "length ?\<S>\<^sub>j < length S2" and "length ?\<S>\<^sub>k < length S2"
-        using \<open>{j, k} \<subseteq> {0..<length S2 - 1}\<close> by force+
-      moreover from calculation(3,4) have "last ?\<S>\<^sub>j = S2 ! j" and "last ?\<S>\<^sub>k = S2 ! k"
-        by (metis Suc_lessD last_snoc linorder_not_le nat_neq_iff take_Suc_conv_app_nth take_all_iff)+
-      moreover
-      have "is_hyp_proof H S1 (butlast S2)"
-        by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof less.prems(1,2))
-      moreover
-      have "P S1 (butlast S2)"
-        by (smt (verit, best) One_nat_def calculation(7) diff_Suc_less hp_nil hp_rule_R' length_butlast length_greater_0_conv less.hyps less.prems(1,3,4))
-      moreover 
-      have "prefix ((take k S2) @ [S2 ! k]) (butlast S2)"
-        using calculation(4) less.prems(1) by (metis append_butlast_last_id  dual_order.irrefl le_SucI not_le_imp_less prefix_snoc
-            take_Suc_conv_app_nth take_all_iff take_is_prefix)
-      moreover
-      have "\<exists>S''. prefix (S'' @ [S2 ! j]) (butlast S2)"
-        by (metis \<open>take (Suc j) S2 \<noteq> []\<close> append_butlast_last_id calculation(3,5) less.prems(1)
-            less_not_refl prefix_snoc take_is_prefix)
-      ultimately have "P S1 (butlast S2 @ [S2 ! (length S2 - 1)])"
-        using \<open>is_rule_R'_app H p (S2 ! ?i') (S2 ! j) (S2 ! k)\<close> and \<open>S2 ! ?i' = A\<close>
-        by (meson hp_rule_R')
-      then show ?thesis
-        using A_def \<open>S2 ! (length S2 - 1) = A\<close> less.prems(1) by auto
-    qed
-  qed
-qed
-*)
 
 lemma is_hyp_proof_R'_intro:
   assumes "is_rule_R'_app H p D C E"
@@ -4151,7 +4232,7 @@ proof
         using Gen[of "lset As" "(A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)" x \<alpha>]
         using fx by auto
       then have \<open>lset As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
-        by (metis C_eq hyp1 nice1234 wffs_from_equality(1,2) wffs_from_neg) (* by RR and Axiom 3 *)
+        by (metis C_eq equality_of_type_def hyp1 neg_def nice1234 wffs_from_equality(1,2) x_p_3 x_p_4)
       then have \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close>
         using fact2[unfolded C_eq]
         by (metis QnegD hyp_derivable_form_is_wffso is_derivable_from_hyps.cases prop_5224)
