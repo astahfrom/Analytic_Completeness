@@ -78,6 +78,39 @@ proof (induct A arbitrary: F G rule: wffs_of_type_induct)
     by (metis Diff_iff fmdom'_notD singletonD)
 qed simp_all
 
+
+lemma fmran'_fmdrop_subset: "fmran' (fmdrop (x, \<alpha>) \<theta>) \<subseteq> fmran' \<theta>"
+proof (induction \<theta>)
+  case fmempty
+  then show ?case by auto
+next
+  case (fmupd x' y' \<theta>)
+  then show ?case
+    by (simp add: fmdrop_fmupd subset_iff)
+qed
+
+(*
+lemma fmran'_fmdrop_1:
+  assumes "x \<noteq> y"
+  assumes "\<theta> $$ x = \<theta> $$ y"
+  assumes "y \<in> fmran' \<theta>"
+  shows "fmran' (fmdrop x \<theta>) = fmran' \<theta>"
+  sorry
+
+lemma fmran'_fmdrop_2:
+  assumes "\<forall>y \<in> fmdom' \<theta>. \<theta> $$ y \<noteq> \<theta> $$ x"
+  assumes "x \<in> fmran' \<theta>"
+  shows "fmran' (fmdrop x \<theta>) = (fmran' \<theta>) - {\<theta> $$! x}"
+  sorry
+*)
+(*
+lemma  
+  assumes "(y, \<beta>) \<in> \<Union> (free_vars ` fmran' (fmdrop (x, \<alpha>) \<theta>))"
+  assumes "(y, \<beta>) \<noteq> (x, \<alpha>)"
+  shows "(y, \<beta>) \<in> \<Union> (free_vars ` fmran' \<theta>)" 
+  using assms by (meson SUP_subset_mono fmran'_fmdrop_subset subset_iff)
+*)
+
 lemma free_vars_substitute: \<open>free_vars (substitute \<phi> A) \<subseteq> (free_vars A - fmdom' \<phi>) \<union> \<Union>(free_vars ` fmran' \<phi>)\<close>
 proof (induct \<phi> A rule: substitute.induct)
   case (1 \<theta> x \<alpha>)
@@ -105,19 +138,41 @@ next
   then show ?case
   proof (cases \<open>(x, \<alpha>) \<in> fmdom' \<theta>\<close>)
     case True
+    then have ind: "free_vars \<^bold>S fmdrop (x, \<alpha>) \<theta> A \<subseteq> 
+                      free_vars A - fmdom' (fmdrop (x, \<alpha>) \<theta>) 
+                       \<union> \<Union> (free_vars ` fmran' (fmdrop (x, \<alpha>) \<theta>))"
+      using 4 by auto
+    {
+      fix y \<beta>
+      assume y\<beta>_free: "(y,\<beta>) \<in> free_vars \<^bold>S fmdrop (x, \<alpha>) \<theta> A - {(x, \<alpha>)}"
+      then have y\<beta>_free': "(y,\<beta>) \<in> free_vars \<^bold>S fmdrop (x, \<alpha>) \<theta> A"
+        by auto
+      have not: "(y,\<beta>) \<noteq> (x,\<alpha>)"
+        using y\<beta>_free by auto
+      from y\<beta>_free' have "(y,\<beta>) \<in> free_vars A - fmdom' (fmdrop (x, \<alpha>) \<theta>) 
+                                   \<union> \<Union> (free_vars ` fmran' (fmdrop (x, \<alpha>) \<theta>))"
+        using ind by auto
+      then have "(y,\<beta>) \<in> ((free_vars A - {(x, \<alpha>)}) - fmdom' \<theta>) \<union> \<Union> (free_vars ` fmran' \<theta>)"
+      proof
+        assume ind_l: "(y, \<beta>) \<in> free_vars A - fmdom' (fmdrop (x, \<alpha>) \<theta>)"
+        then have fv: "(y, \<beta>) \<in> (free_vars A - {(x, \<alpha>)})"
+          using not by blast
+        then have "(y, \<beta>) \<notin> fmdom' \<theta>"
+          using ind_l by force
+        then show "(y,\<beta>) \<in> ((free_vars A - {(x, \<alpha>)}) - fmdom' \<theta>) \<union> \<Union> (free_vars ` fmran' \<theta>)"
+          using fv by auto
+      next
+        assume "(y, \<beta>) \<in> \<Union> (free_vars ` fmran' (fmdrop (x, \<alpha>) \<theta>))"
+        then have "(y,\<beta>) \<in>  \<Union> (free_vars ` fmran' \<theta>)"
+          by (metis (no_types, lifting) HOL.ext UN_Un UnCI Un_absorb2 fmran'_fmdrop_subset)
+        then show "(y, \<beta>) \<in> ((free_vars A - {(x, \<alpha>)}) - fmdom' \<theta>) \<union> \<Union> (free_vars ` fmran' \<theta>)"
+          by blast
+      qed
+    }
+    then have "free_vars \<^bold>S fmdrop (x, \<alpha>) \<theta> A - {(x, \<alpha>)} \<subseteq> free_vars A - {(x, \<alpha>)} - fmdom' \<theta> \<union> \<Union> (free_vars ` fmran' \<theta>)"
+      by (metis subsetI surj_pair)
     then show ?thesis
-      using 4
-        (* TODO: nasty *)
-      apply auto
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
-          in_mono insert_iff)
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_drop fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
-          in_mono insert_iff)
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmdom'_notI fmlookup_dom'_iff fmlookup_drop fmlookup_ran'_iff
-          in_mono insertE insert_Diff prod.inject)
-      apply (smt (verit, ccfv_threshold) Diff_iff UN_iff UnE fmlookup_drop fmlookup_ran'_iff in_mono insertE insert_Diff
-          not_None_eq prod.inject)
-      done
+      using True by auto
   next
     case False
     then show ?thesis
@@ -3908,86 +3963,6 @@ next
     using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?S\<close>, of ?S' ?S'', OF P1 P2]
     by (simp add: const_subst_proof_def)
 qed
-
-(*
-lemma is_hyp_proof_const_subst:
-  assumes "is_hyp_proof (lset As) Ts P"
-  assumes "c \<notin> logical_names"
-  assumes "(x, \<tau>) \<notin> vars\<^sub>p P"
-  assumes "c \<notin> P.params (lset As)"
-  assumes "is_hyps (lset As)" (* <-- Ought that to be in the induction? *)
-  shows "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> P)"
-using assms proof (induction rule: is_hyp_proof_induct)
-  case hp_nil
-  then show ?case
-    by (simp add: const_subst_proof_def)
-next
-  case (hp_rule_R' S S' E S'' C p D)
-    let ?C = "const_subst (c, x) \<tau> C"
-  let ?D = "const_subst (c, x) \<tau> D"
-  let ?E = "const_subst (c, x) \<tau> E"
-
-  let ?S = "const_subst_proof (c, x) \<tau> S"
-  let ?SD = "const_subst_proof (c, x) \<tau> (S @ [D])"
-  let ?S' = "const_subst_proof (c, x) \<tau> S'"
-  let ?S'E = "const_subst_proof (c, x) \<tau> (S' @ [E])"
-  let ?S'' = "const_subst_proof (c, x) \<tau> S''"
-  let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
-  let ?Ts' = "const_subst_proof (c, x) \<tau> Ts"
-
-  have "is_hyp_proof (lset As) ?Ts' ?S"
-    using hp_rule_R'.IH hp_rule_R'.prems vars\<^sub>p_def by auto
-
-  have "prefix ?S''C ?S"
-    by (metis const_subst_proof_def map_mono_prefix hp_rule_R'.hyps(3))
-  have "prefix ?S'E ?S"
-    by (metis const_subst_proof_def map_mono_prefix hp_rule_R'.hyps(2))
-  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [const_subst (c, x) \<tau> E]) (const_subst_proof (c, x) \<tau> S)"
-    using \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by fastforce
-
-  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [const_subst (c, x) \<tau> C]) (const_subst_proof (c, x) \<tau> S)"
-    using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by force
-
-  have "is_hyp_proof (lset As) ?Ts' ?S''C"
-    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> S)\<close>
-        \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
-  
-  have "is_hyp_proof (lset As) ?Ts' ?S'E"
-    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> S)\<close>
-        \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
-
-  have varsD: "(x, \<tau>) \<notin> vars D"
-    using hp_rule_R' unfolding vars\<^sub>p_def by auto
-
-  have varsS: "(x, \<tau>) \<notin> vars\<^sub>p (S @ [D])"
-    by (simp add: hp_rule_R'.prems(2))
-
-  have "vars C \<subseteq> vars\<^sub>p S"
-    unfolding vars\<^sub>p_def apply auto
-    by (metis append.assoc append_Cons in_set_conv_decomp hp_rule_R'.hyps(3) prefixE)
-  then have varsC: "(x, \<tau>) \<notin> vars C"
-    using varsS unfolding vars\<^sub>p_def by auto
-
-  have "vars E \<subseteq> vars\<^sub>p S"
-    unfolding vars\<^sub>p_def apply auto
-    by (metis UnCI in_mono list.set_intros(1) hp_rule_R'.hyps(2) set_append set_mono_prefix)
-  then have varsE: "(x, \<tau>) \<notin> vars E"
-      using varsS unfolding vars\<^sub>p_def by auto
-
-  have varsDCE: "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
-    by (simp add: varsC varsD varsE)
-
-  have "c \<notin> P.params (lset As)"
-    using hp_rule_R'.prems(3) by blast
-
-  have "is_rule_R'_app (lset As) p ?D ?C ?E"
-    using is_rule_R'_app_const_subst[of ?C, of c x \<tau> C ?D D ?E E "lset As" p, OF _ _ _ hp_rule_R'(4) _ hp_rule_R'(6) varsDCE ]
-    using \<open>is_hyps (lset As)\<close> hp_rule_R'.prems(3) by fastforce  
-
-  show ?case
-    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?S\<close>, of ?S' ?S'', OF P1 P2]
-    by (simp add: const_subst_proof_def)
-qed (* Similar to this one: *) thm is_proof_const_subst *)
 
 lemma the_big_thing_to_prove:
   assumes "P' = const_subst_proof (c, x) \<alpha> P"
