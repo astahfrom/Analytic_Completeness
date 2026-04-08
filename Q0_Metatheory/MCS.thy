@@ -2190,6 +2190,7 @@ proof-
     by blast
 qed
 
+(* TODO: We can give this function a more appropriate type I think *)
 fun const_subst :: "nat \<times> nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form"
   where "const_subst (c, x) \<alpha> (y\<^bsub>\<beta>\<^esub>) = y\<^bsub>\<beta>\<^esub>"
   | "const_subst (c, x) \<alpha> (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) = (if c = d \<and> \<alpha> = \<beta> then (x\<^bsub>\<beta>\<^esub>) else (\<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>))"
@@ -2288,6 +2289,7 @@ lemma const_subst_axiom:
   using idemp_const_subst[OF assms(1,2)] assms(3)
   by simp
 
+(* TODO: Remove these repeated abbreviations *)
 abbreviation \<xx> where "\<xx> \<equiv> 0"
 abbreviation \<yy> where "\<yy> \<equiv> Suc \<xx>"
 abbreviation \<zz> where "\<zz> \<equiv> Suc \<yy>"
@@ -2341,18 +2343,20 @@ lemma axiom_4_1_con_const_subst:
   assumes "(x, \<tau>) \<noteq> (y, \<alpha>)"
   shows "const_subst (c, x) \<tau> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>d\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> axioms"
 proof -
-  have helper: "const_subst (c, x) \<tau> A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  let ?A = "const_subst (c, x) \<tau> A"
+
+  have A_wff: "?A \<in> wffs\<^bsub>\<alpha>\<^esub>"
     by (simp add: assms(2) const_subst_wffs) 
 
   show ?thesis 
   proof (cases "c=d \<and> \<tau>=\<beta>")
     case True
     then show ?thesis
-      using assms(3) axioms.axiom_4_1_var helper by auto
+      using assms(3) axioms.axiom_4_1_var A_wff by auto
   next
     case False
     then show ?thesis
-      using assms(1) axioms.simps const_subst_laws(7) helper by auto
+      using assms(1) axioms.simps const_subst_laws(7) A_wff by auto
   qed
 qed
 
@@ -2368,9 +2372,8 @@ lemma axiom_4_2_const_subst:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   assumes "\<forall>t. (x, t) \<notin> vars ((\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>)"
   shows "const_subst (c, x) \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. x\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A) \<in> axioms"
-  oops
+  oops (* TODO: prove or delete... *)
  
-
 lemma axiom_4_3_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
@@ -2382,15 +2385,16 @@ proof -
   let ?B = "const_subst (c, x) \<tau> B"
   let ?C = "const_subst (c, x) \<tau> C"
 
-  have " (\<lambda>y\<^bsub>\<alpha>\<^esub>. ?B \<sqdot> ?C) \<sqdot> ?A =\<^bsub>\<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. ?B) \<sqdot> ?A \<sqdot> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. ?C) \<sqdot> ?A) \<in> axioms"
+  have "(\<lambda>y\<^bsub>\<alpha>\<^esub>. ?B \<sqdot> ?C) \<sqdot> ?A =\<^bsub>\<beta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. ?B) \<sqdot> ?A \<sqdot> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. ?C) \<sqdot> ?A) \<in> axioms"
     by (meson assms(2,3,4) axioms.axiom_4_3 const_subst_wffs)
   then show ?thesis 
     by (simp only: const_subst_laws[OF assms(1)] const_subst.simps)
 qed
 
 lemma in_var_const_subst:
+  assumes "(y, \<gamma>) \<notin> vars A"
   assumes "(y, \<gamma>) \<in> vars (const_subst (c, x) \<tau> A)"
-  shows "(y = x \<and> \<gamma> = \<tau>) \<or> (y, \<gamma>) \<in> vars A"
+  shows "y = x \<and> \<gamma> = \<tau>"
   using assms
 proof (induction A)
   case (FVar x')
@@ -2418,24 +2422,24 @@ lemma axiom_4_4_const_subst:
   assumes "(x,\<tau>) \<notin> vars ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A))"
   shows "const_subst (c, x) \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<gamma>\<^esub>. B) \<sqdot> A =\<^bsub>\<gamma>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<gamma>\<^esub>. (\<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A)) \<in> axioms"
 proof -
-  have A: "const_subst (c, x) \<tau> A \<in> wffs\<^bsub>\<alpha>\<^esub>"
+  let ?A = "const_subst (c, x) \<tau> A"
+  let ?B = "const_subst (c, x) \<tau> B"
+
+  have A_wff: "?A \<in> wffs\<^bsub>\<alpha>\<^esub>"
     by (simp add: assms(2) const_subst_wffs)
-  have B: "const_subst (c, x) \<tau> B \<in> wffs\<^bsub>\<delta>\<^esub> "
+  have B_wff: "?B \<in> wffs\<^bsub>\<delta>\<^esub> "
     by (simp add: assms(3) const_subst_wffs)
  
   have "(y, \<gamma>) \<notin> {(z, \<alpha>)}"
     using assms(4) by auto
   moreover
-  have "(y, \<gamma>) \<notin> vars (const_subst (c, x) \<tau> A)"
+  have "(y, \<gamma>) \<notin> vars ?A"
     using assms(4,5) in_var_const_subst[of y \<gamma>] by auto
   ultimately
-  have "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars (const_subst (c, x) \<tau> A)"
+  have "(y, \<gamma>) \<notin> {(z, \<alpha>)} \<union> vars ?A"
     by simp
   then show ?thesis
-    using const_subst_laws[OF assms(1)]
-    using axioms.axiom_4_4[of "const_subst (c, x) \<tau> A" \<alpha> "const_subst (c, x) \<tau> B" \<delta> y \<gamma> z]
-    using A B
-    by simp
+    using const_subst_laws[OF assms(1)] axioms.axiom_4_4[of ?A \<alpha> ?B \<delta> y \<gamma> z] A_wff B_wff by simp
 qed
 
 lemma axiom_4_5_const_subst:
@@ -2471,7 +2475,7 @@ next
     using axiom_3_const_subst by blast
 next
   case (axiom_4_1_con A \<alpha> z d \<beta>)
-  then have " (x, \<tau>) \<noteq> (z, \<alpha>)"
+  then have "(x, \<tau>) \<noteq> (z, \<alpha>)"
     by auto
   then show ?case
     using axiom_4_1_con_const_subst[OF axiom_4_1_con(2,1), of  x \<tau> z] by auto
@@ -2523,15 +2527,18 @@ next
     next
       case (FCon d)
       then show ?thesis
-        by (smt (verit) Cons.IH Cons.prems Left const_subst.simps(3,4) direction.distinct(1) is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI list.inject)
+        by (smt (verit) Cons.IH Cons.prems Left const_subst.simps(3,4) direction.distinct(1) 
+            is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI list.inject)
     next
       case (FApp B D)
       then show ?thesis
-        by (smt (verit, del_insts) Cons.IH Cons.prems Left const_subst.simps(3,4) is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI) 
+        by (smt (verit, del_insts) Cons.IH Cons.prems Left const_subst.simps(3,4) 
+            is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI) 
     next
       case (FAbs y B)
       then show ?thesis
-        by (smt (verit, del_insts) Cons.IH Cons.prems Left const_subst.simps(3,4) is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI)
+        by (smt (verit, del_insts) Cons.IH Cons.prems Left const_subst.simps(3,4) 
+            is_subform_at.elims(2) is_subform_at.simps(2,4) list.discI)
     qed
   next
     case Right
@@ -2539,19 +2546,23 @@ next
     proof (cases A)
       case (FVar y)
       then show ?thesis
-        by (smt (verit, best) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(2) is_subform_at.simps(3) list.discI list.inject)
+        by (smt (verit, best) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) 
+            is_subform_at.elims(2) is_subform_at.simps(3) list.discI list.inject)
     next
       case (FCon d)
       then show ?thesis
-        by (smt (verit, del_insts) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(2) is_subform_at.simps(3) list.discI list.inject)
+        by (smt (verit, del_insts) Cons.IH Cons.prems Right const_subst.simps(3) 
+            direction.distinct(1) is_subform_at.elims(2) is_subform_at.simps(3) list.discI list.inject)
     next
       case (FApp B D)
       then show ?thesis
-        by (smt (verit) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(1) is_subform_at.simps(3) list.inject)
+        by (smt (verit) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) 
+            is_subform_at.elims(1) is_subform_at.simps(3) list.inject)
     next
       case (FAbs y B)
       then show ?thesis
-        by (smt (verit) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) is_subform_at.elims(1) is_subform_at.simps(3) list.discI list.inject)
+        by (smt (verit) Cons.IH Cons.prems Right const_subst.simps(3) direction.distinct(1) 
+            is_subform_at.elims(1) is_subform_at.simps(3) list.discI list.inject)
     qed
   qed
 qed
@@ -2588,8 +2599,8 @@ proof -
   let ?C = "const_subst (c, x) \<tau> C"
   let ?E = "const_subst (c, x) \<tau> E" 
 
-  from assms(3) have "\<exists>\<alpha> A B. E = A =\<^bsub>\<alpha>\<^esub> B \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> A \<preceq>\<^bsub>p\<^esub> C \<and> D \<in> wffs\<^bsub>o\<^esub> \<and> C\<lblot>p \<leftarrow> B\<rblot> \<rhd> D"
-    unfolding is_rule_R_app_def by auto
+  have "\<exists>\<alpha> A B. E = A =\<^bsub>\<alpha>\<^esub> B \<and> A \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<and> A \<preceq>\<^bsub>p\<^esub> C \<and> D \<in> wffs\<^bsub>o\<^esub> \<and> C\<lblot>p \<leftarrow> B\<rblot> \<rhd> D"
+    unfolding is_rule_R_app_def using assms(3) by auto
   then obtain \<alpha> A B where 
     "E = A =\<^bsub>\<alpha>\<^esub> B"
     "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
@@ -2642,7 +2653,8 @@ proof (cases "S = []")
   then show ?thesis using assms by auto
 next
   case False
-  from False assms show ?thesis proof (induction "length S" arbitrary: S rule: less_induct)
+  from False assms show ?thesis 
+  proof (induction "length S" arbitrary: S rule: less_induct)
     case less
     let ?i' = "length S - 1"
     define A where "A = last S"
@@ -2675,45 +2687,38 @@ next
       let ?\<S>\<^sub>k = "take (Suc k) S"
       obtain \<S>\<^sub>j' and \<S>\<^sub>k' where "S = ?\<S>\<^sub>j @ \<S>\<^sub>j'" and "S = ?\<S>\<^sub>k @ \<S>\<^sub>k'"
         by (metis append_take_drop_id)
-      with \<open>is_proof S\<close> have "is_proof (?\<S>\<^sub>j @ \<S>\<^sub>j')" and "is_proof (?\<S>\<^sub>k @ \<S>\<^sub>k')"
-        by (simp_all only:)
-      moreover
-      from \<open>S = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> and \<open>S = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> and \<open>last S = A\<close> and \<open>{j, k} \<subseteq> {0..<length S - 1}\<close>
-      have "last \<S>\<^sub>j' = A" and "last \<S>\<^sub>k' = A"
-        using length_Cons and less_le_not_le and take_Suc and take_tl and append.right_neutral
-        by (metis atLeastLessThan_iff diff_Suc_1 insert_subset last_appendR take_all_iff)+
-      moreover from \<open>S \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
+       
+      from \<open>S \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
         by simp_all
-      ultimately have "is_proof_of ?\<S>\<^sub>j (last ?\<S>\<^sub>j)" and "is_proof_of ?\<S>\<^sub>k (last ?\<S>\<^sub>k)"
-        using proof_prefix_is_proof_of_last [where \<S> = ?\<S>\<^sub>j and \<S>' = \<S>\<^sub>j']
-        and proof_prefix_is_proof_of_last [where \<S> = ?\<S>\<^sub>k and \<S>' = \<S>\<^sub>k']
-        by fastforce+
-      moreover from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
+
       have "length ?\<S>\<^sub>j < length S" and "length ?\<S>\<^sub>k < length S"
-        using \<open>{j, k} \<subseteq> {0..<length S - 1}\<close> by force+
-      moreover from calculation(3,4) have "last ?\<S>\<^sub>j = S ! j" and "last ?\<S>\<^sub>k = S ! k"
+        using \<open>{j, k} \<subseteq> {0..<?i'}\<close> by force+
+      then have "last ?\<S>\<^sub>j = S ! j" and "last ?\<S>\<^sub>k = S ! k"
         by (metis Suc_lessD last_snoc linorder_not_le nat_neq_iff take_Suc_conv_app_nth take_all_iff)+
-      moreover
+
       have "is_proof (butlast S)"
         by (metis append_butlast_last_id less.prems(1,2) proof_prefix_is_proof)
       moreover
       have "P (butlast S)"
-        by (smt (verit, ccfv_SIG) calculation(7) diff_less length_butlast length_greater_0_conv less.hyps less.prems(1)
+        using less.prems(1) calculation(1) less.hyps
+        by (smt (verit, ccfv_SIG) diff_less length_butlast length_greater_0_conv 
             less_numeral_extra(1) p_axiom p_nil p_rule_R)
       moreover 
-      have "prefix ((take k S) @ [S ! k]) (butlast S)"
-        using calculation(4) less.prems(1) by (metis append_butlast_last_id  dual_order.irrefl le_SucI not_le_imp_less prefix_snoc
-            take_Suc_conv_app_nth take_all_iff take_is_prefix)
+      have "prefix ((butlast ?\<S>\<^sub>k) @ [S ! k]) (butlast S)"
+        using \<open>length ?\<S>\<^sub>k < length S\<close> less.prems(1)
+        by (metis \<open>S = take (Suc k) S @ \<S>\<^sub>k'\<close> \<open>last (take (Suc k) S) = S ! k\<close> \<open>take (Suc k) S \<noteq> []\<close> 
+            append_self_conv butlast_append nat_less_le prefix_def snoc_eq_iff_butlast)
       moreover
-      have "\<exists>S''. prefix (S'' @ [S ! j]) (butlast S)"
-        by (metis \<open>take (Suc j) S \<noteq> []\<close> append_butlast_last_id calculation(3,5) less.prems(1)
-            less_not_refl prefix_snoc take_is_prefix)
-      ultimately have "P (butlast S @ [S ! (length S - 1)])"
-        using \<open>is_rule_R_app p (S ! ?i') (S ! j) (S ! k)\<close> and \<open>S ! ?i' = A\<close>
-        using less(6)[of "butlast S" _ " (S ! k)" _ "(S ! j)" p " (S ! (length S - 1))"]
+      have "prefix ((butlast ?\<S>\<^sub>j) @ [S ! j]) (butlast S)"
+        by (metis \<open>S = take (Suc j) S @ \<S>\<^sub>j'\<close> \<open>last (take (Suc j) S) = S ! j\<close> \<open>take (Suc j) S \<noteq> []\<close> 
+            append_butlast_last_id \<open>length ?\<S>\<^sub>j < length S\<close> less.prems(1) nat_neq_iff prefixI prefix_snoc)
+      ultimately 
+      have "P (butlast S @ [S ! ?i'])"
+        using \<open>is_rule_R_app p (S ! ?i') (S ! j) (S ! k)\<close>
+          less(6)[of "butlast S" "butlast ?\<S>\<^sub>k" "(S ! k)" "butlast ?\<S>\<^sub>j" "(S ! j)" p "(S ! ?i')"]
         by auto
       then show ?thesis
-        using A_def \<open>S ! (length S - 1) = A\<close> less.prems(1) by auto
+        using A_def \<open>S ! ?i' = A\<close> less.prems(1) by auto
     qed
   qed
 qed
