@@ -3409,7 +3409,7 @@ proof -
       using fgx_5 by blast
     then have free_G: "is_free_for ({(\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! (\<gg>,  \<alpha> \<rightarrow> \<beta>)) (\<gg>, \<alpha> \<rightarrow> \<beta>)
           (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
-      using fgx
+      using fgx_1
       by auto
 
     have free_v: "is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! v) v
