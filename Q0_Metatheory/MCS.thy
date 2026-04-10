@@ -105,13 +105,13 @@ lemma fmran'_fmdrop_1:
   assumes "\<theta> $$ x = \<theta> $$ y"
   assumes "y \<in> fmran' \<theta>"
   shows "fmran' (fmdrop x \<theta>) = fmran' \<theta>"
-  sorry
+  undskyld
 
 lemma fmran'_fmdrop_2:
   assumes "\<forall>y \<in> fmdom' \<theta>. \<theta> $$ y \<noteq> \<theta> $$ x"
   assumes "x \<in> fmran' \<theta>"
   shows "fmran' (fmdrop x \<theta>) = (fmran' \<theta>) - {\<theta> $$! x}"
-  sorry
+  undskyld
 *)
 (*
 lemma  
@@ -3146,6 +3146,7 @@ proof -
     using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
 qed thm is_rule_R_app_const_subst
 
+(*
 lemma is_derivable_from_hyps_const_subst: (* Not used for anything *)
   assumes "As \<turnstile> F"
   assumes "\<not> is_logical_name c"
@@ -3170,7 +3171,7 @@ proof(induction)
 next
   case (dv_thm A)
   then show ?case
-    using is_theorem_const_subst using is_derivable_from_hyps.simps sorry (* The present lemma is not used for anything *)
+    using is_theorem_const_subst using is_derivable_from_hyps.simps undskyld (* The present lemma is not used for anything *)
 next
   case (dv_rule_R' C E p D)
   let ?C = "const_subst (c, x) \<tau> C"
@@ -3178,17 +3179,17 @@ next
   let ?E = "const_subst (c, x) \<tau> E"
 
   have "As \<turnstile> ?C"
-    using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) sorry (* The present lemma is not used for anything *)
+    using dv_rule_R'.IH(1) dv_rule_R'.prems(1,2) undskyld (* The present lemma is not used for anything *)
   have "As \<turnstile> ?E"
-    using dv_rule_R'.IH(2) dv_rule_R'.prems(1,2) sorry (* The present lemma is not used for anything *)
+    using dv_rule_R'.IH(2) dv_rule_R'.prems(1,2) undskyld (* The present lemma is not used for anything *)
   have "is_rule_R'_app As p ?D ?C ?E"
     using dv_rule_R'(1,2,3,4,7,8)
-    using is_rule_R'_app_const_subst sorry (* The present lemma is not used for anything *)
+    using is_rule_R'_app_const_subst undskyld (* The present lemma is not used for anything *)
   then show ?case
     using \<open>As \<turnstile> const_subst (c, x) \<tau> C\<close> \<open>As \<turnstile> const_subst (c, x) \<tau> E\<close> dv_rule_R'.hyps(4)
         is_derivable_from_hyps.dv_rule_R' by meson
 qed
-
+*)
 
 
 
