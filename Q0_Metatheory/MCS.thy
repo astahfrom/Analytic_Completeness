@@ -2781,7 +2781,6 @@ next
   let ?E = "const_subst (c, x) \<tau> E"
 
   let ?S = "const_subst_proof (c, x) \<tau> S"
-  let ?SD = "const_subst_proof (c, x) \<tau> (S @ [D])"
   let ?S' = "const_subst_proof (c, x) \<tau> S'"
   let ?S'E = "const_subst_proof (c, x) \<tau> (S' @ [E])"
   let ?S'' = "const_subst_proof (c, x) \<tau> S''"
@@ -2794,20 +2793,20 @@ next
     by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(3))
   have "prefix ?S'E ?S"
     by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(2))
-  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [?E]) (const_subst_proof (c, x) \<tau> S)"
-    using \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by fastforce
+  have pre': "prefix (?S' @ [?E]) ?S"
+    using \<open>prefix (?S'E) ?S\<close> const_subst_proof_def by fastforce
 
-  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [?C]) (const_subst_proof (c, x) \<tau> S)"
-    using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by force
+  have pre'': "prefix (?S'' @ [?C]) ?S"
+    using \<open>prefix (?S''C) ?S\<close> const_subst_proof_def by force
 
   have "is_proof ?S''C"
-    by (metis \<open>is_proof (const_subst_proof (c, x) \<tau> S)\<close>
-        \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> prefixE
+    by (metis \<open>is_proof ?S\<close>
+        \<open>prefix (?S''C) ?S\<close> prefixE
         proof_prefix_is_proof) 
   
   have "is_proof ?S'E"
-    by (metis \<open>is_proof (const_subst_proof (c, x) \<tau> S)\<close>
-        \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> prefixE
+    by (metis \<open>is_proof ?S\<close>
+        \<open>prefix (?S'E) ?S\<close> prefixE
         proof_prefix_is_proof)
 
   have varsD: "(x, \<tau>) \<notin> vars D"
@@ -2836,7 +2835,7 @@ next
     by auto
 
   show ?case
-    using is_proof_R_intro[OF \<open>is_rule_R_app p ?D ?C ?E\<close> \<open>is_proof ?S\<close>, of ?S' ?S'', OF P1 P2]
+    using is_proof_R_intro[OF \<open>is_rule_R_app p ?D ?C ?E\<close> \<open>is_proof ?S\<close>, of ?S' ?S'', OF pre' pre'']
     by (simp add: const_subst_proof_def)
 qed
 
@@ -2863,8 +2862,7 @@ proof -
     by (simp add: \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close> const_subst_proof_def last_map)
 
   show ?thesis
-    using \<open>const_subst_proof (c, x) \<tau> \<S> \<noteq> []\<close> \<open>is_proof (const_subst_proof (c, x) \<tau> \<S>)\<close>
-      \<open>last (const_subst_proof (c, x) \<tau> \<S>) = ?A\<close> by blast
+    using \<open>?\<S> \<noteq> []\<close> \<open>is_proof ?\<S>\<close> \<open>last ?\<S> = ?A\<close> by blast
 qed
 
 lemma finite_vars\<^sub>p: "finite (vars\<^sub>p \<S>)"
@@ -2875,18 +2873,13 @@ proof (induction \<S>)
 next
   case (Cons a \<S>)
   then show ?case
-    unfolding vars\<^sub>p_def
-    apply auto
-    using vars_form_finiteness by auto
+    unfolding vars\<^sub>p_def using vars_form_finiteness by auto
 qed
 
 lemma finite_vars\<^sub>p_fst: "finite (fst ` (vars\<^sub>p \<S>))"
   by (simp add: finite_vars\<^sub>p)
 
-lemma "\<exists>x. x \<notin>(fst ` (vars\<^sub>p \<S>))"
-  by (meson dual_order.refl finite_vars\<^sub>p_fst infinite_nat_iff_unbounded_le)
-
-lemma avoider:
+lemma avoid_vars\<^sub>p:
   shows "\<exists>x. \<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
   by (metis ex_new_if_finite finite_vars\<^sub>p_fst fst_eqD image_iff infinite_UNIV_nat)
 
@@ -2904,15 +2897,10 @@ proof -
     unfolding is_proof_of_def by auto
 
   obtain x where avoid_S: "(x, \<tau>) \<notin> vars\<^sub>p \<S>"
-    using avoider by auto
+    using avoid_vars\<^sub>p by auto
 
   then have avoid_A: "(x, \<tau>) \<notin> vars A"
-    apply auto
-    using \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close>
-    apply auto
-    unfolding vars\<^sub>p_def
-    apply auto
-    done
+    using \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close> unfolding vars\<^sub>p_def by auto
     
 
   let ?A = "const_subst (c, x) \<tau> A"
@@ -2929,46 +2917,41 @@ proof -
     unfolding is_theorem_def using \<open>(x, \<tau>) \<notin> vars A\<close> \<open>is_theorem ?A\<close> by blast
 qed
 
-lemma nice1:
-  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
-  shows "free_vars (const_subst (c, x) \<tau> E) = free_vars E \<or> free_vars (const_subst (c, x) \<tau> E) = free_vars E \<union> {(x, \<tau>)}"
+lemma fresh_free_vars_const_subst:
+  assumes "(x, \<tau>) \<notin> vars A"
+  shows "free_vars (const_subst (c, x) \<tau> A) = free_vars A \<or> free_vars (const_subst (c, x) \<tau> A) = free_vars A \<union> {(x, \<tau>)}"
   using assms
-proof (induction E)
+proof (induction A)
   case (FVar y)
   then show ?case
     by (metis const_subst.simps(1) surj_pair)
 next
   case (FCon y)
   then show ?case
-    by (metis Un_empty Un_insert_right const_subst.simps(2) form.distinct(1,7,9) free_vars_form.simps(1) vars_form.elims
-        vars_is_free_and_bound_vars)
+    by (metis Un_empty Un_insert_right const_subst.simps(2) form.distinct(1,7,9) 
+        free_vars_form.simps(1) vars_form.elims vars_is_free_and_bound_vars)
 next
-  case (FApp E1 E2)
+  case (FApp A B)
   then show ?case
-    by (smt (verit) UnCI const_subst.simps(3) free_vars_form.simps(3) sup.idem sup_assoc sup_commute vars_form.simps(3))
+    by (smt (verit) UnCI const_subst.simps(3) free_vars_form.simps(3) sup.idem sup_assoc sup_commute 
+        vars_form.simps(3))
 next
-  case (FAbs y1a E)
-  define y where "y = fst y1a"
-  define a where "a = snd y1a"
-  have ua: "y1a = (y,a)"
-    unfolding y_def a_def
-    by auto
+  case (FAbs y\<alpha> A)
+  define y where "y = fst y\<alpha>"
+  define \<alpha> where "\<alpha> = snd y\<alpha>"
+  have y\<alpha>_def: "y\<alpha> = (y,\<alpha>)"
+    unfolding y_def \<alpha>_def by auto
 
-  have " (x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
-    using FAbs.prems ua by fastforce
-  have "free_vars (const_subst (c, x) \<tau> E) = free_vars E \<or> free_vars (const_subst (c, x) \<tau> E) = free_vars E \<union> {(x, \<tau>)}"
-    using FAbs.IH \<open>(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E\<close> by linarith
+  then have "(x, \<tau>) \<notin> vars A"
+    using FAbs.prems by fastforce
+  have "free_vars (const_subst (c, x) \<tau> A) = free_vars A \<or> free_vars (const_subst (c, x) \<tau> A) = free_vars A \<union> {(x, \<tau>)}"
+    using FAbs.IH \<open>(x, \<tau>) \<notin> vars A\<close> by linarith
 
-  show ?case
-    apply simp
-    unfolding ua
-    apply simp
-    using \<open>free_vars (const_subst (c, x) \<tau> E) = free_vars E \<or> free_vars (const_subst (c, x) \<tau> E) = free_vars E \<union> {(x, \<tau>)}\<close> by blast
+  then show ?case
+    unfolding y\<alpha>_def by auto
 qed  
 
-find_theorems positions binders_at
-
-lemma nice2_helper:
+lemma const_subst_binders_at:
   assumes "p \<in> positions C"
   shows "binders_at (const_subst (c, x) \<tau> C) p = binders_at C p"
   using assms
@@ -3011,41 +2994,40 @@ next
     by (simp add: position_subform_existence_equivalence)
 qed
 
-lemma nice3: 
+lemma in_binders_at_in_vars: 
   assumes "p \<in> positions C"
-  assumes "C' = const_subst (c, x) \<tau> C"
-  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
-  shows "(x, \<tau>) \<notin> binders_at C p"
-  by (metis UnCI assms(1,3) is_bound_at_in_bound_vars vars_is_free_and_bound_vars)
+  assumes "(x, \<tau>) \<in> binders_at C p"
+  shows "(x, \<tau>) \<in> vars C"
+  using is_bound_at_in_bound_vars vars_is_free_and_bound_vars assms
+  by (metis UnCI)
 
-lemma nice4:
+lemma const_subst_preserves_binders_at:
   assumes "p \<in> positions C"
   assumes "C' = const_subst (c, x) \<tau> C"
-  assumes "E' = const_subst (c, x) \<tau> E"
   shows "binders_at C p = binders_at C' p"
-  by (simp add: assms(1,2) nice2_helper)
+  by (simp add: assms(1,2) const_subst_binders_at)
 
 lemma helpful':
   assumes "p \<in> positions C"
   assumes "C' = const_subst (c, x) \<tau> C"
   assumes "E' = const_subst (c, x) \<tau> E"
-  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "(x, \<tau>) \<notin> vars C \<union> vars E"
   shows "capture_exposed_vars_at p C E = capture_exposed_vars_at p C' E'"
 proof -
   have a: "p \<in> positions C'"
     by (metis assms(1,2) is_replacement_at_existence is_replacement_at_implies_in_positions is_replacement_at_const_subst)
 
   have "free_vars E' = free_vars E \<or> free_vars E' = free_vars E \<union> {(x, \<tau>)}"
-    using assms nice1 by metis
+    using assms fresh_free_vars_const_subst by auto 
   moreover
   have "(x, \<tau>) \<notin> binders_at C' p"
-    using assms nice3 nice2_helper by metis
+    using assms in_binders_at_in_vars const_subst_binders_at by auto
   moreover
   have "(x, \<tau>) \<notin> binders_at C p"
-    using assms nice3 by metis
+    using assms in_binders_at_in_vars by auto
   moreover
   have "binders_at C p = binders_at C' p"
-    using assms nice4 by metis
+    using assms const_subst_preserves_binders_at by metis
   ultimately
   show ?thesis
     using capture_exposed_vars_at_alt_def[OF assms(1), of E]
@@ -3055,23 +3037,23 @@ qed
 lemma helpful'':
   assumes "p \<in> positions C"
   assumes "C' = const_subst (c, x) \<tau> C"
-  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "(x, \<tau>) \<notin> vars C \<union> vars E"
   shows "capture_exposed_vars_at p C As = capture_exposed_vars_at p C' As"
 proof -
   have a: "p \<in> positions C'"
     by (metis assms(1,2) is_replacement_at_existence is_replacement_at_implies_in_positions is_replacement_at_const_subst)
 
   have "free_vars E = free_vars E \<or> free_vars E = free_vars E \<union> {(x, \<tau>)}"
-    using assms nice1 by metis
+    using assms fresh_free_vars_const_subst by metis
   moreover
   have "(x, \<tau>) \<notin> binders_at C' p"
-    using assms nice3 nice2_helper by metis
+    using assms in_binders_at_in_vars const_subst_binders_at by auto
   moreover
   have "(x, \<tau>) \<notin> binders_at C p"
-    using assms nice3 by metis
+    using assms in_binders_at_in_vars by auto
   moreover
   have "binders_at C p = binders_at C' p"
-    using assms nice4 by metis
+    using assms const_subst_preserves_binders_at by metis
   ultimately
   show ?thesis
     using capture_exposed_vars_at_alt_def[OF assms(1), of As]
@@ -3082,11 +3064,10 @@ lemma helpful: (* TODO *)
   assumes "p \<in> positions C"
   assumes "capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at p C As = {}"
   assumes "C' = const_subst (c, x) \<tau> C"
-  assumes "D' = const_subst (c, x) \<tau> D"
   assumes "E' = const_subst (c, x) \<tau> E"
-  assumes "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
+  assumes "(x, \<tau>) \<notin> vars C \<union> vars E"
   shows "capture_exposed_vars_at p C' E' \<inter> capture_exposed_vars_at p C' As = {}"
-  using assms helpful'[OF assms(1,3,5,6)] helpful''[OF assms(1,3)]  by metis
+  using assms helpful' helpful'' by metis
 
 lemma is_rule_R'_app_const_subst:
   assumes "C' = (const_subst (c, x) \<tau> C)"
@@ -3111,7 +3092,9 @@ proof -
     unfolding rule_R'_side_condition_def
     using assms(1,2,3,7,8)
     using helpful
-    by (metis \<open>is_rule_R_app p D C E\<close> is_replacement_at_implies_in_positions is_rule_R_app_def)
+    using \<open>is_rule_R_app p D C E\<close> is_replacement_at_implies_in_positions is_rule_R_app_def
+    by (metis (no_types, lifting) UnCI sup.assoc)
+
   show ?thesis
     using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
 qed
@@ -3668,7 +3651,7 @@ using assms proof (induction rule: is_hyp_proof_induct_THE_REAL_ONE)
     by (simp add: const_subst_proof_def)
 next
   case (hp_hyp A \<S>\<^sub>2)
-  from this(5) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
+  from hp_hyp(5) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
     unfolding vars\<^sub>p_def by auto
   from this hp_hyp have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
     by auto
@@ -3694,21 +3677,21 @@ next
   let ?D = "const_subst (c, x) \<tau> D"
   let ?E = "const_subst (c, x) \<tau> E"
 
-  let ?S = "const_subst_proof (c, x) \<tau> \<S>\<^sub>2"
-  let ?SD = "const_subst_proof (c, x) \<tau> (\<S>\<^sub>2 @ [D])"
+  let ?\<S>\<^sub>2 = "const_subst_proof (c, x) \<tau> \<S>\<^sub>2"
+  let ?\<S>\<^sub>2D = "const_subst_proof (c, x) \<tau> (\<S>\<^sub>2 @ [D])"
   let ?S' = "const_subst_proof (c, x) \<tau> S'"
   let ?S'E = "const_subst_proof (c, x) \<tau> (S' @ [E])"
   let ?S'' = "const_subst_proof (c, x) \<tau> S''"
   let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
   let ?Ts' = "const_subst_proof (c, x) \<tau> Ts"
 
-  have "is_hyp_proof (lset As) ?Ts' ?S"
+  have "is_hyp_proof (lset As) ?Ts' ?\<S>\<^sub>2"
     using hp_rule_R'.IH hp_rule_R'.prems vars\<^sub>p_def by auto
 
-  have "prefix ?S''C ?S"
+  have "prefix ?S''C ?\<S>\<^sub>2"
     by (metis const_subst_proof_def hp_rule_R'.hyps(2) map_mono_prefix)
 
-  have "prefix ?S'E ?S"
+  have "prefix ?S'E ?\<S>\<^sub>2"
     by (metis const_subst_proof_def hp_rule_R'.hyps(1) map_mono_prefix)
 
   have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [const_subst (c, x) \<tau> E]) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
@@ -3756,7 +3739,7 @@ next
     by (metis hp_rule_R'.hyps(3))
 
   show ?case
-    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?S\<close>, of ?S' ?S'', OF P1 P2]
+    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?\<S>\<^sub>2\<close>, of ?S' ?S'', OF P1 P2]
     by (simp add: const_subst_proof_def)
 qed
 
