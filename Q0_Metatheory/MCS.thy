@@ -2641,6 +2641,10 @@ qed
 definition const_subst_proof where 
   "const_subst_proof cx \<tau> S = map (const_subst cx \<tau>) S"
 
+lemma nil_is_proof:
+  "is_proof []"
+  by simp
+
 thm theorem_is_derivable_form (* The proof is adapted from the proof of theorem_is_derivable_form *)
 lemma is_proof_induct [consumes 1, case_names p_nil p_axiom p_rule_R]:
   assumes "is_proof S"
@@ -2671,13 +2675,26 @@ next
     then show ?case
     proof cases
       case axiom
-      with \<open>S ! ?i' = A\<close> have "P (butlast S @ [A])"
-        using less(5)[of A "butlast S"]
-        using append_butlast_last_id diff_less gr0I length_0_conv length_butlast less.hyps less.prems(1,2)
-            less_numeral_extra(1) p_axiom p_nil p_rule_R proof_but_last_is_proof
-        by (metis (no_types, lifting))
-      then show ?thesis using \<open>S ! ?i' = A\<close>
-        by (simp add: A_def less.prems(1))
+      then show ?thesis
+      proof (cases "butlast S = []")
+        case True
+        then show ?thesis
+          using nil_is_proof axiom p_axiom p_nil
+          by (metis append_butlast_last_id last_conv_nth)
+      next
+        case False
+        have A: "length (butlast S) < length S"
+          using less.prems(1) by (simp)
+        have B: "butlast S \<noteq> []"
+          using False .
+        have C: "is_proof (butlast S)"
+          by (metis append_butlast_last_id less.prems(1,2) proof_prefix_is_proof)
+        have "P (butlast S)"
+          using less.hyps(1)[of "butlast S", OF A B C]
+          using assms by auto
+        then show ?thesis
+          by (metis C axiom last_conv_nth less.prems(1) p_axiom snoc_eq_iff_butlast)
+      qed
     next
       case rule_R
       then obtain p and j and k
@@ -2845,8 +2862,6 @@ next
     using is_proof_R_intro[OF \<open>is_rule_R_app p ?D ?C ?E\<close> \<open>is_proof ?S\<close>, of ?S' ?S'', OF P1 P2]
     by (simp add: const_subst_proof_def)
 qed
-(* TODO AND WARNING:
-   ON SOME OF THE FOLLOWING I DID NOT PUT "x IS FRESH". That must be needed. *)
 
 lemma is_proof_of_const_subst:
   assumes "is_proof_of \<S> A"
