@@ -2281,7 +2281,7 @@ lemma cons_form_non_lnames: \<open>c \<in> logical_names \<Longrightarrow> c \<n
   by (induction A)
     (auto split: if_splits)
 
-lemma const_subst_axiom:
+lemma const_subst_axiom_if_no_c:
   assumes \<open>c \<notin> cons_form A\<close>
     and \<open>\<not> is_logical_name c\<close> 
     and \<open>A \<in> axioms\<close>
@@ -2452,10 +2452,10 @@ lemma axiom_4_5_const_subst:
 lemma axiom_5_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   shows "const_subst (c, x) \<tau> (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub>) \<in> axioms"
-  by (metis Q_constant_of_type_def Q_def assms axioms.axiom_5 cons_form.simps(1,2,3) const_subst_axiom empty_iff equality_of_type_def
+  by (metis Q_constant_of_type_def Q_def assms axioms.axiom_5 cons_form.simps(1,2,3) const_subst_axiom_if_no_c empty_iff equality_of_type_def
       iota_constant_def iota_def logical_name_simps(1,2) sup_bot.right_neutral)
 
-lemma const_subst_axiom2:
+lemma const_subst_axiom:
   assumes \<open>\<not> is_logical_name c\<close> 
     and \<open>(x,\<tau>) \<notin> vars A\<close>
     and \<open>A \<in> axioms\<close>
@@ -2654,7 +2654,7 @@ lemma is_proof_induct [consumes 1, case_names p_nil p_axiom p_rule_R]:
   shows "P S"
 proof (cases "S = []")
   case True
-  then show ?thesis using assms by auto
+  then show ?thesis using p_nil by auto
 next
   case False
   from False assms show ?thesis 
@@ -2676,24 +2676,23 @@ next
     proof cases
       case axiom
       then show ?thesis
-      proof (cases "butlast S = []")
+      proof (cases "S = [A]")
         case True
         then show ?thesis
-          using nil_is_proof axiom p_axiom p_nil
-          by (metis append_butlast_last_id last_conv_nth)
+          using nil_is_proof axiom p_axiom p_nil by (metis \<open>S ! (length S - 1) = A\<close> append_self_conv2)
       next
         case False
-        have A: "length (butlast S) < length S"
+        have len: "length (butlast S) < length S"
           using less.prems(1) by (simp)
-        have B: "butlast S \<noteq> []"
-          using False .
-        have C: "is_proof (butlast S)"
-          by (metis append_butlast_last_id less.prems(1,2) proof_prefix_is_proof)
+        have non_empt: "butlast S \<noteq> []"
+          using False by (metis A_def append_butlast_last_id append_self_conv2 less.prems(1))
+        have prove: "is_proof (butlast S)"
+          by (metis append_butlast_last_id less.prems(1,2) proof_but_last_is_proof)
         have "P (butlast S)"
-          using less.hyps(1)[of "butlast S", OF A B C]
+          using less.hyps(1)[of "butlast S", OF len non_empt prove]
           using assms by auto
         then show ?thesis
-          by (metis C axiom last_conv_nth less.prems(1) p_axiom snoc_eq_iff_butlast)
+          using less.prems(1) p_axiom prove axiom by (metis last_conv_nth snoc_eq_iff_butlast)
       qed
     next
       case rule_R
@@ -2776,7 +2775,8 @@ lemma is_proof_const_subst:
   assumes "c \<notin> logical_names"
   assumes "(x, \<tau>) \<notin> vars\<^sub>p \<S>"
   shows "is_proof (const_subst_proof (c,x) \<tau> \<S>)"
-using assms proof (induction rule: is_proof_induct)
+  using assms 
+proof (induction rule: is_proof_induct)
   case p_nil
   then show ?case
     by (simp add: const_subst_proof_def)
@@ -2790,13 +2790,12 @@ next
     using p_axiom unfolding vars\<^sub>p_def
     by auto
   have "const_subst (c,x) \<tau> A \<in> axioms"
-    using const_subst_axiom2
-    using \<open>(x, \<tau>) \<notin> vars A\<close> p_axiom.hyps(1) p_axiom.prems(1) by auto
+    using const_subst_axiom \<open>(x, \<tau>) \<notin> vars A\<close> p_axiom.hyps(1) p_axiom.prems(1) by auto
   have "is_proof ((const_subst_proof (c,x) \<tau> S) @ [const_subst (c,x) \<tau> A])"
-    by (metis \<open>const_subst (c,x) \<tau> A \<in> axioms\<close> \<open>is_proof (const_subst_proof (c,x) \<tau> S)\<close> axiom_appended_to_proof_is_proof)
+    by (metis \<open>const_subst (c,x) \<tau> A \<in> axioms\<close> \<open>is_proof (const_subst_proof (c,x) \<tau> S)\<close> 
+        axiom_appended_to_proof_is_proof)
   then show ?case
-    using p_axiom
-    using const_subst_proof_def by auto
+    using p_axiom const_subst_proof_def by auto
 next
   case (p_rule_R S S' E S'' C p D)
   let ?C = "const_subst (c, x) \<tau> C"
@@ -2817,10 +2816,10 @@ next
     by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(3))
   have "prefix ?S'E ?S"
     by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(2))
-  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [const_subst (c, x) \<tau> E]) (const_subst_proof (c, x) \<tau> S)"
+  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [?E]) (const_subst_proof (c, x) \<tau> S)"
     using \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by fastforce
 
-  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [const_subst (c, x) \<tau> C]) (const_subst_proof (c, x) \<tau> S)"
+  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [?C]) (const_subst_proof (c, x) \<tau> S)"
     using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> S)\<close> const_subst_proof_def by force
 
   have "is_proof ?S''C"
@@ -2887,7 +2886,7 @@ proof -
 
   show ?thesis
     using \<open>const_subst_proof (c, x) \<tau> \<S> \<noteq> []\<close> \<open>is_proof (const_subst_proof (c, x) \<tau> \<S>)\<close>
-      \<open>last (const_subst_proof (c, x) \<tau> \<S>) = const_subst (c, x) \<tau> A\<close> by blast
+      \<open>last (const_subst_proof (c, x) \<tau> \<S>) = ?A\<close> by blast
 qed
 
 lemma finite_vars\<^sub>p: "finite (vars\<^sub>p \<S>)"
