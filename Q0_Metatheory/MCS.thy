@@ -1432,57 +1432,56 @@ section \<open>Derivational Consistency\<close>
 definition is_consistent_set :: "form set \<Rightarrow> bool" where
   [iff]: "is_consistent_set \<G> \<longleftrightarrow> is_hyps \<G> \<and> \<not> is_inconsistent_set \<G>"
 
-interpretation DC: Weak_Derivational_Confl map_con cons_form is_param confl_class \<open>is_consistent_set \<circ> lset\<close>
+interpretation DC: Derivational_Confl map_con cons_form is_param confl_class is_consistent_set
 proof
   fix H ps qs q
-  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> and *: \<open>lset ps \<subseteq> lset H\<close> \<open>q \<in> lset qs\<close> \<open>q \<in> lset H\<close>
-  then show \<open>\<not> (is_consistent_set \<circ> lset) H\<close>
+  assume \<open>ps \<leadsto>\<^sub>\<crossmark> qs\<close> and *: \<open>lset ps \<subseteq> H\<close> \<open>q \<in> lset qs\<close> \<open>q \<in> H\<close>
+  then show \<open>\<not> is_consistent_set H\<close>
   proof cases
     case CFalse
-    then have \<open>F\<^bsub>o\<^esub> \<in> lset H\<close>
+    then have \<open>F\<^bsub>o\<^esub> \<in> H\<close>
       using * by simp
     then show ?thesis
       using dv_hyp by simp
   next
     case CTrue
-    then have \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<in> lset H\<close>
+    then have \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<in> H\<close>
       using * by simp
     then show ?thesis
       using dv_hyp prop_5219_2
-      by (metis comp_apply equality_of_type_def false_wff is_consistent_set_def is_inconsistent_set_def neg_def)
+      by (metis equality_of_type_def false_wff is_consistent_set_def is_inconsistent_set_def neg_def)
   next
     case (CNot A)
-    then show ?thesis
-    proof safe
-      assume H: \<open>(is_consistent_set \<circ> lset) H\<close>
-      from CNot have \<open>\<sim>\<^sup>\<Q> A \<in> lset H\<close> \<open>A \<in> lset H\<close>
+    show ?thesis
+    proof
+      assume H: \<open>is_consistent_set H\<close>
+      from CNot have \<open>\<sim>\<^sup>\<Q> A \<in> H\<close> \<open>A \<in> H\<close>
         using * by simp_all
-      then have \<open>lset H \<turnstile> \<sim>\<^sup>\<Q> A\<close> \<open>lset H \<turnstile> A\<close>
+      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> A\<close> \<open>H \<turnstile> A\<close>
         using dv_hyp H by auto
-      then have \<open>lset H \<turnstile> F\<^bsub>o\<^esub>\<close>
+      then have \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
         using H prop_5201_1 prop_5201_2
-        by (metis equality_of_type_def equivalence_def neg_def )
+        by (metis equality_of_type_def equivalence_def neg_def)
       then show False
         using H by simp
     qed
   next
     case (CIrr A \<alpha>)
-    then show ?thesis
-    proof safe
-      assume H: \<open>(is_consistent_set \<circ> lset) H\<close>
-      with CIrr have \<open>lset H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
+    show ?thesis
+    proof
+      assume H: \<open>is_consistent_set H\<close>
+      with CIrr have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
         using *(1) dv_hyp by auto
-      then have \<open>lset H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
+      then have \<open>H \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
         by auto
-      then have \<open>lset H \<turnstile> F\<^bsub>o\<^esub>\<close>
+      then have \<open>H \<turnstile> F\<^bsub>o\<^esub>\<close>
         using H *(1) prop_5201_1 prop_5201_2 hyp_prop_5200
-        by (metis is_consistent_set_def equality_of_type_def comp_apply CIrr(3) neg_def equivalence_def)
+        by (metis is_consistent_set_def equality_of_type_def CIrr(3) neg_def equivalence_def)
       then show False
         using H by simp
     qed
   qed
 qed
-
 
 subsection \<open>Conjunctive Consistency\<close>
 
@@ -1826,14 +1825,14 @@ proof -
     by simp
 qed
 
-interpretation DA: Weak_Derivational_Alpha map_con cons_form is_param alpha_class "is_consistent_set \<circ> lset"
+interpretation DA: Derivational_Alpha map_con cons_form is_param alpha_class is_consistent_set
 proof(standard)
   fix Hs
     and ps qs :: \<open>form list\<close>
   assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
-    and sub: \<open>lset ps \<subseteq> lset Hs\<close>
-    and consistent: \<open>(is_consistent_set \<circ> lset) Hs\<close>
-  hence well_formed: \<open>(lset qs \<union> lset Hs) \<subseteq> wffs\<^bsub>o\<^esub>\<close>
+    and sub: \<open>lset ps \<subseteq> Hs\<close>
+    and consistent: \<open>is_consistent_set Hs\<close>
+  hence well_formed: \<open>(lset qs \<union> Hs) \<subseteq> wffs\<^bsub>o\<^esub>\<close>
   proof(cases)
     case (CEqvP A B)
     then show ?thesis
@@ -1849,8 +1848,8 @@ proof(standard)
   next
     case (CTrans A \<alpha> B C)
     then show ?thesis
-      using consistent
-      by (metis comp_apply equality_wff insert_subset is_consistent_set_def le_sup_iff
+      using consistent unfolding is_consistent_set_def
+      by (metis equality_wff insert_subset le_sup_iff
           list.simps(15) sub subset_trans wffs_from_equality(2))
   next
     case (CCong A \<alpha> B C \<beta>)
@@ -1864,64 +1863,58 @@ proof(standard)
     case (CSubst A \<alpha> B \<beta> x)
     then show ?thesis
       using consistent prop_5207
-      by (metis closed_is_free_for comp_apply empty_set hyp_derivable_form_is_wffso insert_subset is_consistent_set_def
+      by (metis closed_is_free_for empty_set hyp_derivable_form_is_wffso insert_subset is_consistent_set_def
           is_derivable_from_hyps.cases le_sup_iff list.simps(15))
   qed
-  moreover have \<open>finite (lset qs \<union> lset Hs)\<close>
-    by simp
-  ultimately have \<open>is_hyps (lset qs \<union> lset Hs)\<close>
+  moreover have \<open>finite (lset qs \<union> Hs)\<close>
+    using consistent by simp
+  ultimately have \<open>is_hyps (lset qs \<union> Hs)\<close>
     unfolding is_consistent_set_def ..
   from \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
-  have \<open>\<forall>F \<in> lset qs. lset Hs \<turnstile> F\<close>
+  have \<open>\<forall>F \<in> lset qs. Hs \<turnstile> F\<close>
   proof(cases)
     case (CEqvP A B)
       (* It seemed clean to only use negation and implication, but maybe these are too annoying to prove. *)
     then show ?thesis
-      using consistent prop_5241
-      by (metis derive_rule(5,6) empty_iff empty_set le_sup_iff 
-          list.set_finite list.simps(15) set_ConsD sub well_formed)
+      using consistent prop_5241 consistent unfolding is_consistent_set_def
+      by (metis derive_rule(5,6) empty_iff empty_set list.simps(15) set_ConsD sub)
   next
     case (CEqvN A B)
     then show ?thesis
-      using consistent prop_5241
-      by (metis derive_rule(7,8) empty_iff empty_set le_sup_iff 
-          list.set_finite list.simps(15) set_ConsD sub well_formed)
+      using consistent prop_5241 consistent unfolding is_consistent_set_def
+      by (metis derive_rule(7,8) empty_iff empty_set list.simps(15) set_ConsD sub)
   next
     case (CImpN A B)
     then show ?thesis
-      using consistent prop_5241
-      by (metis derive_rule(3,4) empty_iff empty_set le_sup_iff 
-          list.set_finite list.simps(15) set_ConsD sub well_formed)
+      using consistent prop_5241 consistent unfolding is_consistent_set_def
+      by (metis derive_rule(3,4) empty_iff empty_set list.simps(15) set_ConsD sub)
   next
     case (CTrans A \<alpha> B C)
     then show ?thesis
-      using consistent \<open>is_hyps (lset qs \<union> lset Hs)\<close> prop_5201_2 prop_5201_3
+      using consistent \<open>is_hyps (lset qs \<union> Hs)\<close> prop_5201_2 prop_5201_3
       by (metis sub set_ConsD le_sup_iff list.set_intros(1-2)finite_Un subset_code(1) dv_hyp)
   next
     case (CCong A \<alpha> B C \<beta>)
-    then show ?thesis using consistent \<open>is_hyps (lset qs \<union> lset Hs)\<close> prop_5201_6
+    then show ?thesis using consistent \<open>is_hyps (lset qs \<union> Hs)\<close> prop_5201_6
       by (metis sub set_ConsD list.set_cases insert_subset dv_hyp list.simps(15) list.discI sup.boundedE infinite_Un)
   next
     case (CIota A)
      then show ?thesis
-      using axiom_5_wff
-      by (metis derivability_implies_hyp_derivability empty_iff empty_set le_sup_iff list.set_finite set_ConsD
-          well_formed)
+      using axiom_5_wff consistent unfolding is_consistent_set_def
+      by (metis derivability_implies_hyp_derivability empty_iff empty_set set_ConsD)
   next
     case (CSubst A \<alpha> B \<beta> x)
     then show ?thesis
-      using prop_5207
-      by (metis closed_is_free_for derivability_implies_hyp_derivability empty_iff empty_set le_sup_iff list.set_finite
-          set_ConsD well_formed)
+      using prop_5207 consistent unfolding is_consistent_set_def
+      by (metis closed_is_free_for derivability_implies_hyp_derivability empty_iff empty_set set_ConsD)
   qed
-  have \<open>is_consistent_set (lset qs \<union> lset Hs)\<close>
-    by (metis \<open>\<forall>F\<in>lset qs. lset Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> lset Hs)\<close> well_formed
-        comp_apply consistent finite_Un generalized_deduction_theorem generalized_modus_ponens
+  have \<open>is_consistent_set (lset qs \<union> Hs)\<close>
+    by (metis \<open>\<forall>F\<in>lset qs. Hs \<turnstile> F\<close> \<open>finite (lset qs \<union> Hs)\<close> well_formed
+        consistent finite_Un generalized_deduction_theorem generalized_modus_ponens
         is_consistent_set_def is_inconsistent_set_def sup_commute)
-  thus "(is_consistent_set \<circ> lset) (qs @ Hs)"
+  thus "is_consistent_set (lset qs \<union> Hs)"
     by simp
 qed
-
 
 subsection \<open>Disjunctive Consistency\<close>
 
@@ -2003,89 +1996,90 @@ proof-
     by blast
 qed
 
-interpretation DB: Weak_Derivational_Beta map_con
-  cons_form is_param beta_class "is_consistent_set \<circ> lset"
+interpretation DB: Derivational_Beta map_con
+  cons_form is_param beta_class is_consistent_set
 proof
   fix Hs and ps qs
   assume beta: \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
-    and sub: \<open>lset ps \<subseteq> lset Hs\<close>
-    and consistent: \<open>(is_consistent_set \<circ> lset) Hs\<close>
-  hence finite_Hs: \<open>finite (lset Hs)\<close>
+    and sub: \<open>lset ps \<subseteq> Hs\<close>
+    and consistent: \<open>is_consistent_set Hs\<close>
+  hence finite_Hs: \<open>finite Hs\<close>
     by blast
-  show \<open>\<exists>q\<in>lset qs. (is_consistent_set \<circ> lset) (q # Hs)\<close>
+  show \<open>\<exists>q\<in>lset qs. is_consistent_set ({q} \<union> Hs)\<close>
     using beta
   proof(cases)
     case (CImpP A B)
-    hence hypsH: \<open>is_hyps (lset Hs)\<close>
-      and hypsL: \<open>is_hyps (lset (\<sim>\<^sup>\<Q> A # Hs))\<close>
-      and hypsR: \<open>is_hyps (lset (B # Hs))\<close>
+    hence hypsH: \<open>is_hyps Hs\<close>
+      and hypsL: \<open>is_hyps ({\<sim>\<^sup>\<Q> A} \<union> Hs)\<close>
+      and hypsR: \<open>is_hyps ({B} \<union> Hs)\<close>
       using consistent
       by force+
     moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close>
       by (metis neg_wff CImpP(3))
-    moreover have \<open>lset Hs \<turnstile> \<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B\<close>
+    moreover have \<open>Hs \<turnstile> \<sim>\<^sup>\<Q> A \<or>\<^sup>\<Q> B\<close>
       using  MP prop_5241[OF hypsH _ sub, unfolded CImpP(1)]
         derivable_tautologous_imp[OF _ is_taut(10)[OF CImpP(3,4)]]
       by (metis empty_set imp_op_wff list.simps(15) CImpP(1,3,4))
-    ultimately have \<open>\<not> lset Hs \<union> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub> \<or> \<not> lset Hs \<union> {B} \<turnstile> F\<^bsub>o\<^esub>\<close>
+    ultimately have \<open>\<not> Hs \<union> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub> \<or> \<not> Hs \<union> {B} \<turnstile> F\<^bsub>o\<^esub>\<close>
       using Q_consistent_disjF[OF _ _ CImpP(4) _ consistent[unfolded comp_def]]
       by blast
-    hence \<open>\<not> (lset (\<sim>\<^sup>\<Q> A # Hs) \<turnstile> F\<^bsub>o\<^esub>) \<or> \<not> (lset (B # Hs) \<turnstile> F\<^bsub>o\<^esub>)\<close>
+    hence \<open>\<not> ({\<sim>\<^sup>\<Q> A} \<union> Hs \<turnstile> F\<^bsub>o\<^esub>) \<or> \<not> ({B} \<union> Hs \<turnstile> F\<^bsub>o\<^esub>)\<close>
       by simp
-    then show \<open>\<exists>q\<in>lset qs. (is_consistent_set \<circ> lset) (q # Hs)\<close>
+    then show \<open>\<exists>q\<in>lset qs. is_consistent_set ({q} \<union> Hs)\<close>
       using consistent hypsL hypsR
       unfolding is_consistent_set_def is_inconsistent_set_def
       comp_def CImpP(2)
       by simp
   next
     case (CLEM A)
-    hence hypsH: \<open>is_hyps (lset Hs)\<close>
-      and hypsL: \<open>is_hyps (lset (A # Hs))\<close>
-      and hypsR: \<open>is_hyps (lset (\<sim>\<^sup>\<Q> A # Hs))\<close>
+    hence hypsH: \<open>is_hyps Hs\<close>
+      and hypsL: \<open>is_hyps ({A} \<union> Hs)\<close>
+      and hypsR: \<open>is_hyps ({\<sim>\<^sup>\<Q> A} \<union> Hs)\<close>
       using consistent
       by force+
     moreover have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close>
       by (metis neg_wff CLEM(3))
-    moreover have \<open>lset Hs \<turnstile> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A\<close>
+    moreover have \<open>Hs \<turnstile> A \<or>\<^sup>\<Q> \<sim>\<^sup>\<Q> A\<close>
       using hypsH CLEM(3) prop_LEM by blast
-    ultimately have \<open>\<not> lset Hs \<union> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub> \<or> \<not> lset Hs \<union> {A} \<turnstile> F\<^bsub>o\<^esub>\<close>
-      by (metis Q_consistent_disjF comp_def consistent CLEM(3))
-    hence \<open>\<not> (lset (\<sim>\<^sup>\<Q> A # Hs) \<turnstile> F\<^bsub>o\<^esub>) \<or> \<not> (lset (A # Hs) \<turnstile> F\<^bsub>o\<^esub>)\<close>
+    ultimately have \<open>\<not> Hs \<union> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub> \<or> \<not> Hs \<union> {A} \<turnstile> F\<^bsub>o\<^esub>\<close>
+      by (metis Q_consistent_disjF consistent CLEM(3))
+    hence \<open>\<not> ({\<sim>\<^sup>\<Q> A} \<union> Hs \<turnstile> F\<^bsub>o\<^esub>) \<or> \<not> ({A} \<union> Hs \<turnstile> F\<^bsub>o\<^esub>)\<close>
       by simp
-    then show \<open>\<exists>q\<in>lset qs. (is_consistent_set \<circ> lset) (q # Hs)\<close>
+    then show \<open>\<exists>q\<in>lset qs. is_consistent_set ({q} \<union> Hs)\<close>
       using consistent hypsL hypsR
       unfolding is_consistent_set_def is_inconsistent_set_def
         comp_def CLEM(2) by auto
   qed
 qed
 
-interpretation DG: Weak_Derivational_Gamma map_con map_con
-  cons_form is_param gamma_class "is_consistent_set \<circ> lset"
+interpretation DG: Derivational_Gamma map_con map_con
+  cons_form is_param gamma_class is_consistent_set
 proof
   fix As ps F qs t
   assume \<open>ps \<leadsto>\<^sub>\<gamma> (F, qs)\<close> 
-    and sub: \<open>lset ps \<subseteq> lset As\<close> and \<open>t \<in> F (lset As)\<close> 
-    and consistent: \<open>(is_consistent_set \<circ> lset) As\<close>
-  then show \<open>(is_consistent_set \<circ> lset) (qs t @ As)\<close>
+    and sub: \<open>lset ps \<subseteq> As\<close> and \<open>t \<in> F As\<close> 
+    and consistent: \<open>is_consistent_set As\<close>
+  then show \<open>is_consistent_set (lset (qs t) \<union> As)\<close>
   proof cases
     case (CExt A \<alpha> \<beta> B)
-    hence \<open>is_hyps (lset (qs t @ As))\<close>
-      using consistent \<open>t \<in> F (lset As)\<close> CExt(2,4,5) 
+    hence \<open>is_hyps (lset (qs t) \<union> As)\<close>
+      using consistent \<open>t \<in> F As\<close> CExt(2,4,5) 
       by auto
-    moreover have \<open>\<not> lset (qs t @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
+    moreover have \<open>\<not> lset (qs t) \<union> As \<turnstile> F\<^bsub>o\<^esub>\<close>
     proof
-      assume hyp: \<open>lset (qs t @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
-      have \<open>lset As \<turnstile> A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B\<close>
+      assume hyp: \<open>lset (qs t) \<union> As \<turnstile> F\<^bsub>o\<^esub>\<close>
+      have \<open>As \<turnstile> A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B\<close>
         using prop_5241 sub dv_hyp 
           CExt(1) consistent by auto
-      hence \<open>lset As \<turnstile> A \<sqdot> t =\<^bsub>\<beta>\<^esub> B \<sqdot> t\<close>
-        using prop_5201_5[of \<open>lset As\<close> A \<alpha> \<beta> B t]
-          \<open>t \<in> F (lset As)\<close> CExt(2) 
+      hence \<open>As \<turnstile> A \<sqdot> t =\<^bsub>\<beta>\<^esub> B \<sqdot> t\<close>
+        using prop_5201_5[of As A \<alpha> \<beta> B t]
+          \<open>t \<in> F As\<close> CExt(2) 
         by fastforce
-      hence \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close>
-        by (metis Deduction_Theorem List.finite_set 
+      hence \<open>As \<turnstile> F\<^bsub>o\<^esub>\<close>
+        using consistent unfolding is_consistent_set_def
+        by (metis Deduction_Theorem 
             Un_commute hyp list.set(1) list.simps(15)
-            local.CExt(3) prop_5224 set_append)
+            local.CExt(3) prop_5224)
       thus \<open>False\<close>
         using consistent
         by fastforce
@@ -3295,8 +3289,7 @@ proof -
 
   have fgx_1:
     "is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
-    using Fwff assms(3) is_free_for_axiom_3_f
-    by (metis Un_iff vars_is_free_and_bound_vars) 
+    using Fwff assms(3) is_free_for_axiom_3_f by blast
   have fgx_5:
     "is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)"
     using Gwff assms(4) is_free_for_axiom_3_g
@@ -3578,13 +3571,13 @@ qed
 thm is_hyp_proof_induct_THE_REAL_ONE
 
 lemma is_hyp_proof_const_subst:
-  assumes "is_hyp_proof (lset As) Ts P"
+  assumes "is_hyp_proof As Ts P"
   assumes "is_proof Ts"
-  assumes "is_hyps (lset As)"
+  assumes "is_hyps As"
   assumes "c \<notin> logical_names"
   assumes "(x, \<tau>) \<notin> vars\<^sub>p P"
-  assumes "c \<notin> P.params (lset As)"
-  shows "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> P)"
+  assumes "c \<notin> P.params As"
+  shows "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> P)"
 using assms proof (induction rule: is_hyp_proof_induct_THE_REAL_ONE)
   case hp_nil
   then show ?case
@@ -3593,10 +3586,10 @@ next
   case (hp_hyp A \<S>\<^sub>2)
   from hp_hyp(5) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
     unfolding vars\<^sub>p_def by auto
-  from this hp_hyp have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
+  from this hp_hyp have "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
     by auto
-  then have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2 @ [const_subst (c, x) \<tau> A])"
-    using hyp_appended_to_hyp_proof_is_hyp_proof[of "lset As" "(const_subst_proof (c, x) \<tau> Ts)" "(const_subst_proof (c, x) \<tau> \<S>\<^sub>2)" "const_subst (c, x) \<tau> A"]
+  then have "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2 @ [const_subst (c, x) \<tau> A])"
+    using hyp_appended_to_hyp_proof_is_hyp_proof[of As "(const_subst_proof (c, x) \<tau> Ts)" "(const_subst_proof (c, x) \<tau> \<S>\<^sub>2)" "const_subst (c, x) \<tau> A"]
     by (metis UN_I hp_hyp.hyps(1) hp_hyp.prems(1,3) idemp_const_subst)
   then show ?case
     by (simp add: const_subst_proof_def)
@@ -3604,10 +3597,10 @@ next
   case (hp_seq A \<S>\<^sub>2)
   from this(5) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
     unfolding vars\<^sub>p_def by auto
-  from this hp_seq have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
+  from this hp_seq have "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
     by auto
-  then have "is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2 @ [const_subst (c, x) \<tau> A])"
-    using thm_appended_to_hyp_proof_is_hyp_proof[of "lset As" "(const_subst_proof (c, x) \<tau> Ts)" "(const_subst_proof (c, x) \<tau> \<S>\<^sub>2)" "const_subst (c, x) \<tau> A"]
+  then have "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2 @ [const_subst (c, x) \<tau> A])"
+    using thm_appended_to_hyp_proof_is_hyp_proof[of As "(const_subst_proof (c, x) \<tau> Ts)" "(const_subst_proof (c, x) \<tau> \<S>\<^sub>2)" "const_subst (c, x) \<tau> A"]
     by (metis const_subst_proof_def hp_seq.hyps(1) image_eqI list.set_map)
   then show ?case
     by (simp add: const_subst_proof_def)
@@ -3625,7 +3618,7 @@ next
   let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
   let ?Ts' = "const_subst_proof (c, x) \<tau> Ts"
 
-  have "is_hyp_proof (lset As) ?Ts' ?\<S>\<^sub>2"
+  have "is_hyp_proof As ?Ts' ?\<S>\<^sub>2"
     using hp_rule_R'.IH hp_rule_R'.prems vars\<^sub>p_def by auto
 
   have "prefix ?S''C ?\<S>\<^sub>2"
@@ -3640,12 +3633,12 @@ next
   have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [const_subst (c, x) \<tau> C]) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
     using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> const_subst_proof_def by force
 
-  have "is_hyp_proof (lset As) ?Ts' ?S''C"
-    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
+  have "is_hyp_proof As ?Ts' ?S''C"
+    by (metis \<open>is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
         \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
   
-  have "is_hyp_proof (lset As) ?Ts' ?S'E"
-    by (metis \<open>is_hyp_proof (lset As) (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
+  have "is_hyp_proof As ?Ts' ?S'E"
+    by (metis \<open>is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
         \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
 
   have varsD: "(x, \<tau>) \<notin> vars D"
@@ -3670,16 +3663,16 @@ next
   have varsDCE: "(x, \<tau>) \<notin> vars D \<union> vars C \<union> vars E"
     by (simp add: varsC varsD varsE)
 
-  have "c \<notin> P.params (lset As)"
+  have "c \<notin> P.params As"
     using hp_rule_R'.prems(3) by blast
 
-  have "is_rule_R'_app (lset As) p ?D ?C ?E"
+  have "is_rule_R'_app As p ?D ?C ?E"
     using is_rule_R'_app_const_subst hp_rule_R'(4) _ hp_rule_R'(6) varsDCE
-    using \<open>is_hyps (lset As)\<close> hp_rule_R'.prems(3)
+    using \<open>is_hyps As\<close> hp_rule_R'.prems(3)
     by (metis hp_rule_R'.hyps(3))
 
   show ?case
-    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app (lset As) p ?D ?C ?E\<close> \<open>is_hyp_proof (lset As) ?Ts' ?\<S>\<^sub>2\<close>, of ?S' ?S'', OF P1 P2]
+    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app As p ?D ?C ?E\<close> \<open>is_hyp_proof As ?Ts' ?\<S>\<^sub>2\<close>, of ?S' ?S'', OF P1 P2]
     by (simp add: const_subst_proof_def)
 qed
 
@@ -3687,29 +3680,29 @@ lemma the_big_thing_to_prove:
   assumes "P' = const_subst_proof (c, x) \<alpha> P"
   assumes "Ts' = const_subst_proof (c, x) \<alpha> Ts"
   assumes "form' = const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
-  assumes "is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+  assumes "is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
   assumes "True"
-  assumes "(x, \<alpha>) \<notin> vars (lset As)"
+  assumes "(x, \<alpha>) \<notin> vars As"
   assumes "(x, \<alpha>) \<notin> vars B"
   assumes "c \<notin> logical_names"
   assumes "(x, \<alpha>) \<notin> vars\<^sub>p Ts"
   assumes "(x, \<alpha>) \<notin> vars\<^sub>p P"
-  assumes "c \<notin> P.params (lset As)"
-  shows "is_hyp_proof_of (lset As) Ts' P' form'"
+  assumes "c \<notin> P.params As"
+  shows "is_hyp_proof_of As Ts' P' form'"
 proof -
-  from assms(4) have "is_hyps (lset As)"
+  from assms(4) have "is_hyps As"
     unfolding is_hyp_proof_of_def by auto
   from assms(4) have "is_proof Ts"
     unfolding is_hyp_proof_of_def by auto
   from assms(4) have "P \<noteq> [] "
     unfolding is_hyp_proof_of_def by auto
-  from assms(4) have "is_hyp_proof (lset As) Ts P"
+  from assms(4) have "is_hyp_proof As Ts P"
     unfolding is_hyp_proof_of_def by auto
   from assms(4) have "last P = A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
     unfolding is_hyp_proof_of_def by auto
 
-  have "is_hyps (lset As)"
-    by (simp add: \<open>is_hyps (lset As)\<close>)
+  have "is_hyps As"
+    by (simp add: \<open>is_hyps As\<close>)
   moreover
   have "is_proof Ts'"
     using \<open>is_proof Ts\<close> unfolding assms(2)
@@ -3719,8 +3712,8 @@ proof -
   have "P' \<noteq> []"
     by (simp add: \<open>P \<noteq> []\<close> assms(1) const_subst_proof_def)
   moreover
-  have "is_hyp_proof (lset As) Ts' P'"
-    using \<open>is_hyp_proof (lset As) Ts P\<close> unfolding assms(1)
+  have "is_hyp_proof As Ts' P'"
+    using \<open>is_hyp_proof As Ts P\<close> unfolding assms(1)
     using assms(8,10)
     using is_hyp_proof_const_subst[of As Ts P c x \<alpha>]
     using \<open>is_proof Ts\<close> assms(11,2) calculation(1) by presburger
@@ -3731,21 +3724,20 @@ proof -
   show ?thesis
     unfolding is_hyp_proof_of_def by auto
 qed
-  
 
-interpretation DD: Weak_Derivational_Delta map_con
-  cons_form is_param delta "is_consistent_set \<circ> lset"
+interpretation DD: Derivational_Delta map_con
+  cons_form is_param delta is_consistent_set
 proof
   fix As p c
-  assume \<open>p \<in> lset As\<close> 
-    and \<open>is_param c\<close> \<open>c \<notin> P.params (lset As)\<close> 
-    and consistent: \<open>(is_consistent_set \<circ> lset) As\<close>
+  assume \<open>p \<in> As\<close> 
+    and \<open>is_param c\<close> \<open>c \<notin> P.params As\<close> 
+    and consistent: \<open>is_consistent_set As\<close>
   hence neg_case: \<open>\<not> (p \<in> wffs\<^bsub>o\<^esub> \<and> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)))
-    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p c @ As)\<close>
+    \<Longrightarrow> is_consistent_set (lset (delta p c) \<union> As)\<close>
     by (simp only: CDelta)
       fastforce
   moreover have pos_case: \<open>p \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> (\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B))
-    \<Longrightarrow> (is_consistent_set \<circ> lset) (delta p c @ As)\<close>
+    \<Longrightarrow> is_consistent_set (lset (delta p c) \<union> As)\<close>
   proof-
     assume hyp1: \<open>p \<in> wffs\<^bsub>o\<^esub>\<close>
       and hyp2: \<open>\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)\<close>
@@ -3755,28 +3747,30 @@ proof
         and C_eq: \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
       using ineq_match_delta[OF hyp1] ineq_matchD
       by blast
-    have fact1: \<open>is_hyps (lset (delta p c @ As))\<close>
+    have fact1: \<open>is_hyps (lset (delta p c) \<union> As)\<close>
       unfolding delta_eq
       using hyp1 C_eq consistent 
         wffs_from_equality[of A "\<alpha> \<rightarrow> \<beta>" B] 
         wffs_from_neg[of "A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B"] 
       by auto
-    have fact2: \<open>lset As \<turnstile> p\<close>
-      using prop_5241 \<open>p \<in> lset As\<close> dv_hyp consistent 
+    have fact2: \<open>As \<turnstile> p\<close>
+      using prop_5241 \<open>p \<in> As\<close> dv_hyp consistent 
       by auto
-    have \<open>\<not> lset (delta p c @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
+    have \<open>\<not> lset (delta p c) \<union> As \<turnstile> F\<^bsub>o\<^esub>\<close>
     proof(unfold delta_eq, rule notI)
-      assume \<open>lset ([\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)] @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>
-        (is \<open>lset ([\<sim>\<^sup>\<Q> ?form] @ As) \<turnstile> F\<^bsub>o\<^esub>\<close>)
-      hence \<open>lset As \<turnstile> ?form\<close>
+      assume \<open>lset [\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)] \<union> As \<turnstile> F\<^bsub>o\<^esub>\<close>
+        (is \<open>lset [\<sim>\<^sup>\<Q> ?form] \<union> As \<turnstile> F\<^bsub>o\<^esub>\<close>)
+      hence \<open>As \<turnstile> ?form\<close>
         using QnegI delta_eq fact1 Qdouble_negE
-        by (metis Un_insert_right append_Cons append_Nil equality_of_type_def 
-            fact2 is_derivable_from_hyps.cases list.set_intros(1) list.simps(15)
-            neg_def subset_iff sup_bot.right_neutral wffs_from_equality(2))
-      have \<open>(\<forall>A\<in>(lset As). c \<notin> Qconsts A) \<or> is_logical_name c\<close>
-        using \<open>c \<notin> P.params (lset As)\<close> c_in_cons_form_iff
+          consistent unfolding is_consistent_set_def
+        by (metis empty_set insert_subset
+            le_sup_iff list.simps(15)
+            sup_commute wffs_from_neg)
+       
+      have \<open>(\<forall>A\<in>As. c \<notin> Qconsts A) \<or> is_logical_name c\<close>
+        using \<open>c \<notin> P.params As\<close> c_in_cons_form_iff
         by auto
-      then have \<open>(\<forall>A\<in>(lset As). c \<notin> Qconsts A)\<close>
+      then have \<open>(\<forall>A\<in>As. c \<notin> Qconsts A)\<close>
         using \<open>is_param c\<close> unfolding is_param_def by meson
           (* from As \<turnstile> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)
       notice c \<notin> P.params (lset As)
@@ -3793,29 +3787,29 @@ proof
         using \<open>is_param c\<close> is_param_def by auto
    
       have "c \<notin> Qconsts p"
-        using  \<open>c \<notin> P.params (lset As)\<close>  \<open>p \<in> lset As\<close>
-        using \<open>\<forall>A\<in>lset As. c \<notin> Qconsts A\<close> by blast
+        using  \<open>c \<notin> P.params As\<close>  \<open>p \<in> As\<close>
+        using \<open>\<forall>A\<in> As. c \<notin> Qconsts A\<close> by blast
       then have cAB: "c \<notin> Qconsts (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B))"
         using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by auto
-      from \<open>lset As \<turnstile> ?form\<close> obtain Ts P where "is_hyp_proof_of (lset As) Ts P ?form" (* Ts are some theorems used in P *)
+      from \<open>As \<turnstile> ?form\<close> obtain Ts P where "is_hyp_proof_of As Ts P ?form" (* Ts are some theorems used in P *)
         using hypothetical_derivability_proof_existence_equivalence by metis
 
       define TP where "TP = (\<lambda>T. SOME P. is_proof_of P T)" (* Maybe not needed *)
       define TsPs where "TsPs = map TP Ts" 
 
-      from \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> obtain x where x_pro: "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)"
-        apply (subgoal_tac "(\<exists>x. (x,\<alpha>) \<notin> (vars (lset As)) \<union> vars\<^sub>p P \<union> vars\<^sub>p Ts) \<and> finite (vars (lset As))")
+      from \<open>is_hyp_proof_of As Ts P ?form\<close> obtain x where x_pro: "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars As"
+        apply (subgoal_tac "(\<exists>x. (x,\<alpha>) \<notin> (vars As) \<union> vars\<^sub>p P \<union> vars\<^sub>p Ts) \<and> finite (vars As)")
         subgoal
           apply auto
           done
         subgoal
           apply rule
           subgoal
-            apply (metis finite_Un finite_vars\<^sub>p fresh_var_existence vars\<^sub>p_def)
+           apply (meson consistent finite_UnI finite_vars\<^sub>p fresh_var_existence is_consistent_set_def vars_form_set_finiteness)
             done
           subgoal
-            apply (metis finite_vars\<^sub>p vars\<^sub>p_def)
+            apply (meson consistent finite_UnI finite_vars\<^sub>p fresh_var_existence is_consistent_set_def vars_form_set_finiteness)
             done
           done
         done
@@ -3827,8 +3821,8 @@ proof
       define form' where "form' = (const_subst (c, x) \<alpha> ?form)"
 
       have x_p_2:
-        \<open>(x,\<alpha>) \<notin> vars (lset As)\<close>
-        using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)\<close> by blast
+        \<open>(x,\<alpha>) \<notin> vars As\<close>
+        using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars As\<close> by blast
       have x_p_3:
         \<open>(x,\<alpha>) \<notin> vars A\<close>
       proof -
@@ -3836,7 +3830,7 @@ proof
           apply simp
           by (meson is_subform_at.simps(1,2,3))
         then have "A \<preceq> last P"
-          using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
+          using \<open>is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
         then have "vars A \<subseteq> vars (last P)"
           using brand_new_lemma2 by simp
         then have "vars A \<subseteq> vars\<^sub>p P"
@@ -3852,12 +3846,12 @@ proof
               using last_in_set apply blast
               done
             subgoal
-              using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
+              using \<open>is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
               done
             done
           done
         then show \<open>(x,\<alpha>) \<notin> vars A\<close>
-          using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)\<close> by blast
+          using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars As\<close> by blast
       qed
       have x_p_4:
         \<open>(x,\<alpha>) \<notin> vars B\<close>
@@ -3866,7 +3860,7 @@ proof
           apply simp
           by (meson is_subform_at.simps(1,2,3))
         then have "B \<preceq> last P"
-          using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
+          using \<open>is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
         then have "vars B \<subseteq> vars (last P)"
           using brand_new_lemma2 by simp
         then have "vars B \<subseteq> vars\<^sub>p P"
@@ -3882,28 +3876,28 @@ proof
               using last_in_set apply blast
               done
             subgoal
-              using \<open>is_hyp_proof_of (lset As) Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
+              using \<open>is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
               done
             done
           done
         then show \<open>(x,\<alpha>) \<notin> vars B\<close>
-          using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars (lset As)\<close> by blast
+          using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars As\<close> by blast
       qed
 
       find_theorems c
-      have "is_hyp_proof_of (lset As) Ts' P' form'"
+      have "is_hyp_proof_of As Ts' P' form'"
         using
           x_pro
           x_p_2
           x_p_4
           \<open>c \<notin> logical_names\<close>
-          the_big_thing_to_prove[OF P'_def Ts'_def form'_def \<open>is_hyp_proof_of (lset As) Ts P ?form\<close> _ _ _ _ _ _ \<open>c \<notin> P.params (lset As)\<close>]
+          the_big_thing_to_prove[OF P'_def Ts'_def form'_def \<open>is_hyp_proof_of As Ts P ?form\<close> _ _ _ _ _ _ \<open>c \<notin> P.params As\<close>]
         by metis
-      then have "lset As \<turnstile> form'"
+      then have "As \<turnstile> form'"
         using hypothetical_derivability_proof_existence_equivalence by metis
 
       then have x_p_1:
-        \<open>lset As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+        \<open>As \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
         using form'_def by fastforce
 
       from cAB have "c \<notin> Qconsts A"
@@ -3915,20 +3909,20 @@ proof
       then have b: "const_subst (c, x) \<alpha> B = B"
         using Qconsts_const_subst by auto
 
-      have fx: "(x, \<alpha>) \<notin> free_vars (lset As)"
+      have fx: "(x, \<alpha>) \<notin> free_vars As"
         by (metis dual_order.refl equalityI free_vars_in_all_vars_set insert_subset x_p_2)
 
-      from x_p_1 have \<open>lset As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+      from x_p_1 have \<open>As \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
         apply (simp only: const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b)
         apply auto
         done
-      then have "lset As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
-        using Gen[of "lset As" "(A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)" x \<alpha>]
+      then have "As \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
+        using Gen[of As "(A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)" x \<alpha>]
         using fx by auto
-      then have \<open>lset As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+      then have \<open>As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         using C_eq equality_of_type_def hyp1 neg_def nice1234 wffs_from_equality(1,2) x_p_3 x_p_4
         by (metis Un_iff vars_is_free_and_bound_vars)
-      then have \<open>lset As \<turnstile> F\<^bsub>o\<^esub>\<close>
+      then have \<open>As \<turnstile> F\<^bsub>o\<^esub>\<close>
         using fact2[unfolded C_eq]
         by (metis QnegD hyp_derivable_form_is_wffso is_derivable_from_hyps.cases prop_5224)
       thus \<open>False\<close>
@@ -3940,7 +3934,7 @@ proof
       unfolding comp_def
       by blast 
   qed
-  ultimately show \<open>(is_consistent_set \<circ> lset) (delta p c @ As)\<close>
+  ultimately show \<open>is_consistent_set (lset (delta p c) \<union> As)\<close>
     by blast
 qed
 
@@ -3953,64 +3947,84 @@ proof -
     by simp
 qed
 
-interpretation Weak_Derivational_Consistency map_con cons_form is_param Kinds \<open>is_consistent_set \<circ> lset\<close>
+interpretation Derivational_Consistency map_con cons_form is_param Kinds is_consistent_set
 proof
-  show \<open>infinite UNIV \<Longrightarrow> P.prop\<^sub>E Kinds {S. \<exists>A. lset A = S \<and> (is_consistent_set \<circ> lset) A}\<close>
-    using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] infinite_params
+  show \<open>infinite UNIV \<Longrightarrow> P.prop\<^sub>E Kinds {A. P.enough_new A \<and> is_consistent_set A}\<close>
+    using prop\<^sub>E_Kinds[OF DC.kind DA.kind DB.kind DG.kind DD.kind] inf_univ
     by blast
 qed
 
 section \<open>Completeness\<close>
 
-theorem completeness:
-  assumes mod: \<open>\<And>M. is_general_model M \<Longrightarrow> M \<Turnstile> A\<close>
-    and A: \<open>is_closed_wff_of_type A o\<close>
-  shows \<open>\<turnstile> A\<close>
-proof (rule ccontr)
-  assume \<open>\<not> \<turnstile> A\<close>
-  have \<open>\<not> {\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close>
-  proof
-    assume \<open>{\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close>
-    hence \<open>\<turnstile> \<sim>\<^sup>\<Q> A \<supset>\<^sup>\<Q> F\<^bsub>o\<^esub>\<close>
-      by (metis Deduction_Theorem finite.emptyI sup_bot_left)
-    hence \<open>\<turnstile> \<sim>\<^sup>\<Q>\<sim>\<^sup>\<Q> A\<close>
-      by (metis QnegI \<open>{\<sim>\<^sup>\<Q> A} \<turnstile> F\<^bsub>o\<^esub>\<close> hyp_derivable_form_is_wffso 
-          is_derivable_from_hyps.cases sup_bot_left
-          wffs_from_imp_op(1))
-    hence \<open>\<turnstile> A\<close>
-      by (meson bot.extremum finite.emptyI wffs_from_neg
-          hyp_derivable_form_is_wffso is_taut(16) 
-          prop_5224 tautologous_is_hyp_derivable)
-    thus False
-      using \<open>\<not> \<turnstile> A\<close>
-      by blast
-  qed
-  then have *: \<open>(is_consistent_set \<circ> lset) [\<sim>\<^sup>\<Q> A]\<close>
-    using A by auto
+lemma is_hyps_enough_new:
+  assumes \<open>is_hyps \<H>\<close>
+  shows \<open>P.enough_new \<H>\<close>
+proof -
+ have \<open>inj (to_nat :: form \<Rightarrow> nat)\<close>
+    using inj_to_nat by blast
+  then show ?thesis
+    using assms P.enough_new_countable P.finite_params_fm
+    by (metis finite_Diff2 finite_UN_I infinite_params)
+qed
 
-  let ?S = \<open>{\<sim>\<^sup>\<Q> A}\<close>
-  let ?C = \<open>{S. \<exists>A. lset A = S \<and> (is_consistent_set \<circ> lset) A}\<close>
+theorem completeness:
+  assumes mod: \<open>\<And>M. is_general_model M \<Longrightarrow> \<forall>B \<in> \<H>. M \<Turnstile> B \<Longrightarrow> M \<Turnstile> A\<close>
+    and A: \<open>is_sentence A\<close>
+    and \<H>: \<open>is_hyps \<H>\<close> \<open>\<forall>B \<in> \<H>. is_sentence B\<close>
+  shows \<open>\<H> \<turnstile> A\<close>
+proof (rule ccontr)
+  assume \<open>\<not> \<H> \<turnstile> A\<close>
+ 
+  have \<open>\<not> {\<sim>\<^sup>\<Q> A} \<union> \<H> \<turnstile> F\<^bsub>o\<^esub>\<close>
+  proof
+    assume \<open>{\<sim>\<^sup>\<Q> A} \<union> \<H> \<turnstile> F\<^bsub>o\<^esub>\<close>
+    then have \<open>\<H> \<turnstile> \<sim>\<^sup>\<Q> \<sim>\<^sup>\<Q> A\<close>
+      using \<H> A QnegI neg_wff by auto
+    then have \<open>\<H> \<turnstile> A\<close>
+      using \<H> A Qdouble_negE by blast
+    then show False
+      using \<open>\<not> \<H> \<turnstile> A\<close> by blast
+  qed
+  then have *: \<open>is_consistent_set ({\<sim>\<^sup>\<Q> A} \<union> \<H>)\<close>
+    using A \<H> by auto
+
+  let ?S = \<open>{\<sim>\<^sup>\<Q> A} \<union> \<H>\<close>
+  let ?C = \<open>{S. P.enough_new S \<and> is_consistent_set S}\<close>
 
   have p: \<open>P.prop\<^sub>E Kinds ?C\<close>
     using Consistency by blast
- 
-  have \<open>inj (to_nat :: form \<Rightarrow> nat)\<close>
-    using inj_to_nat by blast
+
+  have \<open>is_hyps ?S\<close>
+    using * by fast
   then have new: \<open>P.enough_new ?S\<close>
-    using P.enough_new_countable infinite_params P.finite_params_fm
-    by (metis finite.emptyI finite_Diff2 finite_UN_I finite_insert)
+    using is_hyps_enough_new by blast
 
   have s: \<open>?S \<in> ?C\<close>
-    using * by (metis (mono_tags, lifting) list.set(1) list.simps(15) mem_Collect_eq)
- 
-  have \<open>\<sim>\<^sup>\<Q> A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>free_vars (\<sim>\<^sup>\<Q> A) = {}\<close>
+    using * new by blast
+
+  obtain M where M:
+    \<open>is_general_model M\<close>
+    \<open>\<forall>A\<in>{\<sim>\<^sup>\<Q> A} \<union> \<H>. is_sentence A \<longrightarrow> M \<Turnstile> A\<close>
+    \<open>\<forall>A. is_sentence A \<longrightarrow> \<not> (M \<Turnstile> A \<and> M \<Turnstile> \<sim>\<^sup>\<Q> A)\<close>
+    unfolding is_closed_wff_of_type_def
+    using model_existence[OF p s new]
+    by force
+
+  have \<open>is_sentence (\<sim>\<^sup>\<Q> A)\<close>
     using A by auto
-  then obtain M where M: \<open>is_general_model M\<close> \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close> \<open>\<not> M \<Turnstile> A\<close>
-    using model_existence[OF p s new] by (metis neg_fv singletonI wffs_from_neg)
-  moreover have \<open>M \<Turnstile> A\<close>
+  then have \<open>\<forall>B \<in> \<H>. M \<Turnstile> B\<close> \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close>
+    using M(2) \<H> by auto
+  then have \<open>M \<Turnstile> A\<close>
     using mod[OF M(1)] by fast
+  moreover from \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close> have \<open>\<not> M \<Turnstile> A\<close>
+    using A M(3) by meson
   ultimately show False
     by meson
 qed
+
+corollary
+  assumes \<open>\<And>M. is_general_model M \<Longrightarrow> M \<Turnstile> A\<close> \<open>is_sentence A\<close>
+  shows \<open>\<turnstile> A\<close>
+  using assms completeness by simp
 
 end
