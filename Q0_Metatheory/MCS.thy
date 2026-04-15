@@ -3272,9 +3272,7 @@ qed
 lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_is_S_axiom_3\<^sub>v:
   assumes "f \<noteq> g"
   shows "\<^bold>S {(f, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (g, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}(axiom_3\<^sub>v f g x \<alpha> \<beta>) = axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>"
-  unfolding axiom_3\<^sub>v_def axiom_3\<^sub>w\<^sub>f\<^sub>f_def
-  using assms
-  by auto
+  unfolding axiom_3\<^sub>v_def axiom_3\<^sub>w\<^sub>f\<^sub>f_def using assms by auto
 
 lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem:
   assumes Fwff: "F \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>"
@@ -3283,7 +3281,6 @@ lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem:
   assumes "(x, \<alpha>) \<notin> free_vars G"
   shows "\<turnstile> axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>"
 proof -
-
   have ax3v: "\<turnstile> axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>"
     using axiom_3\<^sub>v_theorem by auto
 
@@ -3355,7 +3352,7 @@ proof -
     .
 qed
 
-lemma nice1234:
+lemma axiom_3_right_to_left:
   assumes "A \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>"
   assumes "B \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>"
   assumes "S \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)"
@@ -3367,34 +3364,18 @@ proof -
     using axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem[of A \<alpha> \<beta> B x] using assms by auto
 
   show "S \<turnstile> (A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)"
-    apply (rule rule_RR[where D="A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B", 
+    using rule_RR[where D="A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B", 
           where \<H> = S, 
           where C="\<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)",
           where \<alpha>=o,
           where B="(A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)",
           where A="\<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)",
-          where p="[]"
-            ] )
-    subgoal 
-      using ax unfolding axiom_3\<^sub>w\<^sub>f\<^sub>f_def equivalence_def apply auto
-      done
-    subgoal
-      apply auto
-      done
-    subgoal
-      apply auto
-      done
-    subgoal
-      apply auto
-      done
-    subgoal
-      using assms
-      apply auto
-      done
-    done
+          where p="[]"]
+    using ax assms unfolding axiom_3\<^sub>w\<^sub>f\<^sub>f_def equivalence_def by auto
+     
 qed
 
-lemma brand_new_lemma: (* not used for anything *)
+lemma subforms_vars: (* not used for anything *)
   assumes "A \<in> subforms B"
   shows "vars A \<subseteq> vars B"
 using assms proof (induction B)
@@ -3415,25 +3396,24 @@ next
     by (metis Un_upper1 empty_iff form.distinct(11) insert_iff subforms.elims vars_form.simps(4))
 qed
 
-lemma brand_new_lemma2':
+lemma is_subform_at_vars:
   assumes "A \<preceq>\<^bsub>p\<^esub> B"
   shows "vars A \<subseteq> vars B"
   using assms by (induction rule: is_subform_at.induct) auto
 
-lemma brand_new_lemma2:
+lemma is_subform_vars:
   assumes "A \<preceq> B"
   shows "vars A \<subseteq> vars B"
-  using brand_new_lemma2'
-  using assms by auto 
+  using is_subform_at_vars assms by auto 
 
-lemma is_hyp_proof_induct_THE_REAL_ONE [consumes 3, case_names hp_nil hp_hyp hp_seq hp_rule_R']: (* Which parameters should P have actully?  *)
+lemma is_hyp_proof_induct [consumes 3, case_names hp_nil hp_hyp hp_seq hp_rule_R']:
   assumes "is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2"
   assumes "is_proof \<S>\<^sub>1"
   assumes "is_hyps \<H>"
   assumes "P []"
-  assumes "\<And>A \<S>\<^sub>2. \<lbrakk>A \<in> \<H>; is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2; P \<S>\<^sub>2\<rbrakk> \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
-  assumes "\<And>A \<S>\<^sub>2. \<lbrakk>A \<in> lset \<S>\<^sub>1; is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2; P \<S>\<^sub>2\<rbrakk> \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
-  assumes "\<And>S' E \<S>\<^sub>2 S'' C p D. \<lbrakk>prefix (S' @ [E]) \<S>\<^sub>2; prefix (S'' @ [C]) \<S>\<^sub>2; is_rule_R'_app \<H> p D C E; is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2; P \<S>\<^sub>2\<rbrakk> \<Longrightarrow> P (\<S>\<^sub>2 @ [D])"
+  assumes "\<And>A \<S>\<^sub>2. A \<in> \<H> \<Longrightarrow> is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<Longrightarrow> P \<S>\<^sub>2 \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
+  assumes "\<And>A \<S>\<^sub>2. A \<in> lset \<S>\<^sub>1 \<Longrightarrow> is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<Longrightarrow> P \<S>\<^sub>2 \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
+  assumes "\<And>S' E \<S>\<^sub>2 S'' C p D. prefix (S' @ [E]) \<S>\<^sub>2 \<Longrightarrow> prefix (S'' @ [C]) \<S>\<^sub>2 \<Longrightarrow> is_rule_R'_app \<H> p D C E \<Longrightarrow> is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<Longrightarrow> P \<S>\<^sub>2 \<Longrightarrow> P (\<S>\<^sub>2 @ [D])"
   shows "P \<S>\<^sub>2"
 proof (cases "\<S>\<^sub>2 = []") (* This proof is adapted from hyp_proof_existence_implies_hyp_derivability *)
   case True
@@ -3462,11 +3442,11 @@ next
       then have "A \<in> \<H>"
         using \<open>A = last \<S>\<^sub>2\<close> \<open>\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1) = A\<close> by argo
       moreover
-      have "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
+      have calculation_2: "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
         by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof less.prems(3,4))
       moreover
       have "P (butlast \<S>\<^sub>2)"
-        by (metis assms(4) calculation(2) diff_less length_butlast length_greater_0_conv less.hyps less.prems(1,2,3) zero_less_one)
+        by (metis assms(4) calculation_2 diff_less length_butlast length_greater_0_conv less.hyps less.prems(1,2,3) zero_less_one)
       ultimately
       show ?thesis
         using assms(5)[of A "butlast \<S>\<^sub>2"] \<open>\<S>\<^sub>2 ! ?i' = A\<close> \<open>is_hyps \<H>\<close>
@@ -3512,28 +3492,33 @@ next
           and hyp_proof_prefix_is_hyp_proof_of_last
           [OF \<open>is_hyps \<H>\<close> \<open>is_proof \<S>\<^sub>1\<close> \<open>is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>k @ \<S>\<^sub>k')\<close> \<open>?\<S>\<^sub>k \<noteq> []\<close>]
         by fastforce+
-      moreover from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
-      have "length ?\<S>\<^sub>j < length \<S>\<^sub>2" and "length ?\<S>\<^sub>k < length \<S>\<^sub>2"
+
+      from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
+      have calculation_3: "length ?\<S>\<^sub>j < length \<S>\<^sub>2" and calculation_4: "length ?\<S>\<^sub>k < length \<S>\<^sub>2"
         using \<open>{j, k} \<subseteq> {0..<length \<S>\<^sub>2 - 1}\<close> by force+
-      moreover from calculation(3,4) have "last ?\<S>\<^sub>j = \<S>\<^sub>2 ! j" and "last ?\<S>\<^sub>k = \<S>\<^sub>2 ! k"
+      then have calculation_5: "last ?\<S>\<^sub>j = \<S>\<^sub>2 ! j" and calculation_6: "last ?\<S>\<^sub>k = \<S>\<^sub>2 ! k"
         by (metis Suc_lessD last_snoc linorder_not_le nat_neq_iff take_Suc_conv_app_nth take_all_iff)+
-      moreover
-      have "\<exists>S'. prefix (S' @ [\<S>\<^sub>2 ! k]) (butlast \<S>\<^sub>2)"
+
+
+      have "prefix (butlast ?\<S>\<^sub>k @ [\<S>\<^sub>2 ! k]) (butlast \<S>\<^sub>2)"
         by (metis \<open>\<S>\<^sub>2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> \<open>?\<S>\<^sub>k \<noteq> []\<close> 
-            append_butlast_last_id calculation(4,6) less.prems(3) order_less_irrefl prefixI
+            append_butlast_last_id calculation_4 calculation_6 less.prems(3) order_less_irrefl prefixI
             prefix_snoc)
       moreover
-      have "\<exists>S''. prefix (S'' @ [\<S>\<^sub>2 ! j]) (butlast \<S>\<^sub>2)"
+      have "prefix (butlast ?\<S>\<^sub>j @ [\<S>\<^sub>2 ! j]) (butlast \<S>\<^sub>2)"
         by (metis \<open>\<S>\<^sub>2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> \<open>?\<S>\<^sub>j \<noteq> []\<close> append_butlast_last_id 
-            calculation(3,5) less.prems(3) order_less_irrefl prefixI prefix_snoc)
+            calculation_3 calculation_5 less.prems(3) order_less_irrefl prefixI prefix_snoc)
+      moreover
+      have "P (butlast \<S>\<^sub>2)"
+        using less.prems(1,2,3,4) less.hyps[of "butlast \<S>\<^sub>2"] assms(4) hyp_proof_prefix_is_hyp_proof
+        by (metis  zero_less_one length_greater_0_conv diff_less length_butlast 
+            append_butlast_last_id)
       ultimately
       have "P (butlast \<S>\<^sub>2 @ [\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1)])"
-        using \<open>is_hyps \<H>\<close>
-          and less(1)[OF \<open>length ?\<S>\<^sub>j < length \<S>\<^sub>2\<close>] and less(1)[OF \<open>length ?\<S>\<^sub>k < length \<S>\<^sub>2\<close>]
-          \<open>is_hyps \<H>\<close> and \<open>\<S>\<^sub>2 ! ?i' = A\<close>  \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>
-        using assms(7)[OF _ _  \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>, of _ "butlast \<S>\<^sub>2"]
-        by (metis append_butlast_last_id assms(4) diff_less hyp_proof_prefix_is_hyp_proof 
-            length_butlast length_greater_0_conv less.hyps less.prems(2,3,4) zero_less_one)
+        using \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>
+          less.prems(3) less.prems(4)
+          assms(7)[of "butlast ?\<S>\<^sub>k" "\<S>\<^sub>2 ! k" "butlast \<S>\<^sub>2" "butlast ?\<S>\<^sub>j" "\<S>\<^sub>2 ! j" p "(\<S>\<^sub>2 ! ?i')"]
+        by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof)
       then show ?thesis
         by (metis append_butlast_last_id last_conv_nth less.prems(3))
     qed
@@ -3568,7 +3553,7 @@ proof -
     using   rule_R'_app_appended_to_hyp_proof_is_hyp_proof[of H S1 S ic C ie E p D]
     using \<open>S ! ic = C\<close> \<open>S ! ie = E\<close> \<open>ic < length S\<close> \<open>ie < length S\<close> assms(1,2) by linarith
 qed
-thm is_hyp_proof_induct_THE_REAL_ONE
+thm is_hyp_proof_induct
 
 lemma is_hyp_proof_const_subst:
   assumes "is_hyp_proof As Ts P"
@@ -3578,7 +3563,7 @@ lemma is_hyp_proof_const_subst:
   assumes "(x, \<tau>) \<notin> vars\<^sub>p P"
   assumes "c \<notin> P.params As"
   shows "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> P)"
-using assms proof (induction rule: is_hyp_proof_induct_THE_REAL_ONE)
+using assms proof (induction rule: is_hyp_proof_induct)
   case hp_nil
   then show ?case
     by (simp add: const_subst_proof_def)
@@ -3832,7 +3817,7 @@ proof
         then have "A \<preceq> last P"
           using \<open>is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
         then have "vars A \<subseteq> vars (last P)"
-          using brand_new_lemma2 by simp
+          using is_subform_vars by simp
         then have "vars A \<subseteq> vars\<^sub>p P"
           unfolding vars\<^sub>p_def
           apply auto
@@ -3862,7 +3847,7 @@ proof
         then have "B \<preceq> last P"
           using \<open>is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
         then have "vars B \<subseteq> vars (last P)"
-          using brand_new_lemma2 by simp
+          using is_subform_vars by simp
         then have "vars B \<subseteq> vars\<^sub>p P"
           unfolding vars\<^sub>p_def
           apply auto
@@ -3920,8 +3905,8 @@ proof
         using Gen[of As "(A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)" x \<alpha>]
         using fx by auto
       then have \<open>As \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
-        using C_eq equality_of_type_def hyp1 neg_def nice1234 wffs_from_equality(1,2) x_p_3 x_p_4
-        by (metis Un_iff vars_is_free_and_bound_vars)
+        using C_eq equality_of_type_def hyp1 neg_def axiom_3_right_to_left wffs_from_equality(1,2) 
+          x_p_3 x_p_4 by (metis Un_iff vars_is_free_and_bound_vars)
       then have \<open>As \<turnstile> F\<^bsub>o\<^esub>\<close>
         using fact2[unfolded C_eq]
         by (metis QnegD hyp_derivable_form_is_wffso is_derivable_from_hyps.cases prop_5224)
