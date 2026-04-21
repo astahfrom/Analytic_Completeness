@@ -3604,7 +3604,6 @@ qed
 
 lemma is_hyp_proof_const_subst:
   assumes "is_hyp_proof As Ts P"
-  assumes "is_proof Ts"
   assumes "is_hyps As"
   assumes "c \<notin> logical_names"
   assumes "(x, \<tau>) \<notin> vars\<^sub>p P"
@@ -3616,18 +3615,18 @@ using assms proof (induction rule: is_hyp_proof_induct)
     by (simp add: const_subst_proof_def)
 next
   case (hp_hyp A \<S>\<^sub>2)
-  from hp_hyp(7) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
+  from hp_hyp(6) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
     unfolding vars\<^sub>p_def by auto
   from this hp_hyp have "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
     by auto
   then have "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2 @ [const_subst (c, x) \<tau> A])"
     using hyp_appended_to_hyp_proof_is_hyp_proof[of As "(const_subst_proof (c, x) \<tau> Ts)" "(const_subst_proof (c, x) \<tau> \<S>\<^sub>2)" "const_subst (c, x) \<tau> A"]
-    by (metis UN_I hp_hyp.hyps(1) hp_hyp.prems(3,5) idemp_const_subst)
+    by (metis UN_I hp_hyp.hyps(1) hp_hyp.prems(2,4) idemp_const_subst)
   then show ?case
     by (simp add: const_subst_proof_def)
 next
   case (hp_seq A \<S>\<^sub>2)
-  from this(7) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
+  from this(6) have "(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2"
     unfolding vars\<^sub>p_def by auto
   from this hp_seq have "is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
     by auto
@@ -3696,12 +3695,12 @@ next
     by (simp add: varsC varsD varsE)
 
   have "c \<notin> P.params As"
-    using hp_rule_R'.prems(5) by blast
+    using hp_rule_R'.prems(4) by blast
 
   have "is_rule_R'_app As p ?D ?C ?E"
     using is_rule_R'_app_const_subst hp_rule_R'(4) _ hp_rule_R'(6) varsDCE
-    using \<open>is_hyps As\<close> hp_rule_R'.prems(5)
-    by (metis hp_rule_R'.hyps(3) hp_rule_R'.prems(3))
+    using \<open>is_hyps As\<close> hp_rule_R'.prems(4)
+    by (metis hp_rule_R'.hyps(3) hp_rule_R'.prems(2))
 
   show ?case
     using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app As p ?D ?C ?E\<close> \<open>is_hyp_proof As ?Ts' ?\<S>\<^sub>2\<close>, of ?S' ?S'', OF P1 P2]
@@ -3713,7 +3712,6 @@ lemma the_big_thing_to_prove:
   assumes "Ts' = const_subst_proof (c, x) \<alpha> Ts"
   assumes "form' = const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
   assumes "is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
-  assumes "True"
   assumes "(x, \<alpha>) \<notin> vars As"
   assumes "(x, \<alpha>) \<notin> vars B"
   assumes "c \<notin> logical_names"
@@ -3739,7 +3737,7 @@ proof -
   have "is_proof Ts'"
     using \<open>is_proof Ts\<close> unfolding assms(2)
     using is_proof_const_subst[of Ts c x \<alpha>]
-    using assms(8,9) by auto
+    using assms(7,8) by auto
   moreover
   have "P' \<noteq> []"
     by (simp add: \<open>P \<noteq> []\<close> assms(1) const_subst_proof_def)
@@ -3748,7 +3746,7 @@ proof -
     using \<open>is_hyp_proof As Ts P\<close> unfolding assms(1)
     using assms(8,10)
     using is_hyp_proof_const_subst[of As Ts P c x \<alpha>]
-    using \<open>is_proof Ts\<close> assms(11,2) calculation(1) by presburger
+    using \<open>is_proof Ts\<close> assms(2,7,9) calculation(1) by presburger
   moreover
   have "last P' = form'"
     by (simp add: \<open>P \<noteq> []\<close> \<open>last P = A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close> assms(1,3) const_subst_proof_def last_map)
