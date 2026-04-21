@@ -3501,87 +3501,78 @@ next
     proof cases
       case hyp
       then have "A \<in> \<H>"
-        using \<open>A = last \<S>\<^sub>2\<close> \<open>\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1) = A\<close> by argo
+        using \<open>A = last \<S>\<^sub>2\<close> \<open>\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1) = A\<close> by simp
       moreover
-      have calculation_2: "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
+      have butlast_\<S>\<^sub>2_proof: "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
         by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof less.prems(3,4))
       moreover
       have "P (butlast \<S>\<^sub>2)"
-        by (metis assms(4) calculation_2 diff_less length_butlast length_greater_0_conv less.hyps less.prems(1,2,3) zero_less_one)
+        using assms(4) butlast_\<S>\<^sub>2_proof  less.prems(1,2,3) less.hyps[of "butlast \<S>\<^sub>2"]
+        by (metis diff_less length_butlast length_greater_0_conv zero_less_one)
       ultimately
       show ?thesis
         using assms(5)[of A "butlast \<S>\<^sub>2"] \<open>\<S>\<^sub>2 ! ?i' = A\<close> \<open>is_hyps \<H>\<close>
         by (metis A_def append_butlast_last_id less.prems(3))
     next
       case seq
-      from \<open>\<S>\<^sub>2 ! ?i' \<in> lset \<S>\<^sub>1\<close> and \<open>\<S>\<^sub>2 ! ?i' = A\<close>
-      obtain j where "\<S>\<^sub>1 ! j = A" and "\<S>\<^sub>1 \<noteq> []" and "j < length \<S>\<^sub>1"
-        by (metis empty_iff in_set_conv_nth list.set(1))
-      with \<open>is_proof \<S>\<^sub>1\<close> have "is_proof (take (Suc j) \<S>\<^sub>1)" and "take (Suc j) \<S>\<^sub>1 \<noteq> []"
-        using proof_prefix_is_proof[where \<S>\<^sub>1 = "take (Suc j) \<S>\<^sub>1" and \<S>\<^sub>2 = "drop (Suc j) \<S>\<^sub>1"]
-        by simp_all
-      moreover from \<open>\<S>\<^sub>1 ! j = A\<close> and \<open>j < length \<S>\<^sub>1\<close> have "last (take (Suc j) \<S>\<^sub>1) = A"
-        by (simp add: take_Suc_conv_app_nth)
-      ultimately have "is_proof_of (take (Suc j) \<S>\<^sub>1) A"
-        by fastforce
-      then have "is_theorem A"
-        using is_theorem_def by blast
-      with \<open>is_hyps \<H>\<close> show ?thesis
-        using assms(6)[of A]
-        by (metis A_def \<open>\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1) = A\<close> append_butlast_last_id assms(4) 
-            diff_less hyp_proof_prefix_is_hyp_proof length_butlast length_greater_0_conv
-            less.hyps less.prems(2,4) seq zero_less_one)
+      then have "A \<in> lset \<S>\<^sub>1"
+        using \<open>\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1) = A\<close> by blast
+      moreover
+      have butlast_\<S>\<^sub>2_proof: "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
+        by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof less.prems(3,4))
+      moreover
+      have "P (butlast \<S>\<^sub>2)"
+        using assms(4) butlast_\<S>\<^sub>2_proof  less.prems(1,2,3) less.hyps[of "butlast \<S>\<^sub>2"]
+        by (metis diff_less length_butlast length_greater_0_conv zero_less_one)
+      ultimately
+      show ?thesis
+        using A_def less.prems(3) assms(6)[of A "butlast \<S>\<^sub>2"]
+        by (metis append_butlast_last_id)
     next
       case rule_R'
       then obtain p and j and k
-        where "{j, k} \<subseteq> {0..<?i'}" and "is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)"
+        where "{j, k} \<subseteq> {0..<?i'}" and R': "is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)"
         by force
       let ?\<S>\<^sub>j = "take (Suc j) \<S>\<^sub>2" and ?\<S>\<^sub>k = "take (Suc k) \<S>\<^sub>2"
       obtain \<S>\<^sub>j' and \<S>\<^sub>k' where "\<S>\<^sub>2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'" and "\<S>\<^sub>2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'"
         by (metis append_take_drop_id)
-      then have "is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>j @ \<S>\<^sub>j')" and "is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>k @ \<S>\<^sub>k')"
-        by (simp_all only: \<open>is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2\<close>)
-      moreover from \<open>\<S>\<^sub>2 \<noteq> []\<close> and \<open>\<S>\<^sub>2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> and \<open>\<S>\<^sub>2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> and \<open>A = last \<S>\<^sub>2\<close>
-      have "last \<S>\<^sub>j' = A" and "last \<S>\<^sub>k' = A"
-        using \<open>{j, k} \<subseteq> {0..<length \<S>\<^sub>2 - 1}\<close> and take_tl and less_le_not_le and append.right_neutral
-        by (metis atLeastLessThan_iff insert_subset last_appendR length_tl take_all_iff)+
-      moreover from \<open>\<S>\<^sub>2 \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
+      from \<open>\<S>\<^sub>2 \<noteq> []\<close> have "?\<S>\<^sub>j \<noteq> []" and "?\<S>\<^sub>k \<noteq> []"
         by simp_all
-      ultimately have "is_hyp_proof_of \<H> \<S>\<^sub>1 ?\<S>\<^sub>j (last ?\<S>\<^sub>j)" and "is_hyp_proof_of \<H> \<S>\<^sub>1 ?\<S>\<^sub>k (last ?\<S>\<^sub>k)"
-        using hyp_proof_prefix_is_hyp_proof_of_last
-          [OF \<open>is_hyps \<H>\<close> \<open>is_proof \<S>\<^sub>1\<close> \<open>is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>j @ \<S>\<^sub>j')\<close> \<open>?\<S>\<^sub>j \<noteq> []\<close>]
-          and hyp_proof_prefix_is_hyp_proof_of_last
-          [OF \<open>is_hyps \<H>\<close> \<open>is_proof \<S>\<^sub>1\<close> \<open>is_hyp_proof \<H> \<S>\<^sub>1 (?\<S>\<^sub>k @ \<S>\<^sub>k')\<close> \<open>?\<S>\<^sub>k \<noteq> []\<close>]
-        by fastforce+
-
-      from \<open>last \<S>\<^sub>j' = A\<close> and \<open>last \<S>\<^sub>k' = A\<close>
-      have calculation_3: "length ?\<S>\<^sub>j < length \<S>\<^sub>2" and calculation_4: "length ?\<S>\<^sub>k < length \<S>\<^sub>2"
+      
+      have length_\<S>\<^sub>j: "length ?\<S>\<^sub>j < length \<S>\<^sub>2" and length_\<S>\<^sub>k: "length ?\<S>\<^sub>k < length \<S>\<^sub>2"
         using \<open>{j, k} \<subseteq> {0..<length \<S>\<^sub>2 - 1}\<close> by force+
-      then have calculation_5: "last ?\<S>\<^sub>j = \<S>\<^sub>2 ! j" and calculation_6: "last ?\<S>\<^sub>k = \<S>\<^sub>2 ! k"
+      then have last_\<S>\<^sub>j: "last ?\<S>\<^sub>j = \<S>\<^sub>2 ! j" and last_\<S>\<^sub>k: "last ?\<S>\<^sub>k = \<S>\<^sub>2 ! k"
         by (metis Suc_lessD last_snoc linorder_not_le nat_neq_iff take_Suc_conv_app_nth take_all_iff)+
 
+      have is_hyp_proof_butlast: "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
+        using less.prems(3,4) hyp_proof_prefix_is_hyp_proof[of \<H> \<S>\<^sub>1 "butlast \<S>\<^sub>2" "[A]"] A_def
+        by (metis append_butlast_last_id)
 
       have "prefix (butlast ?\<S>\<^sub>k @ [\<S>\<^sub>2 ! k]) (butlast \<S>\<^sub>2)"
         by (metis \<open>\<S>\<^sub>2 = ?\<S>\<^sub>k @ \<S>\<^sub>k'\<close> \<open>?\<S>\<^sub>k \<noteq> []\<close> 
-            append_butlast_last_id calculation_4 calculation_6 less.prems(3) order_less_irrefl prefixI
+            append_butlast_last_id length_\<S>\<^sub>k last_\<S>\<^sub>k less.prems(3) order_less_irrefl prefixI
             prefix_snoc)
       moreover
       have "prefix (butlast ?\<S>\<^sub>j @ [\<S>\<^sub>2 ! j]) (butlast \<S>\<^sub>2)"
         by (metis \<open>\<S>\<^sub>2 = ?\<S>\<^sub>j @ \<S>\<^sub>j'\<close> \<open>?\<S>\<^sub>j \<noteq> []\<close> append_butlast_last_id 
-            calculation_3 calculation_5 less.prems(3) order_less_irrefl prefixI prefix_snoc)
+            length_\<S>\<^sub>j last_\<S>\<^sub>j less.prems(3) order_less_irrefl prefixI prefix_snoc)
       moreover
       have "P (butlast \<S>\<^sub>2)"
-        using less.prems(1,2,3,4) less.hyps[of "butlast \<S>\<^sub>2"] assms(4) hyp_proof_prefix_is_hyp_proof
-        by (metis  zero_less_one length_greater_0_conv diff_less length_butlast 
-            append_butlast_last_id)
+        using less.prems(1,2,3) 
+          is_hyp_proof_butlast
+          less.hyps[of "butlast \<S>\<^sub>2"] 
+          assms(4)
+        by (metis append_butlast_last_id length_append_singleton lessI)
+      moreover
+      have "is_hyp_proof \<H> \<S>\<^sub>1 (butlast \<S>\<^sub>2)"
+        using less.prems(4) less.prems(3) by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof)
       ultimately
       have "P (butlast \<S>\<^sub>2 @ [\<S>\<^sub>2 ! (length \<S>\<^sub>2 - 1)])"
-        using \<open>is_rule_R'_app \<H> p (\<S>\<^sub>2 ! ?i') (\<S>\<^sub>2 ! j) (\<S>\<^sub>2 ! k)\<close>
-          less.prems(3) less.prems(4)
+        using R'
           assms(7)[of "butlast ?\<S>\<^sub>k" "\<S>\<^sub>2 ! k" "butlast \<S>\<^sub>2" "butlast ?\<S>\<^sub>j" "\<S>\<^sub>2 ! j" p "(\<S>\<^sub>2 ! ?i')"]
-        by (metis append_butlast_last_id hyp_proof_prefix_is_hyp_proof)
+        by metis
       then show ?thesis
-        by (metis append_butlast_last_id last_conv_nth less.prems(3))
+        using less.prems(3) by (metis append_butlast_last_id last_conv_nth)
     qed
   qed
 qed
