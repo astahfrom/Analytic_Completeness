@@ -3472,7 +3472,8 @@ lemma is_hyp_proof_induct [consumes 1, case_names hp_nil hp_hyp hp_seq hp_rule_R
   assumes "P []"
   assumes "\<And>A \<S>\<^sub>2. A \<in> \<H> \<Longrightarrow> is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<Longrightarrow> P \<S>\<^sub>2 \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
   assumes "\<And>A \<S>\<^sub>2. A \<in> lset \<S>\<^sub>1 \<Longrightarrow> is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<Longrightarrow> P \<S>\<^sub>2 \<Longrightarrow> P (\<S>\<^sub>2 @ [A])"
-  assumes "\<And>S' E \<S>\<^sub>2 S'' C p D. prefix (S' @ [E]) \<S>\<^sub>2 \<Longrightarrow> prefix (S'' @ [C]) \<S>\<^sub>2 \<Longrightarrow> is_rule_R'_app \<H> p D C E \<Longrightarrow> is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<Longrightarrow> P \<S>\<^sub>2 \<Longrightarrow> P (\<S>\<^sub>2 @ [D])"
+  assumes "\<And>S' E \<S>\<^sub>2 S'' C p D. prefix (S' @ [E]) \<S>\<^sub>2 \<Longrightarrow> prefix (S'' @ [C]) \<S>\<^sub>2 
+  \<Longrightarrow> is_rule_R'_app \<H> p D C E \<Longrightarrow> is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2 \<Longrightarrow> P \<S>\<^sub>2 \<Longrightarrow> P (\<S>\<^sub>2 @ [D])"
   shows "P \<S>\<^sub>2"
 proof (cases "\<S>\<^sub>2 = []") (* This proof is adapted from hyp_proof_existence_implies_hyp_derivability *)
   case True
@@ -3647,9 +3648,9 @@ next
   let ?S'E = "const_subst_proof (c, x) \<tau> (S' @ [E])"
   let ?S'' = "const_subst_proof (c, x) \<tau> S''"
   let ?S''C = "const_subst_proof (c, x) \<tau> (S'' @ [C])"
-  let ?Ts' = "const_subst_proof (c, x) \<tau> Ts"
+  let ?Ts = "const_subst_proof (c, x) \<tau> Ts"
 
-  have "is_hyp_proof As ?Ts' ?\<S>\<^sub>2"
+  have "is_hyp_proof As ?Ts ?\<S>\<^sub>2"
     using hp_rule_R'.IH hp_rule_R'.prems vars\<^sub>p_def by auto
 
   have "prefix ?S''C ?\<S>\<^sub>2"
@@ -3658,19 +3659,20 @@ next
   have "prefix ?S'E ?\<S>\<^sub>2"
     by (metis const_subst_proof_def hp_rule_R'.hyps(1) map_mono_prefix)
 
-  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [const_subst (c, x) \<tau> E]) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
-    using \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> const_subst_proof_def by fastforce
+  have P1: "prefix (const_subst_proof (c, x) \<tau> S' @ [?E]) (?\<S>\<^sub>2)"
+    using \<open>prefix ?S'E ?\<S>\<^sub>2\<close> 
+      const_subst_proof_def by fastforce
 
-  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [const_subst (c, x) \<tau> C]) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)"
-    using \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> const_subst_proof_def by force
+  have P2: "prefix (const_subst_proof (c, x) \<tau> S'' @ [?C]) (?\<S>\<^sub>2)"
+    using \<open>prefix ?S''C (?\<S>\<^sub>2)\<close> const_subst_proof_def by force
 
-  have "is_hyp_proof As ?Ts' ?S''C"
-    by (metis \<open>is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
-        \<open>prefix (const_subst_proof (c, x) \<tau> (S'' @ [C])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
+  have "is_hyp_proof As ?Ts ?S''C"
+    by (metis \<open>is_hyp_proof As ?Ts (?\<S>\<^sub>2)\<close>
+        \<open>prefix ?S''C ?\<S>\<^sub>2\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
   
-  have "is_hyp_proof As ?Ts' ?S'E"
-    by (metis \<open>is_hyp_proof As (const_subst_proof (c, x) \<tau> Ts) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close>
-        \<open>prefix (const_subst_proof (c, x) \<tau> (S' @ [E])) (const_subst_proof (c, x) \<tau> \<S>\<^sub>2)\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
+  have "is_hyp_proof As ?Ts ?S'E"
+    by (metis \<open>is_hyp_proof As (?Ts) (?\<S>\<^sub>2)\<close>
+        \<open>prefix ?S'E ?\<S>\<^sub>2\<close> hyp_proof_prefix_is_hyp_proof prefix_def)
 
   have varsD: "(x, \<tau>) \<notin> vars D"
     using hp_rule_R' unfolding vars\<^sub>p_def by auto
@@ -3679,14 +3681,16 @@ next
     using hp_rule_R'.prems by auto
 
   have "vars C \<subseteq> vars\<^sub>p \<S>\<^sub>2"
-    unfolding vars\<^sub>p_def apply auto
-    by (metis append.assoc append_Cons hp_rule_R'.hyps(2) in_set_conv_decomp prefix_def)
+    unfolding vars\<^sub>p_def 
+    by clarsimp
+      (metis append.assoc append_Cons hp_rule_R'.hyps(2) in_set_conv_decomp prefix_def)
   then have varsC: "(x, \<tau>) \<notin> vars C"
     using varsS unfolding vars\<^sub>p_def by auto
 
   have "vars E \<subseteq> vars\<^sub>p \<S>\<^sub>2"
-    unfolding vars\<^sub>p_def apply auto
-    by (metis append.assoc append_Cons hp_rule_R'.hyps(1) in_set_conv_decomp prefix_def)
+    unfolding vars\<^sub>p_def 
+    by clarsimp
+      (metis append.assoc append_Cons hp_rule_R'.hyps(1) in_set_conv_decomp prefix_def)
     
   then have varsE: "(x, \<tau>) \<notin> vars E"
       using varsS unfolding vars\<^sub>p_def by auto
@@ -3703,15 +3707,16 @@ next
     by (metis hp_rule_R'.hyps(3) hp_rule_R'.prems(2))
 
   show ?case
-    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app As p ?D ?C ?E\<close> \<open>is_hyp_proof As ?Ts' ?\<S>\<^sub>2\<close>, of ?S' ?S'', OF P1 P2]
+    using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app As p ?D ?C ?E\<close> 
+        \<open>is_hyp_proof As ?Ts ?\<S>\<^sub>2\<close>, of ?S' ?S'', OF P1 P2]
     by (simp add: const_subst_proof_def)
 qed
 
-lemma the_big_thing_to_prove:
+lemma is_hyp_proof_of_const_subst:
   assumes "P' = const_subst_proof (c, x) \<alpha> P"
   assumes "Ts' = const_subst_proof (c, x) \<alpha> Ts"
-  assumes "form' = const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
-  assumes "is_hyp_proof_of As Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)"
+  assumes "form' = const_subst (c, x) \<alpha> A"
+  assumes "is_hyp_proof_of As Ts P (A)"
   assumes "(x, \<alpha>) \<notin> vars As"
   assumes "(x, \<alpha>) \<notin> vars B"
   assumes "c \<notin> logical_names"
@@ -3728,7 +3733,7 @@ proof -
     unfolding is_hyp_proof_of_def by auto
   from assms(4) have "is_hyp_proof As Ts P"
     unfolding is_hyp_proof_of_def by auto
-  from assms(4) have "last P = A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>"
+  from assms(4) have "last P = A"
     unfolding is_hyp_proof_of_def by auto
 
   have "is_hyps As"
@@ -3749,7 +3754,7 @@ proof -
     using \<open>is_proof Ts\<close> assms(2,7,9) calculation(1) by presburger
   moreover
   have "last P' = form'"
-    by (simp add: \<open>P \<noteq> []\<close> \<open>last P = A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>\<close> assms(1,3) const_subst_proof_def last_map)
+    by (simp add: \<open>P \<noteq> []\<close> \<open>last P = A\<close> assms(1,3) const_subst_proof_def last_map)
   ultimately
   show ?thesis
     unfolding is_hyp_proof_of_def by auto
@@ -3772,24 +3777,25 @@ proof
     assume hyp1: \<open>p \<in> wffs\<^bsub>o\<^esub>\<close>
       and hyp2: \<open>\<exists>\<alpha> \<beta> A B. ineq_match p (\<alpha>, \<beta>, A, B)\<close>
     then obtain A B \<alpha> \<beta>
-      where C_def: \<open>ineq_match p (\<alpha>, \<beta>, A, B)\<close>
+      where p_def: \<open>ineq_match p (\<alpha>, \<beta>, A, B)\<close>
         and delta_eq: \<open>delta p c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-        and C_eq: \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
+        and p_eq: \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
       using ineq_match_delta[OF hyp1] ineq_matchD by blast
       moreover assume \<open>\<not> is_consistent_set (lset (delta p c) \<union> As)\<close>
       then obtain H where
         H: \<open>H \<subseteq> As\<close> \<open>is_inconsistent_set ({\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)} \<union> H)\<close>
         using consistent unfolding delta_eq is_consistent_set_def
-        by (metis (no_types, lifting) empty_set list.simps(15) subset_UnE subset_singletonD sup_bot_left)
-    have fact1: \<open>is_hyps (lset (delta p c) \<union> H)\<close>
+        by (metis (no_types, lifting) empty_set list.simps(15) 
+            subset_UnE subset_singletonD sup_bot_left)
+    have H_is_hyps: \<open>is_hyps (lset (delta p c) \<union> H)\<close>
       unfolding delta_eq
-      using hyp1 C_eq consistent 
+      using hyp1 p_eq consistent 
         wffs_from_equality[of A "\<alpha> \<rightarrow> \<beta>" B] 
         wffs_from_neg[of "A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B"] 
       by (metis H(2) empty_set inconsistent_imp_hyps list.simps(15))
-    have fact2: \<open>{p} \<union> H \<turnstile> p\<close>
+    have fromH_p: \<open>{p} \<union> H \<turnstile> p\<close>
       using prop_5241 \<open>p \<in> As\<close> dv_hyp consistent 
-      by (metis fact1 finite_Un finite_insert hyp1
+      by (metis H_is_hyps finite_Un finite_insert hyp1
           insert_is_Un insert_subset le_sup_iff
           sup.cobounded1)
 
@@ -3798,7 +3804,7 @@ proof
       assume \<open>lset [\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)] \<union> H \<turnstile> F\<^bsub>o\<^esub>\<close>
         (is \<open>lset [\<sim>\<^sup>\<Q> ?form] \<union> H \<turnstile> F\<^bsub>o\<^esub>\<close>)
       hence \<open>H \<turnstile> ?form\<close>
-        using QnegI delta_eq fact1 Qdouble_negE
+        using QnegI delta_eq H_is_hyps Qdouble_negE
           consistent unfolding is_consistent_set_def
         by (metis empty_set finite_Un inf_sup_aci(5)
             insert_subset list.simps(15) sup.bounded_iff
@@ -3819,94 +3825,62 @@ proof
       then have cAB: "c \<notin> Qconsts (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B))"
         using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by auto
-      from \<open>H \<turnstile> ?form\<close> obtain Ts P where "is_hyp_proof_of H Ts P ?form" (* Ts are some theorems used in P *)
+      from \<open>H \<turnstile> ?form\<close> 
+      obtain Ts P where "is_hyp_proof_of H Ts P ?form" (* Ts are some theorems used in P *)
         using hypothetical_derivability_proof_existence_equivalence by metis
 
-      define TP where "TP = (\<lambda>T. SOME P. is_proof_of P T)" (* Maybe not needed *)
-      define TsPs where "TsPs = map TP Ts" 
-
-      from \<open>is_hyp_proof_of H Ts P ?form\<close> obtain x where x_pro: "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars H"
-        apply (subgoal_tac "(\<exists>x. (x,\<alpha>) \<notin> (vars H) \<union> vars\<^sub>p P \<union> vars\<^sub>p Ts) \<and> finite (vars H)")
-        subgoal
-          apply auto
-          done
-        subgoal
-          apply rule
-          subgoal
-            by (metis fact1 finite_Un finite_vars\<^sub>p
-                fresh_var_existence
-                vars_form_set_finiteness)
-          subgoal
-            by (metis vars_form_set_finiteness finite_Un fact1)
-          done
-        done
-
+      obtain x where x_not_in_prf: "(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars H"
+      proof(atomize_elim)
+        have notin_vars: \<open>(\<exists>x. (x,\<alpha>) \<notin> (vars H) \<union> vars\<^sub>p P \<union> vars\<^sub>p Ts) \<and> finite (vars H)\<close>
+          by (metis H_is_hyps finite_Un finite_vars\<^sub>p fresh_var_existence vars_form_set_finiteness)
+        from \<open>is_hyp_proof_of H Ts P ?form\<close> 
+        show \<open>\<exists>x. (x, \<alpha>) \<notin> vars\<^sub>p P \<and> (x, \<alpha>) \<notin> vars\<^sub>p Ts \<and> (x, \<alpha>) \<notin> vars H\<close>
+          using notin_vars
+          by auto
+      qed
 
       define P' where "P' = const_subst_proof (c, x) \<alpha> P"
       define Ts' where "Ts' = const_subst_proof (c, x) \<alpha> Ts"
       define form' where "form' = (const_subst (c, x) \<alpha> ?form)"
-
-      have x_p_2:
+      have \<open>P \<noteq> []\<close>
+        using \<open>is_hyp_proof_of H Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> 
+        by auto
+      have x_not_in_H:
         \<open>(x,\<alpha>) \<notin> vars H\<close>
         using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars H\<close> by blast
-      have x_p_3:
+      have x_not_in_A:
         \<open>(x,\<alpha>) \<notin> vars A\<close>
       proof -
+       
         have "A \<preceq> ?form"
-          apply simp
-          by (meson is_subform_at.simps(1,2,3))
+          by simp
+            (meson is_subform_at.simps(1,2,3))
         then have "A \<preceq> last P"
           using \<open>is_hyp_proof_of H Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
         then have "vars A \<subseteq> vars (last P)"
           using is_subform_vars by simp
         then have "vars A \<subseteq> vars\<^sub>p P"
-          unfolding vars\<^sub>p_def
-          apply auto
-          apply (rule bexI[of _ "last P"])
-          subgoal for x \<tau>
-            apply auto
-            done
-          subgoal for x \<tau>
-            apply (subgoal_tac "P \<noteq> []")
-            subgoal
-              using last_in_set apply blast
-              done
-            subgoal
-              using \<open>is_hyp_proof_of H Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
-              done
-            done
-          done
+          unfolding vars\<^sub>p_def 
+          using \<open>P \<noteq> []\<close>
+          by (auto intro!: bexI[of _ "last P"])
         then show \<open>(x,\<alpha>) \<notin> vars A\<close>
           using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars H\<close> by blast
       qed
 
-      have x_p_4:
+      have x_not_in_B:
         \<open>(x,\<alpha>) \<notin> vars B\<close>
       proof -
         have "B \<preceq> ?form"
-          apply simp
-          by (meson is_subform_at.simps(1,2,3))
+          by simp
+            (meson is_subform_at.simps(1,2,3))
         then have "B \<preceq> last P"
           using \<open>is_hyp_proof_of H Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> by auto
         then have "vars B \<subseteq> vars (last P)"
           using is_subform_vars by simp
         then have "vars B \<subseteq> vars\<^sub>p P"
-          unfolding vars\<^sub>p_def
-          apply auto
-          apply (rule bexI[of _ "last P"])
-          subgoal for x \<tau>
-            apply auto
-            done
-          subgoal for x \<tau>
-            apply (subgoal_tac "P \<noteq> []")
-            subgoal
-              using last_in_set apply blast
-              done
-            subgoal
-              using \<open>is_hyp_proof_of H Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> apply fastforce
-              done
-            done
-          done
+          unfolding vars\<^sub>p_def 
+          using \<open>P \<noteq> []\<close>
+          by (auto intro!: bexI[of _ "last P"])
         then show \<open>(x,\<alpha>) \<notin> vars B\<close>
           using \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars H\<close> by blast
       qed
@@ -3916,16 +3890,17 @@ proof
 
       have "is_hyp_proof_of H Ts' P' form'"
         using
-          x_pro
-          x_p_2
-          x_p_4
+          x_not_in_prf
+          x_not_in_A
+          x_not_in_B
           \<open>c \<notin> logical_names\<close>
-          the_big_thing_to_prove[OF P'_def Ts'_def form'_def \<open>is_hyp_proof_of H Ts P ?form\<close> _ _ _ _ _ _ \<open>c \<notin> P.params H\<close>]
+          is_hyp_proof_of_const_subst[OF P'_def Ts'_def form'_def \<open>is_hyp_proof_of H Ts P ?form\<close> 
+            _ _ _ _ _ \<open>c \<notin> P.params H\<close>]
         by metis
       then have "H \<turnstile> form'"
         using hypothetical_derivability_proof_existence_equivalence by metis
 
-      then have x_p_1:
+      then have fromH_Ac_Bc:
         \<open>H \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
         using form'_def by fastforce
 
@@ -3938,31 +3913,31 @@ proof
       then have b: "const_subst (c, x) \<alpha> B = B"
         using Qconsts_const_subst by auto
 
-      have fx: "(x, \<alpha>) \<notin> free_vars H"
-        by (metis dual_order.refl equalityI free_vars_in_all_vars_set insert_subset x_p_2)
+      have free_x: "(x, \<alpha>) \<notin> free_vars H"
+        by (metis dual_order.refl equalityI free_vars_in_all_vars_set insert_subset x_not_in_H)
 
-      from x_p_1 have \<open>H \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-        apply (simp only: const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b)
-        apply auto
-        done
+      from fromH_Ac_Bc have \<open>H \<turnstile> (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+        unfolding const_subst_laws[of c, OF \<open>\<not> is_logical_name c\<close>] const_subst.simps a b
+        by auto
       then have "H \<turnstile> \<forall>x\<^bsub>\<alpha>\<^esub>. ((A \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<beta>\<^esub> (B \<sqdot> x\<^bsub>\<alpha>\<^esub>))"  (* by generalisation *)
         using Gen[of H "(A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)" x \<alpha>]
-        using fx by auto
+        using free_x by auto
       then have \<open>H \<turnstile> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
-        using C_eq equality_of_type_def hyp1 neg_def axiom_3_right_to_left wffs_from_equality(1,2) 
-          x_p_3 x_p_4 by (metis Un_iff vars_is_free_and_bound_vars)
+        using p_eq equality_of_type_def hyp1 neg_def axiom_3_right_to_left wffs_from_equality(1,2) 
+          x_not_in_A x_not_in_B by (metis Un_iff vars_is_free_and_bound_vars)
       then have \<open>{p} \<union> H \<turnstile> F\<^bsub>o\<^esub>\<close>
-        using fact2[unfolded C_eq]
-        by (metis C_eq QnegD hyp1
+        using fromH_p[unfolded p_eq]
+        by (metis p_eq QnegD hyp1
             is_derivable_from_hyps.cases prop_5224
             prop_5241 sup.cobounded2
             wffs_from_neg)
       thus False
-        using consistent unfolding comp_def is_consistent_set_def is_inconsistent_set_def
-        using H(1) \<open>p \<in> As\<close> by auto
+        using consistent H(1) \<open>p \<in> As\<close> 
+        unfolding comp_def is_consistent_set_def is_inconsistent_set_def
+        by auto
     qed
     thus False
-      using fact1
+      using H_is_hyps
       unfolding comp_def
       by (metis H(2) delta_eq empty_set
           is_inconsistent_set_def
@@ -4055,7 +4030,7 @@ lemma is_hyps_enough_new:
   assumes \<open>is_hyps \<H>\<close>
   shows \<open>P.enough_new \<H>\<close>
 proof -
- have \<open>inj (to_nat :: form \<Rightarrow> nat)\<close>
+  have \<open>inj (to_nat :: form \<Rightarrow> nat)\<close>
     using inj_to_nat by blast
   then show ?thesis
     using assms P.enough_new_countable P.finite_params_fm
