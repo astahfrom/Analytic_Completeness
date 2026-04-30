@@ -1,5 +1,5 @@
 theory MCS imports
-  "../Analytic_Completeness"
+  "Abstract_Consistency_Property.Abstract_Consistency_Property"
   "Q0_Metatheory.Consistency"
 begin
 
