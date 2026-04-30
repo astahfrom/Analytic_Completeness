@@ -41,7 +41,7 @@ lemma "is_type Vt \<Longrightarrow> V_of_type (type_of_V Vt) = Vt"
 definition V_of_form :: "form \<Rightarrow> V" where
   "V_of_form = (SOME V_of. inj V_of)"
 
-definition form_of_V :: "V \<Rightarrow> form" where
+(* definition form_of_V :: "V \<Rightarrow> form" where
   "form_of_V = inv V_of_form"
 
 definition is_form :: "V \<Rightarrow> bool" where
@@ -58,6 +58,7 @@ lemma "form_of_V (V_of_form A) = A"
 
 lemma "is_form VA \<Longrightarrow> V_of_form (form_of_V VA) = VA"
   by (simp add: f_inv_into_f form_of_V_def is_form_def)
+*)
 
 (* Modified from Anders's definition. *)
 definition extensionally_complete_membership :: "form set \<Rightarrow> bool" where
@@ -264,15 +265,15 @@ lemma c_in_cons_form_iff:
   by (induct A; clarsimp)
     auto
 
-lemma cons_form_eq: \<open>cons_form A = Qconsts A - logical_names\<close>
+(* lemma cons_form_eq: \<open>cons_form A = Qconsts A - logical_names\<close>
   using c_in_cons_form_iff
-  by blast
+  by blast *)
 
 section \<open>Lemmas\<close>
 
 text \<open>This property is really what dodging the logical constants is all about.\<close>
-proposition \<open>map_con f (\<sim>\<^sup>\<Q> A) = \<sim>\<^sup>\<Q> (map_con f A)\<close>
-  by simp
+(* proposition \<open>map_con f (\<sim>\<^sup>\<Q> A) = \<sim>\<^sup>\<Q> (map_con f A)\<close>
+  by simp *)
 
 lemma map_con_id [simp]: \<open>map_con id = id\<close>
 proof
@@ -456,8 +457,8 @@ lemma cTrue: \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<notin> H\<close>
 lemma cIrr: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) \<notin> H\<close>
   using confl by (force intro: CIrr[of A \<alpha>])
 
-lemma cEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<supset>\<^sup>\<Q> B \<in> H \<and> B \<supset>\<^sup>\<Q> A \<in> H\<close>
-  using alpha by (force intro: CEqvP[of A B])
+(* lemma cEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> A \<supset>\<^sup>\<Q> B \<in> H \<and> B \<supset>\<^sup>\<Q> A \<in> H\<close>
+  using alpha by (force intro: CEqvP[of A B]) *)
 
 lemma cEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<in> H \<Longrightarrow> A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B \<in> H \<and> B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A \<in> H\<close>
   using alpha by (force intro: CEqvN[of A B])
@@ -810,11 +811,11 @@ next
     unfolding good_type_def using una by metis
 qed
 
-lemma two_fun:
+(* lemma two_fun:
   assumes "is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)"
   assumes "is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)"
   shows "V A (\<beta> \<rightarrow> \<alpha>) = V B (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H"
-  using all_good assms(1,2) good_type_def two_gamma_def by presburger
+  using all_good assms(1,2) good_type_def two_gamma_def by presburger *)
 
 lemma two_gamma:
   assumes "is_closed_wff_of_type A \<gamma>"
@@ -979,8 +980,8 @@ definition C\<phi> :: "form \<Rightarrow> (var \<Rightarrow> V) \<Rightarrow> fo
 definition type_of :: "form \<Rightarrow> type" where
   "type_of A = (SOME \<gamma>. A \<in> wffs\<^bsub>\<gamma>\<^esub>)"
 
-lemma "A \<in> wffs\<^bsub>\<gamma>\<^esub> \<Longrightarrow> type_of A = \<gamma>"
-  using type_of_def wff_has_unique_type by auto
+(* lemma "A \<in> wffs\<^bsub>\<gamma>\<^esub> \<Longrightarrow> type_of A = \<gamma>"
+  using type_of_def wff_has_unique_type by auto *)
 
 definition V\<phi> :: "(var \<Rightarrow> V) \<Rightarrow> form \<Rightarrow> V" where
   "V\<phi> \<phi> C = V (C\<phi> C \<phi>) (type_of C)"
@@ -2150,25 +2151,25 @@ proof
     using consistent is_consistent_set_union sub by auto
 qed
 
-lemma positions_eta_vars:
-  \<open>positions (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>) 
+(* lemma positions_eta_vars:
+  \<open>positions (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)
   = {[], [\<guillemotleft>, \<guillemotright>], [\<guillemotleft>, \<guillemotleft>], [\<guillemotleft>], [\<guillemotright>], [\<guillemotright>, \<guillemotleft>, \<guillemotright>], [\<guillemotright>, \<guillemotleft>, \<guillemotleft>], [\<guillemotright>, \<guillemotleft>]}\<close>
   by auto
 
-lemma prefix_eta_vars: 
+lemma prefix_eta_vars:
   \<open>prefix p [\<guillemotleft>, \<guillemotleft>] \<Longrightarrow> p = [\<guillemotleft>, \<guillemotleft>] \<or> p = [\<guillemotleft>] \<or> p = []\<close>
   \<open>prefix p [\<guillemotright>] \<Longrightarrow> p = [\<guillemotright>] \<or> p = []\<close>
   unfolding prefix_def
   by (auto simp: Cons_eq_append_conv)
 
-lemma free_for_eta_vars: \<open>(x, \<alpha>) \<notin> free_vars A \<Longrightarrow> 
+lemma free_for_eta_vars: \<open>(x, \<alpha>) \<notin> free_vars A \<Longrightarrow>
   is_free_for A (f, \<alpha> \<rightarrow> \<beta>) (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
   unfolding is_free_for_def in_scope_of_abs_def positions_eta_vars
   using prefix_eta_vars vars_is_free_and_bound_vars
   by (safe; (clarsimp split: option.split form.split elim!: subform_at.elims)?)
-    auto
+    auto *)
 
-lemma eta_conv:
+(* lemma eta_conv:
   shows \<open>\<turnstile> f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
     and \<open>\<turnstile> (\<lambda>x\<^bsub>\<alpha>\<^esub>. f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>) =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close>
     and \<open>F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<Longrightarrow> (x, \<alpha>) \<notin> free_vars F \<Longrightarrow> \<turnstile> F =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> (\<lambda>x\<^bsub>\<alpha>\<^esub>. F \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
@@ -2221,7 +2222,7 @@ proof-
     if \<open>F \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close> and \<open>(x, \<alpha>) \<notin> free_vars F\<close>
     using prop_5201_2 that
     by blast
-qed
+qed *)
 
 (* TODO: We can give this function a more appropriate type I think *)
 fun const_subst :: "nat \<times> nat \<Rightarrow> type \<Rightarrow> form \<Rightarrow> form"
@@ -2254,7 +2255,7 @@ lemma fresh_free_var_for: \<open>\<exists>x. is_free_for A x B\<close>
   using fresh_var_form is_free_for_absent_var
   by blast
 
-lemma is_wff_of_type_const_subst:
+(* lemma is_wff_of_type_const_subst:
   assumes "is_wff_of_type \<alpha> A"
   assumes "(x,\<tau>) \<notin> vars A"
   shows "is_wff_of_type \<alpha> (const_subst (c, x) \<tau> A)"
@@ -2284,16 +2285,16 @@ next
     by simp
 qed
 
-lemma const_subst_in_wffs: 
+lemma const_subst_in_wffs:
   \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> (x,\<tau>) \<notin> vars A \<Longrightarrow> (const_subst (c, x) \<tau> A) \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-  using is_wff_of_type_const_subst is_wff_of_type_wffs_of_type_eq 
-  by force
+  using is_wff_of_type_const_subst is_wff_of_type_wffs_of_type_eq
+  by force *)
 
-lemma is_hyps_const_subst: \<open>is_hyps \<Gamma> \<Longrightarrow> (x, \<alpha>) \<notin> vars \<Gamma> 
+(* lemma is_hyps_const_subst: \<open>is_hyps \<Gamma> \<Longrightarrow> (x, \<alpha>) \<notin> vars \<Gamma>
   \<Longrightarrow> is_hyps {const_subst (c, x) \<alpha> F | F. F \<in> \<Gamma>}\<close>
   unfolding subset_eq
   using finite_imageI
-  by (auto intro!: const_subst_in_wffs)
+  by (auto intro!: const_subst_in_wffs) *)
 
 lemma idemp_const_subst: \<open>c \<notin> cons_form F \<Longrightarrow> \<not> is_logical_name c
   \<Longrightarrow> const_subst (c, x) \<alpha> F = F\<close>
@@ -2310,9 +2311,9 @@ lemma const_subst_laws:
   \<open>\<not> is_logical_name c \<Longrightarrow> const_subst (c, x) \<tau> (A =\<^bsub>\<alpha>\<^esub> B) = (const_subst (c, x) \<tau> A =\<^bsub>\<alpha>\<^esub> const_subst (c, x) \<tau> B)\<close>
   by (simp_all add: logical_names_def)
 
-lemma cons_form_non_lnames: \<open>c \<in> logical_names \<Longrightarrow> c \<notin> cons_form A\<close>
+(* lemma cons_form_non_lnames: \<open>c \<in> logical_names \<Longrightarrow> c \<notin> cons_form A\<close>
   by (induction A)
-    (auto split: if_splits)
+    (auto split: if_splits) *)
 
 lemma const_subst_axiom_if_no_c:
   assumes \<open>c \<notin> cons_form A\<close>
@@ -2400,12 +2401,12 @@ lemma axiom_4_1_var_const_subst:
   shows "const_subst (c, x) \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub>) \<in> axioms"
   using assms(1,2,3) axioms.axiom_4_1_var const_subst_wffs by auto
 
-lemma axiom_4_2_const_subst:
-  assumes \<open>\<not> is_logical_name c\<close> 
+(* lemma axiom_4_2_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close>
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>"
   assumes "\<forall>t. (x, t) \<notin> vars ((\<lambda>x\<^bsub>\<alpha>\<^esub>. \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>)"
   shows "const_subst (c, x) \<tau> ((\<lambda>z\<^bsub>\<alpha>\<^esub>. x\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A) \<in> axioms"
-  oops (* TODO: prove or delete... *)
+  oops *) (* TODO: prove or delete... *)
  
 lemma axiom_4_3_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
@@ -2475,12 +2476,12 @@ proof -
     using const_subst_laws[OF assms(1)] axioms.axiom_4_4[of ?A \<alpha> ?B \<delta> y \<gamma> z] A_wff B_wff by simp
 qed
 
-lemma axiom_4_5_const_subst:
-  assumes \<open>\<not> is_logical_name c\<close> 
+(* lemma axiom_4_5_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close>
   assumes "A \<in> wffs\<^bsub>\<alpha>\<^esub>" and "B \<in> wffs\<^bsub>\<delta>\<^esub>"
   assumes "\<forall>t. (x,t) \<notin> vars ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. B))"
   shows "const_subst (c, x) \<tau> ((\<lambda>y\<^bsub>\<alpha>\<^esub>. \<lambda>y\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha>\<rightarrow>\<delta>\<^esub> (\<lambda>y\<^bsub>\<alpha>\<^esub>. B)) \<in> axioms"
-  using assms(1,2,3) axioms.axiom_4_5 const_subst.simps(3,4) const_subst_laws(7) const_subst_wffs by presburger
+  using assms(1,2,3) axioms.axiom_4_5 const_subst.simps(3,4) const_subst_laws(7) const_subst_wffs by presburger *)
   
 lemma axiom_5_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
@@ -2894,7 +2895,7 @@ next
     by (simp add: const_subst_proof_def)
 qed
 
-lemma is_proof_of_const_subst:
+(* lemma is_proof_of_const_subst:
   assumes "is_proof_of \<S> A"
   assumes "c \<notin> logical_names"
   assumes "(x, \<tau>) \<notin> vars\<^sub>p \<S>"
@@ -2918,7 +2919,7 @@ proof -
 
   show ?thesis
     using \<open>?\<S> \<noteq> []\<close> \<open>is_proof ?\<S>\<close> \<open>last ?\<S> = ?A\<close> by blast
-qed
+qed *)
 
 lemma finite_vars\<^sub>p: "finite (vars\<^sub>p \<S>)"
 proof (induction \<S>)
@@ -2931,17 +2932,17 @@ next
     unfolding vars\<^sub>p_def using vars_form_finiteness by auto
 qed
 
-lemma finite_vars\<^sub>p_fst: "finite (fst ` (vars\<^sub>p \<S>))"
+(* lemma finite_vars\<^sub>p_fst: "finite (fst ` (vars\<^sub>p \<S>))"
   by (simp add: finite_vars\<^sub>p)
 
 lemma avoid_vars\<^sub>p:
   shows "\<exists>x. \<forall>t. (x, t) \<notin> vars\<^sub>p \<S>"
-  by (metis ex_new_if_finite finite_vars\<^sub>p_fst fst_eqD image_iff infinite_UNIV_nat)
+  by (metis ex_new_if_finite finite_vars\<^sub>p_fst fst_eqD image_iff infinite_UNIV_nat) *)
 
-lemma is_theorem_const_subst:
+(* lemma is_theorem_const_subst:
   assumes "is_theorem A"
   assumes "c \<notin> logical_names"
-  shows "\<exists>x. ((x, \<tau>) \<notin> vars A) \<and> is_theorem (const_subst (c, x) \<tau> A)"        
+  shows "\<exists>x. ((x, \<tau>) \<notin> vars A) \<and> is_theorem (const_subst (c, x) \<tau> A)"
 proof -
   from assms(1) obtain \<S> where pSA: "is_proof_of \<S> A"
     unfolding is_theorem_def by auto
@@ -2956,7 +2957,7 @@ proof -
 
   then have avoid_A: "(x, \<tau>) \<notin> vars A"
     using \<open>\<S> \<noteq> []\<close> \<open>last \<S> = A\<close> unfolding vars\<^sub>p_def by auto
-    
+
 
   let ?A = "const_subst (c, x) \<tau> A"
   let ?\<S> = "const_subst_proof (c, x) \<tau> \<S>"
@@ -2970,7 +2971,7 @@ proof -
 
   show "?thesis"
     unfolding is_theorem_def using \<open>(x, \<tau>) \<notin> vars A\<close> \<open>is_theorem ?A\<close> by blast
-qed
+qed *)
 
 lemma fresh_free_vars_const_subst:
   assumes "(x, \<tau>) \<notin> vars A"
@@ -3436,7 +3437,7 @@ proof -
      
 qed
 
-lemma subforms_vars: (* not used for anything *)
+(* lemma subforms_vars: (* not used for anything *)
   assumes "A \<in> subforms B"
   shows "vars A \<subseteq> vars B"
 using assms proof (induction B)
@@ -3455,7 +3456,7 @@ next
   case (FAbs x1a B)
   then show ?case
     by (metis Un_upper1 empty_iff form.distinct(11) insert_iff subforms.elims vars_form.simps(4))
-qed
+qed *)
 
 lemma is_subform_at_vars:
   assumes "A \<preceq>\<^bsub>p\<^esub> B"
