@@ -1881,9 +1881,10 @@ proof -
   have 1: \<open>is_substitution ?v\<close>
     using A unfolding is_substitution_def by simp
   have \<open>is_free_for A (Suc 0, i) ?B\<close>
-    by (metis Q_constant_of_type_def Q_def iota_constant_def iota_def is_free_for_in_con is_free_for_in_equality
-        is_free_for_in_var is_free_for_to_app)
-  then have 2: \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set) \<and> is_free_for (?v $$! v) v ?B\<close>
+    by (metis Q_constant_of_type_def Q_def iota_constant_def iota_def is_free_for_in_con 
+        is_free_for_in_equality is_free_for_in_var is_free_for_to_app)
+  then have 2: \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set) 
+    \<and> is_free_for (?v $$! v) v ?B\<close>
     by auto
   have 3: \<open>?v \<noteq> {$$}\<close>
     by simp
