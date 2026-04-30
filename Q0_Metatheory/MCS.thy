@@ -16,7 +16,7 @@ instance type :: embeddable ..
 instance form :: small ..
 instance form :: embeddable ..
 
-definition V_of_type :: "type \<Rightarrow> V" where
+(* definition V_of_type :: "type \<Rightarrow> V" where
   "V_of_type = (SOME V_of. inj V_of)"
 
 definition type_of_V :: "V \<Rightarrow> type" where
@@ -37,7 +37,7 @@ lemma "type_of_V (V_of_type t) = t"
 lemma "is_type Vt \<Longrightarrow> V_of_type (type_of_V Vt) = Vt"
   by (simp add: f_inv_into_f is_type_def type_of_V_def)
 
-
+*)
 definition V_of_form :: "form \<Rightarrow> V" where
   "V_of_form = (SOME V_of. inj V_of)"
 
