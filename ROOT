@@ -1,15 +1,17 @@
-session "Analytic-Completeness" = HOL +
+chapter AFP
+
+session Q0_Completeness (AFP) = HOL +
   options [timeout = 600]
   sessions
-    "HOL-Cardinals"
-    "HOL-Number_Theory" 
+    Abstract_Consistency_Property
+    Q0_Metatheory
   theories
-    Analytic_Completeness
-    Example_Bounded_FOL
-    Example_SOL
-    Example_PIL
-    Fin_Arith_Prog
-    Counter_Example_PIL
+    Consistency_Property
+    Constant_Substitution
+    Derivational_Consistency
+    Model_Existence
+    Q0_Completeness
   document_files
-    "root.bib"
     "root.tex"
+    "root.bib"
+
