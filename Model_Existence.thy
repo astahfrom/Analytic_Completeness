@@ -613,7 +613,7 @@ proof -
     by (metis (mono_tags, lifting) someI_ex)
 qed
 
-lemma Q_denotation_V_2:
+lemma Q_denotation_V_two:
   assumes \<open>x \<in> elts (D \<alpha>)\<close>
     and \<open>y \<in> elts (D \<alpha>)\<close>
   shows \<open>V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> x \<bullet> y = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x \<bullet> y\<close>
@@ -640,7 +640,7 @@ proof -
     by fastforce
 qed
 
-lemma Q_denotation_V_1:
+lemma Q_denotation_V_one:
   assumes \<open>x \<in> elts (D \<alpha>)\<close>
   shows \<open>V (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> x = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x\<close>
 proof (rule fun_ext)
@@ -652,7 +652,7 @@ next
     by (metis VPi_D domain_frame frame.identity_relation_is_domain_respecting)
 next
   show \<open>\<And>y. y \<in> elts (D \<alpha>) \<Longrightarrow> V Q\<^bsub>\<alpha>\<^esub> (\<alpha> \<rightarrow> \<alpha> \<rightarrow> o) \<bullet> x \<bullet> y = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x \<bullet> y\<close>
-    using Q_denotation_V_2 assms .
+    using Q_denotation_V_two assms .
 qed
 
 (* Q is identity relation*)
@@ -665,7 +665,7 @@ next
     using domain_frame frame.identity_relation_is_domain_respecting by blast
 next
   show \<open>\<And>x. x \<in> elts (D \<alpha>) \<Longrightarrow> V Q\<^bsub>\<alpha>\<^esub> (\<alpha> \<rightarrow> \<alpha> \<rightarrow> o) \<bullet> x = (q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>) \<bullet> x\<close>
-    using Q_denotation_V_1 .
+    using Q_denotation_V_one .
 qed
 
 lemma Q_denotation_J: \<open>J (Q_constant_of_type \<alpha>) = q\<^bsub>\<alpha>\<^esub>\<^bsup>D\<^esup>\<close>
