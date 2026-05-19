@@ -222,8 +222,6 @@ lemma cRefl:
   shows \<open>A =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
   using assms by (metis cIrr complete equality_wff)
 
-thm wffs_of_type_intros(3)
-
 lemma cSym:
   assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
     and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>

@@ -133,9 +133,8 @@ proof
     proof
       assume H: \<open>is_consistent_set H\<close>
       with CIrr obtain H' where H': \<open>H' \<subseteq> H\<close> \<open>H' \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
-        using *(1) dv_hyp
-        by (metis equality_wff list.set(1) neg_wff list.set_intros(1) 
-            subset_eq set_ConsD List.finite_set bot.extremum)
+        using * CIrr dv_hyp
+        by (metis neg_wff equality_wff list.set_finite set_ConsD empty_set subset_code(1) empty_iff)
       then have \<open>H' \<turnstile> \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A)\<close>
         by auto
       then have \<open>H' \<turnstile> F\<^bsub>o\<^esub>\<close>
