@@ -8,26 +8,26 @@ section \<open>Consistency Property\<close>
 inductive confl_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<crossmark>\<close> 50) where
   CFalse: \<open>[ F\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ F\<^bsub>o\<^esub> ]\<close>
 | CTrue: \<open>[ \<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> ]\<close>
-| CNot: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> A ] \<leadsto>\<^sub>\<crossmark> [ A ]\<close>
-| CIrr: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow>  [ \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) ]\<close>
+| CNot: \<open>[ \<sim>\<^sup>\<Q> A ] \<leadsto>\<^sub>\<crossmark> [ A ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+| CIrr: \<open>[ \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) ] \<leadsto>\<^sub>\<crossmark> [ \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) ]\<close> if \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
 
 inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
-  CEqvP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<equiv>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ A \<supset>\<^sup>\<Q> B, B \<supset>\<^sup>\<Q> A]\<close>
-| CEqvN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B, B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A]\<close>
-| CImpN: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A, \<sim>\<^sup>\<Q> B ]\<close>
-| CTrans: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B, B =\<^bsub>\<alpha>\<^esub> C ] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>\<alpha>\<^esub> C ]\<close>
-| CCong: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> [ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B ]\<close>
-| CIota: \<open>A \<in> wffs\<^bsub>i\<^esub> \<Longrightarrow> [] \<leadsto>\<^sub>\<alpha> [ \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A ]\<close>
-| CSubst: \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<beta>\<^esub> \<Longrightarrow> free_vars A = {} 
-  \<Longrightarrow> [] \<leadsto>\<^sub>\<alpha> [ (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B ]\<close>
+  CEqvP: \<open>[ A \<equiv>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<alpha> [ A \<supset>\<^sup>\<Q> B, B \<supset>\<^sup>\<Q> A]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+| CEqvN: \<open>[ \<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B, B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+| CImpN: \<open>[ \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A, \<sim>\<^sup>\<Q> B ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+| CTrans: \<open>[ A =\<^bsub>\<alpha>\<^esub> B, B =\<^bsub>\<alpha>\<^esub> C ] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>\<alpha>\<^esub> C ]\<close> if \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+| CCong: \<open>[ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B ]\<close> if \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
+| CIota: \<open>[] \<leadsto>\<^sub>\<alpha> [ \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A ]\<close> if \<open>A \<in> wffs\<^bsub>i\<^esub>\<close>
+| CSubst: \<open>[] \<leadsto>\<^sub>\<alpha> [ (\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B ]\<close> if
+  \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close> and \<open>free_vars A = {} \<close>
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
-  CImpP: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [ A \<supset>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, B ]\<close>
-| CLEM: \<open>A \<in> wffs\<^bsub>o\<^esub> \<Longrightarrow> [] \<leadsto>\<^sub>\<beta> [ A, \<sim>\<^sup>\<Q> A ]\<close>
+  CImpP: \<open>[ A \<supset>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, B ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+| CLEM: \<open>[] \<leadsto>\<^sub>\<beta> [ A, \<sim>\<^sup>\<Q> A ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
 
 inductive gamma_class :: \<open>form list \<Rightarrow> (form set \<Rightarrow> _) \<times> (form \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
-  CExt: \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<Longrightarrow> B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> 
-  \<Longrightarrow> [ A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>C. [ A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C ])\<close>
+  CExt: \<open>[ A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>C. [ A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C ])\<close> if
+  \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
 
 subsection \<open>Negated Equality\<close>
 
