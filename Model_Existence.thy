@@ -132,34 +132,20 @@ theorem consistent:
 lemma cFalse: \<open>F\<^bsub>o\<^esub> \<notin> H\<close>
   using confl by (force intro: CFalse)
 
-lemma cTrue: \<open>\<sim>\<^sup>\<Q> T\<^bsub>o\<^esub> \<notin> H\<close>
-  using confl by (force intro: CTrue)
-
-lemma cIrr:
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-  shows \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) \<notin> H\<close>
-  using assms confl by (force intro: CIrr[of A \<alpha>])
-
-lemma cEqvN:
+lemma cBool:
   assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>\<sim>\<^sup>\<Q> (A \<equiv>\<^sup>\<Q> B) \<in> H\<close>
-  shows \<open>A \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> B \<in> H \<and> B \<supset>\<^sup>\<Q> \<sim>\<^sup>\<Q> A \<in> H\<close>
-  using assms alpha by (force intro: CEqvN[of A B])
+    and \<open>A \<in> H\<close>
+  shows \<open>A =\<^bsub>o\<^esub> T\<^bsub>o\<^esub> \<in> H\<close>
+  using assms alpha by (fastforce intro!: CBool[of A])
 
 lemma cTrans:
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-    and \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-    and \<open>A =\<^bsub>\<alpha>\<^esub> B \<in> H\<close>
-    and \<open>B =\<^bsub>\<alpha>\<^esub> C \<in> H\<close>
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+    and \<open>A =\<^bsub>\<alpha>\<^esub> B \<in> H\<close> \<open>B =\<^bsub>\<alpha>\<^esub> C \<in> H\<close>
   shows \<open>A =\<^bsub>\<alpha>\<^esub> C \<in> H\<close>
   using assms alpha by (force intro: CTrans[of A \<alpha> B])
 
 lemma cCong:
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-    and \<open>C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
     and \<open>A =\<^bsub>\<alpha>\<^esub> B \<in> H\<close>
   shows \<open>C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B \<in> H\<close>
   using assms alpha by (force intro: CCong[of A \<alpha> B C \<beta>])
@@ -170,42 +156,31 @@ lemma cIota:
   using assms alpha by (force intro: CIota[of A])
 
 lemma cSubst:
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close>
     and \<open>free_vars A = {}\<close>
   shows \<open>(\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B \<in> H\<close>
   using assms alpha by (fastforce intro!: CSubst[of A \<alpha> B \<beta> x])
 
 lemma cImpN:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
     and \<open>\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<in> H\<close>
   shows \<open>A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
   using assms alpha by (force intro: CImpN[of A B])
 
 lemma cImpP:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
     and \<open>A \<supset>\<^sup>\<Q> B \<in> H\<close>
   shows \<open>\<sim>\<^sup>\<Q> A \<in> H \<or> B \<in> H\<close>
   using assms beta by (fastforce intro!: CImpP[of A B])
 
-lemma complete:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-  shows \<open>A \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H\<close>
-  using assms beta by (fastforce intro!: CLEM[of A])
-
 lemma cExt:
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
     and \<open>(A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> H\<close>
-    and \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
   shows \<open>(A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C) \<in> H\<close>
   using assms gamma by (force intro: CExt[of A \<alpha>])
 
 lemma cIneq:
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
     and \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> H\<close>
   shows \<open>\<exists>c. is_param c \<and> \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) \<in> H\<close>
 proof -
@@ -217,29 +192,43 @@ proof -
     using delta assms(3) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
 qed
 
+lemma cMP:
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+    and \<open>A \<in> H\<close> \<open>A \<supset>\<^sup>\<Q> B \<in> H\<close>
+  shows \<open>B \<in> H\<close>
+  using assms cImpP consistent by blast
+
+lemma complete:
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+  shows \<open>A \<in> H \<or> \<sim>\<^sup>\<Q> A \<in> H\<close>
+  using assms beta by (fastforce intro!: CLEM[of A])
+
 lemma cRefl:
   assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
   shows \<open>A =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
-  using assms by (metis cIrr complete equality_wff)
+  using assms alpha by (force intro: CRefl[of A \<alpha>])
+
+lemma cIrr:
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  shows \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha>\<^esub> A) \<notin> H\<close>
+  using assms by (metis consistent cRefl equality_wff)
+
+lemma cTop: \<open>T\<^bsub>o\<^esub> \<in> H\<close>
+  using cRefl by auto
 
 lemma cSym:
-  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
     and \<open>A =\<^bsub>\<alpha>\<^esub> B \<in> H\<close>
   shows \<open>B =\<^bsub>\<alpha>\<^esub> A \<in> H\<close>
   using assms cCong[of A \<alpha> B _ o] cIrr[of B \<alpha>] cTrans[of \<open>F\<^bsub>o\<^esub>\<close> o] complete false_wff Q_wff
   by (metis neg_def equality_of_type_def wffs_of_type_intros(3))
 
-lemma cMP:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>A \<in> H\<close>
-    and \<open>A \<supset>\<^sup>\<Q> B \<in> H\<close>
-  shows \<open>B \<in> H\<close>
-  using assms cImpP consistent by blast
-
-lemma cTop: \<open>T\<^bsub>o\<^esub> \<in> H\<close>
-  using cTrue complete by blast
+lemma cEqv:
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+    and \<open>A \<in> H\<close> \<open>B \<in> H\<close>
+  shows \<open>A \<equiv>\<^sup>\<Q> B \<in> H\<close>
+  using assms cBool cSym cTrans consistent complete unfolding equivalence_def
+  by (metis true_wff)
 
 lemma extensionally_complete_membership: \<open>extensionally_complete_membership H\<close>
   unfolding extensionally_complete_membership_def
@@ -302,12 +291,19 @@ lemma bool_to_V_distinct: \<open>bool_to_V False \<noteq> bool_to_V True\<close>
   by (simp add: inj_eq)
 
 lemma two_o:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
+  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
   shows \<open>\<V> A o = \<V> B o \<longleftrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H\<close>
-  using assms consistent cEqvN cImpP cSym cTrans complete bool_to_V_distinct
-  unfolding equivalence_def \<V>.simps
-  by (metis bottom_def equality_of_type_def equality_wff false_wff neg_def top_def)
+proof
+  show \<open>\<V> A o = \<V> B o \<Longrightarrow> A \<equiv>\<^sup>\<Q> B \<in> H\<close>
+    using assms cEqv cSym cTrans complete
+  by (metis \<V>.simps(1) bool_to_V_distinct bottom_def equality_of_type_def
+      equivalence_def false_wff neg_def top_def)
+next
+  show \<open>A \<equiv>\<^sup>\<Q> B \<in> H \<Longrightarrow> \<V> A o = \<V> B o\<close>
+    unfolding equivalence_def \<V>.simps 
+    using assms consistent cSym cTrans complete 
+    by (metis equality_of_type_def false_wff neg_def)
+qed
 
 lemma one_i: \<open>\<D> i = set {\<V> A i| A. is_closed_wff_of_type A i}\<close>
   by simp (* defined to hold *)
@@ -346,7 +342,7 @@ proof -
       using assms cSym by auto
     then have \<open>\<forall>C. is_closed_wff_of_type C i \<longrightarrow> A =\<^bsub>i\<^esub> C \<in> H \<longleftrightarrow> C =\<^bsub>i\<^esub> B \<in> H\<close>
       by blast
-    moreover have \<open>A =\<^bsub>i\<^esub> A \<in> H\<close> \<open>B =\<^bsub>i\<^esub> B \<in> H\<close>
+    moreover have \<open>B =\<^bsub>i\<^esub> B \<in> H\<close>
       using assms cRefl by blast+
     ultimately show \<open>A =\<^bsub>i\<^esub> B \<in> H\<close>
       using assms cTrans by blast
@@ -364,8 +360,7 @@ lemma one_fun:
   by simp (* Defined to hold *)
 
 lemma fun_ext_vfuncset:
-  assumes \<open>f \<in> elts (A \<longmapsto> B)\<close>
-    and \<open>g \<in> elts (A \<longmapsto> B)\<close>
+  assumes \<open>f \<in> elts (A \<longmapsto> B)\<close> \<open>g \<in> elts (A \<longmapsto> B)\<close>
     and \<open>\<And>x. x \<in> elts A \<Longrightarrow> app f x = app g x\<close>
   shows \<open>f = g\<close>
   using assms ZFC_Cardinals.fun_ext by auto
@@ -592,8 +587,7 @@ lemma domain_frame: \<open>frame \<D>\<close>
   using \<D>.simps(1) domain_nonemptiness frame.intro function_domain by blast
 
 lemma distrib_\<V>_app:
-  assumes \<open>is_closed_wff_of_type A (\<alpha> \<rightarrow> \<beta>)\<close>
-    and \<open>is_closed_wff_of_type B \<alpha>\<close>
+  assumes \<open>is_closed_wff_of_type A (\<alpha> \<rightarrow> \<beta>)\<close> \<open>is_closed_wff_of_type B \<alpha>\<close>
   shows \<open>\<V> (A \<sqdot> B) \<beta> = \<V> A (\<alpha> \<rightarrow> \<beta>) \<bullet> \<V> B \<alpha>\<close>
 proof -
  have *: \<open>VLambda (\<D> \<alpha>) b \<bullet> \<V> B \<alpha> = b (\<V> B \<alpha>)\<close> for b
@@ -612,8 +606,7 @@ proof -
 qed
 
 lemma Q_denotation_\<V>_two:
-  assumes \<open>x \<in> elts (\<D> \<alpha>)\<close>
-    and \<open>y \<in> elts (\<D> \<alpha>)\<close>
+  assumes \<open>x \<in> elts (\<D> \<alpha>)\<close> \<open>y \<in> elts (\<D> \<alpha>)\<close>
   shows \<open>\<V> (Q\<^bsub>\<alpha>\<^esub>) (\<alpha>\<rightarrow>\<alpha>\<rightarrow>o) \<bullet> x \<bullet> y = (q\<^bsub>\<alpha>\<^esub>\<^bsup>\<D>\<^esup>) \<bullet> x \<bullet> y\<close>
 proof -
   obtain A B where A: \<open>is_closed_wff_of_type A \<alpha>\<close> \<open>\<V> A \<alpha> = x\<close>
