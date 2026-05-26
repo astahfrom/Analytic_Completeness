@@ -12,7 +12,6 @@ inductive confl_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
 inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<alpha>\<close> 50) where
   CBool: \<open>[ A ] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>o\<^esub> T\<^bsub>o\<^esub> ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
 | CIota: \<open>[] \<leadsto>\<^sub>\<alpha> [ \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A ]\<close> if \<open>A \<in> wffs\<^bsub>i\<^esub>\<close>
-| CImpN: \<open>[ \<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) ] \<leadsto>\<^sub>\<alpha> [ A, \<sim>\<^sup>\<Q> B ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
 | CRefl: \<open>[] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>\<alpha>\<^esub> A ]\<close> if \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
 | CTrans: \<open>[ A =\<^bsub>\<alpha>\<^esub> B, B =\<^bsub>\<alpha>\<^esub> C ] \<leadsto>\<^sub>\<alpha> [ A =\<^bsub>\<alpha>\<^esub> C ]\<close> if \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
 | CCong: \<open>[ A =\<^bsub>\<alpha>\<^esub> B ] \<leadsto>\<^sub>\<alpha> [ C \<sqdot> A =\<^bsub>\<beta>\<^esub> C \<sqdot> B ]\<close> if \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>C \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
@@ -20,8 +19,7 @@ inductive alpha_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> 
   \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<beta>\<^esub>\<close> and \<open>free_vars A = {}\<close>
 
 inductive beta_class :: \<open>form list \<Rightarrow> form list \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<beta>\<close> 50) where
-  CImpP: \<open>[ A \<supset>\<^sup>\<Q> B ] \<leadsto>\<^sub>\<beta> [ \<sim>\<^sup>\<Q> A, B ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-| CLEM: \<open>[] \<leadsto>\<^sub>\<beta> [ A, \<sim>\<^sup>\<Q> A ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
+  CLEM: \<open>[] \<leadsto>\<^sub>\<beta> [ A, \<sim>\<^sup>\<Q> A ]\<close> if \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
 
 inductive gamma_class :: \<open>form list \<Rightarrow> (form set \<Rightarrow> _) \<times> (form \<Rightarrow> _) \<Rightarrow> bool\<close> (infix \<open>\<leadsto>\<^sub>\<gamma>\<close> 50) where
   CExt: \<open>[ A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B ] \<leadsto>\<^sub>\<gamma> (\<lambda>_. wffs\<^bsub>\<alpha>\<^esub>, \<lambda>C. [ A \<sqdot> C =\<^bsub>\<beta>\<^esub> B \<sqdot> C ])\<close> if
@@ -67,7 +65,7 @@ fun delta :: \<open>form \<Rightarrow> nat \<Rightarrow> form list\<close> where
 lemma ineq_match_delta [simp]:
   assumes \<open>C \<in> wffs\<^bsub>o\<^esub>\<close> \<open>ineq_match C (\<alpha>, \<beta>, A, B)\<close>
   shows \<open>delta C c = [ \<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) ]\<close>
-    unfolding CDelta using assms THE_ineq_match by auto
+  unfolding CDelta using assms THE_ineq_match by auto
 
 lemma delta:
   assumes \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
@@ -272,8 +270,8 @@ interpretation Consistency_Kinds map_con cons_form is_param Kinds
 
 interpretation Maximal_Consistency map_con cons_form is_param Kinds
 proof
- have \<open>infinite (UNIV :: form set)\<close>
-   using infinite_UNIV_size[of \<open>\<lambda>A. A \<sqdot> A\<close>] by simp
+  have \<open>infinite (UNIV :: form set)\<close>
+    using infinite_UNIV_size[of \<open>\<lambda>A. A \<sqdot> A\<close>] by simp
   then show \<open>infinite (UNIV :: form set)\<close>
     using finite_prod by blast
 qed simp

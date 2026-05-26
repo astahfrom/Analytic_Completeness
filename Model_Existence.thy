@@ -21,7 +21,7 @@ definition extensionally_complete_membership :: \<open>form set \<Rightarrow> bo
     (\<forall>A B \<alpha> \<beta>. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
                is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
                (\<exists>C. is_closed_wff_of_type C \<beta> \<and>
-                    (((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C)) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)))\<close>
+                    ((A \<sqdot> C) =\<^bsub>\<alpha>\<^esub> (B \<sqdot> C) \<in> H \<longrightarrow> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)))\<close>
 
 lemma substitute_cong:
   assumes \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
@@ -162,18 +162,6 @@ lemma cSubst:
   shows \<open>(\<lambda>x\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<beta>\<^esub> substitute {(x, \<alpha>) \<Zinj> A} B \<in> H\<close>
   using assms alpha by (fastforce intro!: CSubst[of A \<alpha> B \<beta> x])
 
-lemma cImpN:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>\<sim>\<^sup>\<Q> (A \<supset>\<^sup>\<Q> B) \<in> H\<close>
-  shows \<open>A \<in> H \<and> \<sim>\<^sup>\<Q> B \<in> H\<close>
-  using assms alpha by (force intro: CImpN[of A B])
-
-lemma cImpP:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>A \<supset>\<^sup>\<Q> B \<in> H\<close>
-  shows \<open>\<sim>\<^sup>\<Q> A \<in> H \<or> B \<in> H\<close>
-  using assms beta by (fastforce intro!: CImpP[of A B])
-
 lemma cExt:
   assumes \<open>A \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>B \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close> \<open>C \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
     and \<open>(A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B) \<in> H\<close>
@@ -192,12 +180,6 @@ proof -
   then show ?thesis
     using delta assms(3) by (metis list.set_intros(1,2) sat\<^sub>H_WitsE subset_code(1))
 qed
-
-lemma cMP:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close> \<open>B \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>A \<in> H\<close> \<open>A \<supset>\<^sup>\<Q> B \<in> H\<close>
-  shows \<open>B \<in> H\<close>
-  using assms cImpP consistent by blast
 
 lemma complete:
   assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
@@ -238,22 +220,18 @@ proof (intro allI impI)
   assume *: \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close>
   then consider (pos) \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close> | (neg) \<open>\<sim>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H\<close>
     using complete by blast
-  then show \<open>\<exists>C. is_closed_wff_of_type C \<beta> \<and> ((A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C) \<supset>\<^sup>\<Q> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)\<close>
+  then show \<open>\<exists>C. is_closed_wff_of_type C \<beta> \<and> ((A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C) \<in> H \<longrightarrow> (A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B) \<in> H)\<close>
   proof cases
     case pos
     then show ?thesis
-      using * unfolding is_closed_wff_of_type_def
-      by (metis (no_types, opaque_lifting) cImpN complete consistent equality_wff 
-          free_vars_form.simps(2) imp_op_wff wffs_of_type_intros(2,3))
+      by force
   next
     case neg
     then obtain c where \<open>is_param c\<close> \<open>\<sim>\<^sup>\<Q> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<in> H\<close>
       using * cIneq unfolding is_closed_wff_of_type_def by meson
-    then have \<open>(A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub> =\<^bsub>\<alpha>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<beta>\<^esub>) \<notin> H\<close>
-      using consistent * equality_wff wffs_of_type_intros(2,3) by fastforce
     then show ?thesis
-      using * unfolding is_closed_wff_of_type_def
-      by (metis cImpN complete equality_wff free_vars_form.simps(2) imp_op_wff wffs_of_type_intros(2,3))
+      using * consistent unfolding is_closed_wff_of_type_def
+      by (metis equality_wff free_vars_form.simps(2) wffs_of_type_intros(2,3))
   qed
 qed
 
@@ -519,7 +497,7 @@ next
       {
         fix C
         assume C: \<open>is_closed_wff_of_type C \<beta>\<close>
-       then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
+        then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
           by (metis (mono_tags, lifting) get_rep.simps some_eq_ex)
         moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
           using C by (simp add: well_typed)
@@ -540,9 +518,9 @@ next
           using TFun.IH(2) A B C good_type_def two_gamma_def wffs_of_type_intros(3) by force
       }
       then show \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
-        using A B cMP extensionally_complete_membership
+        using A B extensionally_complete_membership
         unfolding extensionally_complete_membership_def is_closed_wff_of_type_def
-        by (metis equality_wff wffs_of_type_intros(3))
+        by meson
     qed
   }
   then have \<open>two_gamma (\<beta> \<rightarrow> \<alpha>)\<close>
