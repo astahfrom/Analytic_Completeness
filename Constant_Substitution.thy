@@ -1,5 +1,6 @@
 theory Constant_Substitution imports
   Consistency_Property
+  "Q0_Metatheory.Elementary_Logic"
 begin
 
 (* TODO: We can give this function a more appropriate type I think *)

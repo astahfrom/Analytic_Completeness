@@ -1,5 +1,6 @@
 theory Derivational_Consistency imports
   Constant_Substitution
+  "Q0_Metatheory.Consistency"
 begin
 
 section \<open>Derivational Consistency\<close>

@@ -1,6 +1,6 @@
 theory Consistency_Property imports
   "Abstract_Consistency_Property.Abstract_Consistency_Property"
-  "Q0_Metatheory.Consistency"
+  "Q0_Metatheory.Syntax"
 begin
 
 section \<open>Consistency Property\<close>
