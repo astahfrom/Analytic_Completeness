@@ -361,7 +361,7 @@ proof -
     using is_rule_R_app_def[of p ?D ?C ?E] by auto
 qed
   
-definition const_subst_proof :: "con \<Rightarrow> nat \<Rightarrow> form list \<Rightarrow> form list" (\<open>\<^bold>S\<^sub>c\<^sub>p _ _ _\<close> [51, 51, 51]) where 
+definition const_subst_proof :: \<open>con \<Rightarrow> nat \<Rightarrow> form list \<Rightarrow> form list\<close> (\<open>\<^bold>S\<^sub>c\<^sub>p _ _ _\<close> [51, 51, 51]) where 
   \<open>\<^bold>S\<^sub>c\<^sub>p c\<tau> x S \<equiv> map (\<lambda>A. \<^bold>S\<^sub>c c\<tau> x A) S\<close>
 
 lemma nil_is_proof:
