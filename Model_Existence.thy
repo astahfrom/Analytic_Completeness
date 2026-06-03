@@ -465,8 +465,8 @@ next
 
   {
     fix A B
-    assume A: \<open>is_closed_wff_of_type A ((\<beta> \<rightarrow> \<alpha>))\<close>
-    and B: \<open>is_closed_wff_of_type B ((\<beta> \<rightarrow> \<alpha>))\<close>
+    assume A: \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close>
+    and B: \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close>
     have \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
     proof
       assume \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
@@ -518,7 +518,7 @@ next
       {
         fix C
         assume C: \<open>is_closed_wff_of_type C \<beta>\<close>
-       then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
+        then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
           by (metis (mono_tags, lifting) get_rep.simps some_eq_ex)
         moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
           using C by (simp add: well_typed)

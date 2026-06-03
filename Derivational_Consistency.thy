@@ -569,9 +569,9 @@ proof
           by auto
       qed
 
-      define P' where \<open>P' = const_subst_proof (c, x) \<alpha> P\<close>
-      define Ts' where \<open>Ts' = const_subst_proof (c, x) \<alpha> Ts\<close>
-      define form' where \<open>form' = (const_subst (c, x) \<alpha> ?form)\<close>
+      define P' where \<open>P' = \<^bold>S\<^sub>c\<^sub>p (c, \<alpha>) x P\<close>
+      define Ts' where \<open>Ts' = \<^bold>S\<^sub>c\<^sub>p (c, \<alpha>) x Ts\<close>
+      define form' where \<open>form' = (\<^bold>S\<^sub>c (c, \<alpha>) x ?form)\<close>
       have \<open>P \<noteq> []\<close>
         using \<open>is_hyp_proof_of H Ts P (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close> 
         by auto
@@ -632,16 +632,16 @@ proof
         using hypothetical_derivability_proof_existence_equivalence by metis
 
       then have fromH_Ac_Bc:
-        \<open>H \<turnstile> const_subst (c, x) \<alpha> (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
+        \<open>H \<turnstile> \<^bold>S\<^sub>c (c, \<alpha>) x (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
         using form'_def by fastforce
 
       from cAB have \<open>c \<notin> Qconsts A\<close>
          by auto
-      then have a: \<open>const_subst (c, x) \<alpha> A = A\<close>
+      then have a: \<open>\<^bold>S\<^sub>c (c, \<alpha>) x A = A\<close>
         by (simp add: Qconsts_const_subst)
       from cAB have \<open>c \<notin> Qconsts B\<close>
         by auto
-      then have b: \<open>const_subst (c, x) \<alpha> B = B\<close>
+      then have b: \<open>\<^bold>S\<^sub>c (c, \<alpha>) x B = B\<close>
         using Qconsts_const_subst by auto
 
       have free_x: \<open>(x, \<alpha>) \<notin> free_vars H\<close>
