@@ -1,5 +1,6 @@
 theory Derivational_Consistency imports
   Constant_Substitution
+  "Q0_Metatheory.Consistency"
 begin
 
 section \<open>Derivational Consistency\<close>
@@ -300,11 +301,6 @@ proof
     then show ?thesis
       using dv_hyp hyps prop_5219_2 by auto
   next
-    case (CImpN A B)
-    then show ?thesis
-      using prop_5241 is_taut(1,2)
-      by (metis derivable_tautologous_imp empty_iff empty_set imp_op_wff list.simps(15) neg_wff set_ConsD)
-  next
     case (CTrans A \<alpha> B C)
     then show ?thesis
       using prop_5201_2 prop_5201_3 hyps dv_hyp
@@ -380,46 +376,6 @@ proof
   from \<open>ps \<leadsto>\<^sub>\<beta> qs\<close>
   show \<open>\<exists>q\<in>lset qs. is_consistent_set ({q} \<union> Hs)\<close>
   proof cases
-    case (CImpP A B)
-    show ?thesis
-    proof (rule ccontr)
-      assume \<open>\<not> (\<exists>q\<in>lset qs. is_consistent_set ({q} \<union> Hs))\<close>
-      then have \<open>\<not> is_consistent_set ({\<sim>\<^sup>\<Q> A} \<union> Hs)\<close> \<open>\<not> is_consistent_set ({B} \<union> Hs)\<close>
-        using CImpP by auto
-      then obtain H1 H2 where
-        H1: \<open>H1 \<subseteq> Hs\<close> \<open>is_inconsistent_set ({\<sim>\<^sup>\<Q> A} \<union> H1)\<close> and
-        H2: \<open>H2 \<subseteq> Hs\<close> \<open>is_inconsistent_set ({B} \<union> H2)\<close>
-        using consistent unfolding is_consistent_set_def
-        by (metis subset_UnE subset_singleton_iff sup_bot_left)
-      then have \<open>is_hyps H1\<close> \<open>is_hyps H2\<close>
-        using inconsistent_imp_hyps by fast+
-      then have
-        \<open>is_hyps (lset ps \<union> H1 \<union> H2)\<close>
-        \<open>is_hyps ({\<sim>\<^sup>\<Q> A} \<union> (lset ps \<union> H1 \<union> H2))\<close>
-        \<open>is_hyps ({B} \<union> (lset ps \<union> H1 \<union> H2))\<close>
-        using hyps H1(2) H2(2) inconsistent_imp_hyps by blast+
-      moreover have
-        \<open>{\<sim>\<^sup>\<Q> A} \<union> H1 \<subseteq> {\<sim>\<^sup>\<Q> A} \<union> (lset ps \<union> H1 \<union> H2)\<close>
-        \<open>{B} \<union> H2 \<subseteq> {B} \<union> (lset ps \<union> H1 \<union> H2)\<close>
-        by blast+
-      ultimately have
-        \<open>is_inconsistent_set ({\<sim>\<^sup>\<Q> A} \<union> (lset ps \<union> H1 \<union> H2))\<close>
-        \<open>is_inconsistent_set ({B} \<union> (lset ps \<union> H1 \<union> H2))\<close>
-        using H1(2) H2(2) is_inconsistent_set_mono by meson+
-     
-      moreover have \<open>lset ps \<turnstile> A \<supset>\<^sup>\<Q> B\<close>
-        by (metis local.CImpP(1) dv_hyp hyps list.set_intros(1))
-      then have \<open>lset ps \<union> H1 \<union> H2 \<turnstile> A \<supset>\<^sup>\<Q> B\<close>
-        using prop_5241 \<open>is_hyps (lset ps \<union> H1 \<union> H2)\<close> by blast
-      ultimately have \<open>is_inconsistent_set (lset ps \<union> H1 \<union> H2)\<close>
-        using CImpP(3) \<open>is_hyps (lset ps \<union> H1 \<union> H2)\<close> prop_5224
-        by (metis Qdouble_negE QnegI is_inconsistent_set_def
-            is_inconsistent_set_insert neg_wff sup.commute)
-      moreover have \<open>lset ps \<union> H1 \<union> H2 \<subseteq> Hs\<close>
-        using H1(1) H2(1) sub by simp
-      ultimately show False
-        using consistent by blast
-    qed
   next
     case (CLEM A)
     show ?thesis

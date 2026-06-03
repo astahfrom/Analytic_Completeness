@@ -1,5 +1,6 @@
 theory Constant_Substitution imports
   Consistency_Property
+  "Q0_Metatheory.Elementary_Logic"
 begin
 
 fun const_subst :: \<open>con \<Rightarrow> nat \<Rightarrow> form \<Rightarrow> form\<close> (\<open>\<^bold>S\<^sub>c _ _ _\<close> [51, 51, 51])
