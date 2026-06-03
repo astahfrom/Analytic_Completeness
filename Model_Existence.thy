@@ -252,8 +252,8 @@ fun
 | \<open>\<D> (\<beta> \<rightarrow> \<alpha>) = set {\<V> A (\<beta> \<rightarrow> \<alpha>) | A. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)}\<close>
 | \<open>\<V> A o = (if A \<in> H then \<^bold>T else \<^bold>F)\<close>
 | \<open>\<V> A i = V_of_form_set {B. is_closed_wff_of_type B i \<and> A =\<^bsub>i\<^esub> B \<in> H}\<close>
-| \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = (\<^bold>\<lambda>\<V>C\<beta> \<^bold>: \<D> \<beta>\<^bold>. (let C = get_rep \<V>C\<beta> \<beta> in \<V> (A \<sqdot> C) \<alpha>))\<close>
-| \<open>get_rep \<V>C\<beta> \<beta> = (SOME C. \<V> C \<beta> = \<V>C\<beta> \<and> is_closed_wff_of_type C \<beta>)\<close>
+| \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = (\<^bold>\<lambda>VC\<beta> \<^bold>: \<D> \<beta>\<^bold>. (let C = get_rep VC\<beta> \<beta> in \<V> (A \<sqdot> C) \<alpha>))\<close>
+| \<open>get_rep VC\<beta> \<beta> = (SOME C. \<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>)\<close>
 
 lemma one_o: \<open>\<D> o = set {\<V> A o| A. is_closed_wff_of_type A o}\<close>
 proof -
@@ -381,26 +381,26 @@ lemma fun_typed:
 proof
   fix f
   assume f: \<open>f \<in> elts (\<D> (\<beta> \<rightarrow> \<alpha>))\<close>
-  have sma: \<open>small {\<^bold>\<lambda>\<V>C\<beta>\<^bold>:\<D> \<beta> \<^bold>. \<V> (A \<sqdot> (SOME C. \<V> C \<beta> = \<V>C\<beta> \<and> is_closed_wff_of_type C \<beta>)) \<alpha> |A. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)}\<close>
+  have sma: \<open>small {\<^bold>\<lambda>VC\<beta>\<^bold>:\<D> \<beta> \<^bold>. \<V> (A \<sqdot> (SOME C. \<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>)) \<alpha> |A. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)}\<close>
     by (simp add: setcompr_eq_image)
 
   from f obtain A where A:
-    \<open>f = (\<^bold>\<lambda>\<V>C\<beta>\<^bold>:\<D> \<beta> \<^bold>. \<V> (A \<sqdot> (SOME C. \<V> C \<beta> = \<V>C\<beta> \<and> is_closed_wff_of_type C \<beta>)) \<alpha>)\<close>
+    \<open>f = (\<^bold>\<lambda>VC\<beta>\<^bold>:\<D> \<beta> \<^bold>. \<V> (A \<sqdot> (SOME C. \<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>)) \<alpha>)\<close>
     \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close>
     using sma by auto
 
   {
-    fix \<V>C\<beta>
-    assume \<open>\<V>C\<beta> \<in> elts (\<D> \<beta>)\<close>
-    then have \<open>\<exists>C. \<V> C \<beta> = \<V>C\<beta> \<and> is_closed_wff_of_type C \<beta>\<close>
+    fix VC\<beta>
+    assume \<open>VC\<beta> \<in> elts (\<D> \<beta>)\<close>
+    then have \<open>\<exists>C. \<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>\<close>
       using wff_for_elts by blast
-    then obtain C where C: \<open>(SOME C. \<V> C \<beta> = \<V>C\<beta> \<and> is_closed_wff_of_type C \<beta>) = C\<close> \<open>\<V> C \<beta> = \<V>C\<beta>\<close> \<open>is_closed_wff_of_type C \<beta>\<close>
+    then obtain C where C: \<open>(SOME C. \<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>) = C\<close> \<open>\<V> C \<beta> = VC\<beta>\<close> \<open>is_closed_wff_of_type C \<beta>\<close>
       by (metis (mono_tags, lifting) someI)
     have \<open>is_closed_wff_of_type (A \<sqdot> C) \<alpha>\<close>
       using A(2) C(3) by auto
     then have \<open>\<V> (A \<sqdot> C) \<alpha> \<in> elts (\<D> \<alpha>)\<close>
       using well_typed by blast
-    then have \<open>\<V> (A \<sqdot> (SOME C. \<V> C \<beta> = \<V>C\<beta> \<and> is_closed_wff_of_type C \<beta>)) \<alpha> \<in> elts (\<D> \<alpha>)\<close>
+    then have \<open>\<V> (A \<sqdot> (SOME C. \<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>)) \<alpha> \<in> elts (\<D> \<alpha>)\<close>
       using C by meson
   }
   then show \<open>f \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
@@ -485,11 +485,11 @@ next
         show \<open>\<V> B (\<beta> \<rightarrow> \<alpha>) \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
           using fun_typed well_typed B una by (metis subsetD)
       next
-        fix \<V>C\<beta>
-        assume \<open>\<V>C\<beta> \<in> elts (\<D> \<beta>)\<close>
-        then obtain C where \<open>\<V> C \<beta> = \<V>C\<beta> \<and> is_closed_wff_of_type C \<beta>\<close>
+        fix VC\<beta>
+        assume \<open>VC\<beta> \<in> elts (\<D> \<beta>)\<close>
+        then obtain C where \<open>\<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>\<close>
           using wff_for_elts by blast
-        then show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) \<bullet> \<V>C\<beta> = \<V> B (\<beta> \<rightarrow> \<alpha>) \<bullet> \<V>C\<beta>\<close>
+        then show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta> = \<V> B (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta>\<close>
           using C_application by blast
       qed
     next
