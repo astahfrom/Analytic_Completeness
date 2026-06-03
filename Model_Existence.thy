@@ -349,16 +349,6 @@ lemma well_typed:
   shows \<open>\<V> A \<gamma> \<in> elts (\<D> \<gamma>)\<close>
   using assms by (induct \<gamma>) (auto simp: setcompr_eq_image)
 
-fun unambiguous :: \<open>type \<Rightarrow> bool\<close> where
-  \<open>unambiguous i \<longleftrightarrow> True\<close>
-| \<open>unambiguous o \<longleftrightarrow> True\<close>
-| \<open>unambiguous (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow>
-     (\<forall>A B C. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
-              is_closed_wff_of_type B \<beta> \<longrightarrow>
-              is_closed_wff_of_type C \<beta> \<longrightarrow>
-              \<V> B \<beta> = \<V> C \<beta> \<longrightarrow>
-              \<V> (A \<sqdot> B) \<alpha> = \<V> (A \<sqdot> C) \<alpha>)\<close>
-
 subsection \<open>1\<open>\<gamma>\<close>\<close>
 
 lemma one_gamma: \<open>\<D> \<gamma> = set {\<V> A \<gamma>| A. is_closed_wff_of_type A \<gamma>}\<close>
@@ -374,9 +364,7 @@ proof -
     using assms by fast
 qed
 
-
 lemma fun_typed:
-  assumes \<open>unambiguous (\<beta> \<rightarrow> \<alpha>)\<close>
   shows \<open>elts (\<D> (\<beta> \<rightarrow> \<alpha>)) \<subseteq> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
 proof
   fix f
@@ -409,132 +397,121 @@ qed
 
 subsection \<open>2\<open>\<gamma>\<close>\<close>
 
-definition two_gamma :: \<open>type \<Rightarrow> bool\<close> where
-  \<open>two_gamma \<gamma> \<longleftrightarrow>
-    (\<forall>A B. is_closed_wff_of_type A \<gamma> \<longrightarrow> is_closed_wff_of_type B \<gamma> \<longrightarrow>
-           \<V> A \<gamma> = \<V> B \<gamma> \<longleftrightarrow> A =\<^bsub>\<gamma>\<^esub> B \<in> H)\<close>
-
-definition good_type :: \<open>type \<Rightarrow> bool\<close> where
-  \<open>good_type \<gamma> \<longleftrightarrow> two_gamma \<gamma> \<and> unambiguous \<gamma>\<close>
-
-lemma all_good: \<open>good_type \<gamma>\<close>
-proof (induction \<gamma>)
-  case TInd
-  then show ?case
-    using good_type_def two_gamma_def two_i unambiguous.simps(1) by blast
-next
-  case TBool
-  then show ?case
-    using good_type_def two_gamma_def two_o unambiguous.simps(2) by simp
-next
-  case (TFun \<beta> \<alpha>)
-
-  {
-    fix A B C
-    assume \<open>is_closed_wff_of_type A ((\<beta> \<rightarrow> \<alpha>))\<close>
-      \<open>is_closed_wff_of_type B \<beta>\<close>
-      \<open>is_closed_wff_of_type C \<beta>\<close>
-      \<open>\<V> B \<beta> = \<V> C \<beta>\<close>
-    then have \<open>\<V> (A \<sqdot> B) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
-      using cCong TFun.IH(1,2) good_type_def two_gamma_def wffs_of_type_intros(3) 
-      by auto
-  }
-  then have una: \<open>unambiguous (\<beta> \<rightarrow> \<alpha>)\<close>
-    unfolding unambiguous.simps by fast
-
-  {
-    fix A B
-    assume A: \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close>
-    and B: \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close>
-    have \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
-    proof
-      assume \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
-      then have nice: \<open>\<And>C. is_closed_wff_of_type C \<beta> \<Longrightarrow> A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C \<in> H\<close>
-        using \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> 
-          \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> cExt 
-        by blast
-      {
-        fix C
-        assume C: \<open>is_closed_wff_of_type C \<beta>\<close>
-        then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
-          by (metis (mono_tags, lifting) get_rep.simps some_eq_ex)
-        moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
-          using C by (simp add: well_typed)
-        moreover have \<open>\<V> (A \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
-          using A C una by (metis (mono_tags, lifting) unambiguous.simps(3) tfl_some)
-        ultimately have \<open>(\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>) = \<V> (A \<sqdot> C) \<alpha>\<close>
-          by simp
-        moreover have \<open>is_closed_wff_of_type (B \<sqdot> C) \<alpha>\<close>
-          using B C by auto
-        then have \<open>\<V> (A \<sqdot> C) \<alpha> = \<V> (B \<sqdot> C) \<alpha>\<close>
-          using nice[OF C] A C TFun(2) unfolding good_type_def two_gamma_def by auto
-        moreover have \<open>\<V> (B \<sqdot> C) \<alpha> = \<V> (B \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha>\<close>
-          using B C una by (metis (mono_tags, lifting) unambiguous.simps(3) tfl_some)
-        then have \<open>\<V> (B \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
-          using rep \<V>C by simp
-        ultimately have \<open>(\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>) = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
-          by simp
-      }
-      note C_application = this
-
-      show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close>
-      proof (rule fun_ext_vfuncset[of _ \<open>\<D> \<beta>\<close> \<open>\<D> \<alpha>\<close>])
-        show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
-          using fun_typed well_typed A una by (metis subsetD)
-      next
-        show \<open>\<V> B (\<beta> \<rightarrow> \<alpha>) \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
-          using fun_typed well_typed B una by (metis subsetD)
-      next
-        fix VC\<beta>
-        assume \<open>VC\<beta> \<in> elts (\<D> \<beta>)\<close>
-        then obtain C where \<open>\<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>\<close>
-          using wff_for_elts by blast
-        then show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta> = \<V> B (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta>\<close>
-          using C_application by blast
-      qed
-    next
-      assume \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close>
-      {
-        fix C
-        assume C: \<open>is_closed_wff_of_type C \<beta>\<close>
-        then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
-          by (metis (mono_tags, lifting) get_rep.simps some_eq_ex)
-        moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
-          using C by (simp add: well_typed)
-        moreover have \<open>\<V> (A \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
-          using A C una by (metis (mono_tags, lifting) unambiguous.simps(3) tfl_some)
-        ultimately have \<open>\<V> (A \<sqdot> C) \<alpha> = (\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
-          by simp
-        then have \<open>\<V> (A \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
-          using \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close> by presburger
-
-        moreover have \<open>\<V> (B \<sqdot> C) \<alpha> = \<V> (B \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha>\<close>
-          using B C una by (metis (mono_tags, lifting) unambiguous.simps(3) tfl_some)
-        then have \<open>\<V> (B \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
-          using rep \<V>C by simp
-        ultimately have \<open>\<V> (A \<sqdot> C) \<alpha> = \<V> (B \<sqdot> C) \<alpha>\<close>
-          by simp
-        then have \<open>A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C \<in> H\<close>
-          using TFun.IH(2) A B C good_type_def two_gamma_def wffs_of_type_intros(3) by force
-      }
-      then show \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
-        using A B extensionally_complete_membership
-        unfolding extensionally_complete_membership_def is_closed_wff_of_type_def
-        by meson
-    qed
-  }
-  then have \<open>two_gamma (\<beta> \<rightarrow> \<alpha>)\<close>
-    unfolding two_gamma_def by auto
-
-  then show ?case
-    unfolding good_type_def using una by metis
-qed
-
 lemma two_gamma:
   assumes \<open>is_closed_wff_of_type A \<gamma>\<close>
     and \<open>is_closed_wff_of_type B \<gamma>\<close>
   shows \<open>\<V> A \<gamma> = \<V> B \<gamma> \<longleftrightarrow> A =\<^bsub>\<gamma>\<^esub> B \<in> H\<close>
-  using all_good assms(1,2) good_type_def two_gamma_def by presburger
+  using assms
+proof (induction \<gamma> arbitrary: A B)
+  case TInd
+  then show ?case
+    using two_i by blast
+next
+  case TBool
+  then show ?case
+    using two_o by simp
+next
+  case (TFun \<beta> \<alpha>)
+  note A = TFun(3)
+  note B = TFun(4)
+
+  {
+    fix A B C
+    assume \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close>
+      \<open>is_closed_wff_of_type B \<beta>\<close>
+      \<open>is_closed_wff_of_type C \<beta>\<close>
+      \<open>\<V> B \<beta> = \<V> C \<beta>\<close>
+    then have \<open>\<V> (A \<sqdot> B) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
+      using cCong wffs_of_type_intros(3) TFun.IH(1,2)
+      by auto
+  }
+  note unambiguity = this
+
+  show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>) \<longleftrightarrow> A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
+  proof
+    assume \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
+    then have nice: \<open>\<And>C. is_closed_wff_of_type C \<beta> \<Longrightarrow> A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C \<in> H\<close>
+      using \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close> 
+        \<open>is_closed_wff_of_type B (\<beta> \<rightarrow> \<alpha>)\<close> cExt 
+      by blast
+    {
+      fix C
+      assume C: \<open>is_closed_wff_of_type C \<beta>\<close>
+      then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
+        by (metis (mono_tags, lifting) get_rep.simps some_eq_ex)
+      moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
+        using C by (simp add: well_typed)
+      moreover have \<open>\<V> (A \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
+        using A C unambiguity by (metis (mono_tags, lifting) tfl_some)
+      ultimately have \<open>(\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>) = \<V> (A \<sqdot> C) \<alpha>\<close>
+        by simp
+      moreover have \<open>is_closed_wff_of_type (B \<sqdot> C) \<alpha>\<close>
+        using B C by auto
+      then have \<open>\<V> (A \<sqdot> C) \<alpha> = \<V> (B \<sqdot> C) \<alpha>\<close>
+        using nice[OF C] A C TFun(2)[of \<open>A \<sqdot> C\<close> \<open>B \<sqdot> C\<close>] by auto
+      moreover have \<open>\<V> (B \<sqdot> C) \<alpha> = \<V> (B \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha>\<close>
+        using B C unambiguity by (metis (mono_tags, lifting) tfl_some)
+      then have \<open>\<V> (B \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
+        using rep \<V>C by simp
+      ultimately have \<open>(\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>) = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
+        by simp
+    }
+    note C_application = this
+
+    show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close>
+    proof (rule fun_ext_vfuncset[of _ \<open>\<D> \<beta>\<close> \<open>\<D> \<alpha>\<close>])
+      show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
+        using fun_typed well_typed A unambiguity by (metis subsetD)
+    next
+      show \<open>\<V> B (\<beta> \<rightarrow> \<alpha>) \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
+        using fun_typed well_typed B unambiguity by (metis subsetD)
+    next
+      fix VC\<beta>
+      assume \<open>VC\<beta> \<in> elts (\<D> \<beta>)\<close>
+      then obtain C where \<open>\<V> C \<beta> = VC\<beta> \<and> is_closed_wff_of_type C \<beta>\<close>
+        using wff_for_elts by blast
+      then show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta> = \<V> B (\<beta> \<rightarrow> \<alpha>) \<bullet> VC\<beta>\<close>
+        using C_application by blast
+    qed
+  next
+    assume \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close>
+    {
+      fix C
+      assume C: \<open>is_closed_wff_of_type C \<beta>\<close>
+      then have rep: \<open>\<V> (get_rep (\<V> C \<beta>) \<beta>) \<beta> = \<V> C \<beta>\<close>
+        by (metis (mono_tags, lifting) get_rep.simps some_eq_ex)
+      moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
+        using C by (simp add: well_typed)
+      moreover have \<open>\<V> (A \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
+        using A C unambiguity by (metis (mono_tags, lifting) tfl_some)
+      ultimately have \<open>\<V> (A \<sqdot> C) \<alpha> = (\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
+        by simp
+      then have \<open>\<V> (A \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
+        using \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close> by presburger
+
+      moreover have \<open>\<V> (B \<sqdot> C) \<alpha> = \<V> (B \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha>\<close>
+        using B C unambiguity by (metis (mono_tags, lifting) tfl_some)
+      then have \<open>\<V> (B \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
+        using rep \<V>C by simp
+      ultimately have \<open>\<V> (A \<sqdot> C) \<alpha> = \<V> (B \<sqdot> C) \<alpha>\<close>
+        by simp
+      then have \<open>A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C \<in> H\<close>
+        using TFun.IH(2) A B C wffs_of_type_intros(3) by force
+    }
+    then show \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
+      using A B extensionally_complete_membership
+      unfolding extensionally_complete_membership_def is_closed_wff_of_type_def
+      by meson
+  qed
+qed
+
+lemma unambiguity:
+  assumes \<open>is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)\<close>
+    and \<open>is_closed_wff_of_type B \<beta>\<close>
+    and \<open>is_closed_wff_of_type C \<beta>\<close>
+    and \<open>\<V> B \<beta> = \<V> C \<beta>\<close>
+    shows \<open>\<V> (A \<sqdot> B) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
+  using assms cCong wffs_of_type_intros(3) two_gamma by auto
 
 
 subsection \<open>M is interpretation\<close>
@@ -556,7 +533,7 @@ lemma non_logical_constant_denotation_\<J>:
   unfolding \<J>.simps by auto
 
 lemma function_domain: \<open>\<D> (\<alpha> \<rightarrow> \<beta>) \<le> \<D> \<alpha> \<longmapsto> \<D> \<beta>\<close>
-  using all_good fun_typed good_type_def by blast
+  using fun_typed by blast
 
 lemma domain_nonemptiness: \<open>\<D> \<alpha> \<noteq> 0\<close>
   by (metis wffs_of_type_intros(2) well_typed 
@@ -572,11 +549,9 @@ proof -
  have *: \<open>VLambda (\<D> \<alpha>) b \<bullet> \<V> B \<alpha> = b (\<V> B \<alpha>)\<close> for b
    using assms(2) well_typed ZFC_Cardinals.beta by meson
  
-  have \<open>unambiguous (\<alpha> \<rightarrow> \<beta>)\<close>
-    using all_good unfolding good_type_def by meson
-  then have \<open>\<V> B \<alpha> = \<V> C \<alpha> \<Longrightarrow> \<V> (A \<sqdot> B) \<beta> = \<V> (A \<sqdot> C) \<beta>\<close>
+  have \<open>\<V> B \<alpha> = \<V> C \<alpha> \<Longrightarrow> \<V> (A \<sqdot> B) \<beta> = \<V> (A \<sqdot> C) \<beta>\<close>
     if \<open>is_closed_wff_of_type C \<alpha>\<close> for C
-    using assms that unambiguous.simps(3) by blast
+    using assms that unambiguity by blast
   moreover have \<open>\<exists>C. \<V> C \<alpha> = \<V> B \<alpha> \<and> is_closed_wff_of_type C \<alpha>\<close>
     using assms(2) by blast
   ultimately show ?thesis
