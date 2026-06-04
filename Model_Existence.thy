@@ -412,8 +412,6 @@ next
     using two_o by simp
 next
   case (TFun \<beta> \<alpha>)
-  note A = TFun(3)
-  note B = TFun(4)
 
   {
     fix A B C
@@ -442,15 +440,15 @@ next
       moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
         using C by (simp add: well_typed)
       moreover have \<open>\<V> (A \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
-        using A C unambiguity by (metis (mono_tags, lifting) tfl_some)
+        using TFun(3) C unambiguity by (metis (mono_tags, lifting) tfl_some)
       ultimately have \<open>(\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>) = \<V> (A \<sqdot> C) \<alpha>\<close>
         by simp
       moreover have \<open>is_closed_wff_of_type (B \<sqdot> C) \<alpha>\<close>
-        using B C by auto
+        using TFun(4) C by auto
       then have \<open>\<V> (A \<sqdot> C) \<alpha> = \<V> (B \<sqdot> C) \<alpha>\<close>
-        using nice[OF C] A C TFun(2)[of \<open>A \<sqdot> C\<close> \<open>B \<sqdot> C\<close>] by auto
+        using nice[OF C] TFun(3) C TFun(2)[of \<open>A \<sqdot> C\<close> \<open>B \<sqdot> C\<close>] by auto
       moreover have \<open>\<V> (B \<sqdot> C) \<alpha> = \<V> (B \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha>\<close>
-        using B C unambiguity by (metis (mono_tags, lifting) tfl_some)
+        using TFun(4) C unambiguity by (metis (mono_tags, lifting) tfl_some)
       then have \<open>\<V> (B \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
         using rep \<V>C by simp
       ultimately have \<open>(\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>) = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
@@ -461,10 +459,10 @@ next
     show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close>
     proof (rule fun_ext_vfuncset[of _ \<open>\<D> \<beta>\<close> \<open>\<D> \<alpha>\<close>])
       show \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
-        using fun_typed well_typed A unambiguity by (metis subsetD)
+        using fun_typed well_typed TFun(3) unambiguity by (metis subsetD)
     next
       show \<open>\<V> B (\<beta> \<rightarrow> \<alpha>) \<in> elts (\<D> \<beta> \<longmapsto> \<D> \<alpha>)\<close>
-        using fun_typed well_typed B unambiguity by (metis subsetD)
+        using fun_typed well_typed TFun(4) unambiguity by (metis subsetD)
     next
       fix VC\<beta>
       assume \<open>VC\<beta> \<in> elts (\<D> \<beta>)\<close>
@@ -483,23 +481,23 @@ next
       moreover have \<V>C: \<open>\<V> C \<beta> \<in> elts (\<D> \<beta>)\<close>
         using C by (simp add: well_typed)
       moreover have \<open>\<V> (A \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha> = \<V> (A \<sqdot> C) \<alpha>\<close>
-        using A C unambiguity by (metis (mono_tags, lifting) tfl_some)
+        using TFun(3) C unambiguity by (metis (mono_tags, lifting) tfl_some)
       ultimately have \<open>\<V> (A \<sqdot> C) \<alpha> = (\<V> A (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
         by simp
       then have \<open>\<V> (A \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
         using \<open>\<V> A (\<beta> \<rightarrow> \<alpha>) = \<V> B (\<beta> \<rightarrow> \<alpha>)\<close> by presburger
 
       moreover have \<open>\<V> (B \<sqdot> C) \<alpha> = \<V> (B \<sqdot> (SOME Ca. \<V> Ca \<beta> = \<V> C \<beta> \<and> is_closed_wff_of_type Ca \<beta>)) \<alpha>\<close>
-        using B C unambiguity by (metis (mono_tags, lifting) tfl_some)
+        using TFun(4) C unambiguity by (metis (mono_tags, lifting) tfl_some)
       then have \<open>\<V> (B \<sqdot> C) \<alpha> = (\<V> B (\<beta> \<rightarrow> \<alpha>)) \<bullet> (\<V> C \<beta>)\<close>
         using rep \<V>C by simp
       ultimately have \<open>\<V> (A \<sqdot> C) \<alpha> = \<V> (B \<sqdot> C) \<alpha>\<close>
         by simp
       then have \<open>A \<sqdot> C =\<^bsub>\<alpha>\<^esub> B \<sqdot> C \<in> H\<close>
-        using TFun.IH(2) A B C wffs_of_type_intros(3) by force
+        using TFun.IH(2) TFun(3,4) C wffs_of_type_intros(3) by force
     }
     then show \<open>A =\<^bsub>\<beta> \<rightarrow> \<alpha>\<^esub> B \<in> H\<close>
-      using A B extensionally_complete_membership
+      using TFun(3,4) extensionally_complete_membership
       unfolding extensionally_complete_membership_def is_closed_wff_of_type_def
       by meson
   qed
