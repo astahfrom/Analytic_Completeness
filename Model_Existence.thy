@@ -16,6 +16,9 @@ instance type :: embeddable ..
 instance form :: small ..
 instance form :: embeddable ..
 
+definition is_frugal :: \<open>model_structure \<Rightarrow> bool\<close> where
+  \<open>is_frugal \<M> \<equiv> case \<M> of (\<D>, \<J>, \<V>) \<Rightarrow> \<forall>\<alpha>. |elts (\<D> \<alpha>)| \<le>o |UNIV :: form set|\<close>
+
 definition extensionally_complete_membership :: \<open>form set \<Rightarrow> bool\<close> where
   \<open>extensionally_complete_membership H \<longleftrightarrow>
     (\<forall>A B \<alpha> \<beta>. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
@@ -1114,6 +1117,20 @@ lemma model_consistent:
   by (metis (mono_tags, lifting) \<J>.simps well_typed free_vars_form.simps(2)
       is_assignment_def is_closed_wff_of_type_def old.prod.case wffs_of_type_intros(2))
 
+lemma elts_in_wffs: \<open>elts (\<D> \<alpha>) \<subseteq> (\<lambda>A. \<V> A \<alpha>) ` wffs\<^bsub>\<alpha>\<^esub>\<close>
+proof (induct \<alpha>)
+  case TBool
+  then show ?case
+    using cTop cFalse by auto
+qed auto
+
+lemma frugal_wffs: \<open>|elts (\<D> \<alpha>)| \<le>o |wffs\<^bsub>\<alpha>\<^esub>|\<close>
+  using elts_in_wffs by (meson surj_imp_ordLeq)
+
+theorem is_frugal: \<open>is_frugal (\<D>,\<J>,\<V>\<phi>)\<close>
+  unfolding is_frugal_def
+  using frugal_wffs card_of_UNIV ordLeq_transitive by blast
+
 end
 
 section \<open>Model Existence\<close>
@@ -1122,7 +1139,7 @@ theorem model_existence:
   fixes S :: \<open>form set\<close>
   assumes cprop: \<open>P.prop\<^sub>E Kinds C\<close>
     and S: \<open>S \<in> C\<close> \<open>P.enough_new S\<close>
-  shows \<open>\<exists>M. is_general_model M \<and>
+  shows \<open>\<exists>M. is_general_model M \<and> is_frugal M \<and>
     (\<forall>A \<in> S. is_sentence A \<longrightarrow> M \<Turnstile> A) \<and>
     (\<forall>A. is_sentence A \<longrightarrow> \<not> (M \<Turnstile> A \<and> M \<Turnstile> \<sim>\<^sup>\<Q> A))\<close>
 proof -
@@ -1133,7 +1150,7 @@ proof -
   qed
   then show ?thesis
     using MyHintikka.canon_model_for[OF *] MyHintikka.is_general_model[OF *] 
-      MyHintikka.model_consistent[OF *]
+      MyHintikka.model_consistent[OF *] MyHintikka.is_frugal[OF *]
       Extend_subset by blast
 qed
 

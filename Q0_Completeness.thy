@@ -6,7 +6,7 @@ begin
 section \<open>Completeness\<close>
 
 theorem strong_completeness:
-  assumes mod: \<open>\<And>M. is_general_model M \<Longrightarrow> \<forall>B \<in> \<G>. M \<Turnstile> B \<Longrightarrow> M \<Turnstile> A\<close>
+  assumes mod: \<open>\<And>M. is_general_model M \<Longrightarrow> is_frugal M \<Longrightarrow> \<forall>B \<in> \<G>. M \<Turnstile> B \<Longrightarrow> M \<Turnstile> A\<close>
     and A: \<open>is_sentence A\<close>
     and \<G>: \<open>\<forall>B \<in> \<G>. is_sentence B\<close> \<open>P.enough_new \<G>\<close>
   shows \<open>\<exists>\<H> \<subseteq> \<G>. \<H> \<turnstile> A\<close>
@@ -47,7 +47,7 @@ proof (rule ccontr)
     using * new by blast
 
   obtain M where M:
-    \<open>is_general_model M\<close>
+    \<open>is_general_model M\<close> \<open>is_frugal M\<close>
     \<open>\<forall>A\<in>{\<sim>\<^sup>\<Q> A} \<union> \<G>. is_sentence A \<longrightarrow> M \<Turnstile> A\<close>
     \<open>\<forall>A. is_sentence A \<longrightarrow> \<not> (M \<Turnstile> A \<and> M \<Turnstile> \<sim>\<^sup>\<Q> A)\<close>
     unfolding is_closed_wff_of_type_def
@@ -57,11 +57,11 @@ proof (rule ccontr)
   have \<open>is_sentence (\<sim>\<^sup>\<Q> A)\<close>
     using A by auto
   then have \<open>\<forall>B \<in> \<G>. M \<Turnstile> B\<close> \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close>
-    using M(2) \<G> by auto
+    using M(3) \<G> by auto
   then have \<open>M \<Turnstile> A\<close>
-    using mod[OF M(1)] by fast
+    using mod[OF M(1-2)] by fast
   moreover from \<open>M \<Turnstile> \<sim>\<^sup>\<Q> A\<close> have \<open>\<not> M \<Turnstile> A\<close>
-    using A M(3) by meson
+    using A M(4) by meson
   ultimately show False
     by meson
 qed
