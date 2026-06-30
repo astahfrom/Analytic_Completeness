@@ -87,7 +87,7 @@ proof -
 qed
 
 corollary completeness:
-  assumes \<open>\<And>M. is_general_model M \<Longrightarrow> M \<Turnstile> A\<close> \<open>is_sentence A\<close>
+  assumes \<open>\<And>M. is_general_model M \<Longrightarrow> is_frugal M \<Longrightarrow> M \<Turnstile> A\<close> \<open>is_sentence A\<close>
   shows \<open>\<turnstile> A\<close>
   using assms strong_completeness[where \<G>=\<open>{}\<close> and A=A] is_hyps_enough_new
   by simp
