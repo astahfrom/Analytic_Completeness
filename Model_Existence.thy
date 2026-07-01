@@ -1079,7 +1079,7 @@ lemma denotation_function: \<open>is_wff_denotation_function \<V>\<phi>\<close>
   by auto
 
 sublocale M: general_model \<D> \<J> \<V>\<phi>
-  using denotation_function 
+  using denotation_function
   by unfold_locales auto
 
 lemma sat_closed_formulas:
@@ -1089,12 +1089,12 @@ lemma sat_closed_formulas:
 proof -
   have \<open>\<V>\<phi> \<phi> A = \<V> (C\<phi> A \<phi>) o\<close>
     using A by (metis \<V>\<phi>_def someI_ex type_of_def wff_has_unique_type)
-  moreover have \<open>\<V> (C\<phi> A \<phi>) o = \<^bold>T \<longleftrightarrow> C\<phi> A \<phi> \<in> H\<close>
-    by (simp add: bool_to_V_distinct)
-  moreover have \<open>C\<phi> A \<phi> \<in> H\<close>
+  also have \<open>\<V> (C\<phi> A \<phi>) o = \<V> A o\<close>
     using H A empty_C\<phi> by simp
-  ultimately show ?thesis
-    by simp
+  also have \<open>\<dots>  = \<^bold>T \<longleftrightarrow> A \<in> H\<close>
+    by (simp add: bool_to_V_distinct)
+  finally show ?thesis
+    using H by meson
 qed
 
 lemma canon_model_for: \<open>is_model_for (\<D>,\<J>,\<V>\<phi>) {A \<in> H. A \<in> wffs\<^bsub>o\<^esub> \<and> free_vars A = {}}\<close>
