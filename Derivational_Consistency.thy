@@ -87,6 +87,8 @@ lemma is_inconsistent_set_mono:
   shows \<open>is_inconsistent_set \<G>\<close>
   using assms prop_5241 by blast
 
+subsection \<open>Conflicts\<close>
+
 interpretation DC: Derivational_Confl map_con cons_form is_param confl_class is_consistent_set
 proof
   fix H ps qs q
@@ -420,6 +422,8 @@ proof
   qed
 qed
 
+subsection \<open>Universal Consistency\<close>
+
 interpretation DG: Derivational_Gamma map_con map_con
   cons_form is_param gamma_class is_consistent_set
 proof
@@ -445,6 +449,8 @@ proof
   then show \<open>is_consistent_set (lset (qs t) \<union> As)\<close>
     using consistent is_consistent_set_union sub by auto
 qed
+
+subsection \<open>Existential Consistency\<close>
 
 interpretation DD: Derivational_Delta map_con cons_form is_param delta is_consistent_set
 proof
