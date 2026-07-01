@@ -19,6 +19,11 @@ instance form :: embeddable ..
 definition is_frugal :: \<open>model_structure \<Rightarrow> bool\<close> where
   \<open>is_frugal \<M> \<equiv> case \<M> of (\<D>, \<J>, \<V>) \<Rightarrow> \<forall>\<alpha>. |elts (\<D> \<alpha>)| \<le>o |UNIV :: form set|\<close>
 
+lemma is_frugal_countable: \<open>is_frugal (\<D>, \<J>, \<V>) \<longleftrightarrow> ( \<forall>\<alpha>. |elts (\<D> \<alpha>)| \<le>o |UNIV :: nat set| )\<close>
+  unfolding is_frugal_def case_prod_conv
+  by (meson UNIV_I card_of_ordLeqI  countable_class.ex_inj inf_univ
+      infinite_iff_card_of_nat ordLeq_transitive)
+
 definition extensionally_complete_membership :: \<open>form set \<Rightarrow> bool\<close> where
   \<open>extensionally_complete_membership H \<longleftrightarrow>
     (\<forall>A B \<alpha> \<beta>. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>) \<longrightarrow>
