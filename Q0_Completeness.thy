@@ -139,7 +139,7 @@ proposition is_consistent_set: \<open>is_consistent_set \<G> \<longleftrightarro
   unfolding is_consistent_set_def using inconsistent_imp_hyps by blast
 
 corollary model_existence_implies_set_consistency_general:
-  assumes \<open>\<exists>\<M>. is_general_model \<M> \<and> is_model_for \<M> \<G>\<close>
+  assumes \<open>is_general_model \<M>\<close> \<open>is_model_for \<M> \<G>\<close>
   shows \<open>is_consistent_set \<G>\<close>
   using assms model_existence_implies_set_consistency inconsistent_imp_hyps
   unfolding is_consistent_set_def
