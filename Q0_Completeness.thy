@@ -135,7 +135,7 @@ text \<open>
   Similarly, we remove this finiteness assumption from the principle of explosion.
 \<close>
 
-proposition is_consistent_set: \<open>is_consistent_set \<G> \<longleftrightarrow> (\<nexists>\<H>. \<H> \<subseteq> \<G> \<and> finite \<H> \<and> \<H> \<subseteq> wffs\<^bsub>o\<^esub> \<and> \<H> \<turnstile> F\<^bsub>o\<^esub>)\<close>
+lemma is_consistent_set: \<open>is_consistent_set \<G> \<longleftrightarrow> (\<nexists>\<H>. \<H> \<subseteq> \<G> \<and> finite \<H> \<and> \<H> \<subseteq> wffs\<^bsub>o\<^esub> \<and> \<H> \<turnstile> F\<^bsub>o\<^esub>)\<close>
   unfolding is_consistent_set_def using inconsistent_imp_hyps by blast
 
 corollary model_existence_implies_set_consistency_general:
