@@ -695,8 +695,17 @@ proof -
           where A=\<open>\<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>,
           where p=\<open>[]\<close>]
     using ax assms unfolding axiom_3\<^sub>w\<^sub>f\<^sub>f_def equivalence_def by auto
-     
 qed
+
+lemma is_subform_at_vars:
+  assumes \<open>A \<preceq>\<^bsub>p\<^esub> B\<close>
+  shows \<open>vars A \<subseteq> vars B\<close>
+  using assms by (induction rule: is_subform_at.induct) auto
+
+lemma is_subform_vars:
+  assumes \<open>A \<preceq> B\<close>
+  shows \<open>vars A \<subseteq> vars B\<close>
+  using is_subform_at_vars assms by auto 
 
 interpretation DD: Derivational_Delta map_con cons_form is_param delta is_consistent_set
 proof
