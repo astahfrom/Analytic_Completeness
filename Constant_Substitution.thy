@@ -100,7 +100,13 @@ lemma axiom_4_1_var_const_subst:
     and \<open>y\<^bsub>\<beta>\<^esub> \<noteq> z\<^bsub>\<alpha>\<^esub>\<close>
   shows \<open>\<^bold>S\<^sub>c (c, \<tau>) x ((\<lambda>z\<^bsub>\<alpha>\<^esub>. y\<^bsub>\<beta>\<^esub>) \<sqdot> A =\<^bsub>\<beta>\<^esub> y\<^bsub>\<beta>\<^esub>) \<in> axioms\<close>
   using assms(1,2,3) axioms.axiom_4_1_var const_subst_wffs by auto
- 
+
+lemma axiom_4_2_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close>
+    and \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
+  shows \<open>\<^bold>S\<^sub>c (c, \<tau>) x ((\<lambda>z\<^bsub>\<alpha>\<^esub>. z\<^bsub>\<alpha>\<^esub>) \<sqdot> A =\<^bsub>\<alpha>\<^esub> A) \<in> axioms\<close>
+  using assms(1,2) axioms.axiom_4_2 const_subst_wffs by auto
+
 lemma axiom_4_3_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
     and \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close>
@@ -169,6 +175,12 @@ proof -
     using const_subst_laws[OF assms(1)] axioms.axiom_4_4[of ?A \<alpha> ?B \<delta> y \<gamma> z] A_wff B_wff by simp
 qed
 
+lemma axiom_4_5_const_subst:
+  assumes \<open>\<not> is_logical_name c\<close>
+    and \<open>A \<in> wffs\<^bsub>\<alpha>\<^esub>\<close> and \<open>B \<in> wffs\<^bsub>\<delta>\<^esub>\<close>
+  shows \<open>\<^bold>S\<^sub>c (c, \<tau>) x ((\<lambda>z\<^bsub>\<alpha>\<^esub>. \<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<sqdot> A =\<^bsub>\<alpha> \<rightarrow> \<delta>\<^esub> \<lambda>z\<^bsub>\<alpha>\<^esub>. B) \<in> axioms\<close>
+  using assms axioms.axiom_4_5 const_subst_laws(7) const_subst_wffs by force
+
 lemma axiom_5_const_subst:
   assumes \<open>\<not> is_logical_name c\<close> 
   shows \<open>\<^bold>S\<^sub>c (c, \<tau>) x (\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub>) \<in> axioms\<close>
@@ -208,11 +220,11 @@ next
 next
   case (axiom_4_2 A \<alpha> z)
   then show ?case
-    using axioms.axiom_4_2 const_subst_wffs by force
+    using axiom_4_2_const_subst by blast
 next
   case (axiom_4_3 A \<alpha> B \<gamma> \<beta> C x)
   then show ?case
-    using axiom_4_3_const_subst by auto
+    using axiom_4_3_const_subst by blast
 next
   case (axiom_4_4 A \<alpha> B \<delta> y \<gamma> x)
   then show ?case
@@ -220,12 +232,11 @@ next
 next
   case (axiom_4_5 A \<alpha> B \<delta> x)
   then show ?case
-    using axioms.axiom_4_5 const_subst.simps(3,4) 
-      const_subst_laws(7) const_subst_wffs by presburger
+    using axiom_4_5_const_subst by blast
 next
   case axiom_5
   then show ?case
-    using axiom_5_const_subst by force
+    using axiom_5_const_subst by blast
 qed
 
 lemma is_subform_at_const_subst:
@@ -361,8 +372,8 @@ proof -
     using is_rule_R_app_def[of p ?D ?C ?E] by auto
 qed
   
-definition const_subst_proof :: \<open>con \<Rightarrow> nat \<Rightarrow> form list \<Rightarrow> form list\<close> (\<open>\<^bold>S\<^sub>c\<^sub>p _ _ _\<close> [51, 51, 51]) where 
-  \<open>\<^bold>S\<^sub>c\<^sub>p c\<tau> x S \<equiv> map (\<lambda>A. \<^bold>S\<^sub>c c\<tau> x A) S\<close>
+fun const_subst_proof :: \<open>con \<Rightarrow> nat \<Rightarrow> form list \<Rightarrow> form list\<close> (\<open>\<^bold>S\<^sub>c\<^sub>p _ _ _\<close> [51, 51, 51]) where 
+  \<open>\<^bold>S\<^sub>c\<^sub>p (c, \<alpha>) x S = map (\<lambda>A. \<^bold>S\<^sub>c (c, \<alpha>) x A) S\<close>
 
 lemma nil_is_proof:
   \<open>is_proof []\<close>
@@ -503,7 +514,7 @@ lemma is_proof_const_subst:
 proof (induction rule: is_proof_induct)
   case p_nil
   then show ?case
-    by (simp add: const_subst_proof_def)
+    by simp
 next
   case (p_axiom A S)
   have \<open>(x, \<tau>) \<notin> vars\<^sub>p S\<close>
@@ -519,7 +530,7 @@ next
     by (metis \<open>\<^bold>S\<^sub>c (c, \<tau>) x A \<in> axioms\<close> \<open>is_proof (\<^bold>S\<^sub>c\<^sub>p (c, \<tau>) x S)\<close> 
         axiom_appended_to_proof_is_proof)
   then show ?case
-    using p_axiom const_subst_proof_def by auto
+    using p_axiom by auto
 next
   case (p_rule_R S S' E S'' C p D)
   let ?C = \<open>\<^bold>S\<^sub>c (c, \<tau>) x C\<close>
@@ -536,14 +547,14 @@ next
     using p_rule_R.IH p_rule_R.prems(1,2) vars\<^sub>p_def by auto
 
   have \<open>prefix ?S''C ?S\<close>
-    by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(3))
+    by (metis const_subst_proof.simps map_mono_prefix p_rule_R.hyps(3))
   have \<open>prefix ?S'E ?S\<close>
-    by (metis const_subst_proof_def map_mono_prefix p_rule_R.hyps(2))
+    by (metis const_subst_proof.simps map_mono_prefix p_rule_R.hyps(2))
   have pre': \<open>prefix (?S' @ [?E]) ?S\<close>
-    using \<open>prefix (?S'E) ?S\<close> const_subst_proof_def by fastforce
+    using \<open>prefix (?S'E) ?S\<close>  by fastforce
 
   have pre'': \<open>prefix (?S'' @ [?C]) ?S\<close>
-    using \<open>prefix (?S''C) ?S\<close> const_subst_proof_def by force
+    using \<open>prefix (?S''C) ?S\<close>  by force
 
   have \<open>is_proof ?S''C\<close>
     by (metis \<open>is_proof ?S\<close>
@@ -584,7 +595,7 @@ next
 
   show ?case
     using is_proof_R_intro[OF \<open>is_rule_R_app p ?D ?C ?E\<close> \<open>is_proof ?S\<close>, of ?S' ?S'', OF pre' pre'']
-    by (simp add: const_subst_proof_def)
+    by simp
 qed
 
 lemma finite_vars\<^sub>p: \<open>finite (vars\<^sub>p \<S>)\<close>
@@ -1210,7 +1221,7 @@ lemma is_hyp_proof_const_subst:
 using assms proof (induction rule: is_hyp_proof_induct)
   case hp_nil
   then show ?case
-    by (simp add: const_subst_proof_def)
+    by simp
 next
   case (hp_hyp A \<S>\<^sub>2)
   from hp_hyp(6) have \<open>(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2\<close>
@@ -1223,7 +1234,7 @@ next
         ]
     by (metis UN_I hp_hyp.hyps(1) hp_hyp.prems(2,4) idemp_const_subst)
   then show ?case
-    by (simp add: const_subst_proof_def)
+    by simp
 next
   case (hp_seq A \<S>\<^sub>2)
   from this(6) have \<open>(x, \<tau>) \<notin> vars\<^sub>p \<S>\<^sub>2\<close>
@@ -1234,9 +1245,9 @@ next
     using thm_appended_to_hyp_proof_is_hyp_proof[of 
         As \<open>(\<^bold>S\<^sub>c\<^sub>p (c, \<tau>) x Ts)\<close> \<open>(\<^bold>S\<^sub>c\<^sub>p (c, \<tau>) x \<S>\<^sub>2)\<close> \<open>\<^bold>S\<^sub>c (c, \<tau>) x A\<close>
         ]
-    by (metis const_subst_proof_def hp_seq.hyps(1) image_eqI list.set_map)
+    by (metis const_subst_proof.simps hp_seq.hyps(1) image_eqI list.set_map)
   then show ?case
-    by (simp add: const_subst_proof_def)
+    by simp
 next
   case (hp_rule_R' S' E \<S>\<^sub>2 S'' C p D)
   let ?C = \<open>\<^bold>S\<^sub>c (c, \<tau>) x C\<close>
@@ -1255,17 +1266,17 @@ next
     using hp_rule_R'.IH hp_rule_R'.prems vars\<^sub>p_def by auto
 
   have \<open>prefix ?S''C ?\<S>\<^sub>2\<close>
-    by (metis const_subst_proof_def hp_rule_R'.hyps(2) map_mono_prefix)
+    by (metis const_subst_proof.simps hp_rule_R'.hyps(2) map_mono_prefix)
 
   have \<open>prefix ?S'E ?\<S>\<^sub>2\<close>
-    by (metis const_subst_proof_def hp_rule_R'.hyps(1) map_mono_prefix)
+    by (metis const_subst_proof.simps hp_rule_R'.hyps(1) map_mono_prefix)
 
   have P1: \<open>prefix ((\<^bold>S\<^sub>c\<^sub>p (c, \<tau>) x S') @ [?E]) (?\<S>\<^sub>2)\<close>
     using \<open>prefix ?S'E ?\<S>\<^sub>2\<close> 
-      const_subst_proof_def by fastforce
+       by fastforce
 
   have P2: \<open>prefix ((\<^bold>S\<^sub>c\<^sub>p (c, \<tau>) x S'') @ [?C]) (?\<S>\<^sub>2)\<close>
-    using \<open>prefix ?S''C (?\<S>\<^sub>2)\<close> const_subst_proof_def by force
+    using \<open>prefix ?S''C (?\<S>\<^sub>2)\<close>  by force
 
   have \<open>is_hyp_proof As ?Ts ?S''C\<close>
     by (metis \<open>is_hyp_proof As ?Ts (?\<S>\<^sub>2)\<close>
@@ -1310,14 +1321,14 @@ next
   show ?case
     using is_hyp_proof_R'_intro[OF \<open>is_rule_R'_app As p ?D ?C ?E\<close> 
         \<open>is_hyp_proof As ?Ts ?\<S>\<^sub>2\<close>, of ?S' ?S'', OF P1 P2]
-    by (simp add: const_subst_proof_def)
+    by simp
 qed
 
 lemma is_hyp_proof_of_const_subst:
   assumes \<open>P' = \<^bold>S\<^sub>c\<^sub>p (c, \<alpha>) x P\<close>
     and \<open>Ts' = \<^bold>S\<^sub>c\<^sub>p (c, \<alpha>) x Ts\<close>
     and \<open>form' = \<^bold>S\<^sub>c (c, \<alpha>) x A\<close>
-    and \<open>is_hyp_proof_of As Ts P (A)\<close>
+    and \<open>is_hyp_proof_of As Ts P A\<close>
     and \<open>(x, \<alpha>) \<notin> vars As\<close>
     and \<open>(x, \<alpha>) \<notin> vars B\<close>
     and \<open>c \<notin> logical_names\<close>
@@ -1346,7 +1357,7 @@ proof -
     using assms(7,8) by auto
   moreover
   have \<open>P' \<noteq> []\<close>
-    by (simp add: \<open>P \<noteq> []\<close> assms(1) const_subst_proof_def)
+    by (simp add: \<open>P \<noteq> []\<close> assms(1))
   moreover
   have \<open>is_hyp_proof As Ts' P'\<close>
     using \<open>is_hyp_proof As Ts P\<close> unfolding assms(1)
@@ -1355,7 +1366,7 @@ proof -
     using \<open>is_proof Ts\<close> assms(2,7,9) calculation(1) by presburger
   moreover
   have \<open>last P' = form'\<close>
-    by (simp add: \<open>P \<noteq> []\<close> \<open>last P = A\<close> assms(1,3) const_subst_proof_def last_map)
+    by (simp add: \<open>P \<noteq> []\<close> \<open>last P = A\<close> assms(1,3) last_map)
   ultimately
   show ?thesis
     unfolding is_hyp_proof_of_def by auto
