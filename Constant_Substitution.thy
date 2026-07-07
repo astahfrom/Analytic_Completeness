@@ -777,32 +777,6 @@ proof -
     using \<open>is_rule_R_app p D' C' E'\<close> \<open>rule_R'_side_condition As p D' C' E'\<close> by blast
 qed
 
-lemma Qconsts_const_subst:
-  assumes \<open>c \<notin> Qconsts A\<close>
-  shows \<open>\<^bold>S\<^sub>c (c, \<alpha>) x A = A\<close>
-using assms proof (induction A)
-  case (FVar y)
-  then show ?case
-    by (cases y; simp)
-      (metis const_subst.simps(1) surj_pair)
-next
-  case (FCon y)
-  then show ?case
-  proof (cases y)
-    case non_logical
-    then show ?thesis
-      using FCon by (metis Qconsts.simps(2) const_subst.simps(2) insert_iff prod.exhaust)
-  qed simp_all
-next
-  case (FApp A1 A2)
-  then show ?case
-    by auto
-next
-  case (FAbs x1a A)
-  then show ?case
-    by (metis Qconsts.simps(4) const_subst.simps(4) prod.exhaust)
-qed
-
 lemma is_hyp_proof_induct [consumes 1, case_names hp_nil hp_hyp hp_seq hp_rule_R']:
   assumes \<open>is_hyp_proof \<H> \<S>\<^sub>1 \<S>\<^sub>2\<close>
     and \<open>P []\<close>
