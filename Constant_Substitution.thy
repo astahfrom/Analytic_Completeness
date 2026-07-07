@@ -703,15 +703,12 @@ lemma const_subst_preserves_binders_at:
 lemma capture_exposed_vars_at_const_subst1:
   assumes \<open>p \<in> positions C\<close>
     and \<open>C' = \<^bold>S\<^sub>c (c, \<tau>) x C\<close>
-    and \<open>(x, \<tau>) \<notin> vars C \<union> vars E\<close>
+    and \<open>(x, \<tau>) \<notin> vars C\<close>
   shows \<open>capture_exposed_vars_at p C As = capture_exposed_vars_at p C' As\<close>
 proof -
   have a: \<open>p \<in> positions C'\<close>
     by (metis assms(1,2) is_replacement_at_existence is_replacement_at_implies_in_positions is_replacement_at_const_subst)
 
-  have \<open>free_vars E = free_vars E \<or> free_vars E = free_vars E \<union> {(x, \<tau>)}\<close>
-    using assms fresh_free_vars_const_subst by metis
-  moreover
   have \<open>(x, \<tau>) \<notin> binders_at C' p\<close>
     using assms in_binders_at_in_vars const_subst_binders_at by auto
   moreover
@@ -757,10 +754,10 @@ lemma capture_exposed_vars_at_intersection_const_subst:
   assumes \<open>p \<in> positions C\<close>
     and \<open>capture_exposed_vars_at p C E \<inter> capture_exposed_vars_at p C As = {}\<close>
     and \<open>C' = \<^bold>S\<^sub>c (c, \<tau>) x C\<close>
-  assumes \<open>E' = \<^bold>S\<^sub>c (c, \<tau>) x E\<close>
-  assumes \<open>(x, \<tau>) \<notin> vars C \<union> vars E\<close>
+    and \<open>E' = \<^bold>S\<^sub>c (c, \<tau>) x E\<close>
+    and \<open>(x, \<tau>) \<notin> vars C \<union> vars E\<close>
   shows \<open>capture_exposed_vars_at p C' E' \<inter> capture_exposed_vars_at p C' As = {}\<close>
-  using assms capture_exposed_vars_at_const_subst1 capture_exposed_vars_at_const_subst2 by metis
+  using assms capture_exposed_vars_at_const_subst1 capture_exposed_vars_at_const_subst2 by (metis Un_iff)
 
 lemma is_rule_R'_app_const_subst:
   assumes \<open>C' = (\<^bold>S\<^sub>c (c, \<tau>) x C)\<close>
