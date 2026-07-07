@@ -240,48 +240,32 @@ proof-
     by blast
 qed
 
-lemma derivable_tautologous_imp:
-  assumes \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-    and \<open>is_tautologous (A \<supset>\<^sup>\<Q> B)\<close>
-  shows \<open>{A} \<turnstile> B\<close>
-proof-
-  have \<open>is_hyps {A}\<close>
-    using \<open>A \<in> wffs\<^bsub>o\<^esub>\<close>
-    by simp
-  have obs: \<open>([X] \<supset>\<^sup>\<Q>\<^sub>\<star> Y) = (X \<supset>\<^sup>\<Q> Y)\<close> for X Y
-    by simp_all
-  show \<open>{A} \<turnstile> B\<close>
-    using tautologous_horn_clause_is_hyp_derivable
-      [OF \<open>is_hyps {A}\<close> \<open>is_hyps {A}\<close>, where hs=\<open>[A]\<close>]
-    \<open>is_tautologous (A \<supset>\<^sup>\<Q> B)\<close>
-    unfolding obs
-    by (metis \<open>is_hyps {A}\<close> dv_hyp empty_set
-        list.simps(15))
-qed
-
 lemma axiom_5_wff:
   assumes A: \<open>A \<in> wffs\<^bsub>i\<^esub>\<close>
   shows \<open>\<turnstile> \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A\<close>
 proof -
-  let ?v = \<open>{(Suc 0, i) \<Zinj> A}\<close>
-  let ?B = \<open>\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> Suc 0\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> Suc 0\<^bsub>i\<^esub>\<close>
+  let ?v = \<open>{(\<yy>, i) \<Zinj> A}\<close>
+  let ?orig = \<open>\<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> \<yy>\<^bsub>i\<^esub>) =\<^bsub>i\<^esub> \<yy>\<^bsub>i\<^esub>\<close>
 
   have 1: \<open>is_substitution ?v\<close>
     using A unfolding is_substitution_def by simp
-  have \<open>is_free_for A (Suc 0, i) ?B\<close>
-    by (metis Q_constant_of_type_def Q_def iota_constant_def iota_def is_free_for_in_con 
-        is_free_for_in_equality is_free_for_in_var is_free_for_to_app)
-  then have 2: \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set) 
-    \<and> is_free_for (?v $$! v) v ?B\<close>
-    by auto
+  have \<open>is_free_for A (\<yy>, i) ?orig\<close>
+    unfolding Q_constant_of_type_def Q_def iota_constant_def iota_def
+    by (metis  is_free_for_in_con is_free_for_in_equality is_free_for_in_var is_free_for_to_app)
+  then have \<open>\<forall>v\<in>fmdom' ?v. is_free_for (?v $$! v) v ?orig\<close>
+    by (metis empty_iff fmdom'_empty fmdom'_fmupd fmupd_lookup insert_iff option.sel)
+  moreover have \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set)\<close>
+    by simp
+  ultimately have 2: \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set) \<and> is_free_for (?v $$! v) v ?orig\<close>
+    by meson
   have 3: \<open>?v \<noteq> {$$}\<close>
     by simp
 
-  have \<open>\<turnstile> ?B\<close>
+  have \<open>\<turnstile> ?orig\<close>
     using axiom_5 axiom_is_derivable_from_no_hyps by blast
-  then have \<open>\<turnstile> \<^bold>S ?v ?B\<close>
+  then have \<open>\<turnstile> \<^bold>S ?v ?orig\<close>
     using Sub 1 2 3 by blast
-  then show \<open>\<turnstile> \<iota> \<sqdot> (Q\<^bsub>i\<^esub> \<sqdot> A) =\<^bsub>i\<^esub> A\<close>
+  then show ?thesis
     by simp
 qed
 
@@ -453,226 +437,62 @@ qed
 subsection \<open>Existential Consistency\<close>
 
 
-definition axiom_3\<^sub>v where
-  \<open>axiom_3\<^sub>v f g x \<alpha> \<beta> = (f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> g\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-
-definition axiom_3\<^sub>w\<^sub>f\<^sub>f where
-  \<open>axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta> = (F =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> G) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (F \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> G \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-
-lemma axiom_3\<^sub>v_is_S_axiom_3\<^sub>v:
-  assumes \<open>f \<noteq> g\<close>
-  shows \<open>(\<^bold>S {(f, \<alpha> \<rightarrow> \<beta>) \<Zinj> f'\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (g, \<alpha> \<rightarrow> \<beta>) \<Zinj> g'\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} (axiom_3\<^sub>v f g x \<alpha> \<beta>)) = axiom_3\<^sub>v f' g' x \<alpha> \<beta>\<close>
-  unfolding axiom_3\<^sub>v_def 
-  using assms
-  by auto
-
-lemma axiom_3\<^sub>v_theorem:
-  \<open>\<turnstile> axiom_3\<^sub>v f g x \<alpha> \<beta>\<close>
-proof -
-  have ax3\<ff>\<gg>\<xx>: \<open>\<turnstile> axiom_3\<^sub>v \<ff> \<gg> \<xx> \<alpha> \<beta>\<close>
-    using axiom_3 axiom_3\<^sub>v_def axiom_is_derivable_from_no_hyps by presburger
-
-  have sub: \<open>is_substitution {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>}\<close>
-    by auto
-
-  have dom: \<open>fmdom' {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} = {(\<ff>, \<alpha> \<rightarrow> \<beta>) ,(\<gg>, \<alpha> \<rightarrow> \<beta>)}\<close>
-    by auto
-
-  have \<xx>_not_g: \<open>(\<xx>, \<alpha>) \<notin> free_vars (g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>)\<close>
-    by simp
-  then have free_for_g: \<open>is_free_for (g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>) (\<gg>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> \<xx> \<alpha> \<beta>)\<close>
-    using axiom_3\<^sub>v_def equivalence_def is_free_for_in_equality 
-      is_free_for_in_forall is_free_for_in_var is_free_for_to_app by presburger
-
-  have \<xx>_not_f: \<open>(\<xx>, \<alpha>) \<notin> free_vars (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>)\<close>
-    by simp
-  then have free_for_f:  \<open>is_free_for (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>) (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> \<xx> \<alpha> \<beta>)\<close>
-    using axiom_3\<^sub>v_def equivalence_def is_free_for_in_app 
-      is_free_for_in_equality is_free_for_in_forall is_free_for_in_var by presburger
-
-  have notin: \<open>\<forall>v. v \<notin> free_var_names ({}::form set)\<close>
-    by auto
-
-  have \<open>\<forall>v\<in>fmdom' {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>}.
-          is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} $$! v) v (axiom_3\<^sub>v \<ff> \<gg> \<xx> \<alpha> \<beta>)\<close>
-    using free_for_f free_for_g unfolding dom
-    by (metis (no_types, lifting) fmupd_lookup insert_iff option.sel singletonD)
-  then have is_free_for_fg: 
-    \<open>\<forall>v\<in>fmdom' {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>}.
-       var_name v \<notin> free_var_names ({}::form set) \<and> 
-       is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} $$! v) v (axiom_3\<^sub>v \<ff> \<gg> \<xx> \<alpha> \<beta>)\<close>
-      by auto
-
-  have empty: \<open>{(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} \<noteq> {$$}\<close>
-    by auto
-
-  have \<open>\<turnstile> \<^bold>S {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>} (axiom_3\<^sub>v \<ff> \<gg> \<xx> \<alpha> \<beta>)\<close>
-    using Sub[OF ax3\<ff>\<gg>\<xx> sub is_free_for_fg empty] by auto
-  then have ax3fg\<xx>: \<open>\<turnstile> axiom_3\<^sub>v f g \<xx> \<alpha> \<beta>\<close>
-    by (simp add: axiom_3\<^sub>v_is_S_axiom_3\<^sub>v)
-
-  show ?thesis
-  proof (cases \<open>x = \<xx>\<close>)
+lemma axiom_3_x: \<open>\<turnstile> (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+proof (cases \<open>x = \<xx>\<close>)
     case True
     then show ?thesis
-      using ax3fg\<xx> by auto
+    using axiom_3 axiom_is_derivable_from_no_hyps by blast
   next
     case False
-    then have x_not_free: \<open>(x, \<alpha>) \<notin> free_vars (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)\<close>
+    then have \<open>(x, \<alpha>) \<notin> free_vars (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)\<close>
       by auto
-    have f\<xx>_is_g\<xx>_wff: \<open>f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> \<in> wffs\<^bsub>o\<^esub>\<close>
+    moreover have \<open>\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> \<in> wffs\<^bsub>o\<^esub>\<close>
       by auto
-
-    have free_for_x: \<open>is_free_for (x\<^bsub>\<alpha>\<^esub>) (\<xx>, \<alpha>) (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)\<close>
+    moreover have \<open>is_free_for (x\<^bsub>\<alpha>\<^esub>) (\<xx>, \<alpha>) (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)\<close>
       using is_free_for_in_app is_free_for_in_equality is_free_for_in_var by presburger
-
-    from ax3fg\<xx> have 
-      \<open>\<turnstile> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) 
+    ultimately have 
+      \<open>\<turnstile> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) 
           =\<^bsub>\<alpha> \<rightarrow> o\<^esub>
-         (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<^bold>S {(\<xx>, \<alpha>) \<Zinj> x\<^bsub>\<alpha>\<^esub>} (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))\<close>
-      unfolding axiom_3\<^sub>v_def forall_def
-      using \<alpha>[of \<open>(f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)\<close> o x \<alpha> \<xx>, OF f\<xx>_is_g\<xx>_wff x_not_free free_for_x]
-        f\<xx>_is_g\<xx>_wff free_for_x by auto
-    then have alpha: \<open>\<turnstile> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) =\<^bsub>\<alpha> \<rightarrow> o\<^esub>
-         (\<lambda>x\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))\<close>
-      by auto
+         (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<^bold>S {(\<xx>, \<alpha>) \<Zinj> x\<^bsub>\<alpha>\<^esub>} (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))\<close>
+      using prop_5206 unfolding forall_def by fast
 
-    define p :: position where \<open>p = [\<guillemotright>, \<guillemotright>]\<close>
+    then have \<open>\<turnstile> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) =\<^bsub>\<alpha> \<rightarrow> o\<^esub>
+         (\<lambda>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))\<close>
+      by simp
 
-    have \<open>\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<preceq>\<^bsub>p\<^esub> axiom_3\<^sub>v f g \<xx> \<alpha> \<beta>\<close>
-      unfolding p_def axiom_3\<^sub>v_def by auto
-    moreover
-    have \<open>(axiom_3\<^sub>v f g \<xx> \<alpha> \<beta>)\<lblot>p \<leftarrow> \<lambda>x\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<rblot> \<rhd> axiom_3\<^sub>v f g x \<alpha> \<beta>\<close>
-      unfolding axiom_3\<^sub>v_def p_def by auto
-    ultimately
-    show ?thesis
-      using
-        \<open>\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>) \<preceq>\<^bsub>p\<^esub> axiom_3\<^sub>v f g \<xx> \<alpha> \<beta>\<close> alpha ax3fg\<xx>
-        rule_R by blast
+    then show ?thesis
+      using axiom_3 axiom_is_derivable_from_no_hyps pi_wff prop_5201_3 prop_5201_6
+      unfolding equivalence_def forall_def by blast
   qed
-qed
 
-lemma is_free_for_axiom_3_f:
-  assumes \<open>F \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
-    and \<open>(x, \<alpha>) \<notin> free_vars F\<close>
-  shows \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close> 
+lemma axiom_3_wff:
+  assumes A: \<open>A \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close> and B: \<open>B \<in> wffs\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>\<close>
+    and x: \<open>(x, \<alpha>) \<notin> free_vars A\<close> \<open>(x, \<alpha>) \<notin> free_vars B\<close>
+  shows \<open>\<turnstile> (A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
 proof -
-  have \<ff>x: \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (x\<^bsub>\<alpha>\<^esub>)\<close>
-    using is_free_for_in_var by presburger
-  have \<ff>\<gg>: \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>)\<close>
-    using is_free_for_in_var by presburger
-  have \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-    using \<ff>\<gg> \<ff>x is_free_for_to_app by presburger
-  have \<ff>\<ff>: \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>)\<close>
-    using is_free_for_in_var by presburger
-  have \<ff>\<ff>x\<gg>x: \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-    using \<ff>x \<ff>\<ff> \<ff>\<gg> is_free_for_in_equality is_free_for_to_app by presburger 
-  have \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))\<close>
-    using \<ff>\<ff> \<ff>\<gg> assms \<ff>\<ff>x\<gg>x is_free_for_in_equality is_free_for_in_equivalence is_free_for_in_forall by presburger
+  let ?v = \<open>{(\<ff>, \<alpha>\<rightarrow>\<beta>) \<Zinj> A, (\<gg>, \<alpha>\<rightarrow>\<beta>) \<Zinj> B}\<close>
+  let ?orig = \<open>(\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+
+  have 1: \<open>is_substitution ?v\<close>
+    using A B unfolding is_substitution_def by simp
+  have \<open>is_free_for A (\<ff>, \<alpha>\<rightarrow>\<beta>) ?orig\<close> \<open>is_free_for B (\<gg>, \<alpha>\<rightarrow>\<beta>) ?orig\<close>
+    unfolding equivalence_def using x
+    by (metis is_free_for_in_equality is_free_for_in_forall is_free_for_in_var is_free_for_to_app)+
+  then have \<open>\<forall>v\<in>fmdom' ?v. is_free_for (?v $$! v) v ?orig\<close>
+    by (metis empty_iff fmdom'_empty fmdom'_fmupd fmupd_lookup insert_iff option.sel)
+  moreover have \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set)\<close>
+    by simp
+  ultimately have 2: \<open>\<forall>v\<in>fmdom' ?v. var_name v \<notin> free_var_names ({} :: form set) \<and> is_free_for (?v $$! v) v ?orig\<close>
+    by meson
+  have 3: \<open>?v \<noteq> {$$}\<close>
+    by simp
+
+  have \<open>\<turnstile> ?orig\<close>
+    using axiom_3_x .
+  then have \<open>\<turnstile> \<^bold>S ?v ?orig\<close>
+    using Sub 1 2 3 by blast
   then show ?thesis
-    using axiom_3\<^sub>v_def by presburger
-qed
-
-lemma is_free_for_axiom_3_g:
-  assumes \<open>G \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
-    and \<open>(x, \<alpha>) \<notin> free_vars G\<close>
-  shows \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-proof -
-  have \<ff>x: \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (x\<^bsub>\<alpha>\<^esub>)\<close>
-    using is_free_for_in_var by presburger
-  have \<ff>\<gg>: \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>)\<close>
-    using is_free_for_in_var by presburger
-  have \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (\<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-    using \<ff>\<gg> \<ff>x is_free_for_to_app by presburger
-  have \<ff>\<ff>: \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>)\<close>
-    using is_free_for_in_var by presburger
-  have \<ff>\<ff>x\<gg>x: \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
-    using \<ff>x \<ff>\<ff> \<ff>\<gg> is_free_for_in_equality is_free_for_to_app by presburger 
-  have \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))\<close>
-    using \<ff>\<ff> \<ff>\<gg> assms \<ff>\<ff>x\<gg>x is_free_for_in_equality is_free_for_in_equivalence is_free_for_in_forall by presburger
-  then show ?thesis
-    using axiom_3\<^sub>v_def by presburger
-qed
-
-lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_is_S_axiom_3\<^sub>v:
-  assumes \<open>f \<noteq> g\<close>
-  shows \<open>\<^bold>S {(f, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (g, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}(axiom_3\<^sub>v f g x \<alpha> \<beta>) = axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>\<close>
-  unfolding axiom_3\<^sub>v_def axiom_3\<^sub>w\<^sub>f\<^sub>f_def using assms by auto
-
-lemma axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem:
-  assumes Fwff: \<open>F \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
-    and Gwff: \<open>G \<in> wffs\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub>\<close>
-    and \<open>(x, \<alpha>) \<notin> free_vars F\<close>
-    and \<open>(x, \<alpha>) \<notin> free_vars G\<close>
-  shows \<open>\<turnstile> axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>\<close>
-proof -
-  have ax3v: \<open>\<turnstile> axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>\<close>
-    using axiom_3\<^sub>v_theorem by auto
-
-  have fgx_1:
-    \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-    using Fwff assms(3) is_free_for_axiom_3_f by blast
-  have fgx_5:
-    \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-    using Gwff assms(4) is_free_for_axiom_3_g
-    by presburger  
-
-  have fgx_7:
-    \<open>\<ff> \<noteq> \<gg>\<close>
-    by blast
-
-  have is_sub: \<open>is_substitution {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}\<close>
-    using Gwff Fwff by auto
-  {
-    fix v
-    assume \<open>v \<in> fmdom' {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}\<close>
-    then have a: \<open>v \<in> {(\<ff>, \<alpha> \<rightarrow> \<beta>),(\<gg>, \<alpha> \<rightarrow> \<beta>)}\<close>
-      by auto
-
-    have v_notin: \<open>var_name v \<notin> free_var_names ({} :: form set)\<close>
-      by auto
-
-    have \<open>is_free_for F (\<ff>, \<alpha> \<rightarrow> \<beta>) (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-      using fgx_1 by fastforce
-
-    then have free_F: \<open>is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! (\<ff>, \<alpha> \<rightarrow> \<beta>)) (\<ff>, \<alpha> \<rightarrow> \<beta>)
-          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-      using fgx_1
-      by auto
-
-    have \<open>is_free_for G (\<gg>, \<alpha> \<rightarrow> \<beta>)
-          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-      using fgx_5 by blast
-    then have free_G: \<open>is_free_for ({(\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! (\<gg>,  \<alpha> \<rightarrow> \<beta>)) (\<gg>, \<alpha> \<rightarrow> \<beta>)
-          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-      using fgx_1
-      by auto
-
-    have free_v: \<open>is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! v) v
-          (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-      using a free_F free_G fgx_1 by auto
-
-    have \<open>var_name v \<notin> free_var_names ({}:: form set) \<and>
-         is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! v) v
-           (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-      
-        using v_notin free_v by metis
-  }
-  then have p: \<open>\<forall>v\<in>fmdom' {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}.
-      var_name v \<notin> free_var_names ({}:: form set) \<and>
-      is_free_for ({(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} $$! v) v
-       (axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-    by metis
-
-  have notempt: \<open>{(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G} \<noteq> {$$}\<close>
-    by auto
-
-  have \<open>\<turnstile> \<^bold>S {(\<ff>, \<alpha> \<rightarrow> \<beta>) \<Zinj> F, (\<gg>, \<alpha> \<rightarrow> \<beta>) \<Zinj> G}(axiom_3\<^sub>v \<ff> \<gg> x \<alpha> \<beta>)\<close>
-   using Sub[OF ax3v is_sub p notempt] .
-  then have \<open>\<turnstile> axiom_3\<^sub>w\<^sub>f\<^sub>f F G x \<alpha> \<beta>\<close>
-    by (metis axiom_3\<^sub>w\<^sub>f\<^sub>f_is_S_axiom_3\<^sub>v fgx_7)
-  then show ?thesis
-    .
+    by simp
 qed
 
 lemma axiom_3_right_to_left:
@@ -683,8 +503,8 @@ lemma axiom_3_right_to_left:
     and \<open>(x, \<alpha>) \<notin> free_vars B\<close>
   shows \<open>S \<turnstile> (A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)\<close>
 proof -
-  have ax: \<open>\<turnstile> axiom_3\<^sub>w\<^sub>f\<^sub>f A B x \<alpha> \<beta>\<close>
-    using axiom_3\<^sub>w\<^sub>f\<^sub>f_theorem[of A \<alpha> \<beta> B x] using assms by auto
+  have ax: \<open>\<turnstile> (A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
+    using axiom_3_wff assms by blast
 
   show \<open>S \<turnstile> (A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)\<close>
     using rule_RR[where D=\<open>A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B\<close>, 
@@ -694,7 +514,7 @@ proof -
           where B=\<open>(A =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> B)\<close>,
           where A=\<open>\<forall>x\<^bsub>\<alpha>\<^esub>. (A \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>,
           where p=\<open>[]\<close>]
-    using ax assms unfolding axiom_3\<^sub>w\<^sub>f\<^sub>f_def equivalence_def by auto
+    using ax assms unfolding equivalence_def by auto
 qed
 
 lemma is_subform_at_vars:
