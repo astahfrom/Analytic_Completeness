@@ -644,9 +644,7 @@ next
 qed  
 
 lemma const_subst_binders_at:
-  assumes \<open>p \<in> positions C\<close>
   shows \<open>binders_at (\<^bold>S\<^sub>c (c, \<tau>) x C) p = binders_at C p\<close>
-  using assms
 proof (induction rule: binders_at.induct)
   case (1 A B p)
   then show ?case
@@ -663,11 +661,11 @@ next
 next
   case ("5_1" v va vb)
   then show ?case
-    by (meson is_subform_at.simps(8) is_subform_at_existence)
+    by (metis const_subst.simps(1) old.prod.exhaust)
 next
   case ("5_2" v va vb)
   then show ?case
-    by (simp add: position_subform_existence_equivalence)
+    by (metis binders_at.simps(5,6) const_subst.simps(2) surj_pair)
 next
   case ("5_3" v va vc)
   then show ?case
@@ -675,50 +673,40 @@ next
 next
   case ("5_4" v va)
   then show ?case
-    by (meson is_subform_at.simps(8) is_subform_at_existence)
+    by (metis const_subst.simps(1) old.prod.exhaust)
 next
   case ("5_5" v va)
   then show ?case
-    by (simp add: position_subform_existence_equivalence)
+    by (metis binders_at.simps(5,9) const_subst.simps(2) old.prod.exhaust)
 next
   case ("5_6" v vb va)
   then show ?case
-    by (simp add: position_subform_existence_equivalence)
+    by (metis binders_at.simps(7) const_subst.simps(4) surj_pair)
 qed
 
 lemma in_binders_at_in_vars: 
-  assumes \<open>p \<in> positions C\<close>
-    and \<open>(x, \<tau>) \<in> binders_at C p\<close>
+  assumes \<open>(x, \<tau>) \<in> binders_at C p\<close>
   shows \<open>(x, \<tau>) \<in> vars C\<close>
-  using is_bound_at_in_bound_vars vars_is_free_and_bound_vars assms
-  by (metis UnCI)
+  using assms
+  by (induction rule: binders_at.induct) auto
 
 lemma const_subst_preserves_binders_at:
-  assumes \<open>p \<in> positions C\<close>
-    and \<open>C' = \<^bold>S\<^sub>c (c, \<tau>) x C\<close>
+  assumes \<open>C' = \<^bold>S\<^sub>c (c, \<tau>) x C\<close>
   shows \<open>binders_at C p = binders_at C' p\<close>
-  by (simp add: assms(1,2) const_subst_binders_at)
-
+  by (simp add: assms const_subst_binders_at)
 
 lemma capture_exposed_vars_at_const_subst1:
   assumes \<open>p \<in> positions C\<close>
     and \<open>C' = \<^bold>S\<^sub>c (c, \<tau>) x C\<close>
-    and \<open>(x, \<tau>) \<notin> vars C\<close>
   shows \<open>capture_exposed_vars_at p C As = capture_exposed_vars_at p C' As\<close>
 proof -
   have a: \<open>p \<in> positions C'\<close>
-    by (metis assms(1,2) is_replacement_at_existence is_replacement_at_implies_in_positions is_replacement_at_const_subst)
+    by (metis assms(1,2) is_replacement_at_existence is_replacement_at_implies_in_positions
+        is_replacement_at_const_subst)
 
-  have \<open>(x, \<tau>) \<notin> binders_at C' p\<close>
-    using assms in_binders_at_in_vars const_subst_binders_at by auto
-  moreover
-  have \<open>(x, \<tau>) \<notin> binders_at C p\<close>
-    using assms in_binders_at_in_vars by auto
-  moreover
   have \<open>binders_at C p = binders_at C' p\<close>
     using assms const_subst_preserves_binders_at by metis
-  ultimately
-  show ?thesis
+  then show ?thesis
     using capture_exposed_vars_at_alt_def[OF assms(1), of As]
       capture_exposed_vars_at_alt_def[OF a, of As] by auto
 qed
