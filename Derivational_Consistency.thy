@@ -531,7 +531,7 @@ proof -
           =\<^bsub>\<alpha> \<rightarrow> o\<^esub>
          (\<lambda>x\<^bsub>\<alpha>\<^esub>. \<^bold>S {(\<xx>, \<alpha>) \<Zinj> x\<^bsub>\<alpha>\<^esub>} (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>))\<close>
       unfolding axiom_3\<^sub>v_def forall_def
-      using prop_5206[of \<open>(f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)\<close> o x \<alpha> \<xx>, OF f\<xx>_is_g\<xx>_wff x_not_free free_for_x]
+      using \<alpha>[of \<open>(f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)\<close> o x \<alpha> \<xx>, OF f\<xx>_is_g\<xx>_wff x_not_free free_for_x]
         f\<xx>_is_g\<xx>_wff free_for_x by auto
     then have alpha: \<open>\<turnstile> (\<lambda>\<xx>\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> \<xx>\<^bsub>\<alpha>\<^esub>)) =\<^bsub>\<alpha> \<rightarrow> o\<^esub>
          (\<lambda>x\<^bsub>\<alpha>\<^esub>. (f\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> g\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>))\<close>
