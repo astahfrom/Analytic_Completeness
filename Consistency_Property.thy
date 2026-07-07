@@ -96,17 +96,6 @@ fun cons_form :: \<open>form \<Rightarrow> nat set\<close> where
 | \<open>cons_form (A \<sqdot> B) = cons_form A \<union> cons_form B\<close>
 | \<open>cons_form (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = cons_form A\<close>
 
-fun Qconsts :: \<open>form \<Rightarrow> nat set\<close> where
-  \<open>Qconsts (x\<^bsub>\<alpha>\<^esub>) = {}\<close>
-| \<open>Qconsts (\<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>) = {c}\<close>
-| \<open>Qconsts (A \<sqdot> B) = Qconsts A \<union> Qconsts B\<close>
-| \<open>Qconsts (\<lambda>x\<^bsub>\<alpha>\<^esub>. A) = Qconsts A\<close>
-
-lemma c_in_cons_form_iff:
-  \<open>c \<in> cons_form A \<longleftrightarrow> c \<in> Qconsts A \<and> \<not> is_logical_name c\<close>
-  by (induct A; clarsimp)
-    auto
-
 subsection \<open>Lemmas\<close>
 
 text \<open>This property is really what dodging the logical constants is all about.\<close>

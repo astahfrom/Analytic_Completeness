@@ -757,19 +757,16 @@ proof
             insert_subset list.simps(15) sup.bounded_iff
             wffs_from_neg)
        
-      have \<open>(\<forall>A\<in>As. c \<notin> Qconsts A) \<or> is_logical_name c\<close>
-        using \<open>c \<notin> P.params As\<close> c_in_cons_form_iff
-        by auto
-      then have \<open>(\<forall>A\<in>As. c \<notin> Qconsts A)\<close>
-        using \<open>is_param c\<close> unfolding is_param_def by meson
+      have \<open>(\<forall>A\<in>As. c \<notin> cons_form A)\<close>
+        using \<open>c \<notin> P.params As\<close> by auto
 
       have logc: \<open>\<not> is_logical_name c\<close>
         using \<open>is_param c\<close> is_param_def by auto
    
-      have \<open>c \<notin> Qconsts p\<close>
+      have \<open>c \<notin> cons_form p\<close>
         using  \<open>c \<notin> P.params As\<close>  \<open>p \<in> As\<close>
-        using \<open>\<forall>A\<in> As. c \<notin> Qconsts A\<close> by blast
-      then have cAB: \<open>c \<notin> Qconsts (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B))\<close>
+        using \<open>\<forall>A\<in> As. c \<notin> cons_form A\<close> by blast
+      then have cAB: \<open>c \<notin> cons_form (\<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B))\<close>
         using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by auto
       from \<open>H \<turnstile> ?form\<close> 
@@ -852,15 +849,15 @@ proof
         \<open>H \<turnstile> \<^bold>S\<^sub>c (c, \<alpha>) x (A \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> B \<sqdot> \<lbrace>c\<rbrace>\<^bsub>\<alpha>\<^esub>)\<close>
         using form'_def by fastforce
 
-      from cAB have \<open>c \<notin> Qconsts A\<close>
+      from cAB have \<open>c \<notin> cons_form A\<close>
          by auto
       then have a: \<open>\<^bold>S\<^sub>c (c, \<alpha>) x A = A\<close>
-        by (simp add: Qconsts_const_subst)
-      from cAB have \<open>c \<notin> Qconsts B\<close>
+        by (simp add: idemp_const_subst logc)
+      from cAB have \<open>c \<notin> cons_form B\<close>
         by auto
       then have b: \<open>\<^bold>S\<^sub>c (c, \<alpha>) x B = B\<close>
-        using Qconsts_const_subst by auto
-
+        by (simp add: idemp_const_subst logc)
+    
       have free_x: \<open>(x, \<alpha>) \<notin> free_vars H\<close>
         by (metis dual_order.refl equalityI free_vars_in_all_vars_set insert_subset x_not_in_H)
 
