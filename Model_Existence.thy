@@ -293,7 +293,7 @@ next
 qed
 
 lemma one_i: \<open>\<D> i = set {\<V> A i| A. is_closed_wff_of_type A i}\<close>
-  by simp (* defined to hold *)
+  by simp (* Holds directly by definition *)
 
 lemma inj_V_of_form: \<open>inj V_of_form\<close>
   by (metis V_of_form_def embeddable_class.ex_inj someI_ex)
@@ -344,7 +344,7 @@ qed
 
 lemma one_fun:
   \<open>\<D> (\<beta> \<rightarrow> \<alpha>) = set {\<V> A (\<beta> \<rightarrow> \<alpha>)| A. is_closed_wff_of_type A (\<beta> \<rightarrow> \<alpha>)}\<close>
-  by simp (* Defined to hold *)
+  by simp (* Holds directly by definition *)
 
 lemma fun_ext_vfuncset:
   assumes \<open>f \<in> elts (A \<longmapsto> B)\<close> \<open>g \<in> elts (A \<longmapsto> B)\<close>

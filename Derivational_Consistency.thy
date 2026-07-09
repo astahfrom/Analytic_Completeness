@@ -436,7 +436,6 @@ qed
 
 subsection \<open>Existential Consistency\<close>
 
-
 lemma axiom_3_x: \<open>\<turnstile> (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> =\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub>) \<equiv>\<^sup>\<Q> \<forall>x\<^bsub>\<alpha>\<^esub>. (\<ff>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub> =\<^bsub>\<beta>\<^esub> \<gg>\<^bsub>\<alpha>\<rightarrow>\<beta>\<^esub> \<sqdot> x\<^bsub>\<alpha>\<^esub>)\<close>
 proof (cases \<open>x = \<xx>\<close>)
     case True
@@ -590,7 +589,7 @@ proof
         using \<open>p = \<sim>\<^sup>\<Q> (A =\<^bsub>\<alpha> \<rightarrow> \<beta>\<^esub> B)\<close>
         by auto
       from \<open>H \<turnstile> ?form\<close> 
-      obtain Ts P where \<open>is_hyp_proof_of H Ts P ?form\<close> (* Ts are some theorems used in P *)
+      obtain Ts P where \<open>is_hyp_proof_of H Ts P ?form\<close>
         using hypothetical_derivability_proof_existence_equivalence by metis
 
       obtain x where x_not_in_prf: \<open>(x,\<alpha>) \<notin> vars\<^sub>p P \<and> (x,\<alpha>) \<notin> vars\<^sub>p Ts \<and> (x,\<alpha>) \<notin> vars H\<close>

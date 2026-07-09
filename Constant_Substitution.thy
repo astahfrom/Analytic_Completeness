@@ -1045,7 +1045,7 @@ proof -
     unfolding is_hyp_proof_of_def by auto
   from assms(4) have \<open>is_proof Ts\<close>
     unfolding is_hyp_proof_of_def by auto
-  from assms(4) have \<open>P \<noteq> [] \<close>
+  from assms(4) have \<open>P \<noteq> []\<close>
     unfolding is_hyp_proof_of_def by auto
   from assms(4) have \<open>is_hyp_proof As Ts P\<close>
     unfolding is_hyp_proof_of_def by auto
