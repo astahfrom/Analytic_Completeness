@@ -165,14 +165,14 @@ lemma infinite_sets_consistent: \<open>infinite \<G> \<Longrightarrow> \<not> is
   using infinite_sets_underivable by blast
 
 text \<open>We might finally remark, that even if we stick to finite sets, then
-@{thm [source] hyp_derivability_implies_validity} (strong soundness) in @{theory Q0_Metatheory.Soundness}
+@{thm [source] hyp_derivability_implies_validity} in @{theory Q0_Metatheory.Soundness}
 carries a redundant assumption \<^prop>\<open>is_hyps \<G>\<close> since this follows from the derivation \<^prop>\<open>\<G> \<turnstile> A\<close>.
 Likewise, @{thm [source] model_existence_implies_set_consistency} in  @{theory Q0_Metatheory.Consistency}
 needlessly assumes \<^prop>\<open>is_hyps \<G>\<close> since when proving \<^prop>\<open>\<not> is_inconsistent_set \<G>\<close> we get
 to assume \<^prop>\<open>\<G> \<turnstile> F\<^bsub>o\<^esub>\<close> and the same argument as above applies. To showcase these redundancies,
 we remove the extra assumptions for strong soundness and consistency.\<close>
 
-lemma strong_soundness:
+lemma hyp_derivability_implies_validity2:
   assumes "is_model_for \<M> \<G>"
   and "\<G> \<turnstile> A"
   and "is_general_model \<M>"
