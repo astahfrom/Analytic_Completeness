@@ -1,4 +1,4 @@
-# Formalised completeness of Peter Andrews' Higher-Order Logic in Isabelle/HOL
+# Formalized completeness of Peter Andrews' Higher-Order Logic in Isabelle/HOL
 
 This folder contains the mechanized proofs described in our submission.
 
