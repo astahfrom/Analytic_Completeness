@@ -196,7 +196,7 @@ interpretation C: Confl map_con cons_form is_param confl_class
   by unfold_locales (fastforce elim!: confl_class.cases simp: confl_class.simps)
 
 interpretation A: Alpha map_con cons_form is_param alpha_class
-proof (unfold_locales, safe)
+proof (unfold_locales, safe?)
   fix ps qs f
   assume \<open>ps \<leadsto>\<^sub>\<alpha> qs\<close>
   then show \<open>map (map_con f) ps \<leadsto>\<^sub>\<alpha> map (map_con f) qs\<close>
