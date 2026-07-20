@@ -1,7 +1,7 @@
 chapter AFP
 
 session Q0_Completeness (AFP) = HOL +
-  options [timeout = 600]
+  options [timeout = 600, document = pdf, document_output = "output"]
   sessions
     Abstract_Consistency_Property
     Q0_Metatheory
