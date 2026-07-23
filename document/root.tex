@@ -62,7 +62,7 @@
 
 % sane default for proof documents
 \parindent 0pt\parskip 0.5ex
-
+\newpage
 \section{Introduction}
 We give a completeness proof of Peter B. Andrews' system $Q_0$ for Higher-Order Logic following 
 his textbook ``An Introduction to Mathematical Logic and Type Theory: To Truth Through Proof' 
@@ -73,23 +73,22 @@ combined with the framework by From and Schlichtkrull for abstract consistency p
 This framework fits Andrews' completeness proof better than other such frameworks for logics.
 The framework for synthetic completeness \cite{Synthetic_Completeness-AFP,DBLP:conf/cpp/From25} applies only to synthetic proof systems, a narrower range than for the chosen framework, and would limit the extensibility of the results. 
 The frameworks for Beth/Hintikka style completeness proofs \cite{Abstract_Completeness-AFP,DBLP:conf/cade/Blanchette0T14,DBLP:journals/jar/BlanchettePT17}
-and for saturation based provers \cite{Splitting_Framework-AFP,DBLP:journals/jar/WaldmannTRB22,DBLP:conf/cade/EbnerBT21,DBLP:conf/cpp/TourretB21,Saturation_Framework_Extensions-AFP,DBLP:conf/cade/WaldmannTRB20} were not designed with axiomatic systems like $Q_0$ in mind.
+and for saturation-based provers \cite{Splitting_Framework-AFP,DBLP:journals/jar/WaldmannTRB22,DBLP:conf/cade/EbnerBT21,DBLP:conf/cpp/TourretB21,Saturation_Framework_Extensions-AFP,DBLP:conf/cade/WaldmannTRB20} were not designed with axiomatic systems like $Q_0$ in mind.
 
 There are two formalizations of $Q_0$ in Isabelle, but they do not cover completeness.
 Specifically there is D\'iaz's \cite{Q0_Metatheory-AFP} formalization of $Q_0$ on 
-which this theory is built and Schlichtkrull's formalization of $Q_0$
-soundness \cite{Q0_Soundness-AFP}.
+which this theory is built and Schlichtkrull's formalization of $Q_0$ \cite{Q0_Soundness-AFP}.
 Formalizations of other systems for higher-order logic also do not cover completeness.
-There is specifically Arthan's specification of HOL in ProofPower \cite{arthan1993,arthan1991sem,arthan1991ded}, John Harrison's formalization of the proof system of HOL Light in HOL Light \cite{DBLP:conf/cade/Harrison06} and the formalization by Kumar et al.\ HOL Light with definitions and a verified implementation in HOL4~\cite{DBLP:conf/itp/KumarAMO14,DBLP:journals/jar/KumarAMO16,DBLP:conf/itp/AbrahamssonMKS22,DBLP:conf/itp/AbrahamssonM23}.
+There is specifically Arthan's specification of HOL in ProofPower \cite{arthan1993,arthan1991sem,arthan1991ded}, John Harrison's formalization of the proof system of HOL Light in HOL Light \cite{DBLP:conf/cade/Harrison06} and the formalization by Kumar et al.\ of HOL Light with definitions and a verified implementation in HOL4~\cite{DBLP:conf/itp/KumarAMO14,DBLP:journals/jar/KumarAMO16,DBLP:conf/itp/AbrahamssonMKS22,DBLP:conf/itp/AbrahamssonM23}.
 Another formalization with the focus on implementation is by
 Ro{\ss}kopf and Nipkow \cite{DBLP:conf/cade/NipkowR21,Metalogic_ProofChecker-AFP,DBLP:journals/jar/RosskopfN23} who in Isabelle/HOL give both a
-formalization of a proof system for terms in Isabelle's metalogic and a formalization of an implementation
+formalized proof system for terms in Isabelle's metalogic and a formalized implementation
 of a checker and prove that the checker implements the system. 
 Additionally there are works formalizing the metatheory of the calculus of constructions and
 the calculus of inductive constructions \cite{DBLP:conf/types/Barras96,barras:inria-00073667,coqincoqmanuscript,coqincoqcontribs,DBLP:journals/pacmpl/SozeauBFTW20}.
 
 The only other formalizations of completeness with general models we know of are for second-order logic
-by Kock and Kirst \cite{DBLP:conf/cpp/KochK22} in Coq and by From and Schlichtkrull in Isabelle/HOL \cite{Abstract_Consistency_Property-AFP,DBLP:conf/itp/FromS25}.
+by Kock and Kirst \cite{DBLP:conf/cpp/KochK22} in Rocq and by From and Schlichtkrull in Isabelle/HOL \cite{Abstract_Consistency_Property-AFP,DBLP:conf/itp/FromS25}.
 
 \begin{figure}
 \begin{center}
